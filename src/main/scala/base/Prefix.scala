@@ -73,6 +73,8 @@ object Prefix {
 
     implicit case object Kilo extends Kilo
 
+    val ps = List(Nano, Micro, Milli)
+
   }
 
 }
