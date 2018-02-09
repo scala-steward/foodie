@@ -1,9 +1,10 @@
 package base
 
-import spire.math.Numeric
+import spire.math.{Interval, Numeric}
 import spire.syntax.numeric._
 
-import scalaz.{@@, Tag}
+import scalaz.{@@, Tag, Zip}
+import scalaz.Scalaz._
 
 /**
   * A type class denoting the scientific prefix of a certain unit (i.e. "milli").
@@ -24,7 +25,7 @@ sealed trait Prefix[P] {
     * @tparam A The type of the scaled value.
     * @return The rescaled value tagged with the type of the prefix to avoid erroneous use.
     */
-  def scale[A: Numeric](value: A): @@[A, P] = Tag(value * factor)
+  def scale[A: Numeric](value: A): A = value * factor
 
   /**
     * Given a value in the prefix format (i.e. interpreted in this format),
@@ -34,11 +35,41 @@ sealed trait Prefix[P] {
     * @tparam A The type of the scaled value.
     * @return The original value stripped of any tags.
     */
-  def unscale[A: Numeric](value: A @@ P): A = Tag.unwrap(value) / factor
+  def unscale[A: Numeric](value: A): A @@ P = Tag(value / factor)
 
 }
 
 object Prefix {
+
+  import Syntax._
+
+  private def prefixList: List[Prefix[_]] = List(Nano, Micro, Milli, Single, Kilo)
+
+  private def prefixOrder[A: Numeric]: Map[Interval[A], Prefix[_]] = {
+    val zipList = Zip[List]
+    val num = Numeric[A]
+
+    import zipList._
+
+    val fs: List[(A, A) => Interval[A]] =
+      List((_: A, upper: A) => Interval.below(upper)) ++
+        prefixList.drop(2).map(_ => Interval.openUpper[A] _)++
+        List((lower: A, _: A) => Interval.atOrAbove(lower) )
+
+    val corners = prefixList.map(_.scale(num.fromBigDecimal(1d)))
+
+    val bounds = zip(corners, corners.tail ++ List(num.fromBigDecimal(1d)))
+
+    val responsibilities = zipWith(fs, bounds)((f, b) => f.tupled(b))
+    zip(responsibilities, prefixList).toMap
+  }
+
+  def normalisedPrefix[A: Numeric](value: A): Prefix[_] = {
+    val order = prefixOrder[A]
+    order.collectFirst {
+      case (interval, prefix) if interval.contains(value) => prefix
+    }.getOrElse(Single)
+  }
 
   def apply[P: Prefix]: Prefix[P] = implicitly[Prefix[P]]
 
@@ -72,8 +103,6 @@ object Prefix {
     implicit case object Single extends Single
 
     implicit case object Kilo extends Kilo
-
-    val ps = List(Nano, Micro, Milli)
 
   }
 

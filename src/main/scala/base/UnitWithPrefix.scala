@@ -2,16 +2,16 @@ package base
 
 import spire.math.Numeric
 
-import scalaz.@@
+import scalaz.{@@, Tag}
 
 /**
   * Representation of a scientific unit with a prefix (e.g. milligram).
   *
-  * @param unadjusted The base value without any interpretation.
+  * @param relative The base value without any interpretation.
   * @tparam U The numeric type of the actual unit.
   * @tparam P A prefix type used for the proper scaling and the interpretation of the base value in the unit.
   */
-case class UnitWithPrefix[U: Numeric, P: Prefix](unadjusted: U) {
+case class UnitWithPrefix[U: Numeric, P: Prefix](relative: U @@ P) {
 
   private val prefix: Prefix[P] = Prefix[P]
 
@@ -22,8 +22,10 @@ case class UnitWithPrefix[U: Numeric, P: Prefix](unadjusted: U) {
 
   /**
     * The actual value denoted by the particular instance.
+    *
+    * Invariant: The absolute value is independent of the prefix.
     */
-  val adjusted: U @@ P = prefix.scale(unadjusted)
+  val absolute: U = prefix.scale(Tag.unwrap(relative))
 
   /**
     * Convert the value to another context.
@@ -33,9 +35,19 @@ case class UnitWithPrefix[U: Numeric, P: Prefix](unadjusted: U) {
     * @return A new unit with the same base value, but wrapped in a new context.
     */
   def rescale[Q: Prefix]: UnitWithPrefix[U, Q] = UnitWithPrefix.to[U, P, Q](this)
+
+  def normalise: UnitWithPrefix[U, _] = {
+    val nPrefix = Prefix.normalisedPrefix(absolute)
+    if (nPrefix != prefix)
+      rescale(nPrefix)
+    else
+      this
+  }
 }
 
 object UnitWithPrefix {
+
+  def fromRelative[U: Numeric, P: Prefix](relative: U): UnitWithPrefix[U, P] = UnitWithPrefix(Tag(relative))
 
   /**
     * Convert between two units with prefixes.
@@ -47,6 +59,6 @@ object UnitWithPrefix {
     * @return A unit with the same base value, but another prefix context.
     */
   def to[U: Numeric, P1, P2: Prefix](unit: UnitWithPrefix[U, P1]): UnitWithPrefix[U, P2] = {
-    UnitWithPrefix[U, P2](unit.unadjusted)
+    UnitWithPrefix[U, P2](Prefix[P2].unscale(unit.absolute))
   }
 }
