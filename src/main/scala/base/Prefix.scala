@@ -3,8 +3,8 @@ package base
 import spire.math.{Interval, Numeric}
 import spire.syntax.numeric._
 
-import scalaz.{@@, Tag, Zip}
 import scalaz.Scalaz._
+import scalaz.{@@, Tag, Zip}
 
 /**
   * A type class denoting the scientific prefix of a certain unit (i.e. "milli").
@@ -37,6 +37,10 @@ sealed trait Prefix[P] {
     */
   def unscale[A: Numeric](value: A): A @@ P = Tag(value / factor)
 
+  /**
+    * @return The name of the prefix.
+    */
+  def name: String
 }
 
 object Prefix {
@@ -124,20 +128,25 @@ sealed trait PrefixFrom[P] extends Prefix[P] {
 
 sealed trait Nano extends PrefixFrom[Nano] {
   override protected final val floatingFactor: Floating = 1e-9
+  override def name: String = "nano"
 }
 
 sealed trait Micro extends PrefixFrom[Micro] {
   override protected final val floatingFactor: Floating = 1e-6
+  override def name: String = "micro"
 }
 
 sealed trait Milli extends PrefixFrom[Milli] {
   override protected final val floatingFactor: Floating = 1e-3
+  override def name: String = "milli"
 }
 
 sealed trait Single extends PrefixFrom[Single] {
   override protected final val floatingFactor: Floating = 1d
+  override def name: String = ""
 }
 
 sealed trait Kilo extends PrefixFrom[Kilo] {
   override protected final val floatingFactor: Floating = 1e3
+  override def name: String = "kilo"
 }
