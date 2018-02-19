@@ -1,5 +1,6 @@
-package base
+package physical
 
+import base._
 import spire.math.{Interval, Numeric}
 import spire.syntax.numeric._
 
@@ -41,6 +42,11 @@ sealed trait Prefix[P] {
     * @return The name of the prefix.
     */
   def name: String
+
+  /**
+    * @return The abbreviated name of the prefix.
+    */
+  def abbreviation: String
 }
 
 object Prefix {
@@ -128,25 +134,30 @@ sealed trait PrefixFrom[P] extends Prefix[P] {
 
 sealed trait Nano extends PrefixFrom[Nano] {
   override protected final val floatingFactor: Floating = 1e-9
-  override def name: String = "nano"
+  override val name: String = "nano"
+  override val abbreviation: String = "n"
 }
 
 sealed trait Micro extends PrefixFrom[Micro] {
   override protected final val floatingFactor: Floating = 1e-6
-  override def name: String = "micro"
+  override val name: String = "micro"
+  override val abbreviation: String = "µ"
 }
 
 sealed trait Milli extends PrefixFrom[Milli] {
   override protected final val floatingFactor: Floating = 1e-3
-  override def name: String = "milli"
+  override val name: String = "milli"
+  override val abbreviation: String = "m"
 }
 
 sealed trait Single extends PrefixFrom[Single] {
   override protected final val floatingFactor: Floating = 1d
-  override def name: String = ""
+  override val name: String = ""
+  override val abbreviation: String = ""
 }
 
 sealed trait Kilo extends PrefixFrom[Kilo] {
   override protected final val floatingFactor: Floating = 1e3
-  override def name: String = "kilo"
+  override val name: String = "kilo"
+  override val abbreviation: String = "k"
 }
