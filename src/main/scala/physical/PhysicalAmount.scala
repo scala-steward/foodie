@@ -56,6 +56,8 @@ case class PhysicalAmount[U: Numeric, P: Prefix](relative: U @@ P) {
 
 object PhysicalAmount {
 
+  import Prefix.Syntax._
+
   def fromRelative[U: Numeric, P: Prefix](relative: U): PhysicalAmount[U, P] = PhysicalAmount(Tag(relative))
 
   /**
@@ -70,6 +72,9 @@ object PhysicalAmount {
   def to[U: Numeric, P1, P2: Prefix](unit: PhysicalAmount[U, P1]): PhysicalAmount[U, P2] = {
     PhysicalAmount[U, P2](Prefix[P2].unscale(unit.absolute))
   }
+
+  def fromAbsolute[N: Numeric, P: Prefix](absolute: N): PhysicalAmount[N, P] =
+    fromRelative[N, Single](absolute).rescale[P]
 
   object Implicits {
 
