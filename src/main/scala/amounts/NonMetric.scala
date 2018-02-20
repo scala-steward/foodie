@@ -1,11 +1,11 @@
 package amounts
 
 import base.{Ingredient, Mass}
+import physical.PhysicalAmount.Implicits._
+import physical.Prefix.Syntax._
 import physical.{PhysicalAmount, Prefix, Single}
 import spire.implicits._
 import spire.math.Numeric
-import PhysicalAmount.Implicits._
-import Prefix.Syntax._
 
 abstract class NonMetric[N: Numeric](inGrams: PhysicalAmount[N, Single])
   extends Weighted[N] with HasUnit[N] with HasIngredient[N] {

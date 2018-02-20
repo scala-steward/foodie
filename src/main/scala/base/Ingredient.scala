@@ -19,5 +19,9 @@ trait Ingredient[N] {
     */
   def baseReference: Mass[N, _]
 
+  /**
+    * @tparam P The prefix type.
+    * @return The density of the ingredient as weight per millilitre.
+    */
   def weightPerMillilitre[P: Prefix]: Mass[N, P]
 }
