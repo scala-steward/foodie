@@ -17,11 +17,14 @@ abstract class NonMetric[N: Numeric](inGrams: PhysicalAmount[N, Single])
 
 object NonMetric {
 
+  private def mkAmount[N: Numeric, P: Prefix](amount: Double): PhysicalAmount[N, P] =
+    PhysicalAmount.fromRelative[N, P](Numeric[N].fromBigDecimal(amount))
+
   case class Ounce[N: Numeric](override val ingredient: Ingredient[N],
                                override val units: N)
-    extends NonMetric(PhysicalAmount.fromRelative[N, Single](Numeric[N].fromBigDecimal(29.4))) //todo: Ounce?
+    extends NonMetric(mkAmount(28.3495))
 
   case class Pound[N: Numeric](override val ingredient: Ingredient[N],
                                override val units: N)
-    extends NonMetric(PhysicalAmount.fromRelative[N, Single](Numeric[N].fromBigDecimal(470))) //todo: Pound?
+    extends NonMetric(mkAmount(453.592))
 }

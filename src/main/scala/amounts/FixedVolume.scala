@@ -41,13 +41,11 @@ object FixedVolume {
   }
 
   case class Teaspoon[N: Numeric]() extends HasVolume[N, Milli] {
-    //todo: How big is a teaspoon?
-    override val volume: NamedUnit[N, Milli, Litre] = mkLitre[N, Milli](2)
+    override val volume: NamedUnit[N, Milli, Litre] = mkLitre[N, Milli](5)
   }
 
   case class Tablespoon[N: Numeric]() extends HasVolume[N, Milli] {
-    //todo: How big is a tablespoon?
-    override val volume: NamedUnit[N, Milli, Litre] = mkLitre[N, Milli](5)
+    override val volume: NamedUnit[N, Milli, Litre] = mkLitre[N, Milli](15)
   }
 
 }
