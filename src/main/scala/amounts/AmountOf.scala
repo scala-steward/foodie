@@ -1,11 +1,12 @@
 package amounts
 
-import algebra.ring.{AdditiveGroup, AdditiveMonoid}
 import base._
+import physical.NamedUnit.Implicits._
+import physical.NamedUnitAnyPrefix.Implicits._
+import physical.PUnit.Syntax._
 import physical.PhysicalAmount.Implicits._
-import physical.Prefix.Syntax._
 import physical.{Milli, Single, _}
-import spire.algebra.{Module, Rng}
+import spire.algebra.Module
 import spire.implicits._
 import spire.math.Numeric
 
@@ -60,32 +61,15 @@ trait Weighted[N] extends AmountOf[N]
 
 object AmountOf {
 
+  private implicit def modM[A, N: Numeric]: Module[Functional[Mass[N, _ <: Prefix], A], N] =
+    Functional.Implicits.moduleF[Mass[N, _ <: Prefix], A, N]
 
   def palette[N: Numeric](amount: AmountOf[N]): Palette[N] = {
-
-    implicit def mod: Module[PhysicalAmount[N, _ <: Prefix], N] = new Module[PhysicalAmount[N, _ <: Prefix], N] {
-      override val scalar: Rng[N] = Rng[N]
-
-      override def timesl(r: N, v: PhysicalAmount[N, _ <: Prefix]): PhysicalAmount[N, _ <: Prefix] = ???
-
-      override def negate(x: PhysicalAmount[N, _ <: Prefix]): PhysicalAmount[N, _ <: Prefix] = ???
-
-      override def zero: PhysicalAmount[N, _ <: Prefix] = ???
-
-      override def plus(x: PhysicalAmount[N, _ <: Prefix], y: PhysicalAmount[N, _ <: Prefix]): PhysicalAmount[N, _ <: Prefix] = ???
-    }
-
-    import PUnit.Syntax.Gram
-
-//    implicit def mod: Module[Palette[N], N] =
-//      Functional.Implicits.moduleF[Mass[N, P with Prefix[P] forSome { type P }], Nutrient, N](Rng[N], modM[Gram])
-//
-//    val base = amount.ingredient.basePalette
-//    val reference = amount.ingredient.baseReference.amount.absolute
-//    val given = amount.toMass[Single].amount.absolute
-//    val factor = given / reference
-//    factor *: base
-    ???
+    val base = amount.ingredient.basePalette
+    val reference = amount.ingredient.baseReference.amount.absolute
+    val given = amount.toMass[Single].amount.absolute
+    val factor = given / reference
+    factor *: base
   }
 
 }
