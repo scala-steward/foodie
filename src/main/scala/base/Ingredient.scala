@@ -1,11 +1,8 @@
 package base
 
 import physical.Prefix
-import spire.math.Numeric
 
 trait Ingredient[N] {
-
-  implicit val numeric: Numeric[N]
 
   /**
     * @return The nutritional palette of a given ingredient per the base reference mass (usually 100g).
@@ -23,5 +20,5 @@ trait Ingredient[N] {
     * @tparam P The prefix type.
     * @return The density of the ingredient as weight per millilitre.
     */
-  def weightPerMillilitre[P: Prefix]: Mass[N, P]
+  def weightPerMillilitre[P <: Prefix]: Mass[N, P]
 }

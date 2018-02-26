@@ -38,17 +38,17 @@ object Functional {
       override def scalar: Field[N] = implicitly[Field[N]]
     }
 
-    implicit def additiveSemigroup[N: AdditiveSemigroup, A]: AdditiveSemigroup[Functional[N, A]] = new FSG[N, A]
+    implicit def additiveSemigroupF[N: AdditiveSemigroup, A]: AdditiveSemigroup[Functional[N, A]] = new FSG[N, A]
 
-    implicit def additiveMonoid[N: AdditiveMonoid, A]: AdditiveMonoid[Functional[N, A]] = new FM[N, A]
+    implicit def additiveMonoidF[N: AdditiveMonoid, A]: AdditiveMonoid[Functional[N, A]] = new FM[N, A]
 
-    implicit def additiveGroup[N: AdditiveGroup, A]: AdditiveGroup[Functional[N, A]] = new FAG[N, A]
+    implicit def additiveGroupF[N: AdditiveGroup, A]: AdditiveGroup[Functional[N, A]] = new FAG[N, A]
 
-    implicit def additiveAbelianGroup[N: AdditiveAbGroup, A]: AdditiveAbGroup[Functional[N, A]] = new FAAG[N, A]
+    implicit def additiveAbelianGroupF[N: AdditiveAbGroup, A]: AdditiveAbGroup[Functional[N, A]] = new FAAG[N, A]
 
-    implicit def module[N, A, R: Rng](implicit mod: Module[N, R]): Module[Functional[N, A], R] = new FMod[N, A, R]
+    implicit def moduleF[N, A, R: Rng](implicit mod: Module[N, R]): Module[Functional[N, A], R] = new FMod[N, A, R]
 
-    implicit def vectorSpace[N: Field, A]: VectorSpace[Functional[N, A], N] = new FVS[N, A]
+    implicit def vectorSpaceF[N: Field, A]: VectorSpace[Functional[N, A], N] = new FVS[N, A]
 
   }
 
