@@ -1,12 +1,11 @@
 package amounts
 
+import base.FunctionalAnyPrefix.Implicits._
 import base._
-import physical.NamedUnit.Implicits._
 import physical.NamedUnitAnyPrefix.Implicits._
 import physical.PUnit.Syntax._
 import physical.PhysicalAmount.Implicits._
 import physical.{Milli, Single, _}
-import spire.algebra.Module
 import spire.implicits._
 import spire.math.Numeric
 
@@ -60,9 +59,6 @@ abstract class ByVolume[N: Numeric] extends AmountOf[N] {
 trait Weighted[N] extends AmountOf[N]
 
 object AmountOf {
-
-  private implicit def modM[A, N: Numeric]: Module[Functional[Mass[N, _ <: Prefix], A], N] =
-    Functional.Implicits.moduleF[Mass[N, _ <: Prefix], A, N]
 
   def palette[N: Numeric](amount: AmountOf[N]): Palette[N] = {
     val base = amount.ingredient.basePalette
