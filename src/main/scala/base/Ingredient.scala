@@ -1,6 +1,7 @@
 package base
 
 import physical.Prefix
+import spire.ClassTag
 
 trait Ingredient[N] {
 
@@ -20,5 +21,5 @@ trait Ingredient[N] {
     * @tparam P The prefix type.
     * @return The density of the ingredient as weight per millilitre.
     */
-  def weightPerMillilitre[P <: Prefix]: Mass[N, P]
+  def weightPerMillilitre[P <: Prefix: ClassTag]: Mass[N, P]
 }

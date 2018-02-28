@@ -89,8 +89,6 @@ object Prefix {
     prefixList.collectFirst { case x: P => x }.getOrElse(Single)
   }
 
-  case class Prefixed[P <: Prefix: ClassTag](prefix: P)
-
   /**
     * Provide instances for the convenient use of the prefixes.
     * The objects extend the traits with the same name for the sake of convenience.
@@ -142,7 +140,7 @@ sealed trait PrefixFrom extends Prefix {
 
 sealed trait Nano extends PrefixFrom {
   override type PrefixType = Nano
-  override implicit def classTag: ClassTag[Nano] = implicitly[ClassTag[Nano]]
+  override implicit val classTag: ClassTag[Nano] = implicitly[ClassTag[Nano]]
   override protected final val floatingFactor: Floating = 1e-9
   override val name: String = "nano"
   override val abbreviation: String = "n"
@@ -158,7 +156,7 @@ sealed trait Micro extends PrefixFrom {
 
 sealed trait Milli extends PrefixFrom {
   override type PrefixType = Milli
-  override implicit def classTag: ClassTag[Milli] = implicitly[ClassTag[Milli]]
+  override implicit val classTag: ClassTag[Milli] = implicitly[ClassTag[Milli]]
   override protected final val floatingFactor: Floating = 1e-3
   override val name: String = "milli"
   override val abbreviation: String = "m"
@@ -166,7 +164,7 @@ sealed trait Milli extends PrefixFrom {
 
 sealed trait Single extends PrefixFrom {
   override type PrefixType = Single
-  override implicit def classTag: ClassTag[Single] = implicitly[ClassTag[Single]]
+  override implicit val classTag: ClassTag[Single] = implicitly[ClassTag[Single]]
   override protected final val floatingFactor: Floating = 1d
   override val name: String = ""
   override val abbreviation: String = ""
@@ -174,7 +172,7 @@ sealed trait Single extends PrefixFrom {
 
 sealed trait Kilo extends PrefixFrom {
   override type PrefixType = Kilo
-  override implicit def classTag: ClassTag[Kilo] = implicitly[ClassTag[Kilo]]
+  override implicit val classTag: ClassTag[Kilo] = implicitly[ClassTag[Kilo]]
   override protected final val floatingFactor: Floating = 1e3
   override val name: String = "kilo"
   override val abbreviation: String = "k"

@@ -28,7 +28,7 @@ case class PhysicalAmount[U: Numeric, P <: Prefix: ClassTag](relative: U @@ P) {
     *
     * Invariant: The absolute value is independent of the prefix.
     */
-  val absolute: U = prefix.scale(Tag.unwrap(relative))
+  lazy val absolute: U = prefix.scale(Tag.unwrap(relative))
 
   /**
     * Convert the value to another context.
@@ -71,7 +71,7 @@ object PhysicalAmount {
   def to[U: Numeric, P1 <: Prefix: ClassTag, P2 <: Prefix: ClassTag](unit: PhysicalAmount[U, P1]):
   PhysicalAmount[U, P2] = {
     val inner = Prefix[P2].unscale(unit.absolute)
-    PhysicalAmount.fromAbsolute[U, P2](inner)
+    PhysicalAmount.fromRelative[U, P2](inner)
   }
 
   def fromAbsolute[N: Numeric, P <: Prefix: ClassTag](absolute: N): PhysicalAmount[N, P] =

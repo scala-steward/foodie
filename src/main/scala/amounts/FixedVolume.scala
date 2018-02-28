@@ -1,10 +1,8 @@
 package amounts
 
-import base.{Ingredient, Mass}
+import base.Ingredient
 import physical.PUnit.Syntax._
-import physical.PUnit._
 import physical.PhysicalAmount.Implicits._
-import physical.Prefix.Syntax._
 import physical.{Milli, _}
 import spire.implicits._
 import spire.math.Numeric
@@ -20,7 +18,7 @@ import scala.reflect.ClassTag
   * @tparam N The type of number used for the amounts.
   * @tparam P The type of the prefix.
   */
-case class FixedVolume[N: Numeric, P <: Prefix: ClassTag](hasVolume: HasVolume[N, P],
+case class FixedVolume[N: Numeric, P <: Prefix : ClassTag](hasVolume: HasVolume[N, P],
                                                            override val ingredient: Ingredient[N],
                                                            override val units: N)
   extends ByVolume[N] with HasUnit[N] with HasIngredient[N] {
@@ -31,7 +29,7 @@ case class FixedVolume[N: Numeric, P <: Prefix: ClassTag](hasVolume: HasVolume[N
 
 object FixedVolume {
 
-  private def mkLitre[N: Numeric, P <: Prefix: ClassTag](amount: N): NamedUnit[N, P, Litre] =
+  private def mkLitre[N: Numeric, P <: Prefix : ClassTag](amount: N): NamedUnit[N, P, Litre] =
     NamedUnit[N, P, Litre](PhysicalAmount.fromRelative[N, P](amount))
 
   /**
