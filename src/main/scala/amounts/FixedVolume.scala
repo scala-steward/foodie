@@ -6,8 +6,7 @@ import physical.PhysicalAmount.Implicits._
 import physical.{Milli, _}
 import spire.implicits._
 import spire.math.Numeric
-
-import scala.reflect.ClassTag
+import Prefix.Syntax._
 
 /**
   * Certain amounts are prescribed in "vessels" of fixed size.
@@ -18,7 +17,7 @@ import scala.reflect.ClassTag
   * @tparam N The type of number used for the amounts.
   * @tparam P The type of the prefix.
   */
-case class FixedVolume[N: Numeric, P <: Prefix : ClassTag](hasVolume: HasVolume[N, P],
+case class FixedVolume[N: Numeric, P: Prefix](hasVolume: HasVolume[N, P],
                                                            override val ingredient: Ingredient[N],
                                                            override val units: N)
   extends ByVolume[N] with HasUnit[N] with HasIngredient[N] {
@@ -29,7 +28,7 @@ case class FixedVolume[N: Numeric, P <: Prefix : ClassTag](hasVolume: HasVolume[
 
 object FixedVolume {
 
-  private def mkLitre[N: Numeric, P <: Prefix : ClassTag](amount: N): NamedUnit[N, P, Litre] =
+  private def mkLitre[N: Numeric, P: Prefix](amount: N): NamedUnit[N, P, Litre] =
     NamedUnit[N, P, Litre](PhysicalAmount.fromRelative[N, P](amount))
 
   /**

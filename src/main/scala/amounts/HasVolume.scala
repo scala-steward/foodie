@@ -1,7 +1,7 @@
 package amounts
 
-import physical.{Litre, NamedUnit, Prefix}
+import physical.{Litre, NamedUnit}
 
-trait HasVolume[N, P <: Prefix] {
+trait HasVolume[N, P] {
   def volume: NamedUnit[N, P, Litre]
 }

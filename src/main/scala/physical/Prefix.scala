@@ -4,18 +4,15 @@ import base._
 import spire.math.{Interval, Numeric}
 import spire.syntax.numeric._
 
-import scala.reflect.ClassTag
 import scalaz.Scalaz._
-import scalaz.{@@, Tag, Zip}
+import scalaz.Zip
 
 /**
   * A type denoting the scientific prefix of a certain unit (i.e. "milli").
   */
-sealed trait Prefix {
+sealed trait Prefix[P] {
 
-  type PrefixType <: Prefix
-
-  implicit def classTag: ClassTag[PrefixType]
+  type PrefixType = P
 
   /**
     * @tparam A Any numeric instance.
@@ -57,9 +54,9 @@ object Prefix {
 
   import Syntax._
 
-  private def prefixList: List[Prefix] = List(Nano, Micro, Milli, Single, Kilo)
+  private val prefixes: List[Prefix[_]] = List(Nano, Micro, Milli, Single, Kilo)
 
-  private def prefixOrder[A: Numeric]: Map[Interval[A], Prefix] = {
+  private def prefixOrder[A: Numeric]: Map[Interval[A], Prefix[_]] = {
     val zipList = Zip[List]
     val num = Numeric[A]
 
@@ -67,27 +64,25 @@ object Prefix {
 
     val fs: List[(A, A) => Interval[A]] =
       List((_: A, upper: A) => Interval.below(upper)) ++
-        prefixList.drop(2).map(_ => Interval.openUpper[A] _)++
+        prefixes.drop(2).map(_ => Interval.openUpper[A] _)++
         List((lower: A, _: A) => Interval.atOrAbove(lower) )
 
-    val corners = prefixList.map(_.scale(num.fromBigDecimal(1d)))
+    val corners = prefixes.map(_.scale(num.fromBigDecimal(1d)))
 
     val bounds = zip(corners, corners.tail ++ List(num.fromBigDecimal(1d)))
 
     val responsibilities = zipWith(fs, bounds)((f, b) => f.tupled(b))
-    zip(responsibilities, prefixList).toMap
+    zip(responsibilities, prefixes).toMap
   }
 
-  def normalisedPrefix[A: Numeric](value: A): Prefix = {
+  def normalisedPrefix[A: Numeric](value: A): Prefix[_] = {
     val order = prefixOrder[A]
     order.collectFirst {
       case (interval, prefix) if interval.contains(value) => prefix
     }.getOrElse(Single)
   }
 
-  def apply[P <: Prefix: ClassTag]: Prefix = {
-    prefixList.collectFirst { case x: P => x }.getOrElse(Single)
-  }
+  def apply[P: Prefix]: Prefix[P] = implicitly[Prefix[P]]
 
   /**
     * Provide instances for the convenient use of the prefixes.
@@ -98,9 +93,9 @@ object Prefix {
     *
     * import Prefix.Syntax._
     *
-    *   val unitWithPrefix = UnitWithPrefix[Floating, Micro](250d)
-    *   println(unitWithPrefix.adjusted)
-    *   val kilo = unitWithPrefix.rescale[Kilo]
+    *   val physicalAmount = PhysicalAmount.fromRelative[Floating, Milli](5)
+    *   println(unitWithPrefix.relative)
+    *   val kilo = physicalAmount.rescale[Kilo]
     *   println(kilo.adjusted)
     *
     * }}}
@@ -120,6 +115,12 @@ object Prefix {
 
     case object Kilo extends Kilo
 
+    implicit val nanoPrefix: Prefix[Nano] = Nano
+    implicit val microPrefix: Prefix[Micro] = Micro
+    implicit val milliPrefix: Prefix[Milli] = Milli
+    implicit val singlePrefix: Prefix[Single] = Single
+    implicit val kiloPrefix: Prefix[Kilo] = Kilo
+
   }
 
 }
@@ -128,7 +129,7 @@ object Prefix {
   * Usually one creates prefix conversions by using a given floating value to rescale other values.
   * This trait abstracts this process and requires merely the floating value.
   */
-sealed trait PrefixFrom extends Prefix {
+sealed trait PrefixFrom[P] extends Prefix[P] {
 
   /**
     * @return A floating representation of the factor (which will be converted to the required numeric context).
@@ -138,41 +139,31 @@ sealed trait PrefixFrom extends Prefix {
   override final def factor[A: Numeric]: A = Numeric[A].fromBigDecimal(floatingFactor)
 }
 
-sealed trait Nano extends PrefixFrom {
-  override type PrefixType = Nano
-  override implicit val classTag: ClassTag[Nano] = implicitly[ClassTag[Nano]]
+sealed trait Nano extends PrefixFrom[Nano] {
   override protected final val floatingFactor: Floating = 1e-9
   override val name: String = "nano"
   override val abbreviation: String = "n"
 }
 
-sealed trait Micro extends PrefixFrom {
-  override type PrefixType = Micro
-  override implicit def classTag: ClassTag[Micro] = implicitly[ClassTag[Micro]]
+sealed trait Micro extends PrefixFrom[Micro] {
   override protected final val floatingFactor: Floating = 1e-6
   override val name: String = "micro"
   override val abbreviation: String = "µ"
 }
 
-sealed trait Milli extends PrefixFrom {
-  override type PrefixType = Milli
-  override implicit val classTag: ClassTag[Milli] = implicitly[ClassTag[Milli]]
+sealed trait Milli extends PrefixFrom[Milli] {
   override protected final val floatingFactor: Floating = 1e-3
   override val name: String = "milli"
   override val abbreviation: String = "m"
 }
 
-sealed trait Single extends PrefixFrom {
-  override type PrefixType = Single
-  override implicit val classTag: ClassTag[Single] = implicitly[ClassTag[Single]]
+sealed trait Single extends PrefixFrom[Single] {
   override protected final val floatingFactor: Floating = 1d
   override val name: String = ""
   override val abbreviation: String = ""
 }
 
-sealed trait Kilo extends PrefixFrom {
-  override type PrefixType = Kilo
-  override implicit val classTag: ClassTag[Kilo] = implicitly[ClassTag[Kilo]]
+sealed trait Kilo extends PrefixFrom[Kilo] {
   override protected final val floatingFactor: Floating = 1e3
   override val name: String = "kilo"
   override val abbreviation: String = "k"

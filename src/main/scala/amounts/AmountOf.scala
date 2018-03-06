@@ -1,15 +1,16 @@
 package amounts
 
-import base.FunctionalAnyPrefix.Implicits._
 import base._
+import physical.{Milli, Single, NamedUnit, Prefix, Litre, Gram}
 import physical.NamedUnitAnyPrefix.Implicits._
-import physical.PUnit.Syntax._
 import physical.PhysicalAmount.Implicits._
-import physical.{Milli, Single, _}
 import spire.implicits._
 import spire.math.Numeric
+import physical.Prefix.Syntax._
+import physical.NamedUnitAnyPrefix.Implicits._
+import spire.algebra.Module
+import physical.PUnit.Syntax._
 
-import scala.reflect.ClassTag
 import scalaz.Tag
 
 /**
@@ -29,7 +30,7 @@ sealed trait AmountOf[N] {
     * @tparam P The prefix type.
     * @return The mass associated with the given amount.
     */
-  def toMass[P <: Prefix: ClassTag]: Mass[N, P]
+  def toMass[P: Prefix]: Mass[N, P]
 }
 
 /**
@@ -43,9 +44,9 @@ abstract class ByVolume[N: Numeric] extends AmountOf[N] {
   /**
     * @return The amount of litres associated with the given unit.
     */
-  def litres: NamedUnit[N, _ <: Prefix, Litre]
+  def litres: NamedUnit[N, _, Litre]
 
-  override def toMass[P <: Prefix: ClassTag]: Mass[N, P] = {
+  override def toMass[P: Prefix]: Mass[N, P] = {
     val actual = Tag.unwrap(litres.amount.rescale[Milli].relative) *: ingredient.weightPerMillilitre[P].amount
     Mass(actual)
   }
@@ -59,6 +60,8 @@ abstract class ByVolume[N: Numeric] extends AmountOf[N] {
 trait Weighted[N] extends AmountOf[N]
 
 object AmountOf {
+
+  implicit def mod[N: Numeric]: Module[Palette[N], N] = FunctionalAnyPrefix.Implicits.fapM[Nutrient, N, Gram, N]
 
   def palette[N: Numeric](amount: AmountOf[N]): Palette[N] = {
     val base = amount.ingredient.basePalette
