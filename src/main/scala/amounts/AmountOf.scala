@@ -61,7 +61,7 @@ trait Weighted[N] extends AmountOf[N]
 
 object AmountOf {
 
-  implicit def mod[N: Numeric]: Module[Palette[N], N] = FunctionalAnyPrefix.Implicits.fapM[Nutrient, N, Gram, N]
+  private implicit def mod[N: Numeric]: Module[Palette[N], N] = FunctionalAnyPrefix.Implicits.fapM[Nutrient, N, Gram, N]
 
   def palette[N: Numeric](amount: AmountOf[N]): Palette[N] = {
     val base = amount.ingredient.basePalette

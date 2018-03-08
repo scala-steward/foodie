@@ -24,6 +24,8 @@ case class Recipe[N: Numeric](ingredients: Traversable[AmountOf[N]]) {
     * The overall nutritional palette associated with this recipe.
     */
   val palette: Palette[N] = Recipe.palette(ingredients)
+
+  def scale(factor: N): Palette[N] = factor *: palette
 }
 
 object Recipe {
