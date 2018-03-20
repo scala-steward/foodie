@@ -28,7 +28,7 @@ object DbFoodName {
   protected val nameLabel: String = "name"
 
   object Implicits {
-    implicit val fromDB: FromMongoDBObject[DbFoodName] = (mongoDBObject: MongoDBObject) => {
+    implicit val foodNameFromDB: FromMongoDBObject[DbFoodName] = (mongoDBObject: MongoDBObject) => {
       (mongoDBObject.getAs[Id](foodIdLabel) |@| mongoDBObject.getAs[String](nameLabel))(DbFoodName.apply)
     }
 
