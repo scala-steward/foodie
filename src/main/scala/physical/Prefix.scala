@@ -54,8 +54,6 @@ object Prefix {
 
   import Syntax._
 
-  private val prefixes: List[Prefix[_]] = List(Nano, Micro, Milli, Single, Kilo)
-
   private def prefixOrder[A: Numeric]: Map[Interval[A], Prefix[_]] = {
     val zipList = Zip[List]
     val num = Numeric[A]
@@ -64,15 +62,15 @@ object Prefix {
 
     val fs: List[(A, A) => Interval[A]] =
       List((_: A, upper: A) => Interval.below(upper)) ++
-        prefixes.drop(2).map(_ => Interval.openUpper[A] _)++
+        All.drop(2).map(_ => Interval.openUpper[A] _)++
         List((lower: A, _: A) => Interval.atOrAbove(lower) )
 
-    val corners = prefixes.map(_.scale(num.fromBigDecimal(1d)))
+    val corners = All.map(_.scale(num.fromBigDecimal(1d)))
 
     val bounds = zip(corners, corners.tail ++ List(num.fromBigDecimal(1d)))
 
     val responsibilities = zipWith(fs, bounds)((f, b) => f.tupled(b))
-    zip(responsibilities, prefixes).toMap
+    zip(responsibilities, All).toMap
   }
 
   def normalisedPrefix[A: Numeric](value: A): Prefix[_] = {
@@ -120,6 +118,8 @@ object Prefix {
     implicit val milliPrefix: Prefix[Milli] = Milli
     implicit val singlePrefix: Prefix[Single] = Single
     implicit val kiloPrefix: Prefix[Kilo] = Kilo
+
+    val All: List[Prefix[_]] = List(Nano, Micro, Milli, Single, Kilo)
 
   }
 
