@@ -1,15 +1,14 @@
 package amounts
 
 import base._
-import physical.{Milli, Single, NamedUnit, Prefix, Litre, Gram}
+import physical.{Milli, Single, NamedUnit, Prefix, Litre}
 import physical.NamedUnitAnyPrefix.Implicits._
 import physical.PhysicalAmount.Implicits._
 import spire.implicits._
 import spire.math.Numeric
 import physical.Prefix.Syntax._
 import physical.NamedUnitAnyPrefix.Implicits._
-import spire.algebra.Module
-import physical.PUnit.Syntax._
+import base.math.ScalarMultiplication.Syntax._
 
 import scalaz.Tag
 
@@ -55,20 +54,21 @@ abstract class ByVolume[N: Numeric] extends AmountOf[N] {
 /**
   * Aside from volume amounts there are amounts based upon weights.
   * This is a common super type for these amounts.
+  *
   * @tparam N The type of number used for the amounts.
   */
 trait Weighted[N] extends AmountOf[N]
 
 object AmountOf {
 
-  private implicit def mod[N: Numeric]: Module[Palette[N], N] = FunctionalAnyPrefix.Implicits.fapM[Nutrient, N, Gram, N]
+  import Palette.Implicits._
 
   def palette[N: Numeric](amount: AmountOf[N]): Palette[N] = {
-    val base = amount.ingredient.basePalette
+    val base: Palette[N] = amount.ingredient.basePalette
     val reference = amount.ingredient.baseReference.amount.absolute
     val given = amount.toMass[Single].amount.absolute
     val factor = given / reference
-    factor *: base
+    base.scale(factor)
   }
 
 }

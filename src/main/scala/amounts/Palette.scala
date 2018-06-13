@@ -1,20 +1,17 @@
 package amounts
 
 import algebra.ring.AdditiveSemigroup
+import base.FunctionalAnyPrefix.Implicits._
 import base._
-import spire.math.Numeric
-import spire.implicits._
-import spire.compat._
-import physical.NamedUnitAnyPrefix.Implicits._
-import FunctionalAnyPrefix.Implicits._
-import physical.PhysicalAmount.Implicits._
-import Functional.Implicits._
-import physical.NamedUnit.Implicits._
-import physical._
-import PUnit.Syntax._
 import base.math.ScalarMultiplication
-import ScalarMultiplication.Syntax._
+import base.math.ScalarMultiplication.Syntax._
+import physical.NamedUnit.Implicits._
+import physical.NamedUnitAnyPrefix.Implicits._
+import physical.PUnit.Syntax._
+import physical.PhysicalAmount.Implicits._
 import spire.algebra.AdditiveMonoid
+import spire.implicits._
+import spire.math.Numeric
 
 import scala.language.implicitConversions
 
