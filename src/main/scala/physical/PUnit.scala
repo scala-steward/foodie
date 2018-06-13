@@ -4,7 +4,7 @@ trait PUnit[U] {
   def name: String
   def abbreviation: String
 }
-//todo: The names should not be fixed by fetched from a file/database.
+//todo: The names should not be fixed but fetched from a file/database.
 sealed trait Gram extends PUnit[Gram] {
   override val name: String = "gram"
   override val abbreviation: String = "g"
@@ -35,6 +35,11 @@ sealed trait Calorie extends PUnit[Calorie] {
   override val abbreviation: String = "Cal"
 }
 
+sealed trait IU extends PUnit[IU] {
+  override val name: String = "International Unit"
+  override def abbreviation: String = "IU"
+}
+
 object PUnit {
 
   def apply[U: PUnit]: PUnit[U] = implicitly[PUnit[U]]
@@ -57,7 +62,8 @@ object PUnit {
     implicit case object CubicCentimetre extends CubicCentimetre
     implicit case object Joule extends Joule
     implicit case object Calorie extends Calorie
+    implicit case object IU extends IU
 
-    val All = Iterable(Gram, Metre, Litre, CubicCentimetre, Joule, Calorie)
+    val All = Iterable(Gram, Metre, Litre, CubicCentimetre, Joule, Calorie, IU)
   }
 }

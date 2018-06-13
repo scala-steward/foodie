@@ -6,6 +6,7 @@ import spire.algebra._
 import spire.implicits._
 import spire.math.Numeric
 import Prefix.Syntax._
+import base.math.ScalarMultiplication
 
 object NamedUnitAnyPrefix {
 

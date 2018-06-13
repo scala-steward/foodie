@@ -30,3 +30,11 @@ object Vitamin {
   case object VitaminC extends Vitamin
 
 }
+
+object Nutrient {
+  sealed trait Type
+
+  trait MassBased extends Type
+  trait IUBased extends Type
+  trait EnergyBased extends Type
+}

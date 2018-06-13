@@ -1,13 +1,13 @@
 package base
 
-import physical.Prefix
+import physical.{NamedUnit, Prefix}
 
 trait Ingredient[N] {
 
   /**
     * @return The nutritional palette of a given ingredient per the base reference mass (usually 100g).
     */
-  def basePalette: Palette[N]
+  def basePalette: Functional[NamedUnit[N, _, _], Nutrient]
 
   /**
     * @return The reference mass.

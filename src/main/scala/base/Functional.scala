@@ -1,8 +1,13 @@
 package base
 
 import algebra.ring.{AdditiveMonoid, AdditiveSemigroup}
+import base.math.ScalarMultiplication
+import base.math.ScalarMultiplication.Syntax._
 import spire.algebra._
 import spire.implicits._
+import spire.math.Numeric
+
+import scalaz.Scalaz._
 
 case class Functional[N, A](f: A => N) extends (A => N) {
   override def apply(v1: A): N = f(v1)
@@ -10,7 +15,17 @@ case class Functional[N, A](f: A => N) extends (A => N) {
 
 object Functional {
 
+  def fromAssociations[A, R](zero: R)(associations: Traversable[(A, R)]): Functional[R, A] = {
+    Functional(associations.toMap.getOrElse(_, zero))
+  }
+
   object Implicits {
+
+    private class FSMult[R, V, A](implicit sm: ScalarMultiplication[R, V])
+      extends ScalarMultiplication[R, Functional[V, A]] {
+      override def scale(scalar: R, vector: Functional[V, A]): Functional[V, A] =
+        Functional(vector.f.map(_.scale(scalar)))
+    }
 
     private class FSG[N: AdditiveSemigroup, A] extends AdditiveSemigroup[Functional[N, A]] {
       override def plus(x: Functional[N, A], y: Functional[N, A]): Functional[N, A] =
@@ -50,6 +65,8 @@ object Functional {
 
     implicit def vectorSpaceF[N: Field, A]: VectorSpace[Functional[N, A], N] = new FVS[N, A]
 
+    implicit def scalarMultiplicationF[N: Numeric, V, A](implicit sm: ScalarMultiplication[N, V]):
+    ScalarMultiplication[N, Functional[V, A]] = new FSMult[N, V, A]
   }
 
 }

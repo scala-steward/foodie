@@ -1,13 +1,13 @@
 package amounts
 
-import algebra.ring.AdditiveMonoid
-import base.FunctionalAnyPrefix.Implicits._
 import base._
+import base.math.ScalarMultiplication.Syntax._
 import physical.NamedUnitAnyPrefix.Implicits._
-import physical.PUnit.Syntax._
 import physical.PhysicalAmount.Implicits._
-import spire.implicits._
+import Functional.Implicits._
+import physical.NamedUnit.Implicits._
 import spire.math.Numeric
+import Palette.Implicits._
 
 /**
   * The main type representing a recipe.
@@ -25,7 +25,7 @@ case class Recipe[N: Numeric](ingredients: Traversable[AmountOf[N]]) {
     */
   val palette: Palette[N] = Recipe.palette(ingredients)
 
-  def scale(factor: N): Palette[N] = factor *: palette
+  def scale(factor: N): Palette[N] = palette.scale(factor)
 }
 
 object Recipe {
@@ -39,7 +39,7 @@ object Recipe {
     */
   def palette[N: Numeric](ingredients: Traversable[AmountOf[N]]): Palette[N] = {
     val palettes: Traversable[Palette[N]] = ingredients.map(AmountOf.palette[N])
-    val resultPalette = palettes.foldLeft(AdditiveMonoid[Palette[N]].zero)(_ + _)
+    val resultPalette = CollectionUtil.sum(palettes)
     resultPalette
   }
 }

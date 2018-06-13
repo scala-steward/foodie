@@ -1,13 +1,14 @@
 package physical
 
+import base.math.ScalarMultiplication
+import base.math.ScalarMultiplication.Syntax._
 import physical.PhysicalAmount.Implicits._
 import spire.algebra._
 import spire.implicits._
 import spire.math.Numeric
 
-case class NamedUnit[N: Numeric, P, U: PUnit](amount: PhysicalAmount[N, P]) {
+case class NamedUnit[N: Numeric, P, U](amount: PhysicalAmount[N, P], unit: PUnit[U]) {
 
-  private val unit: PUnit[U] = PUnit[U]
   val prefix: Prefix[P] = amount.prefix
 
   override val toString: String = NamedUnit.mkString(prefix.name, unit.name)(amount)
@@ -16,11 +17,15 @@ case class NamedUnit[N: Numeric, P, U: PUnit](amount: PhysicalAmount[N, P]) {
 
   lazy val normalised: NamedUnit[N, _, U] = {
     val total = amount.normalise
-    NamedUnit(total)
+    def catchType[Q](pa: PhysicalAmount[N, Q]): NamedUnit[N, Q, U] = NamedUnit[N, Q, U](pa, unit)
+    catchType(total)
   }
 }
 
 object NamedUnit {
+
+  def apply[N: Numeric, P, U: PUnit](amount: PhysicalAmount[N, P]): NamedUnit[N, P, U] = NamedUnit(amount, PUnit[U])
+
   private def mkString(prefixName: String, unitName: String)
                       (amount: PhysicalAmount[_, _]): String = {
     s"${amount.relative} $prefixName$unitName"
@@ -31,7 +36,7 @@ object NamedUnit {
     private class NamedUnitSG[N: Numeric, P, U: PUnit]
       extends AdditiveSemigroup[NamedUnit[N, P, U]] {
       override def plus(x: NamedUnit[N, P, U], y: NamedUnit[N, P, U]): NamedUnit[N, P, U] =
-        NamedUnit(x.amount + y.amount)
+        NamedUnit(x.amount + y.amount, PUnit[U])
     }
 
     private class NamedUnitMonoid[N: Numeric, P: Prefix, U: PUnit]
@@ -62,6 +67,20 @@ object NamedUnit {
       override def scalar: Field[F] = implicitly[Field[F]]
     }
 
+    private class NamedUnitSM[R, N: Numeric, U](implicit sm: ScalarMultiplication[R, N])
+      extends ScalarMultiplication[R, NamedUnit[N, _, U]] {
+
+      override def scale(scalar: R, vector: NamedUnit[N, _, U]): NamedUnit[N, _, U] = {
+        def catchType[P](vector: NamedUnit[N, P, U]): NamedUnit[N, P, U] = {
+          implicit val smLocal: ScalarMultiplication[R, PhysicalAmount[N, P]] =
+            scalarMultiplicationPA(Numeric[N], vector.prefix, sm)
+          NamedUnit(vector.amount.scale(scalar), vector.unit)
+        }
+        catchType(vector)
+      }
+
+    }
+
     implicit def additiveSemigroupNU[N: Numeric, P, U: PUnit]: AdditiveSemigroup[NamedUnit[N, P, U]] =
       new NamedUnitSG[N, P, U]
 
@@ -79,6 +98,10 @@ object NamedUnit {
 
     implicit def vectorSpaceNU[N: Numeric, P: Prefix, F: Field, U: PUnit](implicit vs: VectorSpace[N, F]):
     VectorSpace[NamedUnit[N, P, U], F] = new NamedUnitVS[N, P, F, U]
+
+    implicit def scalarMultiplicationNU[R, N: Numeric, U](implicit sm: ScalarMultiplication[R, N]):
+    ScalarMultiplication[R, NamedUnit[N, _, U]] =
+      new NamedUnitSM[R, N, U]
   }
 
 }
