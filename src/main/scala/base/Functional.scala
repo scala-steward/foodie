@@ -15,8 +15,9 @@ case class Functional[N, A](f: A => N) extends (A => N) {
 
 object Functional {
 
-  def fromAssociations[A, R](zero: R)(associations: Traversable[(A, R)]): Functional[R, A] = {
-    Functional(associations.toMap.getOrElse(_, zero))
+  def fromAssociations[A, R: AdditiveMonoid](associations: Traversable[(A, R)]): Functional[R, A] = {
+    val summed = associations.groupBy(_._1).mapValues(as => CollectionUtil.sum(as.map(_._2)))
+    Functional(summed.getOrElse(_, AdditiveMonoid[R].zero))
   }
 
   object Implicits {

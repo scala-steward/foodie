@@ -2,10 +2,12 @@ package amounts
 
 import algebra.ring.AdditiveSemigroup
 import base.FunctionalAnyPrefix.Implicits._
+import base.Nutrient.{EnergyBased, IUBased, MassBased}
 import base._
 import base.math.ScalarMultiplication
 import base.math.ScalarMultiplication.Syntax._
 import physical.NamedUnit.Implicits._
+import physical.NamedUnitAnyPrefix
 import physical.NamedUnitAnyPrefix.Implicits._
 import physical.PUnit.Syntax._
 import physical.PhysicalAmount.Implicits._
@@ -65,11 +67,19 @@ object Palette {
 
   }
 
-//    object Palette {
-//      def fromAssociations[N: Numeric](associations: Iterable[(Nutrient, Mass[N, _])]): Palette[N] = {
-//        val map = associations.groupBy(_._1).mapValues(as => CollectionUtil.sum(as.map(_._2)))
-//
-//        Functional(nutrient => map.getOrElse(nutrient, NamedUnitAnyPrefix.Implicits.additiveAbelianGroupNUAP.zero))
-//      }
-//    }
+
+  def fromAssociations[N: Numeric](massAssociations: Iterable[(Nutrient with MassBased, Mass[N, _])],
+                                   unitAssociations: Iterable[(Nutrient with IUBased, IUnit[N, _])],
+                                   energyAssociations: Iterable[(Nutrient with EnergyBased, Energy[N, _])]): Palette[N] = {
+    val masses = Functional.fromAssociations(massAssociations)
+    val units = Functional.fromAssociations(unitAssociations)
+    val energies = Functional.fromAssociations(energyAssociations)
+
+    Palette(
+      masses,
+      units,
+      energies
+    )
+  }
+
 }
