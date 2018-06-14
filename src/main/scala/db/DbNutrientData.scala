@@ -2,7 +2,6 @@ package db
 
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.MongoDBObject
-import db.cnf.FromDB.Id
 import physical.{PUnit, Prefix}
 import scalaz.Scalaz._
 
@@ -33,10 +32,10 @@ case class DbNutrientData(nutrientId: Id,
 }
 
 object DbNutrientData {
-  protected val nutrientId: String = "nutrientId"
-  protected val name: String = "name"
-  protected val unit: String = "unit"
-  protected val prefix: String = "prefix"
+  val nutrientId: String = "nutrientId"
+  val name: String = "name"
+  val unit: String = "unit"
+  val prefix: String = "prefix"
 
   object Implicits {
     implicit val nutrientDataFromDB: FromMongoDBObject[DbNutrientData] = (mongoDBObject: MongoDBObject) => {

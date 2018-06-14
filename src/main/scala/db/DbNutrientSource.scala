@@ -2,7 +2,6 @@ package db
 
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.MongoDBObject
-import db.cnf.FromDB.Id
 
 import scalaz.Scalaz._
 
@@ -24,8 +23,8 @@ case class DbNutrientSource(nutrientId: Id, source: String) extends ToMongoDBObj
 
 object DbNutrientSource {
 
-  protected val nutrientIdLabel: String = "foodId"
-  protected val sourceLabel: String = "name"
+  val nutrientIdLabel: String = "foodId"
+  val sourceLabel: String = "name"
 
   object Implicits {
     implicit val fromDB: FromMongoDBObject[DbNutrientSource] = (mongoDBObject: MongoDBObject) => {

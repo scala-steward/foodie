@@ -12,8 +12,6 @@ import scala.util.Try
 
 object FromDB {
 
-  type Id = Int
-
   private def readWith[A](parser: Seq[String] => Option[A])(file: String): List[A] = {
     val reader = CSVReader.open(file)
     val fileLines = reader.iterator.drop(1)

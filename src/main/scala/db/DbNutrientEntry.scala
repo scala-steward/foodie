@@ -5,7 +5,6 @@ import java.util.Date
 import base.Floating
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.MongoDBObject
-import db.cnf.FromDB.Id
 
 import scalaz.Scalaz._
 
@@ -38,11 +37,11 @@ case class DbNutrientEntry(foodId: Id,
 
 object DbNutrientEntry {
 
-  protected val foodId: String = "foodId"
-  protected val amount: String = "amount"
-  protected val nutrientId: String = "nutrientId"
-  protected val source: String = "source"
-  protected val dateOfEntry: String = "dateOfEntry"
+  val foodId: String = "foodId"
+  val amount: String = "amount"
+  val nutrientId: String = "nutrientId"
+  val source: String = "source"
+  val dateOfEntry: String = "dateOfEntry"
 
   object Implicits {
     implicit val nutrientEntryFromDB: FromMongoDBObject[DbNutrientEntry] = (mongoDBObject: MongoDBObject) => {

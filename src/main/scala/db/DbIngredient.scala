@@ -2,7 +2,6 @@ package db
 
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.MongoDBObject
-import db.cnf.FromDB.Id
 
 /**
   * A database representation of an ingredient.
