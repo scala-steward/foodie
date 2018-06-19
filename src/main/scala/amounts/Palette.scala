@@ -7,7 +7,6 @@ import base._
 import base.math.ScalarMultiplication
 import base.math.ScalarMultiplication.Syntax._
 import physical.NamedUnit.Implicits._
-import physical.NamedUnitAnyPrefix
 import physical.NamedUnitAnyPrefix.Implicits._
 import physical.PUnit.Syntax._
 import physical.PhysicalAmount.Implicits._
@@ -68,18 +67,14 @@ object Palette {
   }
 
 
-  def fromAssociations[N: Numeric](massAssociations: Iterable[(Nutrient with MassBased, Mass[N, _])],
-                                   unitAssociations: Iterable[(Nutrient with IUBased, IUnit[N, _])],
-                                   energyAssociations: Iterable[(Nutrient with EnergyBased, Energy[N, _])]): Palette[N] = {
+  def fromAssociations[N: Numeric](massAssociations: Traversable[(Nutrient with MassBased, Mass[N, _])],
+                                   unitAssociations: Traversable[(Nutrient with IUBased, IUnit[N, _])],
+                                   energyAssociations: Traversable[(Nutrient with EnergyBased, Energy[N, _])]): Palette[N] = {
     val masses = Functional.fromAssociations(massAssociations)
     val units = Functional.fromAssociations(unitAssociations)
     val energies = Functional.fromAssociations(energyAssociations)
 
-    Palette(
-      masses,
-      units,
-      energies
-    )
+    Palette(masses, units, energies)
   }
 
 }

@@ -13,7 +13,7 @@ import scala.util.Try
 object FromDB {
 
   private def readWith[A](parser: Seq[String] => Option[A])(file: String): List[A] = {
-    val reader = CSVReader.open(file)
+    val reader = CSVReader.open(file, encoding = "ISO-8859-1")
     val fileLines = reader.iterator.drop(1)
     val keyValues = fileLines.flatMap(cells => parser(cells))
     keyValues.toList

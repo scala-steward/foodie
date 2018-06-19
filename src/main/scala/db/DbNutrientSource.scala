@@ -24,7 +24,7 @@ case class DbNutrientSource(nutrientId: Id, source: String) extends ToMongoDBObj
 object DbNutrientSource {
 
   val nutrientIdLabel: String = "foodId"
-  val sourceLabel: String = "name"
+  val sourceLabel: String = "source"
 
   object Implicits {
     implicit val fromDB: FromMongoDBObject[DbNutrientSource] = (mongoDBObject: MongoDBObject) => {
