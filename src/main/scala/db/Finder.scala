@@ -1,10 +1,9 @@
 package db
 
 import amounts.Palette
-import base.Nutrient.{EnergyBased, IUBased, MassBased}
 import base._
-import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.Imports._
+import com.mongodb.casbah.commons.MongoDBObject
 import physical.PUnit.Syntax.{Calorie, Gram, IU}
 import physical.{NamedUnit, PUnit, PhysicalAmount, Prefix}
 import spire.math.Numeric
@@ -51,22 +50,22 @@ object Finder {
 
       val (withGram, withIUnit, withEnergy) =
         associations.foldLeft(
-          (Seq.empty[(Nutrient with MassBased, Mass[Floating, _])],
-            Seq.empty[(Nutrient with IUBased, IUnit[Floating, _])],
-            Seq.empty[(Nutrient with EnergyBased, Energy[Floating, _])]
+          (Seq.empty[(Nutrient with Nutrient.Type.MassBased, Mass[Floating, _])],
+            Seq.empty[(Nutrient with Nutrient.Type.IUBased, IUnit[Floating, _])],
+            Seq.empty[(Nutrient with Nutrient.Type.EnergyBased, Energy[Floating, _])]
           )
         ) { case ((masses, units, energies), (nutrient, NamedUnit(amount, unit))) =>
             val (newMasses, newUnits, newEnergies) =
               if (unit == Gram){
-                val next = nutrient.asInstanceOf[Nutrient with MassBased] -> NamedUnit(amount, Gram)
+                val next = nutrient.asInstanceOf[Nutrient with Nutrient.Type.MassBased] -> NamedUnit(amount, Gram)
                 (next +: masses, units, energies)
               }
               else if (unit == IU) {
-                val next = nutrient.asInstanceOf[Nutrient with IUBased] -> NamedUnit(amount, IU)
+                val next = nutrient.asInstanceOf[Nutrient with Nutrient.Type.IUBased] -> NamedUnit(amount, IU)
                 (masses, next +: units, energies)
               }
               else if (unit == Calorie) {
-                val next = nutrient.asInstanceOf[Nutrient with EnergyBased] -> NamedUnit(amount, Calorie)
+                val next = nutrient.asInstanceOf[Nutrient with Nutrient.Type.EnergyBased] -> NamedUnit(amount, Calorie)
                 (masses, units, next +: energies)
               }
               else (masses, units, energies)

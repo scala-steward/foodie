@@ -59,12 +59,13 @@ object Nutrient {
 
   sealed trait Type
 
-  //todo: move to subobject
-  trait MassBased extends Type
+  object Type {
+    trait MassBased extends Type
 
-  trait IUBased extends Type
+    trait IUBased extends Type
 
-  trait EnergyBased extends Type
+    trait EnergyBased extends Type
+  }
 
   def fromString(name: String): Option[Nutrient] = {
     Mineral.find(name)
