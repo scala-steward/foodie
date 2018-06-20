@@ -15,9 +15,18 @@ import spire.math.Numeric
 
 import scala.language.implicitConversions
 
-case class Palette[N: Numeric](masses: Functional[Mass[N, _], Nutrient with Nutrient.Type.MassBased],
-                               units: Functional[IUnit[N, _], Nutrient with Nutrient.Type.IUBased],
-                               energies: Functional[Energy[N, _], Nutrient with Nutrient.Type.EnergyBased])
+case class Palette[N: Numeric](masses: Functional[Mass[N, _], Nutrient with Type.MassBased],
+                               units: Functional[IUnit[N, _], Nutrient with Type.IUBased],
+                               energies: Functional[Energy[N, _], Nutrient with Type.EnergyBased]) {
+  override val toString: String = {
+    def show[R, A](functional: Functional[R, A], all: Traversable[A]): String =
+      all.map { n => s"$n -> ${functional(n)}" }.mkString("\n")
+
+    s"Palette(\n${show(masses, Type.MassBased.all)}\n" +
+      s"${show(units, Type.IUBased.all)}" +
+      s"${show(energies, Type.EnergyBased.all)}\n)"
+  }
+}
 
 object Palette {
 
@@ -31,23 +40,23 @@ object Palette {
 
     private class PaletteAM[N: Numeric] extends PaletteASG[N] with AdditiveMonoid[Palette[N]] {
       override def zero: Palette[N] = Palette(
-        implicitly(AdditiveMonoid[Functional[Mass[N, _], Nutrient with Nutrient.Type.MassBased]]).zero,
-        implicitly(AdditiveMonoid[Functional[IUnit[N, _], Nutrient with Nutrient.Type.IUBased]]).zero,
-        implicitly(AdditiveMonoid[Functional[Energy[N, _], Nutrient with Nutrient.Type.EnergyBased]]).zero
+        implicitly(AdditiveMonoid[Functional[Mass[N, _], Nutrient with Type.MassBased]]).zero,
+        implicitly(AdditiveMonoid[Functional[IUnit[N, _], Nutrient with Type.IUBased]]).zero,
+        implicitly(AdditiveMonoid[Functional[Energy[N, _], Nutrient with Type.EnergyBased]]).zero
       )
     }
 
     private class PaletteSM[R: Numeric, N: Numeric](implicit sm: ScalarMultiplication[R, N])
       extends ScalarMultiplication[R, Palette[N]] {
 
-      private implicit val mass: ScalarMultiplication[R, Functional[Mass[N, _], Nutrient with Nutrient.Type.MassBased]] =
-        Functional.Implicits.scalarMultiplicationF[R, Mass[N, _], Nutrient with Nutrient.Type.MassBased]
+      private implicit val mass: ScalarMultiplication[R, Functional[Mass[N, _], Nutrient with Type.MassBased]] =
+        Functional.Implicits.scalarMultiplicationF[R, Mass[N, _], Nutrient with Type.MassBased]
 
-      private implicit val unit: ScalarMultiplication[R, Functional[IUnit[N, _], Nutrient with Nutrient.Type.IUBased]] =
-        Functional.Implicits.scalarMultiplicationF[R, IUnit[N, _], Nutrient with Nutrient.Type.IUBased]
+      private implicit val unit: ScalarMultiplication[R, Functional[IUnit[N, _], Nutrient with Type.IUBased]] =
+        Functional.Implicits.scalarMultiplicationF[R, IUnit[N, _], Nutrient with Type.IUBased]
 
-      private implicit val energy: ScalarMultiplication[R, Functional[Energy[N, _], Nutrient with Nutrient.Type.EnergyBased]] =
-        Functional.Implicits.scalarMultiplicationF[R, Energy[N, _], Nutrient with Nutrient.Type.EnergyBased]
+      private implicit val energy: ScalarMultiplication[R, Functional[Energy[N, _], Nutrient with Type.EnergyBased]] =
+        Functional.Implicits.scalarMultiplicationF[R, Energy[N, _], Nutrient with Type.EnergyBased]
 
       override def scale(scalar: R, vector: Palette[N]): Palette[N] = Palette(
         vector.masses.scale(scalar)(mass),
@@ -66,9 +75,9 @@ object Palette {
   }
 
 
-  def fromAssociations[N: Numeric](massAssociations: Traversable[(Nutrient with Nutrient.Type.MassBased, Mass[N, _])],
-                                   unitAssociations: Traversable[(Nutrient with Nutrient.Type.IUBased, IUnit[N, _])],
-                                   energyAssociations: Traversable[(Nutrient with Nutrient.Type.EnergyBased, Energy[N, _])]): Palette[N] = {
+  def fromAssociations[N: Numeric](massAssociations: Traversable[(Nutrient with Type.MassBased, Mass[N, _])],
+                                   unitAssociations: Traversable[(Nutrient with Type.IUBased, IUnit[N, _])],
+                                   energyAssociations: Traversable[(Nutrient with Type.EnergyBased, Energy[N, _])]): Palette[N] = {
     val masses = Functional.fromAssociations(massAssociations)
     val units = Functional.fromAssociations(unitAssociations)
     val energies = Functional.fromAssociations(energyAssociations)
