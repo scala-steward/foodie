@@ -53,7 +53,7 @@ object Nutrient {
 
   case object Theobromine extends MB("THEOBROMINE")
 
-  case object EnergyKJ extends MB("ENERGY (KILOJOULES)")
+  case object EnergyKJ extends EB("ENERGY (KILOJOULES)")
 
   case object Sugars extends MB("SUGARS, TOTAL")
 

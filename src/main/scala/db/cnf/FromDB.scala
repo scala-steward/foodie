@@ -27,7 +27,7 @@ object FromDB {
           cells(Locations.NutrientName.name),
           cells(Locations.NutrientName.prefixedUnit)
         ).toOption
-        (prefix, unit) <- PUnit.fromAbbreviation(prefixAndUnit)
+        (prefix, unit) <- PUnit.bothFromAbbreviation(prefixAndUnit)
       } yield DbNutrientData(id, name, unit, prefix)
     }
   }
@@ -38,11 +38,11 @@ object FromDB {
         cells(Locations.NutrientAmount.foodId).toInt,
         cells(Locations.NutrientAmount.nutrientId).toInt,
         cells(Locations.NutrientAmount.nutrientAmount).toDouble,
-        cells(Locations.NutrientAmount.nutrientSource),
-        (new SimpleDateFormat).parse(cells(Locations.NutrientAmount.nutrientDate))
+        cells(Locations.NutrientAmount.nutrientSource)
       ).map {
-        case (foodId, nutrientId, nutrientAmount, nutrientSource, date) =>
-          DbNutrientEntry(foodId, nutrientAmount, nutrientId, nutrientSource, date)
+        case (foodId, nutrientId, nutrientAmount, nutrientSource) =>
+          val entry = DbNutrientEntry(foodId, nutrientAmount, nutrientId, nutrientSource)
+          entry
       }.toOption
     }
   }

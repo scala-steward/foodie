@@ -4,6 +4,7 @@ trait PUnit[U] {
   def name: String
   def abbreviation: String
 }
+
 //todo: The names should not be fixed but fetched from a file/database.
 sealed trait Gram extends PUnit[Gram] {
   override val name: String = "gram"
@@ -44,7 +45,13 @@ object PUnit {
 
   def apply[U: PUnit]: PUnit[U] = implicitly[PUnit[U]]
 
-  def fromAbbreviation(name: String): Option[(Prefix[_], PUnit[_])] = prefixedUnitsAA.get(name)
+  def bothFromAbbreviation(name: String): Option[(Prefix[_], PUnit[_])] = prefixedUnitsAA.get(name)
+
+  def fromAbbreviation(name: String): Option[PUnit[_]] =
+    Syntax.All.find(_.abbreviation == name)
+
+  def fromName(name: String): Option[PUnit[_]] =
+    Syntax.All.find(_.name == name)
 
   val prefixedUnitsAA: Map[String, (Prefix[_], PUnit[_])] = {
     for {

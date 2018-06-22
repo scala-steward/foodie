@@ -41,8 +41,8 @@ object DbNutrientData {
     implicit val nutrientDataFromDB: FromMongoDBObject[DbNutrientData] = (mongoDBObject: MongoDBObject) => {
       (mongoDBObject.getAs[Id](nutrientId) |@|
         mongoDBObject.getAs[String](name) |@|
-        mongoDBObject.getAs[PUnit[_]](unit) |@|
-        mongoDBObject.getAs[Prefix[_]](prefix)) (DbNutrientData.apply)
+        mongoDBObject.getAs[String](unit).flatMap(PUnit.fromName) |@|
+        mongoDBObject.getAs[String](prefix).flatMap(Prefix.fromName)) (DbNutrientData.apply)
     }
   }
 }

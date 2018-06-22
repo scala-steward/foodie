@@ -1,13 +1,164 @@
 package base
 
+import base.Nutrient._
+
 sealed trait Type
 
 object Type {
+
   trait MassBased extends Type
 
   object MassBased {
     val all: Traversable[Nutrient with MassBased] = Traversable(
-
+      Protein,
+      Fat,
+      Carbohydrate,
+      Ash,
+      Starch,
+      Sucrose,
+      Glucose,
+      Fructose,
+      Lactose,
+      Maltose,
+      Alcohol,
+      OxalicAcid,
+      Moisture,
+      Mannitol,
+      Sorbitol,
+      Caffeine,
+      Theobromine,
+      Sugars,
+      Galactose,
+      Fibre,
+      Calcium,
+      Iron,
+      Magnesium,
+      Phosphorus,
+      Potassium,
+      Sodium,
+      Zinc,
+      Copper,
+      Manganese,
+      Selenium,
+      Retinol,
+      RetinolActivityEquivalents,
+      BetaCarotene,
+      AlphaCarotene,
+      AlphaTocopherol,
+      VitaminD2,
+      VitaminD,
+      BetaCryptoxanthin,
+      Lycopene,
+      LuteinAndZeaxanthin,
+      BetaTocopherol,
+      GammaTocopherol,
+      DeltaTocopherol,
+      VitaminC,
+      Thiamin,
+      Riboflavin,
+      Niacin,
+      NiacinEquivalent,
+      PantothenicAcid,
+      VitaminB6,
+      Biotin,
+      Folacin,
+      VitaminB12,
+      Choline,
+      VitaminK,
+      FolicAcid,
+      NaturalFolate,
+      FolateEquivalents,
+      Betaine,
+      Tryptophan,
+      Threonine,
+      Isoleucine,
+      Leucine,
+      Lysine,
+      Methionine,
+      Cystine,
+      Phenylalanine,
+      Tyrosine,
+      Valine,
+      Arginine,
+      Histidine,
+      Alanine,
+      AsparticAcid,
+      GlutamicAcid,
+      Glycine,
+      Proline,
+      Serine,
+      Hydroxyproline,
+      Aspartame,
+      AlphaTocopherolAdded,
+      VitaminB12Added,
+      Cholesterol,
+      FattyAcidsTrans,
+      FattyAcidsSaturated,
+      FattyAcidsSaturatedButanoic,
+      FattyAcidsSaturatedHexanoic,
+      FattyAcidsSaturatedOctanoic,
+      FattyAcidsSaturatedDecanoic,
+      FattyAcidsSaturatedDodecanoic,
+      FattyAcidsSaturatedTetradecanoic,
+      FattyAcidsSaturatedHexadecanoic,
+      FattyAcidsSaturatedOctadecanoic,
+      FattyAcidsSaturatedEicosanoic,
+      FattyAcidsMonounsaturatedOctadecenoicUndifferentiated,
+      FattyAcidsPolyunsaturatedOctadecadienoicUndifferentiated,
+      FattyAcidsPolyunsaturatedOctadecatrienoicUndifferentiated,
+      FattyAcidsPolyunsaturatedEicosatetraenoic,
+      FattyAcidsPolyunsaturatedDocosahexaenoic,
+      FattyAcidsSaturatedDocosanoic,
+      FattyAcidsMonounsaturatedTetradecenoic,
+      FattyAcidsMonounsaturatedHexadecenoic,
+      FattyAcidsPolyunsaturatedOctadecatetraenoic,
+      FattyAcidsMonounsaturatedEicosenoic,
+      FattyAcidsPolyunsaturatedEicosapentaenoic,
+      FattyAcidsMonounsaturatedDocosenoicUndifferentiated,
+      FattyAcidsPolyunsaturatedDocosapentanoic,
+      PlantSterol,
+      StigmaSterol,
+      CampeSterol,
+      BetaSitoSterol,
+      FattyAcidsMonounsaturatedTotal,
+      FattyAcidsPolyunsaturatedTotal,
+      FattyAcidsSaturatedPentadecanoic,
+      FattyAcidsSaturatedHeptadecanoic,
+      FattyAcidsSaturatedTetracosanoic,
+      FattyAcidsMonounsaturatedHexadecenoicT,
+      FattyAcidsMonounsaturatedOctadecenoicT,
+      FattyAcidsMonounsaturatedDocosenoicT,
+      FattyAcidsPolyunsaturatedLinoleicOctadecadienoicI,
+      FattyAcidsPolyunsaturatedOctadecadienoic,
+      FattyAcidsPolyunsaturatedLinoleicOctadecadienoicConjugated,
+      FattyAcidsMonounsaturatedTetracosenoic,
+      FattyAcidsPolyunsaturatedEicosadienoic,
+      FattyAcidsMonounsaturatedHexadecenoicC,
+      FattyAcidsMonounsaturatedOctadecenoicC,
+      FattyAcidsPolyunsaturatedLinoleicOctadecadienoicC,
+      FattyAcidsMonounsaturatedDocosenoicC,
+      FattyAcidsPolyunsaturatedOctadecatrienoicN6,
+      FattyAcidsMonounsaturatedHeptadecenoic,
+      FattyAcidsPolyunsaturatedEicosatrienoic,
+      FattyAcidsTransnonoenoicTransMonoenoic,
+      FattyAcidsTranspolyenoicTransPolyenoic,
+      FattyAcidsSaturatedTridecanoic,
+      FattyAcidsMonounsaturatedPentadecenoic,
+      Monosaccharides,
+      Disaccharides,
+      FattyAcidsPolyunsaturatedOctadecatrienoicN3,
+      FattyAcidsPolyunsaturatedEicosatrienoicN3,
+      FattyAcidsPolyunsaturatedEicosatrienoicN6,
+      FattyAcidsPolyunsaturatedArachidonic,
+      FattyAcidsPolyunsaturatedOctadecatrienoic,
+      FattyAcidsPolyunsaturated215,
+      FattyAcidsPolyunsaturatedDocosatetraenoic,
+      FattyAcidsMonounsaturatedTetracosenoicUndifferentiated,
+      FattyAcidsMonounsaturatedLauroleic,
+      FattyAcidsPolyunsaturated223,
+      FattyAcidsPolyunsaturatedDocosadienoic,
+      FattyAcidsPolyunsaturatedOmega3,
+      FattyAcidsPolyunsaturatedOmega6
     )
   }
 
@@ -15,7 +166,7 @@ object Type {
 
   object IUBased {
     val all: Traversable[Nutrient with IUBased] = Traversable(
-
+      VitaminDIU
     )
   }
 
@@ -23,7 +174,8 @@ object Type {
 
   object EnergyBased {
     val all: Traversable[Nutrient with EnergyBased] = Traversable(
-
+      EnergyKJ, EnergyKCal
     )
   }
+
 }

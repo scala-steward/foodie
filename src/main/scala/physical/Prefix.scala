@@ -82,6 +82,10 @@ object Prefix {
 
   def apply[P: Prefix]: Prefix[P] = implicitly[Prefix[P]]
 
+  def fromAbbreviation(name: String): Option[Prefix[_]] = Syntax.All.find(_.abbreviation == name)
+
+  def fromName(name: String): Option[Prefix[_]] = Syntax.All.find(_.name == name)
+
   /**
     * Provide instances for the convenient use of the prefixes.
     * The objects extend the traits with the same name for the sake of convenience.

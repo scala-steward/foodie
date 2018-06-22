@@ -15,27 +15,30 @@ import scalaz.Scalaz._
   * @param amount      The amount of the nutrient in the food.
   * @param nutrientId  The id of the nutrient in the entry.
   * @param source      The source, where this information originates from.
-  * @param dateOfEntry The date when this information has been obtained.
   */
 case class DbNutrientEntry(foodId: Id,
                            amount: Floating,
                            nutrientId: Id,
-                           source: String,
-                           dateOfEntry: Date) extends ToMongoDBObject {
+                           source: String) extends ToMongoDBObject {
   override def db: MongoDBObject = {
     val builder = MongoDBObject.newBuilder
     builder ++= Seq(
       DbNutrientEntry.foodId -> foodId,
-      DbNutrientEntry.amount -> amount.toString(),
+      DbNutrientEntry.amount -> amount.doubleValue(),
       DbNutrientEntry.nutrientId -> nutrientId,
-      DbNutrientEntry.source -> source,
-      DbNutrientEntry.dateOfEntry -> dateOfEntry.toString
+      DbNutrientEntry.source -> source
     )
     builder.result()
   }
 }
 
 object DbNutrientEntry {
+
+  def apply(foodId: Id,
+            amount: Double,
+            nutrientId: Id,
+            source: String): DbNutrientEntry =
+    DbNutrientEntry(foodId, amount: BigDecimal, nutrientId, source)
 
   val foodId: String = "foodId"
   val amount: String = "amount"
@@ -46,10 +49,9 @@ object DbNutrientEntry {
   object Implicits {
     implicit val nutrientEntryFromDB: FromMongoDBObject[DbNutrientEntry] = (mongoDBObject: MongoDBObject) => {
       (mongoDBObject.getAs[Id](foodId) |@|
-        mongoDBObject.getAs[Floating](amount) |@|
+        mongoDBObject.getAs[Double](amount) |@|
         mongoDBObject.getAs[Id](nutrientId) |@|
-        mongoDBObject.getAs[String](source) |@|
-        mongoDBObject.getAs[Date](dateOfEntry)) (DbNutrientEntry.apply)
+        mongoDBObject.getAs[String](source)) (DbNutrientEntry.apply)
     }
   }
 

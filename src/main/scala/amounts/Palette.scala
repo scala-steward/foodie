@@ -23,7 +23,7 @@ case class Palette[N: Numeric](masses: Functional[Mass[N, _], Nutrient with Type
       all.map { n => s"$n -> ${functional(n)}" }.mkString("\n")
 
     s"Palette(\n${show(masses, Type.MassBased.all)}\n" +
-      s"${show(units, Type.IUBased.all)}" +
+      s"${show(units, Type.IUBased.all)}\n" +
       s"${show(energies, Type.EnergyBased.all)}\n)"
   }
 }
