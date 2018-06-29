@@ -1,8 +1,6 @@
 package db.cnf
 
 
-import java.text.SimpleDateFormat
-
 import com.github.tototoshi.csv.CSVReader
 import com.mongodb.casbah.Imports._
 import db._
@@ -69,6 +67,29 @@ object FromDB {
     }
   }
 
+  private def readConversionFactors: String => List[DbConversionFactor] = {
+    readWith { cells =>
+      Try(
+        cells(Locations.ConversionFactor.foodId).toInt,
+        cells(Locations.ConversionFactor.measureId).toInt,
+        cells(Locations.ConversionFactor.factor).toDouble
+      ).map { case (foodId, measureId, factor) =>
+          DbConversionFactor(foodId, measureId, factor)
+      }.toOption
+    }
+  }
+
+  private def readMeasureNames: String => List[DbMeasureName] = {
+    readWith { cells =>
+      Try(
+        cells(Locations.MeasureName.measureId).toInt,
+        cells(Locations.MeasureName.name)
+      ).map { case (measureId, name) =>
+        DbMeasureName(measureId, name)
+      }.toOption
+    }
+  }
+
   private def readAndInsert[A <: ToMongoDBObject](parser: String => List[A])(original: String): Unit = {
     val result = parser(original)
     result.foreach { x =>
@@ -81,6 +102,8 @@ object FromDB {
     readAndInsert(readNutrientAmounts)(Locations.NutrientAmount.location)
     readAndInsert(readNutrientSources)(Locations.NutrientSource.location)
     readAndInsert(readFoodNames)(Locations.FoodName.location)
+    readAndInsert(readConversionFactors)(Locations.ConversionFactor.location)
+    readAndInsert(readMeasureNames)(Locations.MeasureName.location)
   }
 
 }

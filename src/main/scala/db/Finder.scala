@@ -5,7 +5,7 @@ import base._
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.MongoDBObject
 import physical.PUnit.Syntax.{Calorie, Gram, IU}
-import physical.{NamedUnit, PUnit, PhysicalAmount, Prefix}
+import physical._
 import spire.math.Numeric
 
 object Finder {
@@ -85,6 +85,7 @@ object TestMe {
 
   def main(args: Array[String]): Unit = {
     val pal = Finder.getPalette("Avocado, raw, california")
-    println(pal)
+    val result = pal.get.masses(Nutrient.Iron).normalised
+    println(result)
   }
 }

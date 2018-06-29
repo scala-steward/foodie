@@ -35,4 +35,19 @@ object Locations {
     val foodName: Int = 4
   }
 
+  object ConversionFactor {
+    val location: String = s"db${File.separator}CONVERSION FACTOR.csv"
+
+    val foodId: Int = 0
+    val measureId: Int = 1
+    val factor: Int = 2
+  }
+
+  object MeasureName {
+    val location: String = s"db${File.separator}MEASURE NAME.csv"
+
+    val measureId: Int = 0
+    val name: Int = 1
+  }
+
 }

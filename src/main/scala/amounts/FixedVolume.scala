@@ -18,8 +18,8 @@ import Prefix.Syntax._
   * @tparam P The type of the prefix.
   */
 case class FixedVolume[N: Numeric, P: Prefix](hasVolume: HasVolume[N, P],
-                                                           override val ingredient: Ingredient[N],
-                                                           override val units: N)
+                                              override val ingredient: Ingredient[N],
+                                              override val units: N)
   extends ByVolume[N] with HasUnit[N] with HasIngredient[N] {
 
   override val litres: NamedUnit[N, P, Litre] = NamedUnit[N, P, Litre](units *: hasVolume.volume.amount)

@@ -23,3 +23,7 @@ trait Ingredient[N] {
     */
   def weightPerMillilitre[P: Prefix]: Mass[N, P]
 }
+
+object Ingredient {
+
+}

@@ -7,6 +7,8 @@ import spire.algebra._
 import spire.implicits._
 import spire.math.Numeric
 
+import scalaz.Tag
+
 case class NamedUnit[N: Numeric, P, U](amount: PhysicalAmount[N, P], unit: PUnit[U]) {
 
   val prefix: Prefix[P] = amount.prefix

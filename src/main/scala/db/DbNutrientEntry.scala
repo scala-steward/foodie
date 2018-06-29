@@ -1,7 +1,5 @@
 package db
 
-import java.util.Date
-
 import base.Floating
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.MongoDBObject
@@ -44,7 +42,6 @@ object DbNutrientEntry {
   val amount: String = "amount"
   val nutrientId: String = "nutrientId"
   val source: String = "source"
-  val dateOfEntry: String = "dateOfEntry"
 
   object Implicits {
     implicit val nutrientEntryFromDB: FromMongoDBObject[DbNutrientEntry] = (mongoDBObject: MongoDBObject) => {
