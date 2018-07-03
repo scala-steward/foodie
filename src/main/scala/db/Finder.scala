@@ -4,9 +4,16 @@ import amounts.Palette
 import base._
 import com.mongodb.casbah.Imports._
 import com.mongodb.casbah.commons.MongoDBObject
+import db.cnf.VolumeMeasures
 import physical.PUnit.Syntax.{Calorie, Gram, IU}
 import physical._
 import spire.math.Numeric
+import PhysicalAmount.Implicits._
+import spire.algebra.Module
+import spire.implicits._
+import Prefix.Syntax._
+
+import scalaz.{ApplicativePlus, Tag}
 
 object Finder {
 
@@ -79,13 +86,22 @@ object Finder {
     }
   }
 
-}
-
-object TestMe {
-
-  def main(args: Array[String]): Unit = {
-    val pal = Finder.getPalette("Avocado, raw, california")
-    val result = pal.get.masses(Nutrient.Iron).normalised
-    println(result)
+  def findWeightPerMillilitre(preciseName: String): Option[Mass[Floating, _]] = {
+    val all = for {
+      thing <- MongoFactory.collection.find(MongoDBObject(DbFoodName.nameLabel -> preciseName))
+      foodName <- DbFoodName.Implicits.foodNameFromDB.fromDB(thing).toIterator
+      thing2 <- MongoFactory.collection.find(MongoDBObject(DbConversionFactor.foodIdLabel -> foodName.foodId))
+      conversionFactor <- DbConversionFactor.Implicits.conversionFromDB.fromDB(thing2).toIterator
+      thing3 <- MongoFactory.collection.find(MongoDBObject(DbMeasureName.measureId -> conversionFactor.measureId))
+      measure <- DbMeasureName.Implicits.measureNameFromDB.fromDB(thing3).toIterator
+      anyLitre <- VolumeMeasures.findByName(measure.name).toIterator
+    } yield {
+      val amount = anyLitre.amount.rescale[Milli] // k * ml
+      val inverted = PhysicalAmount.fromAbsolute[Floating, Milli](100 / Tag.unwrap(amount.relative))
+      val scaled = conversionFactor.factor *: inverted
+      NamedUnit.gram(scaled).normalised
+    }
+    all.collectFirst { case x => x }
   }
+
 }

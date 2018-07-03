@@ -2,12 +2,11 @@ package physical
 
 import base.math.ScalarMultiplication
 import base.math.ScalarMultiplication.Syntax._
+import physical.PUnit.Syntax.{Gram, Litre}
 import physical.PhysicalAmount.Implicits._
 import spire.algebra._
 import spire.implicits._
 import spire.math.Numeric
-
-import scalaz.Tag
 
 case class NamedUnit[N: Numeric, P, U](amount: PhysicalAmount[N, P], unit: PUnit[U]) {
 
@@ -27,6 +26,10 @@ case class NamedUnit[N: Numeric, P, U](amount: PhysicalAmount[N, P], unit: PUnit
 object NamedUnit {
 
   def apply[N: Numeric, P, U: PUnit](amount: PhysicalAmount[N, P]): NamedUnit[N, P, U] = NamedUnit(amount, PUnit[U])
+
+  def gram[N: Numeric, P](amount: PhysicalAmount[N, P]): NamedUnit[N, P, Gram] = NamedUnit(amount, Gram)
+
+  def litre[N: Numeric, P](amount: PhysicalAmount[N, P]): NamedUnit[N, P, Litre] = NamedUnit(amount, Litre)
 
   private def mkString(prefixName: String, unitName: String)
                       (amount: PhysicalAmount[_, _]): String = {

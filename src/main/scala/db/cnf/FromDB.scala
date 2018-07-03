@@ -98,11 +98,11 @@ object FromDB {
   }
 
   def main(args: Array[String]): Unit = {
-    readAndInsert(readNutrientData)(Locations.NutrientName.location)
-    readAndInsert(readNutrientAmounts)(Locations.NutrientAmount.location)
-    readAndInsert(readNutrientSources)(Locations.NutrientSource.location)
-    readAndInsert(readFoodNames)(Locations.FoodName.location)
-    readAndInsert(readConversionFactors)(Locations.ConversionFactor.location)
+//    readAndInsert(readNutrientData)(Locations.NutrientName.location)
+//    readAndInsert(readNutrientAmounts)(Locations.NutrientAmount.location)
+//    readAndInsert(readNutrientSources)(Locations.NutrientSource.location)
+//    readAndInsert(readFoodNames)(Locations.FoodName.location)
+//    readAndInsert(readConversionFactors)(Locations.ConversionFactor.location)
     readAndInsert(readMeasureNames)(Locations.MeasureName.location)
   }
 

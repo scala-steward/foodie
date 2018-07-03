@@ -10,8 +10,8 @@ case class DbMeasureName(measureId: Id,
   override val db: MongoDBObject = {
     val builder = MongoDBObject.newBuilder
     builder ++= Seq(
-      DbFoodName.foodIdLabel -> measureId,
-      DbFoodName.nameLabel -> name
+      DbMeasureName.measureId -> measureId,
+      DbMeasureName.nameLabel -> name
     )
     builder.result()
   }
@@ -20,12 +20,12 @@ case class DbMeasureName(measureId: Id,
 
 object DbMeasureName {
 
-  val foodIdLabel: String = "foodId"
+  val measureId: String = "measureId"
   val nameLabel: String = "name"
 
   object Implicits {
-    implicit val foodNameFromDB: FromMongoDBObject[DbMeasureName] = (mongoDBObject: MongoDBObject) => {
-      (mongoDBObject.getAs[Id](foodIdLabel) |@| mongoDBObject.getAs[String](nameLabel))(DbMeasureName.apply)
+    implicit val measureNameFromDB: FromMongoDBObject[DbMeasureName] = (mongoDBObject: MongoDBObject) => {
+      (mongoDBObject.getAs[Id](measureId) |@| mongoDBObject.getAs[String](nameLabel))(DbMeasureName.apply)
     }
 
   }

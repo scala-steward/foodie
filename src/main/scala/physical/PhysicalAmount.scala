@@ -131,8 +131,7 @@ object PhysicalAmount {
     implicit def additiveAbelianGroupPA[N: Numeric, P: Prefix]: AdditiveAbGroup[PhysicalAmount[N, P]] =
       new PhysicalAmountAAG[N, P]
 
-    implicit def modulePA[N: Numeric, P: Prefix, R: Rng]
-    (implicit mod: Module[N, R]): Module[PhysicalAmount[N, P], R] =
+    implicit def modulePA[N: Numeric, P: Prefix, R: Rng](implicit mod: Module[N, R]): Module[PhysicalAmount[N, P], R] =
       new PhysicalAmountModule[N, P, R]
 
     implicit def vectorSpacePA[N: Numeric, P: Prefix, F: Field](implicit vs: VectorSpace[N, F]):
