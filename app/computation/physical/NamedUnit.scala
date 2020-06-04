@@ -1,11 +1,11 @@
 package computation.physical
 
+import computation.physical.PUnit.Syntax._
 import computation.physical.PhysicalAmount.Implicits._
-import physical.{Gram, Litre}
 import spire.algebra._
 import spire.syntax.vectorSpace._
 
-case class NamedUnit[N, U](amount: PhysicalAmount[N])
+case class NamedUnit[N, U: PUnit](amount: PhysicalAmount[N])
 
 object NamedUnit {
 
@@ -15,7 +15,7 @@ object NamedUnit {
 
   object Implicits {
 
-    implicit def namedUnitVectorSpace[F: Field, U]: VectorSpace[NamedUnit[F, U], F] = new VectorSpace[NamedUnit[F, U], F] {
+    implicit def namedUnitVectorSpace[F: Field, U: PUnit]: VectorSpace[NamedUnit[F, U], F] = new VectorSpace[NamedUnit[F, U], F] {
       override def scalar: Field[F] = Field[F]
 
       override def timesl(r: F, v: NamedUnit[F, U]): NamedUnit[F, U] = v.copy(amount = r *: v.amount)
