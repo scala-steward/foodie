@@ -3,6 +3,7 @@ package computation.base
 import algebra.ring.AdditiveMonoid
 import spire.algebra._
 import spire.syntax.vectorSpace._
+import computation.base.math.LeftModuleUtil.Implicits._
 
 case class Functional[N, A](f: A => N) extends (A => N) {
   override def apply(v1: A): N = f(v1)
@@ -17,8 +18,8 @@ object Functional {
 
   object Implicits {
 
-    implicit def vectorSpaceF[F: Field, A]: VectorSpace[Functional[F, A], F] = new VectorSpace[Functional[F, A], F] {
-      override def scalar: Field[F] = Field[F]
+    implicit def functionalLeftModule[F, A](implicit leftModule: LeftModule[F, F]): LeftModule[Functional[F, A], F] = new LeftModule[Functional[F, A], F] {
+      override implicit def scalar: Ring[F] = Ring[F]
 
       override def timesl(r: F, v: Functional[F, A]): Functional[F, A] = Functional(a => r * v(a))
 

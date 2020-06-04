@@ -1,5 +1,7 @@
 package computation.physical
 
+import computation.base.math.LeftModuleUtil.Implicits._
+import computation.base.math.LeftModuleUtil.LeftModuleSelf
 import computation.physical.PUnit.Syntax._
 import computation.physical.PhysicalAmount.Implicits._
 import spire.algebra._
@@ -15,16 +17,16 @@ object NamedUnit {
 
   object Implicits {
 
-    implicit def namedUnitVectorSpace[F: Field, U: PUnit]: VectorSpace[NamedUnit[F, U], F] = new VectorSpace[NamedUnit[F, U], F] {
-      override def scalar: Field[F] = Field[F]
+    implicit def namedUnitLeftModule[L: LeftModuleSelf, U: PUnit]: LeftModule[NamedUnit[L, U], L] = new LeftModule[NamedUnit[L, U], L] {
+      override def scalar: Ring[L] = Ring[L]
 
-      override def timesl(r: F, v: NamedUnit[F, U]): NamedUnit[F, U] = v.copy(amount = r *: v.amount)
+      override def timesl(r: L, v: NamedUnit[L, U]): NamedUnit[L, U] = v.copy(amount = r *: v.amount)
 
-      override def negate(x: NamedUnit[F, U]): NamedUnit[F, U] = x.copy(amount = -x.amount)
+      override def negate(x: NamedUnit[L, U]): NamedUnit[L, U] = x.copy(amount = -x.amount)
 
-      override def zero: NamedUnit[F, U] = NamedUnit(AdditiveMonoid[PhysicalAmount[F]].zero)
+      override def zero: NamedUnit[L, U] = NamedUnit(AdditiveMonoid[PhysicalAmount[L]].zero)
 
-      override def plus(x: NamedUnit[F, U], y: NamedUnit[F, U]): NamedUnit[F, U] =
+      override def plus(x: NamedUnit[L, U], y: NamedUnit[L, U]): NamedUnit[L, U] =
         NamedUnit(x.amount + y.amount)
     }
   }

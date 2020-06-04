@@ -1,6 +1,9 @@
 package computation.physical
 
-import spire.algebra.{Field, VectorSpace}
+import algebra.ring.Ring
+import computation.base.math.LeftModuleUtil.Implicits._
+import computation.base.math.LeftModuleUtil.LeftModuleSelf
+import spire.algebra.LeftModule
 import spire.syntax.vectorSpace._
 
 case class PhysicalAmount[N](value: N)
@@ -9,16 +12,16 @@ object PhysicalAmount {
 
   object Implicits {
 
-    implicit def physicalAmountVectorSpace[F: Field]: VectorSpace[PhysicalAmount[F], F] = new VectorSpace[PhysicalAmount[F], F] {
-      override def scalar: Field[F] = Field[F]
+    implicit def physicalAmountLeftModule[L: LeftModuleSelf]: LeftModule[PhysicalAmount[L], L] = new LeftModule[PhysicalAmount[L], L] {
+      override def scalar: Ring[L] = Ring[L]
 
-      override def timesl(r: F, v: PhysicalAmount[F]): PhysicalAmount[F] = v.copy(value = r * v.value)
+      override def timesl(r: L, v: PhysicalAmount[L]): PhysicalAmount[L] = v.copy(value = r * v.value)
 
-      override def negate(x: PhysicalAmount[F]): PhysicalAmount[F] = x.copy(value = -x.value)
+      override def negate(x: PhysicalAmount[L]): PhysicalAmount[L] = x.copy(value = -x.value)
 
-      override def zero: PhysicalAmount[F] = PhysicalAmount(Field[F].zero)
+      override def zero: PhysicalAmount[L] = PhysicalAmount(LeftModuleSelf[L].zero)
 
-      override def plus(x: PhysicalAmount[F], y: PhysicalAmount[F]): PhysicalAmount[F] =
+      override def plus(x: PhysicalAmount[L], y: PhysicalAmount[L]): PhysicalAmount[L] =
         PhysicalAmount(x.value + y.value)
     }
 
