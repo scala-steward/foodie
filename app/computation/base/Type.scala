@@ -1,6 +1,6 @@
-package base
+package computation.base
 
-import base.Nutrient._
+import computation.base.Nutrient._
 
 sealed trait Type
 
@@ -9,7 +9,7 @@ object Type {
   trait MassBased extends Type
 
   object MassBased {
-    val all: Traversable[Nutrient with MassBased] = Traversable(
+    val all: Iterable[Nutrient with MassBased] = Iterable(
       Protein,
       Fat,
       Carbohydrate,
@@ -165,7 +165,7 @@ object Type {
   trait IUBased extends Type
 
   object IUBased {
-    val all: Traversable[Nutrient with IUBased] = Traversable(
+    val all: Iterable[Nutrient with IUBased] = Iterable(
       VitaminDIU
     )
   }
@@ -173,9 +173,11 @@ object Type {
   trait EnergyBased extends Type
 
   object EnergyBased {
-    val all: Traversable[Nutrient with EnergyBased] = Traversable(
+    val all: Iterable[Nutrient with EnergyBased] = Iterable(
       EnergyKJ, EnergyKCal
     )
   }
+
+  val all: Iterable[Nutrient with Type] = MassBased.all ++ EnergyBased.all ++ IUBased.all
 
 }
