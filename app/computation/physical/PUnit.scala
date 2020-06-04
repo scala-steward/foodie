@@ -1,4 +1,4 @@
-package physical
+package computation.physical
 
 trait PUnit[U] {
   def name: String
@@ -45,21 +45,6 @@ object PUnit {
 
   def apply[U: PUnit]: PUnit[U] = implicitly[PUnit[U]]
 
-  def bothFromAbbreviation(name: String): Option[(Prefix[_], PUnit[_])] = prefixedUnitsAA.get(name)
-
-  def fromAbbreviation(name: String): Option[PUnit[_]] =
-    Syntax.All.find(_.abbreviation == name)
-
-  def fromName(name: String): Option[PUnit[_]] =
-    Syntax.All.find(_.name == name)
-
-  val prefixedUnitsAA: Map[String, (Prefix[_], PUnit[_])] = {
-    for {
-      prefix <- Prefix.Syntax.All
-      unit <- PUnit.Syntax.All
-    } yield s"${prefix.abbreviation}${unit.abbreviation}" -> (prefix, unit)
-  }.toMap
-
   object Syntax extends Syntax
 
   trait Syntax {
@@ -70,7 +55,5 @@ object PUnit {
     implicit case object Joule extends Joule
     implicit case object Calorie extends Calorie
     implicit case object IU extends IU
-
-    val All = Iterable(Gram, Metre, Litre, CubicCentimetre, Joule, Calorie, IU)
   }
 }
