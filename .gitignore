@@ -1,7 +1,8 @@
-*.class
-*.log
-
-.idea/*
-project/target/*
-project/project/*
-target/*
+logs
+target
+/.idea
+/.idea_modules
+/.classpath
+/.project
+/.settings
+/RUNNING_PID
