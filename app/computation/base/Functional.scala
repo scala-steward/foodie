@@ -1,13 +1,8 @@
-package base
+package computation.base
 
-import algebra.ring.{AdditiveMonoid, AdditiveSemigroup}
-import base.math.ScalarMultiplication
-import base.math.ScalarMultiplication.Syntax._
+import algebra.ring.AdditiveMonoid
 import spire.algebra._
-import spire.implicits._
-import spire.math.Numeric
-
-import scalaz.Scalaz._
+import spire.syntax.vectorSpace._
 
 case class Functional[N, A](f: A => N) extends (A => N) {
   override def apply(v1: A): N = f(v1)
@@ -15,59 +10,25 @@ case class Functional[N, A](f: A => N) extends (A => N) {
 
 object Functional {
 
-  def fromAssociations[A, R: AdditiveMonoid](associations: Traversable[(A, R)]): Functional[R, A] = {
-    val summed = associations.groupBy(_._1).mapValues(as => CollectionUtil.sum(as.map(_._2)))
+  def fromAssociations[A, R: AdditiveMonoid](associations: Iterable[(A, R)]): Functional[R, A] = {
+    val summed = associations.groupBy(_._1).view.mapValues(as => AdditiveMonoid[R].sum(as.map(_._2))).toMap
     Functional(summed.getOrElse(_, AdditiveMonoid[R].zero))
   }
 
   object Implicits {
 
-    private class FSMult[R, V, A](implicit sm: ScalarMultiplication[R, V])
-      extends ScalarMultiplication[R, Functional[V, A]] {
-      override def scale(scalar: R, vector: Functional[V, A]): Functional[V, A] =
-        Functional(vector.f.map(_.scale(scalar)))
+    implicit def vectorSpaceF[F: Field, A]: VectorSpace[Functional[F, A], F] = new VectorSpace[Functional[F, A], F] {
+      override def scalar: Field[F] = Field[F]
+
+      override def timesl(r: F, v: Functional[F, A]): Functional[F, A] = Functional(a => r * v(a))
+
+      override def negate(x: Functional[F, A]): Functional[F, A] = Functional(a => -x(a))
+
+      override def zero: Functional[F, A] = Functional(_ => scalar.zero)
+
+      override def plus(x: Functional[F, A], y: Functional[F, A]): Functional[F, A] = Functional(a => x(a) + y(a))
     }
 
-    private class FSG[N: AdditiveSemigroup, A] extends AdditiveSemigroup[Functional[N, A]] {
-      override def plus(x: Functional[N, A], y: Functional[N, A]): Functional[N, A] =
-        Functional(a => x(a) + y(a))
-    }
-
-    private class FM[N: AdditiveMonoid, A] extends FSG[N, A] with AdditiveMonoid[Functional[N, A]] {
-      override def zero: Functional[N, A] = Functional(_ => AdditiveMonoid[N].zero)
-    }
-
-    private class FAG[N: AdditiveGroup, A] extends FM[N, A] with AdditiveGroup[Functional[N, A]] {
-      override def negate(x: Functional[N, A]): Functional[N, A] = Functional(a => -x(a))
-    }
-
-    private class FAAG[N: AdditiveAbGroup, A] extends FAG[N, A] with AdditiveAbGroup[Functional[N, A]]
-
-    private class FMod[N, A, R: Rng](implicit val mod: Module[N, R])
-      extends FAG[N, A] with Module[Functional[N, A], R] {
-      override def scalar: Rng[R] = implicitly[Rng[R]]
-
-      override def timesl(r: R, v: Functional[N, A]): Functional[N, A] = Functional(a => r *: v(a))
-    }
-
-    private class FVS[N: Field, A] extends FMod[N, A, N] with VectorSpace[Functional[N, A], N] {
-      override def scalar: Field[N] = implicitly[Field[N]]
-    }
-
-    implicit def additiveSemigroupF[N: AdditiveSemigroup, A]: AdditiveSemigroup[Functional[N, A]] = new FSG[N, A]
-
-    implicit def additiveMonoidF[N: AdditiveMonoid, A]: AdditiveMonoid[Functional[N, A]] = new FM[N, A]
-
-    implicit def additiveGroupF[N: AdditiveGroup, A]: AdditiveGroup[Functional[N, A]] = new FAG[N, A]
-
-    implicit def additiveAbelianGroupF[N: AdditiveAbGroup, A]: AdditiveAbGroup[Functional[N, A]] = new FAAG[N, A]
-
-    implicit def moduleF[N, A, R: Rng](implicit mod: Module[N, R]): Module[Functional[N, A], R] = new FMod[N, A, R]
-
-    implicit def vectorSpaceF[N: Field, A]: VectorSpace[Functional[N, A], N] = new FVS[N, A]
-
-    implicit def scalarMultiplicationF[N: Numeric, V, A](implicit sm: ScalarMultiplication[N, V]):
-    ScalarMultiplication[N, Functional[V, A]] = new FSMult[N, V, A]
   }
 
 }
