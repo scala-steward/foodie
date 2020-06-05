@@ -26,7 +26,7 @@ sealed trait AmountOf[N] {
   /**
     * @return The mass associated with the given amount.
     */
-  def toMass: Mass[N]
+  def mass: Mass[N]
 }
 
 /**
@@ -42,7 +42,7 @@ abstract class ByVolume[N: LeftModuleSelf] extends AmountOf[N] {
     */
   def litres: NamedUnit[N, Litre]
 
-  override def toMass: Mass[N] =
+  override def mass: Mass[N] =
     LeftModuleSelf[N].scalar.fromInt(1000) *: litres.amount.value *: ingredient.weightPerMillilitre
 }
 
@@ -59,7 +59,7 @@ object AmountOf {
   def palette[N: Field](amount: AmountOf[N]): Palette[N] = {
     val base = amount.ingredient.basePalette
     val reference = amount.ingredient.baseReference.amount.value
-    val given = amount.toMass.amount.value
+    val given = amount.mass.amount.value
     val factor = given / reference
     LeftModule[Palette[N], N].timesl(factor, base)
   }
