@@ -2,6 +2,8 @@ package computation.amounts
 
 import computation.base.Functional.Implicits._
 import computation.base._
+import computation.base.math.LeftModuleUtil.LeftModuleSelf
+import computation.physical.NamedUnit.Implicits._
 import spire.algebra.{LeftModule, Ring}
 import spire.syntax.leftModule._
 
@@ -52,9 +54,9 @@ object Palette {
   }
 
 
-  def fromAssociations[N: Ring](massAssociations: Iterable[(Nutrient with Type.MassBased, Mass[N])],
-                                   unitAssociations: Iterable[(Nutrient with Type.IUBased, IUnit[N])],
-                                   energyAssociations: Iterable[(Nutrient with Type.EnergyBased, Energy[N])]): Palette[N] = {
+  def fromAssociations[N: LeftModuleSelf](massAssociations: Iterable[(Nutrient with Type.MassBased, Mass[N])],
+                                          unitAssociations: Iterable[(Nutrient with Type.IUBased, IUnit[N])],
+                                          energyAssociations: Iterable[(Nutrient with Type.EnergyBased, Energy[N])]): Palette[N] = {
     val masses = Functional.fromAssociations(massAssociations)
     val units = Functional.fromAssociations(unitAssociations)
     val energies = Functional.fromAssociations(energyAssociations)
