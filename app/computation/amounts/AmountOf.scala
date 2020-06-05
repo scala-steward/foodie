@@ -1,12 +1,14 @@
 package computation.amounts
 
+import computation.amounts.Palette.Implicits._
 import computation.base._
+import computation.base.math.LeftModuleUtil.Implicits._
 import computation.base.math.LeftModuleUtil.LeftModuleSelf
 import computation.physical.NamedUnit.Implicits._
 import computation.physical.{Litre, NamedUnit}
-import spire.math.Numeric
+import spire.algebra.{Field, LeftModule}
+import spire.syntax.field._
 import spire.syntax.leftModule._
-
 
 /**
   * Denotes a certain amount of something.
@@ -54,12 +56,12 @@ trait Weighted[N] extends AmountOf[N]
 
 object AmountOf {
 
-  def palette[N: Numeric](amount: AmountOf[N]): Palette[N] = {
-    val base: Palette[N] = amount.ingredient.basePalette
-    val reference = amount.ingredient.baseReference.amount.absolute
-    val given = amount.toMass[Single].amount.absolute
+  def palette[N: Field](amount: AmountOf[N]): Palette[N] = {
+    val base = amount.ingredient.basePalette
+    val reference = amount.ingredient.baseReference.amount.value
+    val given = amount.toMass.amount.value
     val factor = given / reference
-    base.scale(factor)
+    LeftModule[Palette[N], N].timesl(factor, base)
   }
 
 }
