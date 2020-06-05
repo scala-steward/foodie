@@ -1,7 +1,6 @@
-package base
+package computation.base
 
-import amounts.Palette
-import physical.Prefix
+import computation.amounts.Palette
 
 trait Ingredient[N] {
 
@@ -15,15 +14,10 @@ trait Ingredient[N] {
     *         Each amount of this ingredient contains precisely the nutritional values
     *         provided in [[basePalette]].
     */
-  def baseReference: Mass[N, _]
+  def baseReference: Mass[N]
 
   /**
-    * @tparam P The prefix type.
     * @return The density of the ingredient as weight per millilitre.
     */
-  def weightPerMillilitre[P: Prefix]: Mass[N, P]
-}
-
-object Ingredient {
-
+  def weightPerMillilitre[P]: Mass[N]
 }
