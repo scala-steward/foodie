@@ -1,11 +1,8 @@
-package physical
+package computation.physical
 
-import base._
-import spire.math.{Interval, Numeric}
+import computation.base.Floating
+import spire.math.Numeric
 import spire.syntax.numeric._
-
-import scalaz.Scalaz._
-import scalaz.Zip
 
 /**
   * A type denoting the scientific prefix of a certain unit (i.e. "milli").
@@ -13,7 +10,7 @@ import scalaz.Zip
 sealed trait Prefix[P] {
 
   type PrefixType = P
-
+  // TODO: Adjust rescaling, since this is only relevant in the final display.
   /**
     * @tparam A Any numeric instance.
     * @return The factor by which a value is multiplied when computed with this prefix.
@@ -52,57 +49,12 @@ sealed trait Prefix[P] {
 
 object Prefix {
 
-  import Syntax._
-
-  private def prefixOrder[A: Numeric]: Map[Interval[A], Prefix[_]] = {
-    val zipList = Zip[List]
-    val num = Numeric[A]
-
-    import zipList._
-
-    val fs: List[(A, A) => Interval[A]] =
-      List((_: A, upper: A) => Interval.below(upper)) ++
-        All.drop(2).map(_ => Interval.openUpper[A] _)++
-        List((lower: A, _: A) => Interval.atOrAbove(lower) )
-
-    val corners = All.map(_.scale(num.fromBigDecimal(1d)))
-
-    val bounds = zip(corners, corners.tail ++ List(num.fromBigDecimal(1d)))
-
-    val responsibilities = zipWith(fs, bounds)((f, b) => f.tupled(b))
-    zip(responsibilities, All).toMap
-  }
-
-  def normalisedPrefix[A: Numeric](value: A): Prefix[_] = {
-    val order = prefixOrder[A]
-    order.collectFirst {
-      case (interval, prefix) if interval.contains(value) => prefix
-    }.getOrElse(Single)
-  }
-
   def apply[P: Prefix]: Prefix[P] = implicitly[Prefix[P]]
 
   def fromAbbreviation(name: String): Option[Prefix[_]] = Syntax.All.find(_.abbreviation == name)
 
   def fromName(name: String): Option[Prefix[_]] = Syntax.All.find(_.name == name)
 
-  /**
-    * Provide instances for the convenient use of the prefixes.
-    * The objects extend the traits with the same name for the sake of convenience.
-    * Usage example:
-    *
-    * {{{
-    *
-    * import Prefix.Syntax._
-    *
-    *   val physicalAmount = PhysicalAmount.fromRelative[Floating, Milli](5)
-    *   println(unitWithPrefix.relative)
-    *   val kilo = physicalAmount.rescale[Kilo]
-    *   println(kilo.adjusted)
-    *
-    * }}}
-    *
-    */
   object Syntax extends Syntax
 
   sealed trait Syntax {
