@@ -1,6 +1,7 @@
 package computation.base.math
 
 import spire.algebra.{LeftModule, Ring}
+import spire.syntax.ring._
 
 object LeftModuleUtil {
 
@@ -21,6 +22,18 @@ object LeftModuleUtil {
       override def plus(x: L, y: L): L = leftModule.scalar.plus(x, y)
 
       override def times(x: L, y: L): L = leftModule.scalar.times(x, y)
+    }
+
+    implicit def ringAsLeftModule[R](implicit ring: Ring[R]): LeftModuleSelf[R] = new LeftModuleSelf[R] {
+      override def scalar: Ring[R] = ring
+
+      override def timesl(r: R, v: R): R = r * v
+
+      override def negate(x: R): R = -x
+
+      override def zero: R = ring.zero
+
+      override def plus(x: R, y: R): R = x + y
     }
   }
 
