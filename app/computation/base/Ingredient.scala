@@ -19,5 +19,5 @@ trait Ingredient[N] {
   /**
     * @return The density of the ingredient as weight per millilitre.
     */
-  def weightPerMillilitre[P]: Mass[N]
+  def weightPerMillilitre: Mass[N]
 }
