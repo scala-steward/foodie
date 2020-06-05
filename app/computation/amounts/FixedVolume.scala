@@ -1,12 +1,11 @@
-package amounts
+package computation.amounts
 
-import base.Ingredient
-import physical.PUnit.Syntax._
-import physical.PhysicalAmount.Implicits._
-import physical.{Milli, _}
+import computation.base.Ingredient
+import computation.base.math.LeftModuleUtil.LeftModuleSelf
+import computation.physical.PhysicalAmount.Implicits._
+import computation.physical._
+import spire.algebra.Field
 import spire.implicits._
-import spire.math.Numeric
-import Prefix.Syntax._
 
 /**
   * Certain amounts are prescribed in "vessels" of fixed size.
@@ -15,37 +14,39 @@ import Prefix.Syntax._
   * @param ingredient The ingredient measured in this container.
   * @param units      The amount of containers used.
   * @tparam N The type of number used for the amounts.
-  * @tparam P The type of the prefix.
   */
-case class FixedVolume[N: Numeric, P: Prefix](hasVolume: HasVolume[N, P],
-                                              override val ingredient: Ingredient[N],
-                                              override val units: N)
+case class FixedVolume[N: LeftModuleSelf](hasVolume: HasVolume[N],
+                                          override val ingredient: Ingredient[N],
+                                          override val units: N)
   extends ByVolume[N] with HasUnit[N] with HasIngredient[N] {
 
-  override val litres: NamedUnit[N, P, Litre] = NamedUnit[N, P, Litre](units *: hasVolume.volume.amount)
+  override val litres: NamedUnit[N, Litre] = NamedUnit[N, Litre](units *: hasVolume.volume.amount)
 
 }
 
 object FixedVolume {
 
-  private def mkLitre[N: Numeric, P: Prefix](amount: N): NamedUnit[N, P, Litre] =
-    NamedUnit[N, P, Litre](PhysicalAmount.fromRelative[N, P](amount))
+  private def fromMillilitres[F](millilitres: Int)
+                                (implicit field: Field[F]): NamedUnit[F, Litre] = {
+    val asLitres = field.fromInt(millilitres) / field.fromInt(1000)
+    NamedUnit(PhysicalAmount(asLitres))
+  }
 
   /**
     * A cup is a standard American measurement unit and corresponds to 250ml.
     *
-    * @tparam N The type of number used in the measurement.
+    * @tparam F The type of number used in the measurement.
     */
-  case class Cup[N: Numeric]() extends HasVolume[N, Milli] {
-    override val volume: NamedUnit[N, Milli, Litre] = mkLitre[N, Milli](250)
+  case class Cup[F: Field]() extends HasVolume[F] {
+    override val volume: NamedUnit[F, Litre] = fromMillilitres[F](250)
   }
 
-  case class Teaspoon[N: Numeric]() extends HasVolume[N, Milli] {
-    override val volume: NamedUnit[N, Milli, Litre] = mkLitre[N, Milli](5)
+  case class Teaspoon[N: Field]() extends HasVolume[N] {
+    override val volume: NamedUnit[N, Litre] = fromMillilitres[N](5)
   }
 
-  case class Tablespoon[N: Numeric]() extends HasVolume[N, Milli] {
-    override val volume: NamedUnit[N, Milli, Litre] = mkLitre[N, Milli](15)
+  case class Tablespoon[N: Field]() extends HasVolume[N] {
+    override val volume: NamedUnit[N, Litre] = fromMillilitres[N](15)
   }
 
 }
