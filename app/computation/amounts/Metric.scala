@@ -1,12 +1,6 @@
-package amounts
+package computation.amounts
 
-import base.{Ingredient, Mass}
-import physical.Prefix
-import spire.math.Numeric
+import computation.base.{Ingredient, Mass}
 
-import scala.reflect.ClassTag
-
-case class Metric[N: Numeric](mass: Mass[N, _],
-                              override val ingredient: Ingredient[N]) extends Weighted[N] {
-  override def toMass[P: Prefix]: Mass[N, P] = Mass(mass.amount.rescale[P])
-}
+case class Metric[N](override val mass: Mass[N],
+                     override val ingredient: Ingredient[N]) extends Weighted[N]

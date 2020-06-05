@@ -1,30 +1,30 @@
-package amounts
+package computation.amounts
 
-import base.{Ingredient, Mass}
-import physical.PhysicalAmount.Implicits._
-import physical.{PhysicalAmount, Prefix, Single}
-import spire.implicits._
-import spire.math.Numeric
-import Prefix.Syntax._
+import computation.base.math.LeftModuleUtil.Implicits._
+import computation.base.math.LeftModuleUtil.LeftModuleSelf
+import computation.base.{Ingredient, Mass}
+import computation.physical.PhysicalAmount
+import computation.physical.PhysicalAmount.Implicits._
+import spire.algebra.Field
+import spire.syntax.leftModule._
 
-abstract class NonMetric[N: Numeric](inGrams: PhysicalAmount[N, Single])
+abstract class NonMetric[N: LeftModuleSelf](inGrams: PhysicalAmount[N])
   extends Weighted[N] with HasUnit[N] with HasIngredient[N] {
 
-  override def toMass[P: Prefix]: Mass[N, P] = {
-    Mass(units *: inGrams.rescale[P])
-  }
+  override lazy val mass: Mass[N] = Mass(units *: inGrams)
 }
 
 object NonMetric {
 
-  private def mkAmount[N: Numeric, P: Prefix](amount: Double): PhysicalAmount[N, P] =
-    PhysicalAmount.fromRelative[N, P](Numeric[N].fromBigDecimal(amount))
+  private def fromGrams[F](grams: Double)(implicit field: Field[F]): PhysicalAmount[F] =
+    PhysicalAmount(field.fromDouble(grams))
 
-  case class Ounce[N: Numeric](override val ingredient: Ingredient[N],
-                               override val units: N)
-    extends NonMetric(mkAmount[N, Single](28.3495))
+  case class Ounce[F: Field](override val ingredient: Ingredient[F],
+                             override val units: F)
+    extends NonMetric(fromGrams(28.3495))
 
-  case class Pound[N: Numeric](override val ingredient: Ingredient[N],
-                               override val units: N)
-    extends NonMetric(mkAmount[N, Single](453.592))
+  case class Pound[F: Field](override val ingredient: Ingredient[F],
+                             override val units: F)
+    extends NonMetric(fromGrams(453.592))
+
 }
