@@ -1,6 +1,6 @@
-package amounts
+package computation.amounts
 
-import base.Ingredient
+import computation.base.Ingredient
 
 /**
   * Certain things have an ingredient and this mixin denotes precisely this fact.

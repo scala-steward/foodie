@@ -1,7 +1,7 @@
-package amounts
+package computation.amounts
 
-import physical.{Litre, NamedUnit}
+import computation.physical.{Litre, NamedUnit}
 
-trait HasVolume[N, P] {
-  def volume: NamedUnit[N, P, Litre]
+trait HasVolume[N] {
+  def volume: NamedUnit[N, Litre]
 }
