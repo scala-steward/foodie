@@ -17,9 +17,8 @@ object Functional {
 
   object Implicits {
 
-    implicit def functionalLeftModule[V, L, A](implicit leftModule: LeftModule[V, L],
-                                               ringL: Ring[L]): LeftModule[Functional[V, A], L] = new LeftModule[Functional[V, A], L] {
-      override def scalar: Ring[L] = ringL
+    implicit def functionalLeftModule[V, L, A](implicit leftModule: LeftModule[V, L]): LeftModule[Functional[V, A], L] = new LeftModule[Functional[V, A], L] {
+      override def scalar: Ring[L] = leftModule.scalar
 
       override def timesl(r: L, v: Functional[V, A]): Functional[V, A] = Functional(a => r *: v(a))
 

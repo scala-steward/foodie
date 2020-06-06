@@ -2,9 +2,12 @@ package computation.amounts
 
 import algebra.ring.AdditiveMonoid
 import computation.amounts.Palette.Implicits._
+import computation.base.{Energy, IUnit, Mass}
+import computation.base.Type.EnergyBased
 import computation.base.math.LeftModuleUtil.Implicits._
+import computation.physical.IU
 import computation.physical.NamedUnit.Implicits._
-import spire.algebra.Field
+import spire.algebra.{Field, LeftModule}
 import spire.syntax.leftModule._
 
 /**
@@ -35,6 +38,11 @@ object Recipe {
    */
   def palette[N: Field](ingredients: Iterable[AmountOf[N]]): Palette[N] = {
     val palettes: Iterable[Palette[N]] = ingredients.map(AmountOf.palette[N])
+    // TODO: This explicit construction should not be necessary.
+    implicit val massModule: LeftModule[Mass[N], N] = namedUnitLeftModule
+    implicit val energyModule: LeftModule[Energy[N], N] = namedUnitLeftModule
+    implicit val iUnitModule: LeftModule[IUnit[N], N] = namedUnitLeftModule
+    implicit val paletteModule: LeftModule[Palette[N], N] = paletteLeftModule
     val resultPalette = AdditiveMonoid[Palette[N]].sum(palettes)
     resultPalette
   }

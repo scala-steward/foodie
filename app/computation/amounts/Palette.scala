@@ -19,9 +19,8 @@ object Palette {
 
     implicit def paletteLeftModule[L](implicit leftModuleMasses: LeftModule[Mass[L], L],
                                       leftModuleUnits: LeftModule[IUnit[L], L],
-                                      leftModuleEnergies: LeftModule[Energy[L], L],
-                                      ringL: Ring[L]): LeftModule[Palette[L], L] = new LeftModule[Palette[L], L] {
-      override def scalar: Ring[L] = ringL
+                                      leftModuleEnergies: LeftModule[Energy[L], L]): LeftModule[Palette[L], L] = new LeftModule[Palette[L], L] {
+      override def scalar: Ring[L] = leftModuleMasses.scalar
 
       override def timesl(r: L, v: Palette[L]): Palette[L] =
         Palette(

@@ -29,11 +29,11 @@ object LeftModuleUtil {
 
       override def timesl(r: R, v: R): R = r * v
 
-      override def negate(x: R): R = -x
+      override def negate(x: R): R = ring.negate(x)
 
       override def zero: R = ring.zero
 
-      override def plus(x: R, y: R): R = x + y
+      override def plus(x: R, y: R): R = ring.plus(x, y)
     }
   }
 

@@ -17,12 +17,12 @@ object PhysicalAmount {
 
       override def timesl(r: L, v: PhysicalAmount[L]): PhysicalAmount[L] = v.copy(value = r * v.value)
 
-      override def negate(x: PhysicalAmount[L]): PhysicalAmount[L] = x.copy(value = -x.value)
+      override def negate(x: PhysicalAmount[L]): PhysicalAmount[L] = x.copy(value = scalar.negate(x.value))
 
       override def zero: PhysicalAmount[L] = PhysicalAmount(LeftModuleSelf[L].zero)
 
       override def plus(x: PhysicalAmount[L], y: PhysicalAmount[L]): PhysicalAmount[L] =
-        PhysicalAmount(x.value + y.value)
+        PhysicalAmount(scalar.plus(x.value , y.value))
     }
 
   }
