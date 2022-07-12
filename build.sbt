@@ -42,8 +42,7 @@ lazy val root = (project in file("."))
     slickCodegenJdbcDriver := "org.postgresql.Driver",
     slickCodegenOutputPackage := "db.generated",
     slickCodegenExcludedTables := Seq("flyway_schema_history"),
-    slickCodegenOutputDir := baseDirectory.value / "app",
-    Compile / sourceGenerators += slickCodegen.taskValue
+    slickCodegenOutputDir := baseDirectory.value / "app"
   )
 
 lazy val elmGenerate = Command.command("elmGenerate") { state =>
