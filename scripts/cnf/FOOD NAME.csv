@@ -1625,9 +1625,7 @@ FoodID,FoodCode,FoodGroupID,FoodSourceID,FoodDescription,FoodDescriptionF,FoodDa
 2340,2340,11,0,"Pickle relish, sweet","Marinades, relish, sucrée",1994-01-01,,11945,
 2341,2341,11,0,"Pickles, cucumber, sour, low sodium","Marinades, cornichons sûrs, faible en sodium",1989-01-01,,11946,
 2342,2342,11,0,"Pickles, cucumber, sweet, low sodium","Marinades, cornichons sucrés, faible en sodium",1989-01-01,,11948,
-2343,2343,11,0,"Mushroom, enoki, raw","Champignon, enoki, cru",1990-01-01,,11950,"Flammulina veluptipes
-
-"
+2343,2343,11,0,"Mushroom, enoki, raw","Champignon, enoki, cru",1990-01-01,,11950,"Flammulina veluptipes"
 2344,2344,11,0,"Pepper, sweet, yellow, raw","Poivron jaune, cru",1994-01-01,,11951,Capsicum annuum
 2345,2345,11,0,"Radicchio, raw","Radicchio, cru",1994-01-01,,11952,Cichorium intybus
 2346,2346,11,0,"Squash, summer, zucchini, baby, raw","Courges d'été, courgettes (zucchini), naines, crues",1994-01-01,,11953,Cucurbita spp.

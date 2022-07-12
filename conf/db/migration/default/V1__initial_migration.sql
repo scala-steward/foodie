@@ -32,7 +32,7 @@ alter table cnf.nutrient_source
 
 create table cnf.nutrient_name(
     nutrient_name_id integer not null,
-    nutrient_code integer,
+    nutrient_code integer not null,
     nutrient_symbol text not null,
     nutrient_unit text not null,
     nutrient_name text not null,
@@ -42,11 +42,11 @@ create table cnf.nutrient_name(
 );
 
 alter table cnf.nutrient_name
-    add constraint nutrient_name_pk primary key (nutrient_name_id);
+    add constraint nutrient_name_pk primary key (nutrient_code);
 
 create table cnf.nutrient_amount (
     food_id integer not null,
-    nutrient_id integer not null,
+    nutrient_id integer not null, -- references either nutrient_name(nutrient_name_id) or nutrient_name(nutrient_code)
     nutrient_value numeric not null,
     standard_error numeric,
     number_of_observation integer,
@@ -56,14 +56,13 @@ create table cnf.nutrient_amount (
 
 alter table cnf.nutrient_amount
     add constraint nutrient_amount_pk primary key (food_id, nutrient_id, nutrient_source_id),
-    add constraint nutrient_amount_nutrient_id_fk foreign key (nutrient_id) references cnf.nutrient_name(nutrient_name_id),
     add constraint nutrient_amount_nutrient_source_id_fk foreign key (nutrient_source_id) references cnf.nutrient_source(nutrient_source_id);
 
 create table cnf.food_name (
    food_id integer unique not null,
    food_code integer not null,
    food_group_id integer not null ,
-   food_source_id integer not null,
+   food_source_id integer not null, -- should reference food_source(food_source_id), but at least one value is missing.
    food_description text not null,
    food_description_f text not null,
    food_date_of_entry date not null,
@@ -74,8 +73,7 @@ create table cnf.food_name (
 
 alter table cnf.food_name
     add constraint food_name_pk primary key (food_id, food_group_id, food_source_id),
-    add constraint food_name_food_group_id_fk foreign key (food_group_id) references cnf.food_group(food_group_id),
-    add constraint food_name_food_source_id_fk foreign key (food_source_id) references cnf.food_source(food_source_id);
+    add constraint food_name_food_group_id_fk foreign key (food_group_id) references cnf.food_group(food_group_id);
 
 create table cnf.yield_name (
     yield_id integer not null ,
@@ -128,18 +126,15 @@ alter table cnf.measure_name
 
 create table cnf.conversion_factor (
     food_id integer not null,
-    measure_id integer not null,
+    measure_id integer not null, -- should reference measure_name(measure_id), but at least one value is missing
     conversion_factor_value numeric not null,
     conv_factor_date_of_entry date not null
 );
 
 alter table cnf.conversion_factor
-    add constraint conversion_factor_pk primary key (food_id, measure_id),
-    add constraint conversion_factor_measure_id_fk foreign key (measure_id) references cnf.measure_name(measure_id);
+    add constraint conversion_factor_pk primary key (food_id, measure_id);
 
-create schema foodie;
-
-create table foodie.person(
+create table person(
     id uuid not null,
     nickname text not null,
     display_name text,
@@ -148,40 +143,40 @@ create table foodie.person(
     hash text not null
 );
 
-alter table foodie.person
+alter table person
     add constraint person_pk primary key (id);
 
-create table foodie.recipe(
+create table recipe(
     id uuid not null,
     user_id uuid not null,
     name text not null,
     description text
 );
 
-alter table foodie.recipe
+alter table recipe
     add constraint recipe_pk primary key (id),
-    add constraint recipe_user_id_fk foreign key (user_id) references foodie.person(id);
+    add constraint recipe_user_id_fk foreign key (user_id) references person(id);
 
-create table foodie.recipe_ingredient(
+create table recipe_ingredient(
     id uuid not null,
     recipe_id uuid not null,
     food_name_id integer not null,
     amount decimal not null
 );
 
-alter table foodie.recipe_ingredient
+alter table recipe_ingredient
     add constraint recipe_ingredient_pk primary key (id),
-    add constraint recipe_ingredient_recipe_id_fk foreign key (recipe_id) references foodie.recipe(id),
+    add constraint recipe_ingredient_recipe_id_fk foreign key (recipe_id) references recipe(id),
     add constraint recipe_ingredient_food_name_id_fk foreign key (food_name_id) references cnf.food_name(food_id);
 
-create table foodie.meal_plan_entry(
+create table meal_plan_entry(
   id uuid not null,
   user_id uuid not null,
   consumed_on timestamp not null,
   amount decimal not null
 );
 
-alter table foodie.meal_plan_entry
+alter table meal_plan_entry
     add constraint meal_plan_entry_pk primary key (id),
-    add constraint meal_plan_entry_user_id_fk foreign key (user_id) references foodie.person(id),
+    add constraint meal_plan_entry_user_id_fk foreign key (user_id) references person(id),
     add constraint meal_plan_entry_amount_positive check (amount > 0);

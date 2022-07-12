@@ -1,0 +1,4 @@
+These files represent the Canadian Nutrient File, Health Canada, 2015.
+The files are used in a textually sanitized state without changes to the nutrient values as obtained from
+https://www.canada.ca/content/dam/hc-sc/migration/hc-sc/fn-an/alt_formats/zip/nutrition/fiche-nutri-data/cnf-fcen-csv.zip
+The foodie project is not associated with Health Canada.
