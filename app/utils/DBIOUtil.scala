@@ -1,4 +1,4 @@
-package util
+package utils
 
 import cats.{ Monad, StackSafeMonad }
 import slick.dbio.DBIO

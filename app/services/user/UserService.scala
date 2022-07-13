@@ -12,7 +12,7 @@ import java.util.UUID
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
 import slick.jdbc.PostgresProfile.api._
-import util.DBIOUtil.instances._
+import utils.DBIOUtil.instances._
 
 trait UserService {
   def get(userId: UUID @@ UserId): Future[Option[User]]
