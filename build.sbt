@@ -33,7 +33,8 @@ lazy val root = (project in file("."))
       "com.dripower"         %% "play-circe"      % "2814.2",
       "com.davegurnell"      %% "bridges"         % "0.24.0",
       "com.github.pathikrit" %% "better-files"    % "3.9.1",
-      "com.typesafe"          % "config"          % "1.4.2"
+      "com.typesafe"          % "config"          % "1.4.2",
+      "io.scalaland"         %% "chimney"         % "0.6.1"
     ),
     slickCodegenDatabaseUrl := config.getString("slick.dbs.default.db.url"),
     slickCodegenDatabaseUser := config.getString("slick.dbs.default.db.user"),
@@ -44,6 +45,10 @@ lazy val root = (project in file("."))
     slickCodegenExcludedTables := Seq("flyway_schema_history"),
     slickCodegenOutputDir := baseDirectory.value / "app"
   )
+
+scalacOptions ++= Seq(
+  "-Ymacro-annotations"
+)
 
 lazy val elmGenerate = Command.command("elmGenerate") { state =>
   "runMain elm.Bridge" :: state
