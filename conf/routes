@@ -1,7 +1,7 @@
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
 
-GET    /recipe/:id               controllers.recipe.RecipeController.get
+GET    /recipe/:id               controllers.recipe.RecipeController.get(id: java.util.UUID)
 POST   /recipe/create            controllers.recipe.RecipeController.create
 PATCH  /recipe/update            controllers.recipe.RecipeController.update
 DELETE /recipe/delete/:id        controllers.recipe.RecipeController.delete(id: java.util.UUID)
@@ -9,7 +9,7 @@ PATCH  /recipe/add-ingredient    controllers.recipe.RecipeController.addIngredie
 PATCH  /recipe/remove-ingredient controllers.recipe.RecipeController.removeIngredient
 PATCH  /recipe/update-amount     controllers.recipe.RecipeController.updateAmount
 
-GET    /meal/:id                 controllers.meal.MealController.get
+GET    /meal/:id                 controllers.meal.MealController.get(id: java.util.UUID)
 GET    /meal/all                 controllers.meal.MealController.all
 POST   /meal/add                 controllers.meal.MealController.add
 PATCH  /meal/update              controllers.meal.MealController.update
