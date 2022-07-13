@@ -9,6 +9,5 @@ import java.util.UUID
 case class Meal(
     id: UUID,
     date: Instant,
-    recipeId: UUID,
-    amount: BigDecimal
+    entries: Seq[MealEntry]
 )
