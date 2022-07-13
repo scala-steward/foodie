@@ -134,7 +134,7 @@ create table cnf.conversion_factor (
 alter table cnf.conversion_factor
     add constraint conversion_factor_pk primary key (food_id, measure_id);
 
-create table person(
+create table "user"(
     id uuid not null,
     nickname text not null,
     display_name text,
@@ -143,8 +143,8 @@ create table person(
     hash text not null
 );
 
-alter table person
-    add constraint person_pk primary key (id);
+alter table "user"
+    add constraint user_pk primary key (id);
 
 create table recipe(
     id uuid not null,
@@ -155,7 +155,7 @@ create table recipe(
 
 alter table recipe
     add constraint recipe_pk primary key (id),
-    add constraint recipe_user_id_fk foreign key (user_id) references person(id);
+    add constraint recipe_user_id_fk foreign key (user_id) references "user"(id);
 
 create table recipe_ingredient(
     id uuid not null,
@@ -178,5 +178,5 @@ create table meal_plan_entry(
 
 alter table meal_plan_entry
     add constraint meal_plan_entry_pk primary key (id),
-    add constraint meal_plan_entry_user_id_fk foreign key (user_id) references person(id),
+    add constraint meal_plan_entry_user_id_fk foreign key (user_id) references "user"(id),
     add constraint meal_plan_entry_amount_positive check (amount > 0);
