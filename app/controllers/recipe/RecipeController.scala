@@ -1,12 +1,15 @@
 package controllers.recipe
 
-import play.api.mvc.{ Action, AnyContent, ControllerComponents }
+import action.JwtAction
+import play.api.mvc.{ AbstractController, Action, AnyContent, ControllerComponents }
 
 import java.util.UUID
 import javax.inject.Inject
 
-class RecipeController @Inject() (controllerComponents: ControllerComponents)
-    extends UserController(controllerComponents) {
+class RecipeController @Inject() (
+    controllerComponents: ControllerComponents,
+    jwtAction: JwtAction
+) extends AbstractController(controllerComponents) {
 
   def get(id: UUID): Action[AnyContent]          = ???
   def create: Action[RecipeCreation]             = ???
