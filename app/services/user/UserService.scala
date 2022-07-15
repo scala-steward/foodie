@@ -24,11 +24,14 @@ object UserService {
     def get(userId: UUID @@ UserId)(implicit executionContext: ExecutionContext): DBIO[Option[User]]
   }
 
-  class Live @Inject() (override protected val dbConfigProvider: DatabaseConfigProvider)(implicit
+  class Live @Inject() (
+      override protected val dbConfigProvider: DatabaseConfigProvider,
+      companion: Companion
+  )(implicit
       executionContext: ExecutionContext
   ) extends UserService
       with HasDatabaseConfigProvider[PostgresProfile] {
-    override def get(userId: UUID @@ UserId): Future[Option[User]] = db.run(Live.get(userId))
+    override def get(userId: UUID @@ UserId): Future[Option[User]] = db.run(companion.get(userId))
   }
 
   object Live extends Companion {
