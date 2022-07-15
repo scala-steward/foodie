@@ -7,7 +7,8 @@ import io.scalaland.chimney.dsl._
 import play.api.libs.circe.Circe
 import play.api.mvc.Results.BadRequest
 import play.api.mvc._
-import pureconfig.ConfigSource
+import pureconfig.generic.ProductHint
+import pureconfig.{ CamelCase, ConfigFieldMapping, ConfigSource }
 import pureconfig.generic.auto._
 import security.jwt.JwtConfiguration
 import services.user.{ User, UserId, UserService }
@@ -25,7 +26,11 @@ class JwtAction @Inject() (
     extends ActionBuilder[Request, AnyContent]
     with Circe {
 
-  private val jwtConfiguration = ConfigSource.default.loadOrThrow[JwtConfiguration]
+  implicit def hint[A]: ProductHint[A] = ProductHint[A](ConfigFieldMapping(CamelCase, CamelCase))
+
+  private val jwtConfiguration = ConfigSource.default
+    .at("jwtConfiguration")
+    .loadOrThrow[JwtConfiguration]
 
   override def invokeBlock[A](
       request: Request[A],
