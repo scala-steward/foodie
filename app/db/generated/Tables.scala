@@ -372,18 +372,19 @@ trait Tables {
    *  @param id Database column id SqlType(uuid), PrimaryKey
    *  @param recipeId Database column recipe_id SqlType(uuid)
    *  @param foodNameId Database column food_name_id SqlType(int4)
+   *  @param measureId Database column measure_id SqlType(int4)
    *  @param amount Database column amount SqlType(numeric) */
-  case class RecipeIngredientRow(id: java.util.UUID, recipeId: java.util.UUID, foodNameId: Int, amount: scala.math.BigDecimal)
+  case class RecipeIngredientRow(id: java.util.UUID, recipeId: java.util.UUID, foodNameId: Int, measureId: Int, amount: scala.math.BigDecimal)
   /** GetResult implicit for fetching RecipeIngredientRow objects using plain SQL queries */
   implicit def GetResultRecipeIngredientRow(implicit e0: GR[java.util.UUID], e1: GR[Int], e2: GR[scala.math.BigDecimal]): GR[RecipeIngredientRow] = GR{
     prs => import prs._
-    RecipeIngredientRow.tupled((<<[java.util.UUID], <<[java.util.UUID], <<[Int], <<[scala.math.BigDecimal]))
+    RecipeIngredientRow.tupled((<<[java.util.UUID], <<[java.util.UUID], <<[Int], <<[Int], <<[scala.math.BigDecimal]))
   }
   /** Table description of table recipe_ingredient. Objects of this class serve as prototypes for rows in queries. */
   class RecipeIngredient(_tableTag: Tag) extends profile.api.Table[RecipeIngredientRow](_tableTag, "recipe_ingredient") {
-    def * = (id, recipeId, foodNameId, amount) <> (RecipeIngredientRow.tupled, RecipeIngredientRow.unapply)
+    def * = (id, recipeId, foodNameId, measureId, amount) <> (RecipeIngredientRow.tupled, RecipeIngredientRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((Rep.Some(id), Rep.Some(recipeId), Rep.Some(foodNameId), Rep.Some(amount))).shaped.<>({r=>import r._; _1.map(_=> RecipeIngredientRow.tupled((_1.get, _2.get, _3.get, _4.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = ((Rep.Some(id), Rep.Some(recipeId), Rep.Some(foodNameId), Rep.Some(measureId), Rep.Some(amount))).shaped.<>({r=>import r._; _1.map(_=> RecipeIngredientRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(uuid), PrimaryKey */
     val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
@@ -391,6 +392,8 @@ trait Tables {
     val recipeId: Rep[java.util.UUID] = column[java.util.UUID]("recipe_id")
     /** Database column food_name_id SqlType(int4) */
     val foodNameId: Rep[Int] = column[Int]("food_name_id")
+    /** Database column measure_id SqlType(int4) */
+    val measureId: Rep[Int] = column[Int]("measure_id")
     /** Database column amount SqlType(numeric) */
     val amount: Rep[scala.math.BigDecimal] = column[scala.math.BigDecimal]("amount")
 
