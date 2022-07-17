@@ -7,5 +7,5 @@ import java.util.UUID
 case class AddIngredient(
     recipeId: UUID @@ RecipeId,
     foodId: Int @@ FoodId,
-    amount: Amount
+    amountUnit: AmountUnit
 )

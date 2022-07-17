@@ -9,7 +9,7 @@ import java.util.UUID
 case class Ingredient(
     id: UUID @@ IngredientId,
     foodId: Int @@ FoodId,
-    amount: Amount
+    amountUnit: AmountUnit
 )
 
 object Ingredient {
