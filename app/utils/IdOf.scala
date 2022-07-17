@@ -9,6 +9,6 @@ import java.util.UUID
 trait IdOf[A] {
 
   implicit val fromUUID: Transformer[UUID, UUID @@ A] = tag[A](_)
-  implicit val toUUID: Transformer[UUID @@ A, UUID]   = _: UUID
+  implicit val toUUID: Transformer[UUID @@ A, UUID]   = id => id: UUID
 
 }
