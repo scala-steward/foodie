@@ -1,14 +1,18 @@
 package services.recipe
 
+import cats.data.OptionT
 import db.generated.Tables
 import errors.ServerError
 import errors.ServerError.Or
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
+import services.user.UserId
 import shapeless.tag.@@
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
+import utils.DBIOUtil.instances._
+import utils.IdUtils.Implicits._
 
 import java.util.UUID
 import javax.inject.Inject
@@ -19,7 +23,7 @@ trait RecipeService {
   def allMeasures: Future[Seq[Measure]]
 
   def getRecipe(id: UUID @@ RecipeId): Future[Option[Recipe]]
-  def createRecipe(recipeCreation: RecipeCreation): Future[Recipe]
+  def createRecipe(userId: UUID @@ UserId, recipeCreation: RecipeCreation): Future[Recipe]
   def updateRecipe(recipeUpdate: RecipeUpdate): Future[Recipe]
   def deleteRecipe(id: UUID @@ RecipeId): Future[ServerError.Or[Unit]]
 
@@ -35,7 +39,15 @@ object RecipeService {
     def allMeasures(implicit ec: ExecutionContext): DBIO[Seq[Measure]]
 
     def getRecipe(id: UUID @@ RecipeId)(implicit ec: ExecutionContext): DBIO[Option[Recipe]]
-    def createRecipe(recipeCreation: RecipeCreation)(implicit ec: ExecutionContext): DBIO[Recipe]
+
+    def createRecipe(
+        id: UUID @@ RecipeId,
+        userId: UUID @@ UserId,
+        recipeCreation: RecipeCreation
+    )(implicit
+        ec: ExecutionContext
+    ): DBIO[Recipe]
+
     def updateRecipe(recipeUpdate: RecipeUpdate)(implicit ec: ExecutionContext): DBIO[Recipe]
     def deleteRecipe(id: UUID @@ RecipeId)(implicit ec: ExecutionContext): DBIO[ServerError.Or[Unit]]
 
@@ -56,10 +68,12 @@ object RecipeService {
 
     override def allMeasures: Future[Seq[Measure]] = db.run(companion.allMeasures)
 
-    override def getRecipe(id: UUID @@ RecipeId): Future[Option[Recipe]] = db.run(companion.getRecipe(id))
+    override def getRecipe(id: UUID @@ RecipeId): Future[Option[Recipe]] =
+      db.run(companion.getRecipe(id))
 
-    override def createRecipe(recipeCreation: RecipeCreation): Future[Recipe] =
-      db.run(companion.createRecipe(recipeCreation))
+    override def createRecipe(userId: UUID @@ UserId, recipeCreation: RecipeCreation): Future[Recipe] = {
+      db.run(companion.createRecipe(UUID.randomUUID().transformInto[UUID @@ RecipeId], userId, recipeCreation))
+    }
 
     override def updateRecipe(recipeUpdate: RecipeUpdate): Future[Recipe] = db.run(companion.updateRecipe(recipeUpdate))
 
@@ -86,10 +100,44 @@ object RecipeService {
       Tables.MeasureName.result
         .map(_.map(_.transformInto[Measure]))
 
-    override def getRecipe(id: UUID @@ RecipeId)(implicit ec: ExecutionContext): DBIO[Option[Recipe]] = ???
-//      Tables.Recipe.filter(_.id === (id: UUID)).result.headOption
+    override def getRecipe(id: UUID @@ RecipeId)(implicit ec: ExecutionContext): DBIO[Option[Recipe]] = {
+      val recipeId = id.transformInto[UUID]
 
-    override def createRecipe(recipeCreation: RecipeCreation)(implicit ec: ExecutionContext): DBIO[Recipe] = ???
+      val transformer = for {
+        recipeRow <- OptionT(Tables.Recipe.filter(_.id === recipeId).result.headOption: DBIO[Option[Tables.RecipeRow]])
+        ingredientRows <- OptionT.liftF(
+          Tables.RecipeIngredient.filter(_.recipeId === recipeId).result: DBIO[Seq[Tables.RecipeIngredientRow]]
+        )
+      } yield Recipe
+        .DBRepresentation(
+          recipeRow,
+          ingredientRows
+        )
+        .transformInto[Recipe]
+
+      transformer.value
+    }
+
+    override def createRecipe(
+        id: UUID @@ RecipeId,
+        userId: UUID @@ UserId,
+        recipeCreation: RecipeCreation
+    )(implicit
+        ec: ExecutionContext
+    ): DBIO[Recipe] = {
+      val recipe = RecipeCreation.create(id, recipeCreation)
+      val recipeRow = Tables.RecipeRow(
+        id = recipe.id.transformInto[UUID],
+        userId = userId.transformInto[UUID],
+        name = recipe.name,
+        description = recipe.description
+      )
+      (Tables.Recipe.returning(Tables.Recipe) += recipeRow)
+        .map { recipeRow =>
+          val dbRepresentation = Recipe.DBRepresentation(recipeRow = recipeRow, ingredientRows = Seq.empty)
+          dbRepresentation.transformInto[Recipe]
+        }
+    }
 
     override def updateRecipe(recipeUpdate: RecipeUpdate)(implicit ec: ExecutionContext): DBIO[Recipe] = ???
 

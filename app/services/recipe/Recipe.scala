@@ -3,6 +3,7 @@ package services.recipe
 import db.generated.Tables
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl.TransformerOps
+import services.user.UserId
 import shapeless.tag.@@
 import utils.IdUtils.Implicits._
 
@@ -22,7 +23,7 @@ object Recipe {
       ingredientRows: Seq[Tables.RecipeIngredientRow]
   )
 
-  implicit val fromDB: Transformer[DBRepresentation, Recipe] =
+  implicit val fromRepresentation: Transformer[DBRepresentation, Recipe] =
     Transformer
       .define[DBRepresentation, Recipe]
       .withFieldComputed(_.id, _.recipeRow.id.transformInto[UUID @@ RecipeId])

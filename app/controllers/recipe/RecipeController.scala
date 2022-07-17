@@ -58,7 +58,7 @@ class RecipeController @Inject() (
   def create: Action[RecipeCreation] =
     jwtAction.async(circe.tolerantJson[RecipeCreation]) { request =>
       recipeService
-        .createRecipe(request.body.transformInto[services.recipe.RecipeCreation])
+        .createRecipe(request.user.id, request.body.transformInto[services.recipe.RecipeCreation])
         .map(
           _.pipe(_.transformInto[Recipe])
             .pipe(_.asJson)
