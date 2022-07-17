@@ -7,5 +7,6 @@ import java.util.UUID
 @JsonCodec
 case class Recipe(
     id: UUID,
-    ingredients: Seq[IngredientWithAmount]
+    //todo: Without refactoring there is the implicit assumption that all recipeIds are the same
+    ingredients: Seq[Ingredient]
 )

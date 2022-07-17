@@ -11,6 +11,11 @@ class RecipeController @Inject() (
     jwtAction: JwtAction
 ) extends AbstractController(controllerComponents) {
 
+  def getMeasures: Action[AnyContent] = ???
+
+  // TODO: Consider allowing specialized search instead of delivering all foods at once.
+  def getFoods: Action[AnyContent] = ???
+
   def get(id: UUID): Action[AnyContent]          = ???
   def create: Action[RecipeCreation]             = ???
   def update: Action[RecipeUpdate]               = ???
