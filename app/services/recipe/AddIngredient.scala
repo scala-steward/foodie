@@ -6,6 +6,6 @@ import java.util.UUID
 
 case class AddIngredient(
     recipeId: UUID @@ RecipeId,
-    ingredientId: Int,
-    amount: BigDecimal
+    foodId: Int @@ FoodId,
+    amount: Amount
 )
