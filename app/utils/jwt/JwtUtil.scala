@@ -8,6 +8,7 @@ import pdi.jwt.{ JwtAlgorithm, JwtCirce, JwtClaim, JwtHeader }
 import security.jwt.{ JwtContent, JwtExpiration }
 import services.user.UserId
 import shapeless.tag.@@
+import utils.IdUtils.Implicits._
 
 import java.util.UUID
 
@@ -33,7 +34,7 @@ object JwtUtil {
       header = JwtHeader(algorithm = signatureAlgorithm),
       claim = JwtClaim(
         content = JwtContent(
-          userId = userId.transformInto
+          userId = userId.transformInto[UUID]
         ).asJson.noSpaces,
         expiration = expiration.expirationAt,
         notBefore = expiration.notBefore

@@ -1,3 +1,3 @@
 package services.recipe
 
-sealed trait RecipeId
+sealed trait FoodId

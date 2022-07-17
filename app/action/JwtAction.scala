@@ -8,11 +8,12 @@ import play.api.libs.circe.Circe
 import play.api.mvc.Results.BadRequest
 import play.api.mvc._
 import pureconfig.generic.ProductHint
-import pureconfig.{ CamelCase, ConfigFieldMapping, ConfigSource }
 import pureconfig.generic.auto._
+import pureconfig.{ CamelCase, ConfigFieldMapping, ConfigSource }
 import security.jwt.JwtConfiguration
 import services.user.{ User, UserId, UserService }
 import shapeless.tag.@@
+import utils.IdUtils.Implicits._
 import utils.jwt.JwtUtil
 
 import java.util.UUID
