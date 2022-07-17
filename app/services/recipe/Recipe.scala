@@ -13,9 +13,4 @@ case class Recipe(
     ingredients: Vector[Ingredient]
 )
 
-object Recipe {
-
-  implicit val toDB: Transformer[Recipe, Tables.RecipeRow] = ???
-//    Transformer.define[Recipe, Tables.RecipeRow].buildTransformer
-
-}
+object Recipe {}

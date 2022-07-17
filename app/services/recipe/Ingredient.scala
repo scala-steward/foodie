@@ -8,7 +8,6 @@ import java.util.UUID
 
 case class Ingredient(
     id: UUID @@ IngredientId,
-    recipeId: UUID @@ RecipeId,
     foodId: Int @@ FoodId,
     amount: Amount
 )

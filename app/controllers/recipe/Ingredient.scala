@@ -9,7 +9,6 @@ import java.util.UUID
 @JsonCodec
 case class Ingredient(
     id: UUID,
-    recipeId: UUID, // TODO: Consider necessity
     foodId: Int,
     amount: Amount
 )

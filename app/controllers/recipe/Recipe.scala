@@ -1,12 +1,23 @@
 package controllers.recipe
 
 import io.circe.generic.JsonCodec
+import io.scalaland.chimney.Transformer
 
 import java.util.UUID
 
 @JsonCodec
 case class Recipe(
     id: UUID,
-    //todo: Without refactoring there is the implicit assumption that all recipeIds are the same
+    name: String,
+    description: Option[String],
     ingredients: Seq[Ingredient]
 )
+
+object Recipe {
+
+  implicit val fromInternal: Transformer[services.recipe.Recipe, Recipe] =
+    Transformer
+      .define[services.recipe.Recipe, Recipe]
+      .buildTransformer
+
+}
