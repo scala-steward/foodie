@@ -3,6 +3,7 @@ package services.recipe
 import db.generated.Tables
 import errors.ServerError
 import errors.ServerError.Or
+import io.scalaland.chimney.dsl.TransformerOps
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import shapeless.tag.@@
 import slick.dbio.DBIO
@@ -30,8 +31,8 @@ trait RecipeService {
 object RecipeService {
 
   trait Companion {
-    def allFoods: DBIO[Seq[Food]]
-    def allMeasures: DBIO[Seq[Measure]]
+    def allFoods(implicit ec: ExecutionContext): DBIO[Seq[Food]]
+    def allMeasures(implicit ec: ExecutionContext): DBIO[Seq[Measure]]
 
     def getRecipe(id: UUID @@ RecipeId)(implicit ec: ExecutionContext): DBIO[Option[Recipe]]
     def createRecipe(recipeCreation: RecipeCreation)(implicit ec: ExecutionContext): DBIO[Recipe]
@@ -77,8 +78,13 @@ object RecipeService {
 
   object Live extends Companion {
 
-    override def allFoods: DBIO[Seq[Food]]       = ???
-    override def allMeasures: DBIO[Seq[Measure]] = ???
+    override def allFoods(implicit ec: ExecutionContext): DBIO[Seq[Food]] =
+      Tables.FoodName.result
+        .map(_.map(_.transformInto[Food]))
+
+    override def allMeasures(implicit ec: ExecutionContext): DBIO[Seq[Measure]] =
+      Tables.MeasureName.result
+        .map(_.map(_.transformInto[Measure]))
 
     override def getRecipe(id: UUID @@ RecipeId)(implicit ec: ExecutionContext): DBIO[Option[Recipe]] = ???
 //      Tables.Recipe.filter(_.id === (id: UUID)).result.headOption

@@ -3,11 +3,11 @@ package controllers.recipe
 import io.circe.generic.JsonCodec
 import io.scalaland.chimney.Transformer
 
-import java.util.UUID
+import utils.IdUtils.Implicits._
 
 @JsonCodec
 case class Food(
-    id: UUID,
+    id: Int,
     name: String
 )
 
