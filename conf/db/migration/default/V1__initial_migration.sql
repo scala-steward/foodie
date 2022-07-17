@@ -162,23 +162,25 @@ create table recipe_ingredient(
     recipe_id uuid not null,
     food_name_id integer not null,
     measure_id int not null,
-    amount decimal not null
+    factor decimal not null
 );
 
 alter table recipe_ingredient
     add constraint recipe_ingredient_pk primary key (id),
     add constraint recipe_ingredient_recipe_id_fk foreign key (recipe_id) references recipe(id),
     add constraint recipe_ingredient_food_name_id_fk foreign key (food_name_id) references cnf.food_name(food_id),
-    add constraint recipe_amount_positive check (amount > 0);
+    add constraint recipe_factor_positive check (factor > 0);
 
 create table meal_plan_entry(
   id uuid not null,
   user_id uuid not null,
+  recipe_id uuid not null,
   consumed_on timestamp not null,
-  amount decimal not null
+  factor decimal not null
 );
 
 alter table meal_plan_entry
     add constraint meal_plan_entry_pk primary key (id),
     add constraint meal_plan_entry_user_id_fk foreign key (user_id) references "user"(id),
-    add constraint meal_plan_entry_amount_positive check (amount > 0);
+    add constraint meal_plan_entry_recipe_id_fk foreign key (recipe_id) references recipe(id),
+    add constraint meal_plan_entry_factor_positive check (factor > 0);

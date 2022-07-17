@@ -3,7 +3,6 @@ package services.recipe
 import db.generated.Tables
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl.TransformerOps
-import services.user.UserId
 import shapeless.tag.@@
 import utils.IdUtils.Implicits._
 

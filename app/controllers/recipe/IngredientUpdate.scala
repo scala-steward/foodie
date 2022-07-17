@@ -18,6 +18,7 @@ object IngredientUpdate {
   implicit val toInternal: Transformer[IngredientUpdate, services.recipe.IngredientUpdate] =
     Transformer
       .define[IngredientUpdate, services.recipe.IngredientUpdate]
+      .withFieldRenamed(_.ingredientId, _.id)
       .buildTransformer
 
 }

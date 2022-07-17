@@ -8,6 +8,7 @@ object ErrorContext {
 
   sealed abstract class ServerErrorInstance(override val message: String) extends ErrorContext
 
+  /* No automatic derivation to avoid upcasting issue, since any instance of ErrorContext has a more precise type. */
   implicit class ErrorContextToServerError(val errorContext: ErrorContext) extends AnyVal {
     def asServerError: ServerError = ServerError.fromContext(errorContext)
   }
@@ -28,6 +29,22 @@ object ErrorContext {
 
   object User {
     case object NotFound extends ServerErrorInstance("No user with the given id found")
+  }
+
+  object Recipe {
+    case object NotFound extends ServerErrorInstance("No recipe with the given id found")
+
+    object Ingredient {
+
+      case class Creation(dbMessage: String)
+          extends ServerErrorInstance(
+            s"Ingredient creation failed due to: $dbMessage"
+          )
+
+      case object NotFound extends ServerErrorInstance("No ingredient with the given id found")
+
+    }
+
   }
 
 }

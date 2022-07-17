@@ -26,7 +26,7 @@ object Ingredient {
         r =>
           AmountUnit(
             measureId = r.measureId.transformInto[Int @@ MeasureId],
-            factor = r.amount
+            factor = r.factor
           )
       )
       .buildTransformer

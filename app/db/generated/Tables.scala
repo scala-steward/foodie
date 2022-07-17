@@ -167,29 +167,34 @@ trait Tables {
   /** Entity class storing rows of table MealPlanEntry
    *  @param id Database column id SqlType(uuid), PrimaryKey
    *  @param userId Database column user_id SqlType(uuid)
+   *  @param recipeId Database column recipe_id SqlType(uuid)
    *  @param consumedOn Database column consumed_on SqlType(timestamp)
-   *  @param amount Database column amount SqlType(numeric) */
-  case class MealPlanEntryRow(id: java.util.UUID, userId: java.util.UUID, consumedOn: java.sql.Timestamp, amount: scala.math.BigDecimal)
+   *  @param factor Database column factor SqlType(numeric) */
+  case class MealPlanEntryRow(id: java.util.UUID, userId: java.util.UUID, recipeId: java.util.UUID, consumedOn: java.sql.Timestamp, factor: scala.math.BigDecimal)
   /** GetResult implicit for fetching MealPlanEntryRow objects using plain SQL queries */
   implicit def GetResultMealPlanEntryRow(implicit e0: GR[java.util.UUID], e1: GR[java.sql.Timestamp], e2: GR[scala.math.BigDecimal]): GR[MealPlanEntryRow] = GR{
     prs => import prs._
-    MealPlanEntryRow.tupled((<<[java.util.UUID], <<[java.util.UUID], <<[java.sql.Timestamp], <<[scala.math.BigDecimal]))
+    MealPlanEntryRow.tupled((<<[java.util.UUID], <<[java.util.UUID], <<[java.util.UUID], <<[java.sql.Timestamp], <<[scala.math.BigDecimal]))
   }
   /** Table description of table meal_plan_entry. Objects of this class serve as prototypes for rows in queries. */
   class MealPlanEntry(_tableTag: Tag) extends profile.api.Table[MealPlanEntryRow](_tableTag, "meal_plan_entry") {
-    def * = (id, userId, consumedOn, amount) <> (MealPlanEntryRow.tupled, MealPlanEntryRow.unapply)
+    def * = (id, userId, recipeId, consumedOn, factor) <> (MealPlanEntryRow.tupled, MealPlanEntryRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((Rep.Some(id), Rep.Some(userId), Rep.Some(consumedOn), Rep.Some(amount))).shaped.<>({r=>import r._; _1.map(_=> MealPlanEntryRow.tupled((_1.get, _2.get, _3.get, _4.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = ((Rep.Some(id), Rep.Some(userId), Rep.Some(recipeId), Rep.Some(consumedOn), Rep.Some(factor))).shaped.<>({r=>import r._; _1.map(_=> MealPlanEntryRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(uuid), PrimaryKey */
     val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
     /** Database column user_id SqlType(uuid) */
     val userId: Rep[java.util.UUID] = column[java.util.UUID]("user_id")
+    /** Database column recipe_id SqlType(uuid) */
+    val recipeId: Rep[java.util.UUID] = column[java.util.UUID]("recipe_id")
     /** Database column consumed_on SqlType(timestamp) */
     val consumedOn: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("consumed_on")
-    /** Database column amount SqlType(numeric) */
-    val amount: Rep[scala.math.BigDecimal] = column[scala.math.BigDecimal]("amount")
+    /** Database column factor SqlType(numeric) */
+    val factor: Rep[scala.math.BigDecimal] = column[scala.math.BigDecimal]("factor")
 
+    /** Foreign key referencing Recipe (database name meal_plan_entry_recipe_id_fk) */
+    lazy val recipeFk = foreignKey("meal_plan_entry_recipe_id_fk", recipeId, Recipe)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
     /** Foreign key referencing User (database name meal_plan_entry_user_id_fk) */
     lazy val userFk = foreignKey("meal_plan_entry_user_id_fk", userId, User)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
   }
@@ -373,8 +378,8 @@ trait Tables {
    *  @param recipeId Database column recipe_id SqlType(uuid)
    *  @param foodNameId Database column food_name_id SqlType(int4)
    *  @param measureId Database column measure_id SqlType(int4)
-   *  @param amount Database column amount SqlType(numeric) */
-  case class RecipeIngredientRow(id: java.util.UUID, recipeId: java.util.UUID, foodNameId: Int, measureId: Int, amount: scala.math.BigDecimal)
+   *  @param factor Database column factor SqlType(numeric) */
+  case class RecipeIngredientRow(id: java.util.UUID, recipeId: java.util.UUID, foodNameId: Int, measureId: Int, factor: scala.math.BigDecimal)
   /** GetResult implicit for fetching RecipeIngredientRow objects using plain SQL queries */
   implicit def GetResultRecipeIngredientRow(implicit e0: GR[java.util.UUID], e1: GR[Int], e2: GR[scala.math.BigDecimal]): GR[RecipeIngredientRow] = GR{
     prs => import prs._
@@ -382,9 +387,9 @@ trait Tables {
   }
   /** Table description of table recipe_ingredient. Objects of this class serve as prototypes for rows in queries. */
   class RecipeIngredient(_tableTag: Tag) extends profile.api.Table[RecipeIngredientRow](_tableTag, "recipe_ingredient") {
-    def * = (id, recipeId, foodNameId, measureId, amount) <> (RecipeIngredientRow.tupled, RecipeIngredientRow.unapply)
+    def * = (id, recipeId, foodNameId, measureId, factor) <> (RecipeIngredientRow.tupled, RecipeIngredientRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((Rep.Some(id), Rep.Some(recipeId), Rep.Some(foodNameId), Rep.Some(measureId), Rep.Some(amount))).shaped.<>({r=>import r._; _1.map(_=> RecipeIngredientRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = ((Rep.Some(id), Rep.Some(recipeId), Rep.Some(foodNameId), Rep.Some(measureId), Rep.Some(factor))).shaped.<>({r=>import r._; _1.map(_=> RecipeIngredientRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(uuid), PrimaryKey */
     val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
@@ -394,8 +399,8 @@ trait Tables {
     val foodNameId: Rep[Int] = column[Int]("food_name_id")
     /** Database column measure_id SqlType(int4) */
     val measureId: Rep[Int] = column[Int]("measure_id")
-    /** Database column amount SqlType(numeric) */
-    val amount: Rep[scala.math.BigDecimal] = column[scala.math.BigDecimal]("amount")
+    /** Database column factor SqlType(numeric) */
+    val factor: Rep[scala.math.BigDecimal] = column[scala.math.BigDecimal]("factor")
 
     /** Foreign key referencing FoodName (database name recipe_ingredient_food_name_id_fk) */
     lazy val foodNameFk = foreignKey("recipe_ingredient_food_name_id_fk", foodNameId, FoodName)(r => r.foodId, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)

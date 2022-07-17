@@ -68,21 +68,26 @@ class RecipeController @Inject() (
 
   def update: Action[RecipeUpdate] =
     jwtAction.async(circe.tolerantJson[RecipeUpdate]) { request =>
-      recipeService
-        .updateRecipe(request.body.transformInto[services.recipe.RecipeUpdate])
+      EitherT(
+        recipeService
+          .updateRecipe(request.body.transformInto[services.recipe.RecipeUpdate])
+      )
         .map(
           _.pipe(_.transformInto[Recipe])
             .pipe(_.asJson)
             .pipe(Ok(_))
         )
+        .fold(badRequest, identity)
     }
 
   def delete(id: UUID): Action[AnyContent] =
     jwtAction.async {
-      EitherT(recipeService.deleteRecipe(id.transformInto[UUID @@ RecipeId])).fold(
-        badRequest,
-        _ => Ok
-      )
+      recipeService
+        .deleteRecipe(id.transformInto[UUID @@ RecipeId])
+        .map(
+          _.pipe(_.asJson)
+            .pipe(Ok(_))
+        )
     }
 
   def addIngredient: Action[AddIngredient] =
@@ -96,10 +101,12 @@ class RecipeController @Inject() (
 
   def removeIngredient(id: UUID): Action[AnyContent] =
     jwtAction.async {
-      EitherT(recipeService.removeIngredient(id.transformInto[UUID @@ IngredientId])).fold(
-        badRequest,
-        _ => Ok
-      )
+      recipeService
+        .removeIngredient(id.transformInto[UUID @@ IngredientId])
+        .map(
+          _.pipe(_.asJson)
+            .pipe(Ok(_))
+        )
     }
 
   def updateAmount: Action[IngredientUpdate] =
