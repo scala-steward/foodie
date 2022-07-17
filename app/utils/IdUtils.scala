@@ -4,13 +4,11 @@ import io.scalaland.chimney.Transformer
 import shapeless.tag
 import shapeless.tag.@@
 
-import java.util.UUID
-
 object IdUtils {
 
   object Implicits {
-    implicit def fromUUID[A]: Transformer[UUID, UUID @@ A] = tag[A](_)
-    implicit def toUUID[A]: Transformer[UUID @@ A, UUID]   = id => id: UUID
+    implicit def fromUntagged[A, Tag]: Transformer[A, A @@ Tag] = tag[Tag](_)
+    implicit def toUntagged[A, Tag]: Transformer[A @@ Tag, A]   = id => id: A
   }
 
 }
