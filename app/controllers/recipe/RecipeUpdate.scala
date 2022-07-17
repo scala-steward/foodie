@@ -15,7 +15,7 @@ case class RecipeUpdate(
 
 object RecipeUpdate {
 
-  implicit val toDB: Transformer[RecipeUpdate, services.recipe.RecipeUpdate] =
+  implicit val toInternal: Transformer[RecipeUpdate, services.recipe.RecipeUpdate] =
     Transformer
       .define[RecipeUpdate, services.recipe.RecipeUpdate]
       .buildTransformer
