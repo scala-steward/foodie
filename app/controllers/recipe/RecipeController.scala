@@ -24,10 +24,25 @@ class RecipeController @Inject() (
     extends AbstractController(controllerComponents)
     with Circe {
 
-  def getMeasures: Action[AnyContent] = ???
+  def getMeasures: Action[AnyContent] =
+    jwtAction.async {
+      recipeService.allMeasures
+        .map(
+          _.map(_.transformInto[Measure])
+            .pipe(_.asJson)
+            .pipe(Ok(_))
+        )
+    }
 
   // TODO: Consider allowing specialized search instead of delivering all foods at once.
-  def getFoods: Action[AnyContent] = ???
+  def getFoods: Action[AnyContent] =
+    jwtAction.async {
+      recipeService.allFoods.map(
+        _.map(_.transformInto[Food])
+          .pipe(_.asJson)
+          .pipe(Ok(_))
+      )
+    }
 
   def get(id: UUID): Action[AnyContent] =
     jwtAction.async {

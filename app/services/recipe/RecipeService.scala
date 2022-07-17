@@ -14,6 +14,9 @@ import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
 
 trait RecipeService {
+  def allFoods: Future[Seq[Food]]
+  def allMeasures: Future[Seq[Measure]]
+
   def getRecipe(id: UUID @@ RecipeId): Future[Option[Recipe]]
   def createRecipe(recipeCreation: RecipeCreation): Future[Recipe]
   def updateRecipe(recipeUpdate: RecipeUpdate): Future[Recipe]
@@ -27,6 +30,9 @@ trait RecipeService {
 object RecipeService {
 
   trait Companion {
+    def allFoods: DBIO[Seq[Food]]
+    def allMeasures: DBIO[Seq[Measure]]
+
     def getRecipe(id: UUID @@ RecipeId)(implicit ec: ExecutionContext): DBIO[Option[Recipe]]
     def createRecipe(recipeCreation: RecipeCreation)(implicit ec: ExecutionContext): DBIO[Recipe]
     def updateRecipe(recipeUpdate: RecipeUpdate)(implicit ec: ExecutionContext): DBIO[Recipe]
@@ -44,6 +50,11 @@ object RecipeService {
       executionContext: ExecutionContext
   ) extends RecipeService
       with HasDatabaseConfigProvider[PostgresProfile] {
+
+    override def allFoods: Future[Seq[Food]] = db.run(companion.allFoods)
+
+    override def allMeasures: Future[Seq[Measure]] = db.run(companion.allMeasures)
+
     override def getRecipe(id: UUID @@ RecipeId): Future[Option[Recipe]] = db.run(companion.getRecipe(id))
 
     override def createRecipe(recipeCreation: RecipeCreation): Future[Recipe] =
@@ -65,6 +76,9 @@ object RecipeService {
   }
 
   object Live extends Companion {
+
+    override def allFoods: DBIO[Seq[Food]]       = ???
+    override def allMeasures: DBIO[Seq[Measure]] = ???
 
     override def getRecipe(id: UUID @@ RecipeId)(implicit ec: ExecutionContext): DBIO[Option[Recipe]] = ???
 //      Tables.Recipe.filter(_.id === (id: UUID)).result.headOption
