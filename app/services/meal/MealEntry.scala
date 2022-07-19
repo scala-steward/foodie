@@ -3,14 +3,11 @@ package services.meal
 import db.generated.Tables
 import io.scalaland.chimney.Transformer
 import services.recipe.RecipeId
-import shapeless.tag.@@
 import utils.IdUtils.Implicits._
 
-import java.util.UUID
-
 case class MealEntry(
-    id: UUID @@ MealEntryId,
-    recipeId: UUID @@ RecipeId,
+    id: MealEntryId,
+    recipeId: RecipeId,
     factor: BigDecimal
 )
 

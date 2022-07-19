@@ -10,7 +10,7 @@ import java.time.{ LocalDate, LocalTime }
 import java.util.UUID
 
 case class Meal(
-    id: UUID @@ MealId,
+    id: MealId,
     date: LocalDate,
     time: Option[LocalTime],
     name: Option[String],
@@ -27,7 +27,7 @@ object Meal {
   implicit val fromRepresentation: Transformer[DBRepresentation, Meal] =
     Transformer
       .define[DBRepresentation, Meal]
-      .withFieldComputed(_.id, _.mealRow.id.transformInto[UUID @@ MealId])
+      .withFieldComputed(_.id, _.mealRow.id.transformInto[MealId])
       .withFieldComputed(_.date, _.mealRow.consumedOnDate.toLocalDate)
       .withFieldComputed(_.time, _.mealRow.consumedOnTime.map(_.toLocalTime))
       .withFieldComputed(_.name, _.mealRow.name)
