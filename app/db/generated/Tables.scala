@@ -14,7 +14,7 @@ trait Tables {
   import slick.jdbc.{GetResult => GR}
 
   /** DDL for all tables. Call .create to execute. */
-  lazy val schema: profile.SchemaDescription = Array(ConversionFactor.schema, FoodGroup.schema, FoodName.schema, FoodSource.schema, MealPlanEntry.schema, MeasureName.schema, NutrientAmount.schema, NutrientName.schema, NutrientSource.schema, Recipe.schema, RecipeIngredient.schema, RefuseAmount.schema, RefuseName.schema, User.schema, YieldAmount.schema, YieldName.schema).reduceLeft(_ ++ _)
+  lazy val schema: profile.SchemaDescription = Array(ConversionFactor.schema, FoodGroup.schema, FoodName.schema, FoodSource.schema, Meal.schema, MealEntry.schema, MeasureName.schema, NutrientAmount.schema, NutrientName.schema, NutrientSource.schema, Recipe.schema, RecipeIngredient.schema, RefuseAmount.schema, RefuseName.schema, User.schema, YieldAmount.schema, YieldName.schema).reduceLeft(_ ++ _)
   @deprecated("Use .schema instead of .ddl", "3.0")
   def ddl = schema
 
@@ -164,42 +164,74 @@ trait Tables {
   /** Collection-like TableQuery object for table FoodSource */
   lazy val FoodSource = new TableQuery(tag => new FoodSource(tag))
 
-  /** Entity class storing rows of table MealPlanEntry
+  /** Entity class storing rows of table Meal
    *  @param id Database column id SqlType(uuid), PrimaryKey
    *  @param userId Database column user_id SqlType(uuid)
-   *  @param recipeId Database column recipe_id SqlType(uuid)
-   *  @param consumedOn Database column consumed_on SqlType(timestamp)
-   *  @param factor Database column factor SqlType(numeric) */
-  case class MealPlanEntryRow(id: java.util.UUID, userId: java.util.UUID, recipeId: java.util.UUID, consumedOn: java.sql.Timestamp, factor: scala.math.BigDecimal)
-  /** GetResult implicit for fetching MealPlanEntryRow objects using plain SQL queries */
-  implicit def GetResultMealPlanEntryRow(implicit e0: GR[java.util.UUID], e1: GR[java.sql.Timestamp], e2: GR[scala.math.BigDecimal]): GR[MealPlanEntryRow] = GR{
+   *  @param consumedOnDate Database column consumed_on_date SqlType(date)
+   *  @param consumedOnTime Database column consumed_on_time SqlType(time), Default(None)
+   *  @param name Database column name SqlType(text), Default(None) */
+  case class MealRow(id: java.util.UUID, userId: java.util.UUID, consumedOnDate: java.sql.Date, consumedOnTime: Option[java.sql.Time] = None, name: Option[String] = None)
+  /** GetResult implicit for fetching MealRow objects using plain SQL queries */
+  implicit def GetResultMealRow(implicit e0: GR[java.util.UUID], e1: GR[java.sql.Date], e2: GR[Option[java.sql.Time]], e3: GR[Option[String]]): GR[MealRow] = GR{
     prs => import prs._
-    MealPlanEntryRow.tupled((<<[java.util.UUID], <<[java.util.UUID], <<[java.util.UUID], <<[java.sql.Timestamp], <<[scala.math.BigDecimal]))
+    MealRow.tupled((<<[java.util.UUID], <<[java.util.UUID], <<[java.sql.Date], <<?[java.sql.Time], <<?[String]))
   }
-  /** Table description of table meal_plan_entry. Objects of this class serve as prototypes for rows in queries. */
-  class MealPlanEntry(_tableTag: Tag) extends profile.api.Table[MealPlanEntryRow](_tableTag, "meal_plan_entry") {
-    def * = (id, userId, recipeId, consumedOn, factor) <> (MealPlanEntryRow.tupled, MealPlanEntryRow.unapply)
+  /** Table description of table meal. Objects of this class serve as prototypes for rows in queries. */
+  class Meal(_tableTag: Tag) extends profile.api.Table[MealRow](_tableTag, "meal") {
+    def * = (id, userId, consumedOnDate, consumedOnTime, name) <> (MealRow.tupled, MealRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((Rep.Some(id), Rep.Some(userId), Rep.Some(recipeId), Rep.Some(consumedOn), Rep.Some(factor))).shaped.<>({r=>import r._; _1.map(_=> MealPlanEntryRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = ((Rep.Some(id), Rep.Some(userId), Rep.Some(consumedOnDate), consumedOnTime, name)).shaped.<>({r=>import r._; _1.map(_=> MealRow.tupled((_1.get, _2.get, _3.get, _4, _5)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(uuid), PrimaryKey */
     val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
     /** Database column user_id SqlType(uuid) */
     val userId: Rep[java.util.UUID] = column[java.util.UUID]("user_id")
+    /** Database column consumed_on_date SqlType(date) */
+    val consumedOnDate: Rep[java.sql.Date] = column[java.sql.Date]("consumed_on_date")
+    /** Database column consumed_on_time SqlType(time), Default(None) */
+    val consumedOnTime: Rep[Option[java.sql.Time]] = column[Option[java.sql.Time]]("consumed_on_time", O.Default(None))
+    /** Database column name SqlType(text), Default(None) */
+    val name: Rep[Option[String]] = column[Option[String]]("name", O.Default(None))
+
+    /** Foreign key referencing User (database name meal_user_id_fk) */
+    lazy val userFk = foreignKey("meal_user_id_fk", userId, User)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
+  }
+  /** Collection-like TableQuery object for table Meal */
+  lazy val Meal = new TableQuery(tag => new Meal(tag))
+
+  /** Entity class storing rows of table MealEntry
+   *  @param id Database column id SqlType(uuid), PrimaryKey
+   *  @param mealId Database column meal_id SqlType(uuid)
+   *  @param recipeId Database column recipe_id SqlType(uuid)
+   *  @param factor Database column factor SqlType(numeric) */
+  case class MealEntryRow(id: java.util.UUID, mealId: java.util.UUID, recipeId: java.util.UUID, factor: scala.math.BigDecimal)
+  /** GetResult implicit for fetching MealEntryRow objects using plain SQL queries */
+  implicit def GetResultMealEntryRow(implicit e0: GR[java.util.UUID], e1: GR[scala.math.BigDecimal]): GR[MealEntryRow] = GR{
+    prs => import prs._
+    MealEntryRow.tupled((<<[java.util.UUID], <<[java.util.UUID], <<[java.util.UUID], <<[scala.math.BigDecimal]))
+  }
+  /** Table description of table meal_entry. Objects of this class serve as prototypes for rows in queries. */
+  class MealEntry(_tableTag: Tag) extends profile.api.Table[MealEntryRow](_tableTag, "meal_entry") {
+    def * = (id, mealId, recipeId, factor) <> (MealEntryRow.tupled, MealEntryRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = ((Rep.Some(id), Rep.Some(mealId), Rep.Some(recipeId), Rep.Some(factor))).shaped.<>({r=>import r._; _1.map(_=> MealEntryRow.tupled((_1.get, _2.get, _3.get, _4.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+
+    /** Database column id SqlType(uuid), PrimaryKey */
+    val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
+    /** Database column meal_id SqlType(uuid) */
+    val mealId: Rep[java.util.UUID] = column[java.util.UUID]("meal_id")
     /** Database column recipe_id SqlType(uuid) */
     val recipeId: Rep[java.util.UUID] = column[java.util.UUID]("recipe_id")
-    /** Database column consumed_on SqlType(timestamp) */
-    val consumedOn: Rep[java.sql.Timestamp] = column[java.sql.Timestamp]("consumed_on")
     /** Database column factor SqlType(numeric) */
     val factor: Rep[scala.math.BigDecimal] = column[scala.math.BigDecimal]("factor")
 
-    /** Foreign key referencing Recipe (database name meal_plan_entry_recipe_id_fk) */
-    lazy val recipeFk = foreignKey("meal_plan_entry_recipe_id_fk", recipeId, Recipe)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
-    /** Foreign key referencing User (database name meal_plan_entry_user_id_fk) */
-    lazy val userFk = foreignKey("meal_plan_entry_user_id_fk", userId, User)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+    /** Foreign key referencing Meal (database name meal_entry_meal_id_fk) */
+    lazy val mealFk = foreignKey("meal_entry_meal_id_fk", mealId, Meal)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
+    /** Foreign key referencing Recipe (database name meal_entry_recipe_id_fk) */
+    lazy val recipeFk = foreignKey("meal_entry_recipe_id_fk", recipeId, Recipe)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
   }
-  /** Collection-like TableQuery object for table MealPlanEntry */
-  lazy val MealPlanEntry = new TableQuery(tag => new MealPlanEntry(tag))
+  /** Collection-like TableQuery object for table MealEntry */
+  lazy val MealEntry = new TableQuery(tag => new MealEntry(tag))
 
   /** Entity class storing rows of table MeasureName
    *  @param measureId Database column measure_id SqlType(int4), PrimaryKey
@@ -368,7 +400,7 @@ trait Tables {
     val description: Rep[Option[String]] = column[Option[String]]("description", O.Default(None))
 
     /** Foreign key referencing User (database name recipe_user_id_fk) */
-    lazy val userFk = foreignKey("recipe_user_id_fk", userId, User)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+    lazy val userFk = foreignKey("recipe_user_id_fk", userId, User)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
   }
   /** Collection-like TableQuery object for table Recipe */
   lazy val Recipe = new TableQuery(tag => new Recipe(tag))
