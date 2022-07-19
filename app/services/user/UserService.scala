@@ -8,6 +8,7 @@ import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
 import utils.DBIOUtil.instances._
+import utils.IdUtils.Implicits._
 
 import java.util.UUID
 import javax.inject.Inject
