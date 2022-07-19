@@ -3,6 +3,7 @@ GET    /assets/*file             controllers.Assets.versioned(path="/public", fi
 
 GET    /recipe/measures              controllers.recipe.RecipeController.getMeasures
 GET    /recipe/foods                 controllers.recipe.RecipeController.getFoods
+GET    /recipe/all                   controllers.recipe.RecipeController.getRecipes
 GET    /recipe/:id                   controllers.recipe.RecipeController.get(id: java.util.UUID)
 POST   /recipe/create                controllers.recipe.RecipeController.create
 PATCH  /recipe/update                controllers.recipe.RecipeController.update

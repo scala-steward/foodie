@@ -1,6 +1,7 @@
 package services.recipe
 
 import cats.data.{ EitherT, OptionT }
+import cats.syntax.traverse._
 import db.generated.Tables
 import errors.{ ErrorContext, ServerError }
 import io.scalaland.chimney.dsl.TransformerOps
@@ -21,13 +22,14 @@ trait RecipeService {
   def allFoods: Future[Seq[Food]]
   def allMeasures: Future[Seq[Measure]]
 
-  def getRecipe(id: UUID @@ RecipeId): Future[Option[Recipe]]
+  def allRecipes(userId: UUID @@ UserId): Future[Seq[Recipe]]
+  def getRecipe(userId: UUID @@ UserId, id: UUID @@ RecipeId): Future[Option[Recipe]]
   def createRecipe(userId: UUID @@ UserId, recipeCreation: RecipeCreation): Future[Recipe]
   def updateRecipe(recipeUpdate: RecipeUpdate): Future[ServerError.Or[Recipe]]
-  def deleteRecipe(id: UUID @@ RecipeId): Future[Boolean]
+  def deleteRecipe(userId: UUID @@ UserId, id: UUID @@ RecipeId): Future[Boolean]
 
   def addIngredient(addIngredient: AddIngredient): Future[ServerError.Or[Ingredient]]
-  def removeIngredient(ingredientId: UUID @@ IngredientId): Future[Boolean]
+  def removeIngredient(userId: UUID @@ UserId, ingredientId: UUID @@ IngredientId): Future[Boolean]
   def updateAmount(ingredientUpdate: IngredientUpdate): Future[ServerError.Or[Ingredient]]
 }
 
@@ -37,26 +39,46 @@ object RecipeService {
     def allFoods(implicit ec: ExecutionContext): DBIO[Seq[Food]]
     def allMeasures(implicit ec: ExecutionContext): DBIO[Seq[Measure]]
 
-    def getRecipe(id: UUID @@ RecipeId)(implicit ec: ExecutionContext): DBIO[Option[Recipe]]
+    def allRecipes(userId: UUID @@ UserId)(implicit ec: ExecutionContext): DBIO[Seq[Recipe]]
+
+    def getRecipe(
+        userId: UUID @@ UserId,
+        id: UUID @@ RecipeId
+    )(implicit ec: ExecutionContext): DBIO[Option[Recipe]]
 
     def createRecipe(
         id: UUID @@ RecipeId,
-        userId: UUID @@ UserId,
         recipeCreation: RecipeCreation
     )(implicit
         ec: ExecutionContext
     ): DBIO[Recipe]
 
-    def updateRecipe(recipeUpdate: RecipeUpdate)(implicit ec: ExecutionContext): DBIO[ServerError.Or[Recipe]]
-    def deleteRecipe(id: UUID @@ RecipeId)(implicit ec: ExecutionContext): DBIO[Boolean]
+    def updateRecipe(
+        recipeUpdate: RecipeUpdate
+    )(implicit
+        ec: ExecutionContext
+    ): DBIO[ServerError.Or[Recipe]]
 
-    def addIngredient(id: UUID @@ IngredientId, addIngredient: AddIngredient)(implicit
+    def deleteRecipe(
+        userId: UUID @@ UserId,
+        id: UUID @@ RecipeId
+    )(implicit ec: ExecutionContext): DBIO[Boolean]
+
+    def addIngredient(
+        id: UUID @@ IngredientId,
+        addIngredient: AddIngredient
+    )(implicit
         ec: ExecutionContext
     ): DBIO[Ingredient]
 
-    def removeIngredient(id: UUID @@ IngredientId)(implicit ec: ExecutionContext): DBIO[Boolean]
+    def removeIngredient(
+        userId: UUID @@ UserId,
+        id: UUID @@ IngredientId
+    )(implicit ec: ExecutionContext): DBIO[Boolean]
 
-    def updateAmount(ingredientUpdate: IngredientUpdate)(implicit
+    def updateAmount(
+        ingredientUpdate: IngredientUpdate
+    )(implicit
         ec: ExecutionContext
     ): DBIO[ServerError.Or[Ingredient]]
 
@@ -74,17 +96,22 @@ object RecipeService {
 
     override def allMeasures: Future[Seq[Measure]] = db.run(companion.allMeasures)
 
-    override def getRecipe(id: UUID @@ RecipeId): Future[Option[Recipe]] =
-      db.run(companion.getRecipe(id))
+    override def allRecipes(userId: UUID @@ UserId): Future[Seq[Recipe]] = db.run(companion.allRecipes(userId))
+
+    override def getRecipe(userId: UUID @@ UserId, id: UUID @@ RecipeId): Future[Option[Recipe]] =
+      db.run(companion.getRecipe(userId, id))
 
     override def createRecipe(userId: UUID @@ UserId, recipeCreation: RecipeCreation): Future[Recipe] = {
-      db.run(companion.createRecipe(UUID.randomUUID().transformInto[UUID @@ RecipeId], userId, recipeCreation))
+      db.run(companion.createRecipe(UUID.randomUUID().transformInto[UUID @@ RecipeId], recipeCreation))
     }
 
     override def updateRecipe(recipeUpdate: RecipeUpdate): Future[ServerError.Or[Recipe]] =
       db.run(companion.updateRecipe(recipeUpdate))
 
-    override def deleteRecipe(id: UUID @@ RecipeId): Future[Boolean] = db.run(companion.deleteRecipe(id))
+    override def deleteRecipe(
+        userId: UUID @@ UserId,
+        id: UUID @@ RecipeId
+    ): Future[Boolean] = db.run(companion.deleteRecipe(userId, id))
 
     override def addIngredient(addIngredient: AddIngredient): Future[ServerError.Or[Ingredient]] =
       db.run(companion.addIngredient(UUID.randomUUID().transformInto[UUID @@ IngredientId], addIngredient))
@@ -94,8 +121,8 @@ object RecipeService {
             Left(ErrorContext.Recipe.Ingredient.Creation(error.getMessage).asServerError)
         }
 
-    override def removeIngredient(ingredientId: UUID @@ IngredientId): Future[Boolean] =
-      db.run(companion.removeIngredient(ingredientId))
+    override def removeIngredient(userId: UUID @@ UserId, ingredientId: UUID @@ IngredientId): Future[Boolean] =
+      db.run(companion.removeIngredient(userId, ingredientId))
 
     override def updateAmount(ingredientUpdate: IngredientUpdate): Future[ServerError.Or[Ingredient]] =
       db.run(companion.updateAmount(ingredientUpdate))
@@ -112,11 +139,25 @@ object RecipeService {
       Tables.MeasureName.result
         .map(_.map(_.transformInto[Measure]))
 
-    override def getRecipe(id: UUID @@ RecipeId)(implicit ec: ExecutionContext): DBIO[Option[Recipe]] = {
+    override def allRecipes(userId: UUID @@ UserId)(implicit ec: ExecutionContext): DBIO[Seq[Recipe]] =
+      Tables.Recipe
+        .filter(_.userId === userId.transformInto[UUID])
+        .map(_.id)
+        .result
+        .flatMap(
+          _.traverse(id => getRecipe(userId, id.transformInto[UUID @@ RecipeId]))
+        )
+        .map(_.flatten)
+
+    override def getRecipe(userId: UUID @@ UserId, id: UUID @@ RecipeId)(implicit
+        ec: ExecutionContext
+    ): DBIO[Option[Recipe]] = {
       val recipeId = id.transformInto[UUID]
 
       val transformer = for {
-        recipeRow <- OptionT(Tables.Recipe.filter(_.id === recipeId).result.headOption: DBIO[Option[Tables.RecipeRow]])
+        recipeRow <- OptionT(
+          recipeQuery(userId, id).result.headOption: DBIO[Option[Tables.RecipeRow]]
+        )
         ingredientRows <- OptionT.liftF(
           Tables.RecipeIngredient.filter(_.recipeId === recipeId).result: DBIO[Seq[Tables.RecipeIngredientRow]]
         )
@@ -132,7 +173,6 @@ object RecipeService {
 
     override def createRecipe(
         id: UUID @@ RecipeId,
-        userId: UUID @@ UserId,
         recipeCreation: RecipeCreation
     )(implicit
         ec: ExecutionContext
@@ -140,7 +180,7 @@ object RecipeService {
       val recipe = RecipeCreation.create(id, recipeCreation)
       val recipeRow = Tables.RecipeRow(
         id = recipe.id.transformInto[UUID],
-        userId = userId.transformInto[UUID],
+        userId = recipeCreation.userId.transformInto[UUID],
         name = recipe.name,
         description = recipe.description
       )
@@ -153,54 +193,86 @@ object RecipeService {
 
     // TODO: Bottleneck - updates concern only the description, however the full recipe is fetched again.
     override def updateRecipe(recipeUpdate: RecipeUpdate)(implicit ec: ExecutionContext): DBIO[ServerError.Or[Recipe]] =
-      Tables.Recipe
-        .filter(_.id === recipeUpdate.id.transformInto[UUID])
+      recipeQuery(recipeUpdate.userId, recipeUpdate.id)
         .map(r => (r.name, r.description))
         .update((recipeUpdate.name, recipeUpdate.description))
         .andThen(
-          getRecipe(recipeUpdate.id)
+          getRecipe(recipeUpdate.userId, recipeUpdate.id)
             .map(_.toRight(ErrorContext.Recipe.NotFound.asServerError))
         )
 
-    override def deleteRecipe(id: UUID @@ RecipeId)(implicit ec: ExecutionContext): DBIO[Boolean] =
-      Tables.Recipe
-        .filter(_.id === id.transformInto[UUID])
-        .delete
+    override def deleteRecipe(userId: UUID @@ UserId, id: UUID @@ RecipeId)(implicit
+        ec: ExecutionContext
+    ): DBIO[Boolean] =
+      recipeQuery(userId, id).delete
         .map(_ > 0)
 
     override def addIngredient(id: UUID @@ IngredientId, addIngredient: AddIngredient)(implicit
         ec: ExecutionContext
     ): DBIO[Ingredient] =
-      (Tables.RecipeIngredient.returning(Tables.RecipeIngredient) += AddIngredient.create(id, addIngredient))
-        .map(_.transformInto[Ingredient])
+      ifRecipeExists(addIngredient.userId, addIngredient.recipeId) {
+        (Tables.RecipeIngredient.returning(Tables.RecipeIngredient) += AddIngredient.create(id, addIngredient))
+          .map(_.transformInto[Ingredient])
+      }
 
     override def removeIngredient(
+        userId: UUID @@ UserId,
         id: UUID @@ IngredientId
-    )(implicit ec: ExecutionContext): DBIO[Boolean] =
-      Tables.RecipeIngredient
-        .filter(_.id === id.transformInto[UUID])
-        .delete
-        .map(_ > 0)
+    )(implicit ec: ExecutionContext): DBIO[Boolean] = {
+      val ingredientQuery = Tables.RecipeIngredient.filter(_.id === id.transformInto[UUID])
+      OptionT(
+        ingredientQuery
+          .map(_.recipeId)
+          .result
+          .headOption: DBIO[Option[UUID]]
+      )
+        .semiflatMap(recipeId =>
+          ifRecipeExists(userId, recipeId.transformInto[UUID @@ RecipeId]) {
+            ingredientQuery.delete
+              .map(_ > 0)
+          }
+        )
+        .getOrElse(false)
+    }
 
     override def updateAmount(ingredientUpdate: IngredientUpdate)(implicit
         ec: ExecutionContext
     ): DBIO[ServerError.Or[Ingredient]] = {
       val findAction = Tables.RecipeIngredient
-        .filter(_.id === ingredientUpdate.id.transformInto[UUID])
-      findAction
-        .map(i => (i.measureId, i.factor))
-        .update((ingredientUpdate.amountUnit.measureId.transformInto[Int], ingredientUpdate.amountUnit.factor))
-        .andThen(
-          EitherT
-            .fromOptionF(
-              findAction.result.headOption: DBIO[Option[Tables.RecipeIngredientRow]],
-              ErrorContext.Recipe.Ingredient.NotFound.asServerError
-            )
-            .map(_.transformInto[Ingredient])
-            .value
-        )
+        .filter(ri => ri.id === ingredientUpdate.id.transformInto[UUID])
+      val updateAction =
+        findAction
+          .map(i => (i.measureId, i.factor))
+          .update((ingredientUpdate.amountUnit.measureId.transformInto[Int], ingredientUpdate.amountUnit.factor))
+          .andThen(
+            EitherT
+              .fromOptionF(
+                findAction.result.headOption: DBIO[Option[Tables.RecipeIngredientRow]],
+                ErrorContext.Recipe.Ingredient.NotFound.asServerError
+              )
+              .map(_.transformInto[Ingredient])
+              .value
+          )
+      ifRecipeExists(ingredientUpdate.userId, ingredientUpdate.recipeId)(updateAction)
     }
 
+    private def recipeQuery(
+        userId: UUID @@ UserId,
+        id: UUID @@ RecipeId
+    ): Query[Tables.Recipe, Tables.RecipeRow, Seq] =
+      Tables.Recipe
+        .filter(r =>
+          r.id === id.transformInto[UUID] &&
+            r.userId === userId.transformInto[UUID]
+        )
+
+    private def ifRecipeExists[A](
+        userId: UUID @@ UserId,
+        id: UUID @@ RecipeId
+    )(action: => DBIO[A])(implicit ec: ExecutionContext): DBIO[A] =
+      recipeQuery(userId, id).exists.result.flatMap(exists => if (exists) action else notFound)
+
+    private def notFound[A]: DBIO[A] = DBIO.failed(DBError.RecipeNotFound)
   }
 
 }

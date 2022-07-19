@@ -1,10 +1,12 @@
 package services.recipe
 
+import services.user.UserId
 import shapeless.tag.@@
 
 import java.util.UUID
 
 case class RecipeCreation(
+    userId: UUID @@ UserId,
     name: String,
     description: Option[String]
 )
