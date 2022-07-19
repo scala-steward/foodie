@@ -128,7 +128,7 @@ class RecipeController @Inject() (
   def updateAmount: Action[IngredientUpdate] =
     jwtAction.async(circe.tolerantJson[IngredientUpdate]) { request =>
       EitherT(
-        recipeService.updateAmount(
+        recipeService.updateIngredient(
           userId = request.user.id,
           ingredientUpdate = request.body.transformInto[services.recipe.IngredientUpdate]
         )

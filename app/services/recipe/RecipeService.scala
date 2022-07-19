@@ -28,8 +28,8 @@ trait RecipeService {
   def deleteRecipe(userId: UserId, id: RecipeId): Future[Boolean]
 
   def addIngredient(userId: UserId, addIngredient: AddIngredient): Future[ServerError.Or[Ingredient]]
+  def updateIngredient(userId: UserId, ingredientUpdate: IngredientUpdate): Future[ServerError.Or[Ingredient]]
   def removeIngredient(userId: UserId, ingredientId: IngredientId): Future[Boolean]
-  def updateAmount(userId: UserId, ingredientUpdate: IngredientUpdate): Future[ServerError.Or[Ingredient]]
 }
 
 object RecipeService {
@@ -73,17 +73,17 @@ object RecipeService {
         ec: ExecutionContext
     ): DBIO[Ingredient]
 
-    def removeIngredient(
-        userId: UserId,
-        id: IngredientId
-    )(implicit ec: ExecutionContext): DBIO[Boolean]
-
-    def updateAmount(
+    def updateIngredient(
         userId: UserId,
         ingredientUpdate: IngredientUpdate
     )(implicit
         ec: ExecutionContext
     ): DBIO[ServerError.Or[Ingredient]]
+
+    def removeIngredient(
+        userId: UserId,
+        id: IngredientId
+    )(implicit ec: ExecutionContext): DBIO[Boolean]
 
   }
 
@@ -136,14 +136,14 @@ object RecipeService {
             Left(ErrorContext.Recipe.Ingredient.Creation(error.getMessage).asServerError)
         }
 
-    override def removeIngredient(userId: UserId, ingredientId: IngredientId): Future[Boolean] =
-      db.run(companion.removeIngredient(userId, ingredientId))
-
-    override def updateAmount(
+    override def updateIngredient(
         userId: UserId,
         ingredientUpdate: IngredientUpdate
     ): Future[ServerError.Or[Ingredient]] =
-      db.run(companion.updateAmount(userId, ingredientUpdate))
+      db.run(companion.updateIngredient(userId, ingredientUpdate))
+
+    override def removeIngredient(userId: UserId, ingredientId: IngredientId): Future[Boolean] =
+      db.run(companion.removeIngredient(userId, ingredientId))
 
   }
 
@@ -243,27 +243,7 @@ object RecipeService {
           .map(_.transformInto[Ingredient])
       }
 
-    override def removeIngredient(
-        userId: UserId,
-        id: IngredientId
-    )(implicit ec: ExecutionContext): DBIO[Boolean] = {
-      val ingredientQuery = Tables.RecipeIngredient.filter(_.id === id.transformInto[UUID])
-      OptionT(
-        ingredientQuery
-          .map(_.recipeId)
-          .result
-          .headOption: DBIO[Option[UUID]]
-      )
-        .semiflatMap(recipeId =>
-          ifRecipeExists(userId, recipeId.transformInto[RecipeId]) {
-            ingredientQuery.delete
-              .map(_ > 0)
-          }
-        )
-        .getOrElse(false)
-    }
-
-    override def updateAmount(
+    override def updateIngredient(
         userId: UserId,
         ingredientUpdate: IngredientUpdate
     )(implicit
@@ -285,6 +265,26 @@ object RecipeService {
               .value
           )
       ifRecipeExists(userId, ingredientUpdate.recipeId)(updateAction)
+    }
+
+    override def removeIngredient(
+        userId: UserId,
+        id: IngredientId
+    )(implicit ec: ExecutionContext): DBIO[Boolean] = {
+      val ingredientQuery = Tables.RecipeIngredient.filter(_.id === id.transformInto[UUID])
+      OptionT(
+        ingredientQuery
+          .map(_.recipeId)
+          .result
+          .headOption: DBIO[Option[UUID]]
+      )
+        .semiflatMap(recipeId =>
+          ifRecipeExists(userId, recipeId.transformInto[RecipeId]) {
+            ingredientQuery.delete
+              .map(_ > 0)
+          }
+        )
+        .getOrElse(false)
     }
 
     private def recipeQuery(
