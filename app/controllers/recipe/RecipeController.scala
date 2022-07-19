@@ -2,12 +2,12 @@ package controllers.recipe
 
 import action.JwtAction
 import cats.data.{ EitherT, OptionT }
-import errors.ServerError
+import errors.{ ErrorContext, ServerError }
 import io.circe.syntax._
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.libs.circe.Circe
 import play.api.mvc._
-import services.recipe.{ IngredientId, RecipeId, RecipeService }
+import services.recipe.{ DBError, IngredientId, RecipeId, RecipeService }
 import utils.IdUtils.Implicits._
 
 import java.util.UUID
@@ -88,6 +88,7 @@ class RecipeController @Inject() (
             .pipe(Ok(_))
         )
         .fold(badRequest, identity)
+        .recover(notFoundHandler)
     }
 
   def delete(id: UUID): Action[AnyContent] =
@@ -112,6 +113,7 @@ class RecipeController @Inject() (
           badRequest,
           _ => Ok
         )
+        .recover(notFoundHandler)
 
     }
 
@@ -125,7 +127,7 @@ class RecipeController @Inject() (
         )
     }
 
-  def updateAmount: Action[IngredientUpdate] =
+  def updateIngredient: Action[IngredientUpdate] =
     jwtAction.async(circe.tolerantJson[IngredientUpdate]) { request =>
       EitherT(
         recipeService.updateIngredient(
@@ -137,9 +139,15 @@ class RecipeController @Inject() (
           badRequest,
           _ => Ok
         )
+        .recover(notFoundHandler)
     }
 
   private def badRequest(serverError: ServerError): Result =
     BadRequest(serverError.asJson)
+
+  private def notFoundHandler: PartialFunction[Throwable, Result] = {
+    case DBError.RecipeNotFound =>
+      BadRequest(ErrorContext.Recipe.NotFound.asServerError.asJson)
+  }
 
 }

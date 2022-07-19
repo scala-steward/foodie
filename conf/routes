@@ -9,7 +9,7 @@ POST   /recipe/create                controllers.recipe.RecipeController.create
 PATCH  /recipe/update                controllers.recipe.RecipeController.update
 DELETE /recipe/delete/:id            controllers.recipe.RecipeController.delete(id: java.util.UUID)
 PATCH  /recipe/add-ingredient        controllers.recipe.RecipeController.addIngredient
-PATCH  /recipe/update-ingredient     controllers.recipe.RecipeController.updateAmount
+PATCH  /recipe/update-ingredient     controllers.recipe.RecipeController.updateIngredient
 PATCH  /recipe/remove-ingredient/:id controllers.recipe.RecipeController.removeIngredient(id: java.util.UUID)
 
 GET    /meal/all                     controllers.meal.MealController.all
