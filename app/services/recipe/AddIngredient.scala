@@ -1,15 +1,13 @@
 package services.recipe
 
 import db.generated.Tables
-import shapeless.tag.@@
 import io.scalaland.chimney.dsl._
-import services.user.UserId
+import shapeless.tag.@@
 import utils.IdUtils.Implicits._
 
 import java.util.UUID
 
 case class AddIngredient(
-    userId: UUID @@ UserId,
     recipeId: UUID @@ RecipeId,
     foodId: Int @@ FoodId,
     amountUnit: AmountUnit
