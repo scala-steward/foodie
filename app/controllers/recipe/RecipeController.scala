@@ -100,12 +100,12 @@ class RecipeController @Inject() (
         )
     }
 
-  def addIngredient: Action[AddIngredient] =
-    jwtAction.async(circe.tolerantJson[AddIngredient]) { request =>
+  def addIngredient: Action[IngredientCreation] =
+    jwtAction.async(circe.tolerantJson[IngredientCreation]) { request =>
       EitherT(
         recipeService.addIngredient(
           userId = request.user.id,
-          addIngredient = request.body.transformInto[services.recipe.AddIngredient]
+          ingredientCreation = request.body.transformInto[services.recipe.IngredientCreation]
         )
       )
         .fold(

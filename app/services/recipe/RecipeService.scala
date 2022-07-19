@@ -27,7 +27,7 @@ trait RecipeService {
   def updateRecipe(userId: UserId, recipeUpdate: RecipeUpdate): Future[ServerError.Or[Recipe]]
   def deleteRecipe(userId: UserId, id: RecipeId): Future[Boolean]
 
-  def addIngredient(userId: UserId, addIngredient: AddIngredient): Future[ServerError.Or[Ingredient]]
+  def addIngredient(userId: UserId, ingredientCreation: IngredientCreation): Future[ServerError.Or[Ingredient]]
   def updateIngredient(userId: UserId, ingredientUpdate: IngredientUpdate): Future[ServerError.Or[Ingredient]]
   def removeIngredient(userId: UserId, ingredientId: IngredientId): Future[Boolean]
 }
@@ -68,7 +68,7 @@ object RecipeService {
     def addIngredient(
         userId: UserId,
         id: IngredientId,
-        addIngredient: AddIngredient
+        ingredientCreation: IngredientCreation
     )(implicit
         ec: ExecutionContext
     ): DBIO[Ingredient]
@@ -127,9 +127,9 @@ object RecipeService {
 
     override def addIngredient(
         userId: UserId,
-        addIngredient: AddIngredient
+        ingredientCreation: IngredientCreation
     ): Future[ServerError.Or[Ingredient]] =
-      db.run(companion.addIngredient(userId, UUID.randomUUID().transformInto[IngredientId], addIngredient))
+      db.run(companion.addIngredient(userId, UUID.randomUUID().transformInto[IngredientId], ingredientCreation))
         .map(Right(_))
         .recover {
           case error =>
@@ -234,12 +234,13 @@ object RecipeService {
     override def addIngredient(
         userId: UserId,
         id: IngredientId,
-        addIngredient: AddIngredient
+        ingredientCreation: IngredientCreation
     )(implicit
         ec: ExecutionContext
     ): DBIO[Ingredient] =
-      ifRecipeExists(userId, addIngredient.recipeId) {
-        (Tables.RecipeIngredient.returning(Tables.RecipeIngredient) += AddIngredient.create(id, addIngredient))
+      ifRecipeExists(userId, ingredientCreation.recipeId) {
+        (Tables.RecipeIngredient
+          .returning(Tables.RecipeIngredient) += IngredientCreation.create(id, ingredientCreation))
           .map(_.transformInto[Ingredient])
       }
 

@@ -7,17 +7,17 @@ import utils.IdUtils.Implicits._
 import java.util.UUID
 
 @JsonCodec
-case class AddIngredient(
+case class IngredientCreation(
     recipeId: UUID,
     foodId: Int,
     amountUnit: AmountUnit
 )
 
-object AddIngredient {
+object IngredientCreation {
 
-  implicit val toInternal: Transformer[AddIngredient, services.recipe.AddIngredient] =
+  implicit val toInternal: Transformer[IngredientCreation, services.recipe.IngredientCreation] =
     Transformer
-      .define[AddIngredient, services.recipe.AddIngredient]
+      .define[IngredientCreation, services.recipe.IngredientCreation]
       .buildTransformer
 
 }
