@@ -11,11 +11,9 @@ import pureconfig.generic.auto._
 import pureconfig.{ CamelCase, ConfigFieldMapping, ConfigSource }
 import security.jwt.JwtConfiguration
 import services.user.{ User, UserId, UserService }
-import shapeless.tag.@@
 import utils.IdUtils.Implicits._
 import utils.jwt.JwtUtil
 
-import java.util.UUID
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -43,7 +41,7 @@ class JwtAction @Inject() (
       user <- EitherT.fromOptionF[Future, ServerError, User](
         userService
           .get(
-            jwtContent.userId.transformInto[UUID @@ UserId]
+            jwtContent.userId.transformInto[UserId]
           ),
         ErrorContext.User.NotFound.asServerError
       )

@@ -8,7 +8,7 @@ import shapeless.tag.@@
 import java.util.UUID
 
 case class User(
-    id: UUID @@ UserId,
+    id: UserId,
     nickname: String,
     displayName: String,
     email: String,

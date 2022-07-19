@@ -3,13 +3,10 @@ package services.recipe
 import db.generated.Tables
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl.TransformerOps
-import shapeless.tag.@@
 import utils.IdUtils.Implicits._
 
-import java.util.UUID
-
 case class Recipe(
-    id: UUID @@ RecipeId,
+    id: RecipeId,
     name: String,
     description: Option[String],
     ingredients: Seq[Ingredient]
@@ -25,7 +22,7 @@ object Recipe {
   implicit val fromRepresentation: Transformer[DBRepresentation, Recipe] =
     Transformer
       .define[DBRepresentation, Recipe]
-      .withFieldComputed(_.id, _.recipeRow.id.transformInto[UUID @@ RecipeId])
+      .withFieldComputed(_.id, _.recipeRow.id.transformInto[RecipeId])
       .withFieldComputed(_.name, _.recipeRow.name)
       .withFieldComputed(_.description, _.recipeRow.description)
       .withFieldComputed(_.ingredients, _.ingredientRows.map(_.transformInto[Ingredient]))

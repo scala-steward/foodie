@@ -2,20 +2,19 @@ package services.recipe
 
 import db.generated.Tables
 import io.scalaland.chimney.dsl._
-import shapeless.tag.@@
 import utils.IdUtils.Implicits._
 
 import java.util.UUID
 
 case class AddIngredient(
-    recipeId: UUID @@ RecipeId,
-    foodId: Int @@ FoodId,
+    recipeId: RecipeId,
+    foodId: FoodId,
     amountUnit: AmountUnit
 )
 
 object AddIngredient {
 
-  def create(id: UUID @@ IngredientId, addIngredient: AddIngredient): Tables.RecipeIngredientRow =
+  def create(id: IngredientId, addIngredient: AddIngredient): Tables.RecipeIngredientRow =
     Tables.RecipeIngredientRow(
       id = id.transformInto[UUID],
       recipeId = addIngredient.recipeId.transformInto[UUID],

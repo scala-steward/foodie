@@ -8,7 +8,6 @@ import io.scalaland.chimney.dsl.TransformerOps
 import play.api.libs.circe.Circe
 import play.api.mvc._
 import services.recipe.{ IngredientId, RecipeId, RecipeService }
-import shapeless.tag.@@
 import utils.IdUtils.Implicits._
 
 import java.util.UUID
@@ -57,7 +56,7 @@ class RecipeController @Inject() (
 
   def get(id: UUID): Action[AnyContent] =
     jwtAction.async { request =>
-      OptionT(recipeService.getRecipe(request.user.id, id.transformInto[UUID @@ RecipeId])).fold(
+      OptionT(recipeService.getRecipe(request.user.id, id.transformInto[RecipeId])).fold(
         NotFound: Result
       )(
         _.pipe(_.transformInto[Recipe])
@@ -94,7 +93,7 @@ class RecipeController @Inject() (
   def delete(id: UUID): Action[AnyContent] =
     jwtAction.async { request =>
       recipeService
-        .deleteRecipe(request.user.id, id.transformInto[UUID @@ RecipeId])
+        .deleteRecipe(request.user.id, id.transformInto[RecipeId])
         .map(
           _.pipe(_.asJson)
             .pipe(Ok(_))
@@ -119,7 +118,7 @@ class RecipeController @Inject() (
   def removeIngredient(id: UUID): Action[AnyContent] =
     jwtAction.async { request =>
       recipeService
-        .removeIngredient(request.user.id, id.transformInto[UUID @@ IngredientId])
+        .removeIngredient(request.user.id, id.transformInto[IngredientId])
         .map(
           _.pipe(_.asJson)
             .pipe(Ok(_))

@@ -1,9 +1,5 @@
 package services.recipe
 
-import shapeless.tag.@@
-
-import java.util.UUID
-
 case class RecipeCreation(
     name: String,
     description: Option[String]
@@ -11,7 +7,7 @@ case class RecipeCreation(
 
 object RecipeCreation {
 
-  def create(id: UUID @@ RecipeId, recipeCreation: RecipeCreation): Recipe =
+  def create(id: RecipeId, recipeCreation: RecipeCreation): Recipe =
     Recipe(
       id = id,
       name = recipeCreation.name,
