@@ -29,7 +29,7 @@ object JwtUtil {
           .map(_ => ErrorContext.Authentication.Token.Content.asServerError)
       }
 
-  def createJwt(userId: UUID @@ UserId, privateKey: String, expiration: JwtExpiration): String =
+  def createJwt(userId: UserId, privateKey: String, expiration: JwtExpiration): String =
     JwtCirce.encode(
       header = JwtHeader(algorithm = signatureAlgorithm),
       claim = JwtClaim(

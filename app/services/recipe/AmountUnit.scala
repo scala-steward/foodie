@@ -1,8 +1,8 @@
 package services.recipe
 
-import shapeless.tag.@@
+import services.meal.MeasureId
 
 case class AmountUnit(
-    measureId: Int @@ MeasureId,
+    measureId: MeasureId,
     factor: BigDecimal
 )
