@@ -2,7 +2,7 @@ package controllers.meal
 
 import io.circe.generic.JsonCodec
 import io.scalaland.chimney.Transformer
-import utils.IdUtils.Implicits._
+import utils.TransformerUtils.Implicits._
 
 import java.util.UUID
 

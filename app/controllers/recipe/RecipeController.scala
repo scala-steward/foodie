@@ -8,7 +8,7 @@ import io.scalaland.chimney.dsl.TransformerOps
 import play.api.libs.circe.Circe
 import play.api.mvc._
 import services.recipe.{ DBError, IngredientId, RecipeId, RecipeService }
-import utils.IdUtils.Implicits._
+import utils.TransformerUtils.Implicits._
 
 import java.util.UUID
 import javax.inject.Inject

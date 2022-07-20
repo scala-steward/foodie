@@ -13,7 +13,4 @@ package object meal {
 
   type MealEntryId = UUID @@ MealEntryTag
 
-  sealed trait MeasureTag
-
-  type MeasureId = UUID @@ MeasureTag
 }

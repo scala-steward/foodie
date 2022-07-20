@@ -3,7 +3,7 @@ package services.recipe
 import db.generated.Tables
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl.TransformerOps
-import utils.IdUtils.Implicits._
+import utils.TransformerUtils.Implicits._
 
 import java.util.UUID
 

@@ -5,12 +5,13 @@ import io.scalaland.chimney.Transformer
 
 import java.time.{ LocalDate, LocalTime }
 import java.util.UUID
-import utils.IdUtils.Implicits._
+import utils.TransformerUtils.Implicits._
 
 @JsonCodec
 case class MealCreation(
     date: LocalDate,
-    time: LocalTime,
+    time: Option[LocalTime],
+    name: Option[String],
     recipeId: UUID,
     amount: BigDecimal
 )

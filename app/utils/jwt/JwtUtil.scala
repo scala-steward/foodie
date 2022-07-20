@@ -7,7 +7,7 @@ import pdi.jwt.algorithms.JwtAsymmetricAlgorithm
 import pdi.jwt.{ JwtAlgorithm, JwtCirce, JwtClaim, JwtHeader }
 import security.jwt.{ JwtContent, JwtExpiration }
 import services.user.UserId
-import utils.IdUtils.Implicits._
+import utils.TransformerUtils.Implicits._
 
 import java.util.UUID
 

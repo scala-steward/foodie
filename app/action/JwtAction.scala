@@ -11,7 +11,7 @@ import pureconfig.generic.auto._
 import pureconfig.{ CamelCase, ConfigFieldMapping, ConfigSource }
 import security.jwt.JwtConfiguration
 import services.user.{ User, UserId, UserService }
-import utils.IdUtils.Implicits._
+import utils.TransformerUtils.Implicits._
 import utils.jwt.JwtUtil
 
 import javax.inject.Inject

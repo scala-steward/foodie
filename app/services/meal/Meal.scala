@@ -2,9 +2,9 @@ package services.meal
 
 import db.generated.Tables
 import io.scalaland.chimney.Transformer
-import shapeless.tag.@@
 import io.scalaland.chimney.dsl.TransformerOps
-import utils.IdUtils.Implicits._
+import services.user.UserId
+import utils.TransformerUtils.Implicits._
 
 import java.time.{ LocalDate, LocalTime }
 import java.util.UUID
@@ -33,5 +33,19 @@ object Meal {
       .withFieldComputed(_.name, _.mealRow.name)
       .withFieldComputed(_.entries, _.mealEntryRows.map(_.transformInto[MealEntry]))
       .buildTransformer
+
+  implicit val toRepresentation: Transformer[(Meal, UserId), DBRepresentation] = {
+    case (meal, userId) =>
+      DBRepresentation(
+        mealRow = Tables.MealRow(
+          id = meal.id.transformInto[UUID],
+          userId = meal.id.transformInto[UUID],
+          consumedOnDate = meal.date.transformInto[java.sql.Date],
+          consumedOnTime = meal.time.map(_.transformInto[java.sql.Time]),
+          name = meal.name
+        ),
+        mealEntryRows = meal.entries.map(me => (me, meal.id).transformInto[Tables.MealEntryRow])
+      )
+  }
 
 }
