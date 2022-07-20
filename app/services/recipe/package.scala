@@ -17,4 +17,8 @@ package object recipe {
   sealed trait FoodTag
 
   type FoodId = Int @@ FoodTag
+
+  sealed trait MeasureTag
+
+  type MeasureId = Int @@ MeasureTag
 }

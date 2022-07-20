@@ -3,8 +3,9 @@ package services.recipe
 import db.generated.Tables
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl.TransformerOps
-import services.meal.MeasureId
 import utils.IdUtils.Implicits._
+
+import java.util.UUID
 
 case class Ingredient(
     id: IngredientId,
@@ -28,5 +29,16 @@ object Ingredient {
           )
       )
       .buildTransformer
+
+  implicit val toDB: Transformer[(Ingredient, RecipeId), Tables.RecipeIngredientRow] = {
+    case (ingredient, recipeId) =>
+      Tables.RecipeIngredientRow(
+        id = ingredient.id.transformInto[UUID],
+        recipeId = recipeId.transformInto[UUID],
+        foodNameId = ingredient.foodId.transformInto[Int],
+        measureId = ingredient.amountUnit.measureId.transformInto[Int],
+        factor = ingredient.amountUnit.factor
+      )
+  }
 
 }

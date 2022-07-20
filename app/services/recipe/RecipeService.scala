@@ -196,17 +196,13 @@ object RecipeService {
     )(implicit
         ec: ExecutionContext
     ): DBIO[Recipe] = {
-      val recipe = RecipeCreation.create(id, recipeCreation)
-      val recipeRow = Tables.RecipeRow(
-        id = recipe.id.transformInto[UUID],
-        userId = userId.transformInto[UUID],
-        name = recipe.name,
-        description = recipe.description
-      )
-      (Tables.Recipe.returning(Tables.Recipe) += recipeRow)
+      val recipe           = RecipeCreation.create(id, recipeCreation)
+      val dbRepresentation = (recipe, userId).transformInto[Recipe.DBRepresentation]
+      (Tables.Recipe.returning(Tables.Recipe) += dbRepresentation.recipeRow)
         .map { recipeRow =>
-          val dbRepresentation = Recipe.DBRepresentation(recipeRow = recipeRow, ingredientRows = Seq.empty)
-          dbRepresentation.transformInto[Recipe]
+          dbRepresentation
+            .copy(recipeRow = recipeRow)
+            .transformInto[Recipe]
         }
     }
 
@@ -237,12 +233,15 @@ object RecipeService {
         ingredientCreation: IngredientCreation
     )(implicit
         ec: ExecutionContext
-    ): DBIO[Ingredient] =
+    ): DBIO[Ingredient] = {
+      val ingredient = IngredientCreation.create(id, ingredientCreation)
       ifRecipeExists(userId, ingredientCreation.recipeId) {
         (Tables.RecipeIngredient
-          .returning(Tables.RecipeIngredient) += IngredientCreation.create(id, ingredientCreation))
+          .returning(Tables.RecipeIngredient) += (ingredient, ingredientCreation.recipeId)
+          .transformInto[Tables.RecipeIngredientRow])
           .map(_.transformInto[Ingredient])
       }
+    }
 
     override def updateIngredient(
         userId: UserId,

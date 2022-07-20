@@ -2,11 +2,10 @@ package services.recipe
 
 import db.generated.Tables
 import io.scalaland.chimney.Transformer
-import shapeless.tag.@@
 import utils.IdUtils.Implicits._
 
 case class Measure(
-    id: Int @@ MeasureId,
+    id: MeasureId,
     name: String
 )
 
