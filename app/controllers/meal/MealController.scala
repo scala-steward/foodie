@@ -49,13 +49,17 @@ class MealController @Inject() (
 
   def create: Action[MealCreation] =
     jwtAction.async(circe.tolerantJson[MealCreation]) { request =>
-      mealService
-        .createMeal(request.user.id, request.body.transformInto[services.meal.MealCreation])
+      EitherT(
+        mealService
+          .createMeal(request.user.id, request.body.transformInto[services.meal.MealCreation])
+      )
         .map(
           _.pipe(_.transformInto[Meal])
             .pipe(_.asJson)
             .pipe(Ok(_))
         )
+        .fold(badRequest, identity)
+        .recover(mealErrorHandler)
     }
 
   def update: Action[MealUpdate] =
@@ -70,7 +74,7 @@ class MealController @Inject() (
             .pipe(Ok(_))
         )
         .fold(badRequest, identity)
-        .recover(notFoundHandler)
+        .recover(mealErrorHandler)
     }
 
   def delete(id: UUID): Action[AnyContent] =
@@ -93,9 +97,11 @@ class MealController @Inject() (
       )
         .fold(
           badRequest,
-          _ => Ok
+          _.pipe(_.transformInto[MealEntry])
+            .pipe(_.asJson)
+            .pipe(Ok(_))
         )
-        .recover(notFoundHandler)
+        .recover(mealErrorHandler)
     }
 
   def updateMealEntry: Action[MealEntryUpdate] =
@@ -108,9 +114,11 @@ class MealController @Inject() (
       )
         .fold(
           badRequest,
-          _ => Ok
+          _.pipe(_.transformInto[MealEntry])
+            .pipe(_.asJson)
+            .pipe(Ok(_))
         )
-        .recover(notFoundHandler)
+        .recover(mealErrorHandler)
     }
 
   def deleteMealEntry(id: UUID): Action[AnyContent] =
@@ -126,9 +134,18 @@ class MealController @Inject() (
   private def badRequest(serverError: ServerError): Result =
     BadRequest(serverError.asJson)
 
-  private def notFoundHandler: PartialFunction[Throwable, Result] = {
-    case DBError.MealNotFound =>
-      BadRequest(ErrorContext.Meal.NotFound.asServerError.asJson)
+  private def mealErrorHandler: PartialFunction[Throwable, Result] = {
+    case error =>
+      val context = error match {
+        case DBError.MealNotFound =>
+          ErrorContext.Meal.NotFound
+        case DBError.MealEntryNotFound =>
+          ErrorContext.Meal.Entry.NotFound
+        case _ =>
+          ErrorContext.Meal.General(error.getMessage)
+      }
+
+      BadRequest(context.asServerError.asJson)
   }
 
 }
