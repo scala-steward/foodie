@@ -114,7 +114,6 @@ class RecipeController @Inject() (
           _ => Ok
         )
         .recover(notFoundHandler)
-
     }
 
   def removeIngredient(id: UUID): Action[AnyContent] =

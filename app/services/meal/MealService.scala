@@ -20,7 +20,7 @@ trait MealService {
   def updateMeal(userId: UserId, mealUpdate: MealUpdate): Future[ServerError.Or[Meal]]
   def deleteMeal(userId: UserId, id: MealId): Future[Boolean]
 
-  def addMealEntry(userId: UserId, mealId: MealId, addEntry: MealEntryCreation): Future[ServerError.Or[MealEntry]]
+  def addMealEntry(userId: UserId, mealEntryCreation: MealEntryCreation): Future[ServerError.Or[MealEntry]]
   def updateMealEntry(userId: UserId, mealEntryUpdate: MealEntryUpdate): Future[ServerError.Or[MealEntry]]
   def removeMealEntry(userId: UserId, mealEntryId: MealEntryId): Future[Boolean]
 }
@@ -35,7 +35,7 @@ object MealService {
     def updateMeal(userId: UserId, mealUpdate: MealUpdate): DBIO[ServerError.Or[Meal]]
     def deleteMeal(userId: UserId, id: MealId): DBIO[Boolean]
 
-    def addMealEntry(userId: UserId, mealId: MealId, addEntry: MealEntryCreation): DBIO[ServerError.Or[MealEntry]]
+    def addMealEntry(userId: UserId, mealEntryCreation: MealEntryCreation): DBIO[ServerError.Or[MealEntry]]
     def updateMealEntry(userId: UserId, mealEntryUpdate: MealEntryUpdate): DBIO[ServerError.Or[MealEntry]]
     def removeMealEntry(userId: UserId, mealEntryId: MealEntryId): DBIO[Boolean]
   }
@@ -61,8 +61,8 @@ object MealService {
 
     override def deleteMeal(userId: UserId, id: MealId): Future[Boolean] = db.run(companion.deleteMeal(userId, id))
 
-    override def addMealEntry(userId: UserId, mealId: MealId, addEntry: MealEntryCreation): Future[Or[MealEntry]] =
-      db.run(companion.addMealEntry(userId, mealId, addEntry))
+    override def addMealEntry(userId: UserId, mealEntryCreation: MealEntryCreation): Future[Or[MealEntry]] =
+      db.run(companion.addMealEntry(userId, mealEntryCreation))
 
     override def updateMealEntry(userId: UserId, mealEntryUpdate: MealEntryUpdate): Future[Or[MealEntry]] =
       db.run(companion.updateMealEntry(userId, mealEntryUpdate))
@@ -83,7 +83,7 @@ object MealService {
 
     override def deleteMeal(userId: UserId, id: MealId): DBIO[Boolean] = ???
 
-    override def addMealEntry(userId: UserId, mealId: MealId, addEntry: MealEntryCreation): DBIO[Or[MealEntry]] = ???
+    override def addMealEntry(userId: UserId, mealEntryCreation: MealEntryCreation): DBIO[Or[MealEntry]] = ???
 
     override def updateMealEntry(userId: UserId, mealEntryUpdate: MealEntryUpdate): DBIO[Or[MealEntry]] = ???
 

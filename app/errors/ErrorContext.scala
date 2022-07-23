@@ -47,4 +47,20 @@ object ErrorContext {
 
   }
 
+  object Meal {
+    case object NotFound extends ServerErrorInstance("No meal with the given id found")
+
+    object Entry {
+
+      case class Creation(dbMessage: String)
+          extends ServerErrorInstance(
+            s"Entry creation failed due to: $dbMessage"
+          )
+
+      case object NotFound extends ServerErrorInstance("No entry with the given id found")
+
+    }
+
+  }
+
 }
