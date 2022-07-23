@@ -1,19 +1,29 @@
 package services.meal
 
+import db.generated.Tables
 import errors.ServerError
 import errors.ServerError.Or
+import io.scalaland.chimney.dsl.TransformerOps
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.user.UserId
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
-import spire.math.Interval
+import spire.math.{ Above, All, Below, Bounded, Empty, Interval, Point }
+import slick.jdbc.PostgresProfile.api._
+import cats.syntax.traverse._
+import spire.math.interval.{ EmptyBound, Unbound, ValueBound }
+import utils.DBIOUtil.instances._
+import cats.syntax.contravariantSemigroupal._
+import cats.instances.function._
+import utils.TransformerUtils.Implicits._
 
 import java.time.LocalDate
+import java.util.UUID
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
 
 trait MealService {
-  def allMeals(userId: UserId, interval: Interval[LocalDate]): Future[Seq[Meal]]
+  def allMeals(userId: UserId, interval: RequestInterval): Future[Seq[Meal]]
   def getMeal(userId: UserId, id: MealId): Future[Option[Meal]]
 
   def createMeal(userId: UserId, mealCreation: MealCreation): Future[Meal]
@@ -28,16 +38,28 @@ trait MealService {
 object MealService {
 
   trait Companion {
-    def allMeals(userId: UserId, interval: Interval[LocalDate]): DBIO[Seq[Meal]]
-    def getMeal(userId: UserId, id: MealId): DBIO[Option[Meal]]
+    def allMeals(userId: UserId, interval: RequestInterval)(implicit ec: ExecutionContext): DBIO[Seq[Meal]]
+    def getMeal(userId: UserId, id: MealId)(implicit ec: ExecutionContext): DBIO[Option[Meal]]
 
-    def createMeal(userId: UserId, mealCreation: MealCreation): DBIO[Meal]
-    def updateMeal(userId: UserId, mealUpdate: MealUpdate): DBIO[ServerError.Or[Meal]]
-    def deleteMeal(userId: UserId, id: MealId): DBIO[Boolean]
+    def createMeal(userId: UserId, mealCreation: MealCreation)(implicit ec: ExecutionContext): DBIO[Meal]
+    def updateMeal(userId: UserId, mealUpdate: MealUpdate)(implicit ec: ExecutionContext): DBIO[ServerError.Or[Meal]]
+    def deleteMeal(userId: UserId, id: MealId)(implicit ec: ExecutionContext): DBIO[Boolean]
 
-    def addMealEntry(userId: UserId, mealEntryCreation: MealEntryCreation): DBIO[ServerError.Or[MealEntry]]
-    def updateMealEntry(userId: UserId, mealEntryUpdate: MealEntryUpdate): DBIO[ServerError.Or[MealEntry]]
-    def removeMealEntry(userId: UserId, mealEntryId: MealEntryId): DBIO[Boolean]
+    def addMealEntry(
+        userId: UserId,
+        mealEntryCreation: MealEntryCreation
+    )(implicit
+        ec: ExecutionContext
+    ): DBIO[ServerError.Or[MealEntry]]
+
+    def updateMealEntry(
+        userId: UserId,
+        mealEntryUpdate: MealEntryUpdate
+    )(implicit
+        ec: ExecutionContext
+    ): DBIO[ServerError.Or[MealEntry]]
+
+    def removeMealEntry(userId: UserId, mealEntryId: MealEntryId)(implicit ec: ExecutionContext): DBIO[Boolean]
   }
 
   class Live @Inject() (
@@ -48,7 +70,7 @@ object MealService {
   ) extends MealService
       with HasDatabaseConfigProvider[PostgresProfile] {
 
-    override def allMeals(userId: UserId, interval: Interval[LocalDate]): Future[Seq[Meal]] =
+    override def allMeals(userId: UserId, interval: RequestInterval): Future[Seq[Meal]] =
       db.run(companion.allMeals(userId, interval))
 
     override def getMeal(userId: UserId, id: MealId): Future[Option[Meal]] = db.run(companion.getMeal(userId, id))
@@ -73,21 +95,76 @@ object MealService {
   }
 
   object Live extends Companion {
-    override def allMeals(userId: UserId, interval: Interval[LocalDate]): DBIO[Seq[Meal]] = ???
 
-    override def getMeal(userId: UserId, id: MealId): DBIO[Option[Meal]] = ???
+    override def allMeals(
+        userId: UserId,
+        interval: RequestInterval
+    )(implicit
+        ec: ExecutionContext
+    ): DBIO[Seq[Meal]] = {
+      val startFilter: LocalDate => Rep[java.sql.Date] => Rep[Boolean] = start =>
+        _ >= start.transformInto[java.sql.Date]
 
-    override def createMeal(userId: UserId, mealCreation: MealCreation): DBIO[Meal] = ???
+      val endFilter: LocalDate => Rep[java.sql.Date] => Rep[Boolean] = end => _ <= end.transformInto[java.sql.Date]
 
-    override def updateMeal(userId: UserId, mealUpdate: MealUpdate): DBIO[Or[Meal]] = ???
+      val dateFilter: Rep[java.sql.Date] => Rep[Boolean] = (interval.from, interval.to) match {
+        case (Some(start), Some(end)) => (startFilter(start), endFilter(end)).mapN(_ && _)
+        case (Some(start), _)         => startFilter(start)
+        case (_, Some(end))           => endFilter(end)
+        case _                        => _ => true
+      }
 
-    override def deleteMeal(userId: UserId, id: MealId): DBIO[Boolean] = ???
+      Tables.Meal
+        .filter(m => m.userId === userId.transformInto[UUID] && dateFilter(m.consumedOnDate))
+        .map(_.id)
+        .result
+        .flatMap(
+          _.traverse(id => getMeal(userId, id.transformInto[MealId]))
+        )
+        .map(_.flatten)
+    }
 
-    override def addMealEntry(userId: UserId, mealEntryCreation: MealEntryCreation): DBIO[Or[MealEntry]] = ???
+    override def getMeal(
+        userId: UserId,
+        id: MealId
+    )(implicit ec: ExecutionContext): DBIO[Option[Meal]] = ???
 
-    override def updateMealEntry(userId: UserId, mealEntryUpdate: MealEntryUpdate): DBIO[Or[MealEntry]] = ???
+    override def createMeal(
+        userId: UserId,
+        mealCreation: MealCreation
+    )(implicit ec: ExecutionContext): DBIO[Meal] = ???
 
-    override def removeMealEntry(userId: UserId, mealEntryId: MealEntryId): DBIO[Boolean] = ???
+    override def updateMeal(
+        userId: UserId,
+        mealUpdate: MealUpdate
+    )(implicit ec: ExecutionContext): DBIO[Or[Meal]] = ???
+
+    override def deleteMeal(
+        userId: UserId,
+        id: MealId
+    )(implicit ec: ExecutionContext): DBIO[Boolean] = ???
+
+    override def addMealEntry(
+        userId: UserId,
+        mealEntryCreation: MealEntryCreation
+    )(implicit
+        ec: ExecutionContext
+    ): DBIO[Or[MealEntry]] = ???
+
+    override def updateMealEntry(
+        userId: UserId,
+        mealEntryUpdate: MealEntryUpdate
+    )(implicit
+        ec: ExecutionContext
+    ): DBIO[Or[MealEntry]] = ???
+
+    override def removeMealEntry(
+        userId: UserId,
+        mealEntryId: MealEntryId
+    )(implicit
+        ec: ExecutionContext
+    ): DBIO[Boolean] = ???
+
   }
 
 }

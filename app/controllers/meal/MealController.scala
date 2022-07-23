@@ -26,7 +26,7 @@ class MealController @Inject() (
   def all: Action[RequestInterval] =
     jwtAction.async(circe.tolerantJson[RequestInterval]) { request =>
       mealService
-        .allMeals(request.user.id, RequestInterval.toInterval(request.body))
+        .allMeals(request.user.id, request.body.transformInto[services.meal.RequestInterval])
         .map(
           _.pipe(
             _.map(_.transformInto[Meal])
