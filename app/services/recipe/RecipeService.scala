@@ -229,13 +229,18 @@ object RecipeService {
         recipeUpdate: RecipeUpdate
     )(implicit
         ec: ExecutionContext
-    ): DBIO[Recipe] =
-      recipeQuery(userId, recipeUpdate.id)
-        .map(r => (r.name, r.description))
-        .update((recipeUpdate.name, recipeUpdate.description))
-        .andThen(
-          OptionT(getRecipe(userId, recipeUpdate.id)).getOrElseF(DBIO.failed(DBError.RecipeNotFound))
+    ): DBIO[Recipe] = {
+      val findAction = OptionT(getRecipe(userId, recipeUpdate.id)).getOrElseF(DBIO.failed(DBError.RecipeNotFound))
+      for {
+        recipe <- findAction
+        _ <- recipeQuery(userId, recipeUpdate.id).update(
+          RecipeUpdate
+            .update(recipe, recipeUpdate)
+            .transformInto[Tables.RecipeRow]
         )
+        updatedRecipe <- findAction
+      } yield updatedRecipe
+    }
 
     override def deleteRecipe(userId: UserId, id: RecipeId)(implicit
         ec: ExecutionContext

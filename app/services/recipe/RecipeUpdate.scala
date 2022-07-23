@@ -6,4 +6,12 @@ case class RecipeUpdate(
     description: Option[String]
 )
 
-object RecipeUpdate {}
+object RecipeUpdate {
+
+  def update(recipe: Recipe, recipeUpdate: RecipeUpdate): Recipe =
+    recipe.copy(
+      name = recipeUpdate.name,
+      description = recipeUpdate.description
+    )
+
+}
