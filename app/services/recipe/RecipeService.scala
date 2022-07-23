@@ -288,8 +288,8 @@ object RecipeService {
             .update(ingredient, ingredientUpdate)
             .transformInto[Tables.RecipeIngredientRow]
         )
-        ingredientFromDB <- findAction
-      } yield ingredientFromDB
+        updatedIngredient <- findAction
+      } yield updatedIngredient
     }
 
     override def removeIngredient(
