@@ -291,16 +291,15 @@ object RecipeService {
         userId: UserId,
         id: IngredientId
     )(implicit ec: ExecutionContext): DBIO[Boolean] = {
-      val ingredientQuery = Tables.RecipeIngredient.filter(_.id === id.transformInto[UUID])
       OptionT(
-        ingredientQuery
+        ingredientQuery(id)
           .map(_.recipeId)
           .result
           .headOption: DBIO[Option[UUID]]
       )
         .semiflatMap(recipeId =>
           ifRecipeExists(userId, recipeId.transformInto[RecipeId]) {
-            ingredientQuery.delete
+            ingredientQuery(id).delete
               .map(_ > 0)
           }
         )
