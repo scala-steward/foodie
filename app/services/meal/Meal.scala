@@ -7,7 +7,6 @@ import services.user.UserId
 import utils.SimpleDate
 import utils.TransformerUtils.Implicits._
 
-import java.time.{ LocalDate, LocalTime }
 import java.util.UUID
 
 case class Meal(
