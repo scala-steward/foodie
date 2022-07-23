@@ -34,6 +34,16 @@ object ErrorContext {
   object Recipe {
     case object NotFound extends ServerErrorInstance("No recipe with the given id found")
 
+    case class Creation(dbMessage: String)
+        extends ServerErrorInstance(
+          s"Recipe creation failed due to: $dbMessage"
+        )
+
+    case class General(dbMessage: String)
+        extends ServerErrorInstance(
+          s"A database operation failed with the message: $dbMessage"
+        )
+
     object Ingredient {
 
       case class Creation(dbMessage: String)

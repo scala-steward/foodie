@@ -67,13 +67,17 @@ class RecipeController @Inject() (
 
   def create: Action[RecipeCreation] =
     jwtAction.async(circe.tolerantJson[RecipeCreation]) { request =>
-      recipeService
-        .createRecipe(request.user.id, request.body.transformInto[services.recipe.RecipeCreation])
+      EitherT(
+        recipeService
+          .createRecipe(request.user.id, request.body.transformInto[services.recipe.RecipeCreation])
+      )
         .map(
           _.pipe(_.transformInto[Recipe])
             .pipe(_.asJson)
             .pipe(Ok(_))
         )
+        .fold(badRequest, identity)
+        .recover(recipeErrorHandler)
     }
 
   def update: Action[RecipeUpdate] =
@@ -88,7 +92,7 @@ class RecipeController @Inject() (
             .pipe(Ok(_))
         )
         .fold(badRequest, identity)
-        .recover(notFoundHandler)
+        .recover(recipeErrorHandler)
     }
 
   def delete(id: UUID): Action[AnyContent] =
@@ -113,7 +117,7 @@ class RecipeController @Inject() (
           badRequest,
           _ => Ok
         )
-        .recover(notFoundHandler)
+        .recover(recipeErrorHandler)
     }
 
   def removeIngredient(id: UUID): Action[AnyContent] =
@@ -138,15 +142,17 @@ class RecipeController @Inject() (
           badRequest,
           _ => Ok
         )
-        .recover(notFoundHandler)
+        .recover(recipeErrorHandler)
     }
 
   private def badRequest(serverError: ServerError): Result =
     BadRequest(serverError.asJson)
 
-  private def notFoundHandler: PartialFunction[Throwable, Result] = {
+  private def recipeErrorHandler: PartialFunction[Throwable, Result] = {
     case DBError.RecipeNotFound =>
       BadRequest(ErrorContext.Recipe.NotFound.asServerError.asJson)
+    case error =>
+      BadRequest(ErrorContext.Recipe.General(error.getMessage).asServerError.asJson)
   }
 
 }

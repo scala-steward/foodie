@@ -23,7 +23,7 @@ trait RecipeService {
 
   def allRecipes(userId: UserId): Future[Seq[Recipe]]
   def getRecipe(userId: UserId, id: RecipeId): Future[Option[Recipe]]
-  def createRecipe(userId: UserId, recipeCreation: RecipeCreation): Future[Recipe]
+  def createRecipe(userId: UserId, recipeCreation: RecipeCreation): Future[ServerError.Or[Recipe]]
   def updateRecipe(userId: UserId, recipeUpdate: RecipeUpdate): Future[ServerError.Or[Recipe]]
   def deleteRecipe(userId: UserId, id: RecipeId): Future[Boolean]
 
@@ -107,11 +107,18 @@ object RecipeService {
     ): Future[Option[Recipe]] =
       db.run(companion.getRecipe(userId, id))
 
+    // TODO: The error can be specialized, because the most likely case is that the user is missing,
+    // and thus a foreign key constraint is not met.
     override def createRecipe(
         userId: UserId,
         recipeCreation: RecipeCreation
-    ): Future[Recipe] = {
+    ): Future[ServerError.Or[Recipe]] = {
       db.run(companion.createRecipe(userId, UUID.randomUUID().transformInto[RecipeId], recipeCreation))
+        .map(Right(_))
+        .recover {
+          case error =>
+            Left(ErrorContext.Recipe.Creation(error.getMessage).asServerError)
+        }
     }
 
     override def updateRecipe(
