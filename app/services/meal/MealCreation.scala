@@ -15,8 +15,7 @@ object MealCreation {
   def create(id: MealId, mealCreation: MealCreation): Meal =
     Meal(
       id = id,
-      date = mealCreation.date.date,
-      time = mealCreation.date.time,
+      date = mealCreation.date,
       name = mealCreation.name,
       entries = Seq.empty
     )

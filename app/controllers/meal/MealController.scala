@@ -8,6 +8,7 @@ import io.scalaland.chimney.dsl.TransformerOps
 import play.api.libs.circe.Circe
 import play.api.mvc._
 import services.meal.{ DBError, MealEntryId, MealId, MealService }
+import utils.TransformerUtils.Implicits._
 
 import java.util.UUID
 import javax.inject.Inject
