@@ -1,6 +1,6 @@
 package services.recipe
 
-import cats.data.{ EitherT, OptionT }
+import cats.data.OptionT
 import cats.syntax.traverse._
 import db.generated.Tables
 import errors.{ ErrorContext, ServerError }
@@ -58,7 +58,7 @@ object RecipeService {
         recipeUpdate: RecipeUpdate
     )(implicit
         ec: ExecutionContext
-    ): DBIO[ServerError.Or[Recipe]]
+    ): DBIO[Recipe]
 
     def deleteRecipe(
         userId: UserId,
@@ -78,7 +78,7 @@ object RecipeService {
         ingredientUpdate: IngredientUpdate
     )(implicit
         ec: ExecutionContext
-    ): DBIO[ServerError.Or[Ingredient]]
+    ): DBIO[Ingredient]
 
     def removeIngredient(
         userId: UserId,
@@ -126,6 +126,11 @@ object RecipeService {
         recipeUpdate: RecipeUpdate
     ): Future[ServerError.Or[Recipe]] =
       db.run(companion.updateRecipe(userId, recipeUpdate))
+        .map(Right(_))
+        .recover {
+          case error =>
+            Left(ErrorContext.Recipe.Update(error.getMessage).asServerError)
+        }
 
     override def deleteRecipe(
         userId: UserId,
@@ -148,6 +153,11 @@ object RecipeService {
         ingredientUpdate: IngredientUpdate
     ): Future[ServerError.Or[Ingredient]] =
       db.run(companion.updateIngredient(userId, ingredientUpdate))
+        .map(Right(_))
+        .recover {
+          case error =>
+            Left(ErrorContext.Recipe.Ingredient.Update(error.getMessage).asServerError)
+        }
 
     override def removeIngredient(userId: UserId, ingredientId: IngredientId): Future[Boolean] =
       db.run(companion.removeIngredient(userId, ingredientId))
@@ -219,13 +229,12 @@ object RecipeService {
         recipeUpdate: RecipeUpdate
     )(implicit
         ec: ExecutionContext
-    ): DBIO[ServerError.Or[Recipe]] =
+    ): DBIO[Recipe] =
       recipeQuery(userId, recipeUpdate.id)
         .map(r => (r.name, r.description))
         .update((recipeUpdate.name, recipeUpdate.description))
         .andThen(
-          getRecipe(userId, recipeUpdate.id)
-            .map(_.toRight(ErrorContext.Recipe.NotFound.asServerError))
+          OptionT(getRecipe(userId, recipeUpdate.id)).getOrElseF(DBIO.failed(DBError.RecipeNotFound))
         )
 
     override def deleteRecipe(userId: UserId, id: RecipeId)(implicit
@@ -255,7 +264,7 @@ object RecipeService {
         ingredientUpdate: IngredientUpdate
     )(implicit
         ec: ExecutionContext
-    ): DBIO[ServerError.Or[Ingredient]] = {
+    ): DBIO[Ingredient] = {
       val findAction = Tables.RecipeIngredient
         .filter(ri => ri.id === ingredientUpdate.id.transformInto[UUID])
       val updateAction =
@@ -263,13 +272,11 @@ object RecipeService {
           .map(i => (i.measureId, i.factor))
           .update((ingredientUpdate.amountUnit.measureId.transformInto[Int], ingredientUpdate.amountUnit.factor))
           .andThen(
-            EitherT
-              .fromOptionF(
-                findAction.result.headOption: DBIO[Option[Tables.RecipeIngredientRow]],
-                ErrorContext.Recipe.Ingredient.NotFound.asServerError
-              )
+            OptionT(
+              findAction.result.headOption: DBIO[Option[Tables.RecipeIngredientRow]]
+            )
               .map(_.transformInto[Ingredient])
-              .value
+              .getOrElseF(DBIO.failed(DBError.RecipeIngredientNotFound))
           )
       ifRecipeExists(userId, ingredientUpdate.recipeId)(updateAction)
     }

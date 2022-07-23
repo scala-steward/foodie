@@ -115,7 +115,9 @@ class RecipeController @Inject() (
       )
         .fold(
           badRequest,
-          _ => Ok
+          _.pipe(_.transformInto[Ingredient])
+            .pipe(_.asJson)
+            .pipe(Ok(_))
         )
         .recover(recipeErrorHandler)
     }
@@ -140,7 +142,9 @@ class RecipeController @Inject() (
       )
         .fold(
           badRequest,
-          _ => Ok
+          _.pipe(_.transformInto[Ingredient])
+            .pipe(_.asJson)
+            .pipe(Ok(_))
         )
         .recover(recipeErrorHandler)
     }

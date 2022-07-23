@@ -39,6 +39,11 @@ object ErrorContext {
           s"Recipe creation failed due to: $dbMessage"
         )
 
+    case class Update(dbMessage: String)
+        extends ServerErrorInstance(
+          s"Recipe update failed due to: $dbMessage"
+        )
+
     case class General(dbMessage: String)
         extends ServerErrorInstance(
           s"A database operation failed with the message: $dbMessage"
@@ -51,6 +56,11 @@ object ErrorContext {
             s"Ingredient creation failed due to: $dbMessage"
           )
 
+      case class Update(dbMessage: String)
+          extends ServerErrorInstance(
+            s"Recipe ingredient update failed due to: $dbMessage"
+          )
+
       case object NotFound extends ServerErrorInstance("No ingredient with the given id found")
 
     }
@@ -59,6 +69,16 @@ object ErrorContext {
 
   object Meal {
     case object NotFound extends ServerErrorInstance("No meal with the given id found")
+
+    case class Creation(dbMessage: String)
+        extends ServerErrorInstance(
+          s"Recipe creation failed due to: $dbMessage"
+        )
+
+    case class General(dbMessage: String)
+        extends ServerErrorInstance(
+          s"A database operation failed with the message: $dbMessage"
+        )
 
     object Entry {
 

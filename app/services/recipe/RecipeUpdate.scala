@@ -5,3 +5,5 @@ case class RecipeUpdate(
     name: String,
     description: Option[String]
 )
+
+object RecipeUpdate {}
