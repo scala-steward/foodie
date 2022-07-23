@@ -3,7 +3,6 @@ package controllers.meal
 import io.circe.generic.JsonCodec
 import utils.SimpleDate
 
-import java.time.{ LocalDate, LocalTime }
 import java.util.UUID
 
 @JsonCodec
