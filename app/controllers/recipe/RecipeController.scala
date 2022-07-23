@@ -153,10 +153,17 @@ class RecipeController @Inject() (
     BadRequest(serverError.asJson)
 
   private def recipeErrorHandler: PartialFunction[Throwable, Result] = {
-    case DBError.RecipeNotFound =>
-      BadRequest(ErrorContext.Recipe.NotFound.asServerError.asJson)
     case error =>
-      BadRequest(ErrorContext.Recipe.General(error.getMessage).asServerError.asJson)
+      val context = error match {
+        case DBError.RecipeNotFound =>
+          ErrorContext.Recipe.NotFound
+        case DBError.RecipeIngredientNotFound =>
+          ErrorContext.Recipe.Ingredient.NotFound
+        case _ =>
+          ErrorContext.Recipe.General(error.getMessage)
+      }
+
+      BadRequest(context.asServerError.asJson)
   }
 
 }
