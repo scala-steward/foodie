@@ -223,7 +223,7 @@ object RecipeService {
         }
     }
 
-    // TODO: Bottleneck - updates concern only the description, however the full recipe is fetched again.
+    // TODO: Bottleneck - updates concern only the non-ingredient parts, but the full recipe is fetched again.
     override def updateRecipe(
         userId: UserId,
         recipeUpdate: RecipeUpdate
@@ -259,26 +259,32 @@ object RecipeService {
       }
     }
 
+    private def getIngredient(
+        ingredientId: IngredientId
+    )(implicit ec: ExecutionContext): DBIO[Option[Ingredient]] =
+      OptionT(
+        ingredientQuery(ingredientId).result.headOption: DBIO[Option[Tables.RecipeIngredientRow]]
+      )
+        .map(_.transformInto[Ingredient])
+        .value
+
     override def updateIngredient(
         userId: UserId,
         ingredientUpdate: IngredientUpdate
     )(implicit
         ec: ExecutionContext
     ): DBIO[Ingredient] = {
-      val findAction = Tables.RecipeIngredient
-        .filter(ri => ri.id === ingredientUpdate.id.transformInto[UUID])
-      val updateAction =
-        findAction
-          .map(i => (i.measureId, i.factor))
-          .update((ingredientUpdate.amountUnit.measureId.transformInto[Int], ingredientUpdate.amountUnit.factor))
-          .andThen(
-            OptionT(
-              findAction.result.headOption: DBIO[Option[Tables.RecipeIngredientRow]]
-            )
-              .map(_.transformInto[Ingredient])
-              .getOrElseF(DBIO.failed(DBError.RecipeIngredientNotFound))
-          )
-      ifRecipeExists(userId, ingredientUpdate.recipeId)(updateAction)
+      val findAction = OptionT(getIngredient(ingredientUpdate.id))
+        .getOrElseF(DBIO.failed(DBError.RecipeIngredientNotFound))
+      for {
+        ingredient <- findAction
+        _ <- ingredientQuery(ingredientUpdate.id).update(
+          IngredientUpdate
+            .update(ingredient, ingredientUpdate)
+            .transformInto[Tables.RecipeIngredientRow]
+        )
+        ingredientFromDB <- findAction
+      } yield ingredientFromDB
     }
 
     override def removeIngredient(
@@ -310,6 +316,12 @@ object RecipeService {
           r.id === id.transformInto[UUID] &&
             r.userId === userId.transformInto[UUID]
         )
+
+    private def ingredientQuery(
+        ingredientId: IngredientId
+    ): Query[Tables.RecipeIngredient, Tables.RecipeIngredientRow, Seq] =
+      Tables.RecipeIngredient
+        .filter(_.id === ingredientId.transformInto[UUID])
 
     private def ifRecipeExists[A](
         userId: UserId,
