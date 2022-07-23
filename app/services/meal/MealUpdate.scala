@@ -1,12 +1,11 @@
 package services.meal
 
+import services.recipe.RecipeId
 import utils.SimpleDate
 
-import java.util.UUID
-
 case class MealUpdate(
-    mealId: UUID,
+    id: MealId,
     date: SimpleDate,
-    recipeId: UUID,
-    amount: BigDecimal
+    name: Option[String],
+    recipeId: RecipeId
 )

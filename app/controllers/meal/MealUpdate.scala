@@ -8,10 +8,10 @@ import java.util.UUID
 
 @JsonCodec
 case class MealUpdate(
-    mealId: UUID,
+    id: UUID,
     date: SimpleDate,
-    recipeId: UUID,
-    amount: BigDecimal
+    name: Option[String],
+    recipeId: UUID
 )
 
 object MealUpdate {
