@@ -234,9 +234,13 @@ object RecipeService {
       for {
         recipe <- findAction
         _ <- recipeQuery(userId, recipeUpdate.id).update(
-          RecipeUpdate
-            .update(recipe, recipeUpdate)
-            .transformInto[Tables.RecipeRow]
+          (
+            RecipeUpdate
+              .update(recipe, recipeUpdate),
+            userId
+          )
+            .transformInto[Recipe.DBRepresentation]
+            .recipeRow
         )
         updatedRecipe <- findAction
       } yield updatedRecipe
@@ -264,32 +268,27 @@ object RecipeService {
       }
     }
 
-    private def getIngredient(
-        ingredientId: IngredientId
-    )(implicit ec: ExecutionContext): DBIO[Option[Ingredient]] =
-      OptionT(
-        ingredientQuery(ingredientId).result.headOption: DBIO[Option[Tables.RecipeIngredientRow]]
-      )
-        .map(_.transformInto[Ingredient])
-        .value
-
     override def updateIngredient(
         userId: UserId,
         ingredientUpdate: IngredientUpdate
     )(implicit
         ec: ExecutionContext
     ): DBIO[Ingredient] = {
-      val findAction = OptionT(getIngredient(ingredientUpdate.id))
-        .getOrElseF(DBIO.failed(DBError.RecipeIngredientNotFound))
+      val findAction =
+        OptionT(ingredientQuery(ingredientUpdate.id).result.headOption: DBIO[Option[Tables.RecipeIngredientRow]])
+          .getOrElseF(DBIO.failed(DBError.RecipeIngredientNotFound))
       for {
-        ingredient <- findAction
+        ingredientRow <- findAction
         _ <- ingredientQuery(ingredientUpdate.id).update(
-          IngredientUpdate
-            .update(ingredient, ingredientUpdate)
+          (
+            IngredientUpdate
+              .update(ingredientRow.transformInto[Ingredient], ingredientUpdate),
+            ingredientRow.recipeId.transformInto[RecipeId]
+          )
             .transformInto[Tables.RecipeIngredientRow]
         )
-        updatedIngredient <- findAction
-      } yield updatedIngredient
+        updatedIngredientRow <- findAction
+      } yield updatedIngredientRow.transformInto[Ingredient]
     }
 
     override def removeIngredient(
