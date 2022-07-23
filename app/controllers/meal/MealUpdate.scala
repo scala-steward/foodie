@@ -1,11 +1,25 @@
 package controllers.meal
 
-import java.time.Instant
+import io.circe.generic.JsonCodec
+import io.scalaland.chimney.Transformer
+import utils.SimpleDate
+import utils.TransformerUtils.Implicits._
+
 import java.util.UUID
 
+@JsonCodec
 case class MealUpdate(
-    mealId: UUID,
-    date: Instant,
-    recipeId: UUID,
-    amount: BigDecimal
+    id: UUID,
+    date: SimpleDate,
+    name: Option[String],
+    recipeId: UUID
 )
+
+object MealUpdate {
+
+  implicit val toDomain: Transformer[MealUpdate, services.meal.MealUpdate] =
+    Transformer
+      .define[MealUpdate, services.meal.MealUpdate]
+      .buildTransformer
+
+}

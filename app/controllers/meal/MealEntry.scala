@@ -6,6 +6,7 @@ import java.util.UUID
 
 @JsonCodec
 case class MealEntry(
+    id: UUID,
     recipeId: UUID,
-    amount: BigDecimal
+    factor: BigDecimal
 )

@@ -134,7 +134,7 @@ create table cnf.conversion_factor (
 alter table cnf.conversion_factor
     add constraint conversion_factor_pk primary key (food_id, measure_id);
 
-create table person(
+create table "user"(
     id uuid not null,
     nickname text not null,
     display_name text,
@@ -143,8 +143,8 @@ create table person(
     hash text not null
 );
 
-alter table person
-    add constraint person_pk primary key (id);
+alter table "user"
+    add constraint user_pk primary key (id);
 
 create table recipe(
     id uuid not null,
@@ -155,28 +155,43 @@ create table recipe(
 
 alter table recipe
     add constraint recipe_pk primary key (id),
-    add constraint recipe_user_id_fk foreign key (user_id) references person(id);
+    add constraint recipe_user_id_fk foreign key (user_id) references "user"(id) on delete cascade;
 
 create table recipe_ingredient(
     id uuid not null,
     recipe_id uuid not null,
     food_name_id integer not null,
-    amount decimal not null
+    measure_id int not null,
+    factor decimal not null
 );
 
 alter table recipe_ingredient
     add constraint recipe_ingredient_pk primary key (id),
     add constraint recipe_ingredient_recipe_id_fk foreign key (recipe_id) references recipe(id),
-    add constraint recipe_ingredient_food_name_id_fk foreign key (food_name_id) references cnf.food_name(food_id);
+    add constraint recipe_ingredient_food_name_id_fk foreign key (food_name_id) references cnf.food_name(food_id),
+    add constraint recipe_factor_positive check (factor > 0);
 
-create table meal_plan_entry(
-  id uuid not null,
-  user_id uuid not null,
-  consumed_on timestamp not null,
-  amount decimal not null
+create table meal(
+    id uuid not null,
+    user_id uuid not null,
+    consumed_on_date date not null,
+    consumed_on_time time,
+    name text
 );
 
-alter table meal_plan_entry
-    add constraint meal_plan_entry_pk primary key (id),
-    add constraint meal_plan_entry_user_id_fk foreign key (user_id) references person(id),
-    add constraint meal_plan_entry_amount_positive check (amount > 0);
+alter table meal
+    add constraint meal_pk primary key (id),
+    add constraint meal_user_id_fk foreign key (user_id) references "user"(id) on delete cascade;
+
+create table meal_entry(
+  id uuid not null,
+  meal_id uuid not null,
+  recipe_id uuid not null,
+  factor decimal not null
+);
+
+alter table meal_entry
+    add constraint meal_entry_pk primary key (id),
+    add constraint meal_entry_meal_id_fk foreign key (meal_id) references meal(id) on delete cascade,
+    add constraint meal_entry_recipe_id_fk foreign key (recipe_id) references recipe(id) on delete cascade,
+    add constraint meal_entry_factor_positive check (factor > 0);

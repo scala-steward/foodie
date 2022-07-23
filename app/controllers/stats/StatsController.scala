@@ -1,12 +1,14 @@
 package controllers.stats
 
-import controllers.recipe.UserController
-import play.api.mvc.{ Action, ControllerComponents }
+import action.JwtAction
+import play.api.mvc.{ AbstractController, Action, ControllerComponents }
 
 import javax.inject.Inject
 
-class StatsController @Inject() (controllerComponents: ControllerComponents)
-    extends UserController(controllerComponents) {
+class StatsController @Inject() (
+    controllerComponents: ControllerComponents,
+    jwtAction: JwtAction
+) extends AbstractController(controllerComponents) {
 
   def get: Action[StatsRequest] = ???
 }
