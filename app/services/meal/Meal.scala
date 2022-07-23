@@ -44,7 +44,7 @@ object Meal {
       DBRepresentation(
         mealRow = Tables.MealRow(
           id = meal.id.transformInto[UUID],
-          userId = meal.id.transformInto[UUID],
+          userId = userId.transformInto[UUID],
           consumedOnDate = meal.date.date.transformInto[java.sql.Date],
           consumedOnTime = meal.date.time.map(_.transformInto[java.sql.Time]),
           name = meal.name
