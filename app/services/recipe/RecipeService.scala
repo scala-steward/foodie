@@ -18,6 +18,7 @@ import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
 
 trait RecipeService {
+  // TODO: Add suggestion function that presents the valid measures for a food
   def allFoods: Future[Seq[Food]]
   def allMeasures: Future[Seq[Measure]]
 
