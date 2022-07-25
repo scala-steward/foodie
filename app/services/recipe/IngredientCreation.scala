@@ -1,5 +1,7 @@
 package services.recipe
 
+import services.{ FoodId, IngredientId, RecipeId }
+
 case class IngredientCreation(
     recipeId: RecipeId,
     foodId: FoodId,

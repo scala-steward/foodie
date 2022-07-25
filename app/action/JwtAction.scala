@@ -10,7 +10,8 @@ import pureconfig.generic.ProductHint
 import pureconfig.generic.auto._
 import pureconfig.{ CamelCase, ConfigFieldMapping, ConfigSource }
 import security.jwt.JwtConfiguration
-import services.user.{ User, UserId, UserService }
+import services.UserId
+import services.user.{ User, UserService }
 import utils.TransformerUtils.Implicits._
 import utils.jwt.JwtUtil
 

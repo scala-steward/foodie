@@ -1,5 +1,7 @@
 package services.recipe
 
+import services.RecipeId
+
 case class RecipeUpdate(
     id: RecipeId,
     name: String,

@@ -7,7 +7,8 @@ import io.circe.syntax._
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.libs.circe.Circe
 import play.api.mvc._
-import services.meal.{ DBError, MealEntryId, MealId, MealService }
+import services.meal.{ DBError, MealService }
+import services.{ MealEntryId, MealId }
 import utils.TransformerUtils.Implicits._
 
 import java.util.UUID

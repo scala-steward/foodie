@@ -3,6 +3,7 @@ package services.user
 import db.generated.Tables
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl._
+import services.UserId
 
 case class User(
     id: UserId,
