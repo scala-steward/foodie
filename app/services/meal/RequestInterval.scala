@@ -14,6 +14,7 @@ object RequestInterval {
 
   implicit val localDateOrder: Order[LocalDate] = Order.by(_.toEpochDay)
 
+  // TODO: Check necessity
   def toInterval(requestInterval: RequestInterval): Interval[LocalDate] =
     (requestInterval.from, requestInterval.to) match {
       case (Some(start), Some(end)) => Interval.closed(start, end)
