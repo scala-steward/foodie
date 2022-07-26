@@ -167,8 +167,10 @@ create table recipe_ingredient(
 
 alter table recipe_ingredient
     add constraint recipe_ingredient_pk primary key (id),
-    add constraint recipe_ingredient_recipe_id_fk foreign key (recipe_id) references recipe(id),
+    add constraint recipe_ingredient_recipe_id_fk foreign key (recipe_id) references recipe(id) on delete cascade,
     add constraint recipe_ingredient_food_name_id_fk foreign key (food_name_id) references cnf.food_name(food_id),
+    add constraint recipe_ingredient_measure_id_fk foreign key (measure_id) references cnf.measure_name(measure_id),
+    add constraint recipe_ingredient_food_name_id_measure_id_fk foreign key (food_name_id, measure_id) references cnf.conversion_factor(food_id, measure_id),
     add constraint recipe_factor_positive check (factor > 0);
 
 create table meal(
