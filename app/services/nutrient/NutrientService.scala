@@ -2,20 +2,19 @@ package services.nutrient
 
 import cats.Applicative
 import cats.data.OptionT
+import cats.syntax.contravariantSemigroupal._
+import cats.syntax.traverse._
 import db.generated.Tables
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
-import services.{ FoodId, MeasureId, NutrientId }
+import services.{ FoodId, MeasureId }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
+import spire.implicits._
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
-import cats.syntax.traverse._
-import cats.syntax.contravariantSemigroupal._
-import cats.instances.list._
 
-import java.util.UUID
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -77,28 +76,37 @@ object NutrientService {
       )
         .getOrElseF(DBIO.failed(DBError.ConversionFactorNotFound))
 
-    def getNutrient(
-        nutrientId: NutrientId
-    ): DBIO[Option[Nutrient]] = ???
+    private def getNutrient(
+        idOrCode: Int
+    )(implicit ec: ExecutionContext): DBIO[Option[Nutrient]] =
+      OptionT(
+        Tables.NutrientName
+          .filter(n => n.nutrientNameId === idOrCode || n.nutrientCode === idOrCode)
+          .result
+          .headOption: DBIO[Option[Tables.NutrientNameRow]]
+      )
+        .map(_.transformInto[Nutrient])
+        .value
 
-    def nutrientBaseOf(
+    private def nutrientBaseOf(
         foodId: FoodId
     )(implicit
         ec: ExecutionContext
     ): DBIO[NutrientMap] =
       for {
-        nutrientAmounts <- Tables.NutrientAmount.filter(_.foodId === foodId.transformInto[Int]).result
+        nutrientAmounts <-
+          Tables.NutrientAmount
+            .filter(_.foodId === foodId.transformInto[Int])
+            .result
         pairs <-
           nutrientAmounts
             .traverse(n =>
               (
-                getNutrient(n.nutrientId.transformInto[NutrientId]),
+                getNutrient(n.nutrientId),
                 Applicative[DBIO].pure(n.nutrientValue)
               ).mapN((n, a) => n.map(_ -> a))
             )
-      } yield NutrientMap(
-        pairs.flatten.toMap
-      )
+      } yield pairs.flatten.toMap
 
     override def nutrientOf(
         foodId: FoodId,
@@ -106,7 +114,11 @@ object NutrientService {
         amount: BigDecimal
     )(implicit
         ec: ExecutionContext
-    ): DBIO[NutrientMap] = ???
+    ): DBIO[NutrientMap] =
+      for {
+        nutrientBase     <- nutrientBaseOf(foodId)
+        conversionFactor <- conversionFactor(foodId, measureId)
+      } yield amount *: conversionFactor.conversionFactorValue *: nutrientBase
 
   }
 
