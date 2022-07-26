@@ -7,6 +7,7 @@ import cats.syntax.traverse._
 import db.generated.Tables
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
+import services.recipe.Ingredient
 import services.{ FoodId, MeasureId }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
@@ -20,10 +21,18 @@ import scala.concurrent.{ ExecutionContext, Future }
 
 trait NutrientService {
 
-  def nutrientsOf(
+  def nutrientsOfFood(
       foodId: FoodId,
       measureId: MeasureId,
-      amount: BigDecimal
+      factor: BigDecimal
+  ): Future[NutrientMap]
+
+  def nutrientsOfIngredient(
+      ingredient: Ingredient
+  ): Future[NutrientMap]
+
+  def nutrientsOfIngredients(
+      ingredients: Seq[Ingredient]
   ): Future[NutrientMap]
 
 }
@@ -32,10 +41,18 @@ object NutrientService {
 
   trait Companion {
 
-    def nutrientOf(
+    def nutrientOfFood(
         foodId: FoodId,
         measureId: MeasureId,
         amount: BigDecimal
+    )(implicit ec: ExecutionContext): DBIO[NutrientMap]
+
+    def nutrientsOfIngredient(
+        ingredient: Ingredient
+    )(implicit ec: ExecutionContext): DBIO[NutrientMap]
+
+    def nutrientsOfIngredients(
+        ingredients: Seq[Ingredient]
     )(implicit ec: ExecutionContext): DBIO[NutrientMap]
 
     def conversionFactor(
@@ -52,8 +69,14 @@ object NutrientService {
       extends NutrientService
       with HasDatabaseConfigProvider[PostgresProfile] {
 
-    override def nutrientsOf(foodId: FoodId, measureId: MeasureId, amount: BigDecimal): Future[NutrientMap] =
-      db.run(companion.nutrientOf(foodId, measureId, amount))
+    override def nutrientsOfFood(foodId: FoodId, measureId: MeasureId, factor: BigDecimal): Future[NutrientMap] =
+      db.run(companion.nutrientOfFood(foodId, measureId, factor))
+
+    override def nutrientsOfIngredient(ingredient: Ingredient): Future[NutrientMap] =
+      db.run(companion.nutrientsOfIngredient(ingredient))
+
+    override def nutrientsOfIngredients(ingredients: Seq[Ingredient]): Future[NutrientMap] =
+      db.run(companion.nutrientsOfIngredients(ingredients))
 
   }
 
@@ -75,6 +98,32 @@ object NutrientService {
           .headOption: DBIO[Option[Tables.ConversionFactorRow]]
       )
         .getOrElseF(DBIO.failed(DBError.ConversionFactorNotFound))
+
+    override def nutrientOfFood(
+        foodId: FoodId,
+        measureId: MeasureId,
+        factor: BigDecimal
+    )(implicit
+        ec: ExecutionContext
+    ): DBIO[NutrientMap] =
+      for {
+        nutrientBase     <- nutrientBaseOf(foodId)
+        conversionFactor <- conversionFactor(foodId, measureId)
+      } yield factor *: conversionFactor.conversionFactorValue *: nutrientBase
+
+    override def nutrientsOfIngredient(ingredient: Ingredient)(implicit ec: ExecutionContext): DBIO[NutrientMap] =
+      nutrientOfFood(
+        foodId = ingredient.foodId,
+        measureId = ingredient.amountUnit.measureId,
+        factor = ingredient.amountUnit.factor
+      )
+
+    override def nutrientsOfIngredients(ingredients: Seq[Ingredient])(implicit
+        ec: ExecutionContext
+    ): DBIO[NutrientMap] =
+      ingredients
+        .traverse(nutrientsOfIngredient)
+        .map(_.qsum)
 
     private def getNutrient(
         idOrCode: Int
@@ -107,18 +156,6 @@ object NutrientService {
               ).mapN((n, a) => n.map(_ -> a))
             )
       } yield pairs.flatten.toMap
-
-    override def nutrientOf(
-        foodId: FoodId,
-        measureId: MeasureId,
-        amount: BigDecimal
-    )(implicit
-        ec: ExecutionContext
-    ): DBIO[NutrientMap] =
-      for {
-        nutrientBase     <- nutrientBaseOf(foodId)
-        conversionFactor <- conversionFactor(foodId, measureId)
-      } yield amount *: conversionFactor.conversionFactorValue *: nutrientBase
 
   }
 
