@@ -1,6 +1,7 @@
 package controllers.stats
 
 import action.JwtAction
+import io.circe.syntax._
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.libs.circe.Circe
 import play.api.mvc.{ AbstractController, Action, ControllerComponents }
@@ -22,7 +23,11 @@ class StatsController @Inject() (
     jwtAction.async(circe.tolerantJson[RequestInterval]) { request =>
       statsService
         .nutrientsOverTime(request.user.id, request.body.transformInto[services.stats.RequestInterval])
-        .map(_.pipe(_.transformInto[Stats]).pipe(_.asJson).pipe(Ok(_)))
+        .map(
+          _.pipe(_.transformInto[Stats])
+            .pipe(_.asJson)
+            .pipe(Ok(_))
+        )
     }
 
 }
