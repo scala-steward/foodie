@@ -2,6 +2,7 @@
 GET    /assets/*file             controllers.Assets.versioned(path="/public", file: Asset)
 
 GET    /recipe/measures              controllers.recipe.RecipeController.getMeasures
+GET    /recipe/measures/:foodId      controllers.recipe.RecipeController.measuresFor(foodId: Int)
 GET    /recipe/foods                 controllers.recipe.RecipeController.getFoods
 GET    /recipe/all                   controllers.recipe.RecipeController.getRecipes
 GET    /recipe/:id                   controllers.recipe.RecipeController.get(id: java.util.UUID)

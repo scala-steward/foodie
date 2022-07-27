@@ -8,7 +8,7 @@ import io.scalaland.chimney.dsl.TransformerOps
 import play.api.libs.circe.Circe
 import play.api.mvc._
 import services.recipe.{ DBError, RecipeService }
-import services.{ IngredientId, RecipeId }
+import services.{ FoodId, IngredientId, RecipeId }
 import utils.TransformerUtils.Implicits._
 
 import java.util.UUID
@@ -27,11 +27,14 @@ class RecipeController @Inject() (
   def getMeasures: Action[AnyContent] =
     jwtAction.async {
       recipeService.allMeasures
-        .map(
-          _.map(_.transformInto[Measure])
-            .pipe(_.asJson)
-            .pipe(Ok(_))
-        )
+        .map(measuresResult)
+    }
+
+  def measuresFor(foodId: Int): Action[AnyContent] =
+    jwtAction.async {
+      recipeService
+        .measuresFor(foodId.transformInto[FoodId])
+        .map(measuresResult)
     }
 
   // TODO: Consider allowing specialized search instead of delivering all foods at once.
@@ -166,5 +169,11 @@ class RecipeController @Inject() (
 
       BadRequest(context.asServerError.asJson)
   }
+
+  private def measuresResult(measures: Seq[services.recipe.Measure]): Result =
+    measures
+      .map(_.transformInto[Measure])
+      .pipe(_.asJson)
+      .pipe(Ok(_))
 
 }

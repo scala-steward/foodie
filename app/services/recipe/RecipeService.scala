@@ -6,7 +6,7 @@ import db.generated.Tables
 import errors.{ ErrorContext, ServerError }
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
-import services.{ IngredientId, RecipeId, UserId }
+import services.{ FoodId, IngredientId, RecipeId, UserId }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
@@ -31,6 +31,8 @@ trait RecipeService {
   def addIngredient(userId: UserId, ingredientCreation: IngredientCreation): Future[ServerError.Or[Ingredient]]
   def updateIngredient(userId: UserId, ingredientUpdate: IngredientUpdate): Future[ServerError.Or[Ingredient]]
   def removeIngredient(userId: UserId, ingredientId: IngredientId): Future[Boolean]
+
+  def measuresFor(foodId: FoodId): Future[Seq[Measure]]
 }
 
 object RecipeService {
@@ -85,6 +87,10 @@ object RecipeService {
         userId: UserId,
         id: IngredientId
     )(implicit ec: ExecutionContext): DBIO[Boolean]
+
+    def measuresFor(
+        foodId: FoodId
+    )(implicit ec: ExecutionContext): DBIO[Seq[Measure]]
 
   }
 
@@ -163,6 +169,7 @@ object RecipeService {
     override def removeIngredient(userId: UserId, ingredientId: IngredientId): Future[Boolean] =
       db.run(companion.removeIngredient(userId, ingredientId))
 
+    override def measuresFor(foodId: FoodId): Future[Seq[Measure]] = db.run(companion.measuresFor(foodId))
   }
 
   object Live extends Companion {
@@ -295,7 +302,7 @@ object RecipeService {
     override def removeIngredient(
         userId: UserId,
         id: IngredientId
-    )(implicit ec: ExecutionContext): DBIO[Boolean] = {
+    )(implicit ec: ExecutionContext): DBIO[Boolean] =
       OptionT(
         ingredientQuery(id)
           .map(_.recipeId)
@@ -309,7 +316,16 @@ object RecipeService {
           }
         )
         .getOrElse(false)
-    }
+
+    override def measuresFor(foodId: FoodId)(implicit ec: ExecutionContext): DBIO[Seq[Measure]] =
+      for {
+        measureIds <-
+          Tables.ConversionFactor
+            .filter(_.foodId === foodId.transformInto[Int])
+            .map(_.measureId)
+            .result
+        measureRows <- Tables.MeasureName.filter(_.measureId.inSetBind(measureIds)).result
+      } yield measureRows.map(_.transformInto[Measure])
 
     private def recipeQuery(
         userId: UserId,
