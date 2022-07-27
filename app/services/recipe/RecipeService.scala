@@ -23,8 +23,8 @@ trait RecipeService {
 
   def allRecipes(userId: UserId): Future[Seq[Recipe]]
   def getRecipe(userId: UserId, id: RecipeId): Future[Option[Recipe]]
-  def createRecipe(userId: UserId, recipeCreation: RecipeCreation): Future[ServerError.Or[Recipe]]
-  def updateRecipe(userId: UserId, recipeUpdate: RecipeUpdate): Future[ServerError.Or[Recipe]]
+  def createRecipe(userId: UserId, recipeCreation: RecipeCreation): Future[ServerError.Or[RecipeInfo]]
+  def updateRecipe(userId: UserId, recipeUpdate: RecipeUpdate): Future[ServerError.Or[RecipeInfo]]
   def deleteRecipe(userId: UserId, id: RecipeId): Future[Boolean]
 
   def addIngredient(userId: UserId, ingredientCreation: IngredientCreation): Future[ServerError.Or[Ingredient]]
@@ -53,14 +53,14 @@ object RecipeService {
         recipeCreation: RecipeCreation
     )(implicit
         ec: ExecutionContext
-    ): DBIO[Recipe]
+    ): DBIO[RecipeInfo]
 
     def updateRecipe(
         userId: UserId,
         recipeUpdate: RecipeUpdate
     )(implicit
         ec: ExecutionContext
-    ): DBIO[Recipe]
+    ): DBIO[RecipeInfo]
 
     def deleteRecipe(
         userId: UserId,
@@ -118,7 +118,7 @@ object RecipeService {
     override def createRecipe(
         userId: UserId,
         recipeCreation: RecipeCreation
-    ): Future[ServerError.Or[Recipe]] = {
+    ): Future[ServerError.Or[RecipeInfo]] = {
       db.run(companion.createRecipe(userId, UUID.randomUUID().transformInto[RecipeId], recipeCreation))
         .map(Right(_))
         .recover {
@@ -130,7 +130,7 @@ object RecipeService {
     override def updateRecipe(
         userId: UserId,
         recipeUpdate: RecipeUpdate
-    ): Future[ServerError.Or[Recipe]] =
+    ): Future[ServerError.Or[RecipeInfo]] =
       db.run(companion.updateRecipe(userId, recipeUpdate))
         .map(Right(_))
         .recover {
@@ -231,25 +231,23 @@ object RecipeService {
         recipeCreation: RecipeCreation
     )(implicit
         ec: ExecutionContext
-    ): DBIO[Recipe] = {
-      val recipe           = RecipeCreation.create(id, recipeCreation)
-      val dbRepresentation = (recipe, userId).transformInto[Recipe.DBRepresentation]
-      (Tables.Recipe.returning(Tables.Recipe) += dbRepresentation.recipeRow)
-        .map { recipeRow =>
-          dbRepresentation
-            .copy(recipeRow = recipeRow)
-            .transformInto[Recipe]
-        }
+    ): DBIO[RecipeInfo] = {
+      val recipeInfo = RecipeCreation.create(id, recipeCreation)
+      val row        = (recipeInfo, userId).transformInto[Tables.RecipeRow]
+      (Tables.Recipe.returning(Tables.Recipe) += row)
+        .map(_.transformInto[RecipeInfo])
     }
 
-    // TODO: Bottleneck - updates concern only the non-ingredient parts, but the full recipe is fetched again.
     override def updateRecipe(
         userId: UserId,
         recipeUpdate: RecipeUpdate
     )(implicit
         ec: ExecutionContext
-    ): DBIO[Recipe] = {
-      val findAction = OptionT(getRecipe(userId, recipeUpdate.id)).getOrElseF(DBIO.failed(DBError.RecipeNotFound))
+    ): DBIO[RecipeInfo] = {
+      val findAction =
+        OptionT(recipeQuery(userId, recipeUpdate.id).result.headOption: DBIO[Option[Tables.RecipeRow]])
+          .getOrElseF(DBIO.failed(DBError.RecipeNotFound))
+          .map(_.transformInto[RecipeInfo])
       for {
         recipe <- findAction
         _ <- recipeQuery(userId, recipeUpdate.id).update(
@@ -258,8 +256,7 @@ object RecipeService {
               .update(recipe, recipeUpdate),
             userId
           )
-            .transformInto[Recipe.DBRepresentation]
-            .recipeRow
+            .transformInto[Tables.RecipeRow]
         )
         updatedRecipe <- findAction
       } yield updatedRecipe

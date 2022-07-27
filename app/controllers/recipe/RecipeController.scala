@@ -77,7 +77,7 @@ class RecipeController @Inject() (
           .createRecipe(request.user.id, request.body.transformInto[services.recipe.RecipeCreation])
       )
         .map(
-          _.pipe(_.transformInto[Recipe])
+          _.pipe(_.transformInto[RecipeInfo])
             .pipe(_.asJson)
             .pipe(Ok(_))
         )
@@ -92,7 +92,7 @@ class RecipeController @Inject() (
           .updateRecipe(request.user.id, request.body.transformInto[services.recipe.RecipeUpdate])
       )
         .map(
-          _.pipe(_.transformInto[Recipe])
+          _.pipe(_.transformInto[RecipeInfo])
             .pipe(_.asJson)
             .pipe(Ok(_))
         )

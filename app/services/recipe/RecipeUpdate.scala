@@ -10,8 +10,8 @@ case class RecipeUpdate(
 
 object RecipeUpdate {
 
-  def update(recipe: Recipe, recipeUpdate: RecipeUpdate): Recipe =
-    recipe.copy(
+  def update(recipeInfo: RecipeInfo, recipeUpdate: RecipeUpdate): RecipeInfo =
+    recipeInfo.copy(
       name = recipeUpdate.name,
       description = recipeUpdate.description
     )

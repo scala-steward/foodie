@@ -9,12 +9,11 @@ case class RecipeCreation(
 
 object RecipeCreation {
 
-  def create(id: RecipeId, recipeCreation: RecipeCreation): Recipe =
-    Recipe(
+  def create(id: RecipeId, recipeCreation: RecipeCreation): RecipeInfo =
+    RecipeInfo(
       id = id,
       name = recipeCreation.name,
-      description = recipeCreation.description,
-      ingredients = Seq.empty
+      description = recipeCreation.description
     )
 
 }

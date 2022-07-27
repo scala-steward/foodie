@@ -68,7 +68,7 @@ object StatsService {
             .traverse(r =>
               NutrientService.Live
                 .nutrientsOfIngredients(r.ingredients)
-                .map(r.id -> _): DBIO[(RecipeId, NutrientMap)]
+                .map(r.recipeInfo.id -> _): DBIO[(RecipeId, NutrientMap)]
             )
             .map(_.toMap)
       } yield {

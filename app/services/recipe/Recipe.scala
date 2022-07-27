@@ -9,9 +9,7 @@ import utils.TransformerUtils.Implicits._
 import java.util.UUID
 
 case class Recipe(
-    id: RecipeId,
-    name: String,
-    description: Option[String],
+    recipeInfo: RecipeInfo,
     ingredients: Seq[Ingredient]
 )
 
@@ -25,9 +23,7 @@ object Recipe {
   implicit val fromRepresentation: Transformer[DBRepresentation, Recipe] =
     Transformer
       .define[DBRepresentation, Recipe]
-      .withFieldComputed(_.id, _.recipeRow.id.transformInto[RecipeId])
-      .withFieldComputed(_.name, _.recipeRow.name)
-      .withFieldComputed(_.description, _.recipeRow.description)
+      .withFieldComputed(_.recipeInfo, _.recipeRow.transformInto[RecipeInfo])
       .withFieldComputed(_.ingredients, _.ingredientRows.map(_.transformInto[Ingredient]))
       .buildTransformer
 
@@ -35,12 +31,12 @@ object Recipe {
     case (recipe, userId) =>
       DBRepresentation(
         Tables.RecipeRow(
-          id = recipe.id.transformInto[UUID],
+          id = recipe.recipeInfo.id.transformInto[UUID],
           userId = userId.transformInto[UUID],
-          name = recipe.name,
-          description = recipe.description
+          name = recipe.recipeInfo.name,
+          description = recipe.recipeInfo.description
         ),
-        recipe.ingredients.map(i => (i, recipe.id).transformInto[Tables.RecipeIngredientRow])
+        recipe.ingredients.map(i => (i, recipe.recipeInfo.id).transformInto[Tables.RecipeIngredientRow])
       )
   }
 
