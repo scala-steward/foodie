@@ -18,7 +18,7 @@ import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
 
 trait RecipeService {
-  def allFoods: Future[Seq[Food]]
+  def allFoods(search: Option[String]): Future[Seq[Food]]
   def allMeasures: Future[Seq[Measure]]
 
   def allRecipes(userId: UserId): Future[Seq[Recipe]]
@@ -37,7 +37,7 @@ trait RecipeService {
 object RecipeService {
 
   trait Companion {
-    def allFoods(implicit ec: ExecutionContext): DBIO[Seq[Food]]
+    def allFoods(search: Option[String])(implicit ec: ExecutionContext): DBIO[Seq[Food]]
     def allMeasures(implicit ec: ExecutionContext): DBIO[Seq[Measure]]
 
     def allRecipes(userId: UserId)(implicit ec: ExecutionContext): DBIO[Seq[Recipe]]
@@ -101,7 +101,7 @@ object RecipeService {
   ) extends RecipeService
       with HasDatabaseConfigProvider[PostgresProfile] {
 
-    override def allFoods: Future[Seq[Food]] = db.run(companion.allFoods)
+    override def allFoods(search: Option[String]): Future[Seq[Food]] = db.run(companion.allFoods(search))
 
     override def allMeasures: Future[Seq[Measure]] = db.run(companion.allMeasures)
 
@@ -173,9 +173,21 @@ object RecipeService {
 
   object Live extends Companion {
 
-    override def allFoods(implicit ec: ExecutionContext): DBIO[Seq[Food]] =
-      Tables.FoodName.result
+    override def allFoods(search: Option[String])(implicit ec: ExecutionContext): DBIO[Seq[Food]] = {
+      val filter: Tables.FoodName => Rep[Boolean] =
+        search.filter(_.nonEmpty).fold((_: Tables.FoodName) => true: Rep[Boolean]) { string =>
+          val queryString                             = s"%${string.toLowerCase}%"
+          def likeSearch: Rep[String] => Rep[Boolean] = _.toLowerCase.like(queryString)
+          t =>
+            likeSearch(t.foodDescription) ||
+              likeSearch(t.foodDescriptionF) ||
+              likeSearch(t.scientificName.getOrElse(""))
+        }
+      Tables.FoodName
+        .filter(filter)
+        .result
         .map(_.map(_.transformInto[Food]))
+    }
 
     override def allMeasures(implicit ec: ExecutionContext): DBIO[Seq[Measure]] =
       Tables.MeasureName.result

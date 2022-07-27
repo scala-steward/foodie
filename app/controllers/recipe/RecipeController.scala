@@ -37,14 +37,15 @@ class RecipeController @Inject() (
         .map(measuresResult)
     }
 
-  // TODO: Consider allowing specialized search instead of delivering all foods at once.
-  def getFoods: Action[AnyContent] =
-    jwtAction.async {
-      recipeService.allFoods.map(
-        _.map(_.transformInto[Food])
-          .pipe(_.asJson)
-          .pipe(Ok(_))
-      )
+  def getFoods: Action[FoodQuery] =
+    jwtAction.async(circe.tolerantJson[FoodQuery]) { request =>
+      recipeService
+        .allFoods(request.body.searchString)
+        .map(
+          _.map(_.transformInto[Food])
+            .pipe(_.asJson)
+            .pipe(Ok(_))
+        )
     }
 
   def getRecipes: Action[AnyContent] =
