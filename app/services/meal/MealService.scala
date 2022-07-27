@@ -1,21 +1,19 @@
 package services.meal
 
 import cats.data.OptionT
-import cats.instances.function._
-import cats.syntax.contravariantSemigroupal._
 import cats.syntax.traverse._
 import db.generated.Tables
 import errors.{ ErrorContext, ServerError }
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
-import services.user.UserId
+import services.{ MealEntryId, MealId, UserId }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
+import utils.DBIOUtil
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 
-import java.time.LocalDate
 import java.util.UUID
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
@@ -127,17 +125,7 @@ object MealService {
     )(implicit
         ec: ExecutionContext
     ): DBIO[Seq[Meal]] = {
-      val startFilter: LocalDate => Rep[java.sql.Date] => Rep[Boolean] = start =>
-        _ >= start.transformInto[java.sql.Date]
-
-      val endFilter: LocalDate => Rep[java.sql.Date] => Rep[Boolean] = end => _ <= end.transformInto[java.sql.Date]
-
-      val dateFilter: Rep[java.sql.Date] => Rep[Boolean] = (interval.from, interval.to) match {
-        case (Some(start), Some(end)) => (startFilter(start), endFilter(end)).mapN(_ && _)
-        case (Some(start), _)         => startFilter(start)
-        case (_, Some(end))           => endFilter(end)
-        case _                        => _ => true
-      }
+      val dateFilter: Rep[java.sql.Date] => Rep[Boolean] = DBIOUtil.dateFilter(interval.from, interval.to)
 
       Tables.Meal
         .filter(m => m.userId === userId.transformInto[UUID] && dateFilter(m.consumedOnDate))

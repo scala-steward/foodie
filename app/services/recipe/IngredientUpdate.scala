@@ -1,5 +1,7 @@
 package services.recipe
 
+import services.IngredientId
+
 case class IngredientUpdate(
     id: IngredientId,
     amountUnit: AmountUnit

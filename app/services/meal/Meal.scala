@@ -3,7 +3,7 @@ package services.meal
 import db.generated.Tables
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl.TransformerOps
-import services.user.UserId
+import services.{ MealId, UserId }
 import utils.SimpleDate
 import utils.TransformerUtils.Implicits._
 

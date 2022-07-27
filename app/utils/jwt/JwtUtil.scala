@@ -6,7 +6,7 @@ import io.scalaland.chimney.dsl._
 import pdi.jwt.algorithms.JwtAsymmetricAlgorithm
 import pdi.jwt.{ JwtAlgorithm, JwtCirce, JwtClaim, JwtHeader }
 import security.jwt.{ JwtContent, JwtExpiration }
-import services.user.UserId
+import services.UserId
 import utils.TransformerUtils.Implicits._
 
 import java.util.UUID

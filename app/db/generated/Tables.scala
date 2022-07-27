@@ -434,10 +434,14 @@ trait Tables {
     /** Database column factor SqlType(numeric) */
     val factor: Rep[scala.math.BigDecimal] = column[scala.math.BigDecimal]("factor")
 
+    /** Foreign key referencing ConversionFactor (database name recipe_ingredient_food_name_id_measure_id_fk) */
+    lazy val conversionFactorFk = foreignKey("recipe_ingredient_food_name_id_measure_id_fk", (foodNameId, measureId), ConversionFactor)(r => (r.foodId, r.measureId), onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
     /** Foreign key referencing FoodName (database name recipe_ingredient_food_name_id_fk) */
     lazy val foodNameFk = foreignKey("recipe_ingredient_food_name_id_fk", foodNameId, FoodName)(r => r.foodId, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+    /** Foreign key referencing MeasureName (database name recipe_ingredient_measure_id_fk) */
+    lazy val measureNameFk = foreignKey("recipe_ingredient_measure_id_fk", measureId, MeasureName)(r => r.measureId, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
     /** Foreign key referencing Recipe (database name recipe_ingredient_recipe_id_fk) */
-    lazy val recipeFk = foreignKey("recipe_ingredient_recipe_id_fk", recipeId, Recipe)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.NoAction)
+    lazy val recipeFk = foreignKey("recipe_ingredient_recipe_id_fk", recipeId, Recipe)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
   }
   /** Collection-like TableQuery object for table RecipeIngredient */
   lazy val RecipeIngredient = new TableQuery(tag => new RecipeIngredient(tag))

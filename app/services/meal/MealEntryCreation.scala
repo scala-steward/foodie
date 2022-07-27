@@ -1,6 +1,6 @@
 package services.meal
 
-import services.recipe.RecipeId
+import services.{ MealEntryId, MealId, RecipeId }
 
 case class MealEntryCreation(
     mealId: MealId,

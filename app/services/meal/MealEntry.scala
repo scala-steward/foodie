@@ -3,7 +3,7 @@ package services.meal
 import db.generated.Tables
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl.TransformerOps
-import services.recipe.RecipeId
+import services.{ MealEntryId, MealId, RecipeId }
 import utils.TransformerUtils.Implicits._
 
 import java.util.UUID
