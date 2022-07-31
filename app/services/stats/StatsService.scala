@@ -4,20 +4,20 @@ import cats.syntax.traverse._
 import db.generated.Tables
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
-import services.{ MealId, RecipeId, UserId }
 import services.meal.MealService
 import services.nutrient.{ NutrientMap, NutrientService }
 import services.recipe.RecipeService
+import services.{ MealId, RecipeId, UserId }
 import slick.dbio.DBIO
+import slick.jdbc.PostgresProfile
+import slick.jdbc.PostgresProfile.api._
+import spire.implicits._
+import utils.DBIOUtil
+import utils.DBIOUtil.instances._
+import utils.TransformerUtils.Implicits._
 
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
-import slick.jdbc.PostgresProfile
-import slick.jdbc.PostgresProfile.api._
-import utils.DBIOUtil
-import utils.DBIOUtil.instances._
-import spire.implicits._
-import utils.TransformerUtils.Implicits._
 
 trait StatsService {
 
@@ -72,13 +72,17 @@ object StatsService {
             )
             .map(_.toMap)
       } yield {
-        val nutrientMap = meals
-          .flatMap(_.entries)
-          .map(me => me.factor *: nutrientsPerRecipe(me.recipeId))
-          .qsum
+        val dailyNutrients = meals
+          .groupBy(_.date.date)
+          .values
+          .map(
+            _.flatMap(_.entries)
+              .map(me => me.factor *: nutrientsPerRecipe(me.recipeId))
+              .qsum
+          )
+
         Stats(
-          meals = meals,
-          nutrientMap = nutrientMap
+          dailyNutrients = dailyNutrients
         )
       }
     }
