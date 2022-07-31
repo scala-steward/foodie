@@ -1,9 +1,9 @@
 package utils
 
-import cats.Order
 import cats.data.NonEmptyList
 import spire.algebra.Field
 import spire.compat._
+import spire.algebra.Order
 import spire.syntax.field._
 
 object MathUtil {
