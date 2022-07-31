@@ -1,34 +1,32 @@
 package controllers.stats
 
-import controllers.meal.Meal
 import io.circe.generic.JsonCodec
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl.TransformerOps
+import spire.implicits._
 
 @JsonCodec
 case class Stats(
-    meals: Seq[Meal],
     nutrients: Seq[NutrientInformation]
 )
 
 object Stats {
 
   implicit val fromDomain: Transformer[services.stats.Stats, Stats] = { stats =>
-    val daily = services.stats.Stats.dailyAverage(stats)
-    val nutrients = stats.nutrientMap.map {
-      case (nutrient, amount) =>
-        NutrientInformation(
-          name = nutrient.name,
-          unit = nutrient.unit.transformInto[NutrientUnit],
-          amounts = Amounts(
-            total = amount,
-            dailyAverage = daily(nutrient)
-          )
-        )
-    }.toSeq
+    val dailyStats     = services.stats.Stats.dailyStats(stats)
+    val totalNutrients = stats.dailyNutrients.qsum
     Stats(
-      meals = stats.meals.map(_.transformInto[Meal]),
-      nutrients = nutrients
+      nutrients = dailyStats.map {
+        case (nutrient, daily) =>
+          NutrientInformation(
+            name = nutrient.name,
+            unit = nutrient.unit.transformInto[NutrientUnit],
+            amounts = Amounts(
+              total = totalNutrients.getOrElse(nutrient, 0),
+              daily = daily.transformInto[Daily]
+            )
+          )
+      }.toSeq
     )
   }
 
