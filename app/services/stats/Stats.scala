@@ -19,7 +19,7 @@ object Stats {
     val max            = dailyNutrients.foldLeft(NutrientMap.empty)((m1, m2) => MapUtil.unionWith(m1, m2)(_.max(_)))
     val median = dailyNutrients
       .map(_.view.mapValues(NonEmptyList.of(_)).toMap)
-      .foldLeft(Map.empty[Nutrient, NonEmptyList[BigDecimal]])((m1, m2) => MapUtil.unionWith(m1, m2)(_ ++ _))
+      .foldLeft(Map.empty[Nutrient, NonEmptyList[BigDecimal]])((m1, m2) => MapUtil.unionWith(m1, m2)(_ ::: _))
       .view
       .mapValues(MathUtil.median)
       .toMap
