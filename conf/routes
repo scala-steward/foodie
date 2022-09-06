@@ -8,6 +8,7 @@ GET    /recipe/:id                   controllers.recipe.RecipeController.get(id:
 POST   /recipe/create                controllers.recipe.RecipeController.create
 PATCH  /recipe/update                controllers.recipe.RecipeController.update
 DELETE /recipe/delete/:id            controllers.recipe.RecipeController.delete(id: java.util.UUID)
+GET    /recipe/:id/ingredients       controllers.recipe.RecipeController.getIngredients(id: java.util.UUID)
 PATCH  /recipe/add-ingredient        controllers.recipe.RecipeController.addIngredient
 PATCH  /recipe/update-ingredient     controllers.recipe.RecipeController.updateIngredient
 PATCH  /recipe/remove-ingredient/:id controllers.recipe.RecipeController.removeIngredient(id: java.util.UUID)
@@ -24,3 +25,5 @@ PATCH  /meal/delete-meal-entry/:id   controllers.meal.MealController.deleteMealE
 GET    /stats                        controllers.stats.StatsController.get
 
 GET    /                             controllers.home.HomeController.home
+POST   /login                        controllers.login.LoginController.login
+POST   /create                       controllers.login.LoginController.createUser
