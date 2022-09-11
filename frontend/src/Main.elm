@@ -6,10 +6,24 @@ import Browser.Navigation as Nav
 import Configuration exposing (Configuration)
 import Html exposing (Html, div, text)
 import Monocle.Lens exposing (Lens)
-import Pages.IngredientEditor.IngredientEditor as IngredientEditor
-import Pages.Login as Login
-import Pages.Overview as Overview
-import Pages.Recipes as Recipes
+import Pages.IngredientEditor.Handler
+import Pages.IngredientEditor.Page
+import Pages.IngredientEditor.View
+import Pages.Login.Handler
+import Pages.Login.Page
+import Pages.Login.View
+import Pages.MealEntryEditor.Handler
+import Pages.MealEntryEditor.Page
+import Pages.MealEntryEditor.View
+import Pages.Meals.Handler
+import Pages.Meals.Page
+import Pages.Meals.View
+import Pages.Overview.Handler
+import Pages.Overview.Page
+import Pages.Overview.View
+import Pages.Recipes.Handler
+import Pages.Recipes.Page
+import Pages.Recipes.View
 import Pages.Util.ParserUtil as ParserUtil
 import Ports exposing (doFetchToken, fetchFoods, fetchMeasures, fetchToken)
 import Url exposing (Url)
@@ -51,10 +65,12 @@ jwtLens =
 
 
 type Page
-    = Login Login.Model
-    | Overview Overview.Model
-    | Recipes Recipes.Model
-    | IngredientEditor IngredientEditor.Model
+    = Login Pages.Login.Page.Model
+    | Overview Pages.Overview.Page.Model
+    | Recipes Pages.Recipes.Page.Model
+    | IngredientEditor Pages.IngredientEditor.Page.Model
+    | Meals Pages.Meals.Page.Model
+    | MealEntryEditor Pages.MealEntryEditor.Page.Model
     | NotFound
 
 
@@ -64,10 +80,12 @@ type Msg
     | FetchToken String
     | FetchFoods String
     | FetchMeasures String
-    | LoginMsg Login.Msg
-    | OverviewMsg Overview.Msg
-    | RecipesMsg Recipes.Msg
-    | IngredientEditorMsg IngredientEditor.Msg
+    | LoginMsg Pages.Login.Page.Msg
+    | OverviewMsg Pages.Overview.Page.Msg
+    | RecipesMsg Pages.Recipes.Page.Msg
+    | IngredientEditorMsg Pages.IngredientEditor.Page.Msg
+    | MealsMsg Pages.Meals.Page.Msg
+    | MealEntryEditorMsg Pages.MealEntryEditor.Page.Msg
 
 
 titleFor : Model -> String
@@ -93,16 +111,22 @@ view : Model -> Html Msg
 view model =
     case model.page of
         Login login ->
-            Html.map LoginMsg (Login.view login)
+            Html.map LoginMsg (Pages.Login.View.view login)
 
         Overview overview ->
-            Html.map OverviewMsg (Overview.view overview)
+            Html.map OverviewMsg (Pages.Overview.View.view overview)
 
         Recipes recipes ->
-            Html.map RecipesMsg (Recipes.view recipes)
+            Html.map RecipesMsg (Pages.Recipes.View.view recipes)
 
         IngredientEditor ingredientEditor ->
-            Html.map IngredientEditorMsg (IngredientEditor.view ingredientEditor)
+            Html.map IngredientEditorMsg (Pages.IngredientEditor.View.view ingredientEditor)
+
+        Meals meals ->
+            Html.map MealsMsg (Pages.Meals.View.view meals)
+
+        MealEntryEditor mealEntryEditor ->
+            Html.map MealEntryEditorMsg (Pages.MealEntryEditor.View.view mealEntryEditor)
 
         NotFound ->
             div [] [ text "Page not found" ]
@@ -123,7 +147,7 @@ update msg model =
             stepTo url model
 
         ( LoginMsg loginMsg, Login login ) ->
-            stepLogin model (Login.update loginMsg login)
+            stepLogin model (Pages.Login.Handler.update loginMsg login)
 
         -- todo: Check all cases, and possibly refactor to have less duplication.
         ( FetchToken token, page ) ->
@@ -132,31 +156,43 @@ update msg model =
                     ( jwtLens.set (Just token) model, Cmd.none )
 
                 Overview overview ->
-                    stepOverview model (Overview.update (Overview.updateJWT token) overview)
+                    stepOverview model (Pages.Overview.Handler.update (Pages.Overview.Page.UpdateJWT token) overview)
 
                 Recipes recipes ->
-                    stepRecipes model (Recipes.update (Recipes.updateJWT token) recipes)
+                    stepRecipes model (Pages.Recipes.Handler.update (Pages.Recipes.Page.UpdateJWT token) recipes)
 
                 IngredientEditor ingredientEditor ->
-                    stepIngredientEditor model (IngredientEditor.update (IngredientEditor.updateJWT token) ingredientEditor)
+                    stepIngredientEditor model (Pages.IngredientEditor.Handler.update (Pages.IngredientEditor.Page.UpdateJWT token) ingredientEditor)
+
+                Meals meals ->
+                    stepMeals model (Pages.Meals.Handler.update (Pages.Meals.Page.UpdateJWT token) meals)
+
+                MealEntryEditor mealEntryEditor ->
+                    stepMealEntryEditor model (Pages.MealEntryEditor.Handler.update (Pages.MealEntryEditor.Page.UpdateJWT token) mealEntryEditor)
 
                 NotFound ->
                     ( jwtLens.set (Just token) model, Cmd.none )
 
         ( FetchFoods foods, IngredientEditor ingredientEditor ) ->
-            stepIngredientEditor model (IngredientEditor.update (IngredientEditor.updateFoods foods) ingredientEditor)
+            stepIngredientEditor model (Pages.IngredientEditor.Handler.update (Pages.IngredientEditor.Page.UpdateFoods foods) ingredientEditor)
 
         ( FetchMeasures measures, IngredientEditor ingredientEditor ) ->
-            stepIngredientEditor model (IngredientEditor.update (IngredientEditor.updateMeasures measures) ingredientEditor)
+            stepIngredientEditor model (Pages.IngredientEditor.Handler.update (Pages.IngredientEditor.Page.UpdateMeasures measures) ingredientEditor)
 
         ( OverviewMsg overviewMsg, Overview overview ) ->
-            stepOverview model (Overview.update overviewMsg overview)
+            stepOverview model (Pages.Overview.Handler.update overviewMsg overview)
 
         ( RecipesMsg recipesMsg, Recipes recipes ) ->
-            stepRecipes model (Recipes.update recipesMsg recipes)
+            stepRecipes model (Pages.Recipes.Handler.update recipesMsg recipes)
 
         ( IngredientEditorMsg ingredientEditorMsg, IngredientEditor ingredientEditor ) ->
-            stepIngredientEditor model (IngredientEditor.update ingredientEditorMsg ingredientEditor)
+            stepIngredientEditor model (Pages.IngredientEditor.Handler.update ingredientEditorMsg ingredientEditor)
+
+        ( MealsMsg mealsMsg, Meals meals ) ->
+            stepMeals model (Pages.Meals.Handler.update mealsMsg meals)
+
+        ( MealEntryEditorMsg mealEntryEditorMsg, MealEntryEditor mealEntryEditor ) ->
+            stepMealEntryEditor model (Pages.MealEntryEditor.Handler.update mealEntryEditorMsg mealEntryEditor)
 
         _ ->
             ( model, Cmd.none )
@@ -168,46 +204,64 @@ stepTo url model =
         Just answer ->
             case answer of
                 LoginRoute flags ->
-                    Login.init flags |> stepLogin model
+                    Pages.Login.Handler.init flags |> stepLogin model
 
                 OverviewRoute flags ->
-                    Overview.init flags |> stepOverview model
+                    Pages.Overview.Handler.init flags |> stepOverview model
 
                 RecipesRoute flags ->
-                    Recipes.init flags |> stepRecipes model
+                    Pages.Recipes.Handler.init flags |> stepRecipes model
 
                 IngredientEditorRoute flags ->
-                    IngredientEditor.init flags |> stepIngredientEditor model
+                    Pages.IngredientEditor.Handler.init flags |> stepIngredientEditor model
+
+                MealsRoute flags ->
+                    Pages.Meals.Handler.init flags |> stepMeals model
+
+                MealEntryEditorRoute flags ->
+                    Pages.MealEntryEditor.Handler.init flags |> stepMealEntryEditor model
 
         Nothing ->
             ( { model | page = NotFound }, Cmd.none )
 
 
-stepLogin : Model -> ( Login.Model, Cmd Login.Msg ) -> ( Model, Cmd Msg )
+stepLogin : Model -> ( Pages.Login.Page.Model, Cmd Pages.Login.Page.Msg ) -> ( Model, Cmd Msg )
 stepLogin model ( login, cmd ) =
     ( { model | page = Login login }, Cmd.map LoginMsg cmd )
 
 
-stepOverview : Model -> ( Overview.Model, Cmd Overview.Msg ) -> ( Model, Cmd Msg )
+stepOverview : Model -> ( Pages.Overview.Page.Model, Cmd Pages.Overview.Page.Msg ) -> ( Model, Cmd Msg )
 stepOverview model ( overview, cmd ) =
     ( { model | page = Overview overview }, Cmd.map OverviewMsg cmd )
 
 
-stepRecipes : Model -> ( Recipes.Model, Cmd Recipes.Msg ) -> ( Model, Cmd Msg )
+stepRecipes : Model -> ( Pages.Recipes.Page.Model, Cmd Pages.Recipes.Page.Msg ) -> ( Model, Cmd Msg )
 stepRecipes model ( recipes, cmd ) =
     ( { model | page = Recipes recipes }, Cmd.map RecipesMsg cmd )
 
 
-stepIngredientEditor : Model -> ( IngredientEditor.Model, Cmd IngredientEditor.Msg ) -> ( Model, Cmd Msg )
+stepIngredientEditor : Model -> ( Pages.IngredientEditor.Page.Model, Cmd Pages.IngredientEditor.Page.Msg ) -> ( Model, Cmd Msg )
 stepIngredientEditor model ( ingredientEditor, cmd ) =
     ( { model | page = IngredientEditor ingredientEditor }, Cmd.map IngredientEditorMsg cmd )
 
 
+stepMealEntryEditor : Model -> ( Pages.MealEntryEditor.Page.Model, Cmd Pages.MealEntryEditor.Page.Msg ) -> ( Model, Cmd Msg )
+stepMealEntryEditor model ( mealEntryEditor, cmd ) =
+    ( { model | page = MealEntryEditor mealEntryEditor }, Cmd.map MealEntryEditorMsg cmd )
+
+
+stepMeals : Model -> ( Pages.Meals.Page.Model, Cmd Pages.Meals.Page.Msg ) -> ( Model, Cmd Msg )
+stepMeals model ( recipes, cmd ) =
+    ( { model | page = Meals recipes }, Cmd.map MealsMsg cmd )
+
+
 type Route
-    = LoginRoute Login.Flags
-    | OverviewRoute Overview.Flags
-    | RecipesRoute Recipes.Flags
-    | IngredientEditorRoute IngredientEditor.Flags
+    = LoginRoute Pages.Login.Page.Flags
+    | OverviewRoute Pages.Overview.Page.Flags
+    | RecipesRoute Pages.Recipes.Page.Flags
+    | IngredientEditorRoute Pages.IngredientEditor.Page.Flags
+    | MealsRoute Pages.Meals.Page.Flags
+    | MealEntryEditorRoute Pages.MealEntryEditor.Page.Flags
 
 
 routeParser : Maybe String -> Configuration -> Parser (Route -> a) a
@@ -232,6 +286,19 @@ routeParser jwt configuration =
                         }
                     )
 
+        mealsParser =
+            s "meals" |> Parser.map flags
+
+        mealEntryEditorParser =
+            (s "meal-entry-editor" </> ParserUtil.uuidParser)
+                |> Parser.map
+                    (\mealId ->
+                        { mealId = mealId
+                        , configuration = configuration
+                        , jwt = jwt
+                        }
+                    )
+
         flags =
             { configuration = configuration, jwt = jwt }
     in
@@ -240,6 +307,8 @@ routeParser jwt configuration =
         , route overviewParser OverviewRoute
         , route recipesParser RecipesRoute
         , route ingredientEditorParser IngredientEditorRoute
+        , route mealsParser MealsRoute
+        , route mealEntryEditorParser MealEntryEditorRoute
         ]
 
 
