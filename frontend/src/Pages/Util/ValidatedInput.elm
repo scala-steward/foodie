@@ -1,11 +1,10 @@
 module Pages.Util.ValidatedInput exposing
     ( ValidatedInput
-    , emptyText
     , isValid
     , lift
-    , text
-    , value
+    , nonEmptyString
     , positive
+    , lenses
     )
 
 import Basics.Extra exposing (flip)
@@ -22,29 +21,15 @@ type alias ValidatedInput a =
     }
 
 
-text : Lens (ValidatedInput a) String
-text =
-    Lens .text (\b a -> { a | text = b })
-
-
-value : Lens (ValidatedInput a) a
-value =
-    Lens .value (\b a -> { a | value = b })
-
-
-emptyText :
-    { ifEmptyValue : a
-    , value : a
-    , parse : String -> Result String a
-    , isPartial : String -> Bool
+lenses :
+    { text : Lens (ValidatedInput a) String
+    , value : Lens (ValidatedInput a) a
     }
-    -> ValidatedInput a
-emptyText params =
-    { value = params.value
-    , ifEmptyValue = params.ifEmptyValue
-    , text = ""
-    , parse = params.parse
-    , partial = params.isPartial
+lenses =
+    { text =
+        Lens .text (\b a -> { a | text = b })
+    , value =
+        Lens .value (\b a -> { a | value = b })
     }
 
 
@@ -67,7 +52,7 @@ setWithLens lens txt model =
         possiblyValid =
             if String.isEmpty txt || validatedInput.partial txt then
                 validatedInput
-                    |> text.set txt
+                    |> lenses.text.set txt
 
             else
                 validatedInput
@@ -75,7 +60,7 @@ setWithLens lens txt model =
     case validatedInput.parse txt of
         Ok v ->
             possiblyValid
-                |> value.set v
+                |> lenses.value.set v
                 |> flip lens.set model
 
         Err _ ->
@@ -89,12 +74,25 @@ lift lens =
 
 positive : ValidatedInput Float
 positive =
-    { value = 0
-    , ifEmptyValue = 0
+    { value = 1
+    , ifEmptyValue = 1
     , text = ""
     , parse =
         String.toFloat
             >> Maybe.Extra.filter (\x -> x > 0)
             >> Result.fromMaybe "Error"
     , partial = \str -> List.length (String.split "." str) <= 2 && String.all (\c -> c == '.' || Char.isDigit c) str
+    }
+
+
+nonEmptyString : ValidatedInput String
+nonEmptyString =
+    { value = ""
+    , ifEmptyValue = ""
+    , text = ""
+    , parse =
+        Just
+            >> Maybe.Extra.filter (String.isEmpty >> not)
+            >> Result.fromMaybe "Error: Empty string"
+    , partial = always True
     }

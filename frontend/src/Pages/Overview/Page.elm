@@ -3,6 +3,7 @@ module Pages.Overview.Page exposing (..)
 import Api.Auxiliary exposing (JWT)
 import Configuration exposing (Configuration)
 import Monocle.Lens exposing (Lens)
+import Pages.Util.FlagsWithJWT exposing (FlagsWithJWT)
 import Util.LensUtil as LensUtil
 
 
@@ -22,15 +23,10 @@ type Msg
     = Recipes
     | Meals
     | Statistics
+    | ReferenceNutrients
     | UpdateJWT String
 
 type alias Flags =
     { configuration : Configuration
     , jwt : Maybe String
-    }
-
-
-type alias FlagsWithJWT =
-    { configuration : Configuration
-    , jwt : String
     }

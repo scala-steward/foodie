@@ -4,13 +4,14 @@ import Api.Auxiliary exposing (JWT, MealId)
 import Api.Types.Meal exposing (Meal)
 import Api.Types.MealUpdate exposing (MealUpdate)
 import Basics.Extra exposing (flip)
+import Dict
 import Either exposing (Either(..))
 import Http exposing (Error)
-import List.Extra
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens as Lens
 import Monocle.Optional as Optional
+import Pages.Meals.MealCreationClientInput as MealCreationClientInput exposing (MealCreationClientInput)
 import Pages.Meals.Page as Page
 import Pages.Meals.Requests as Requests
 import Ports exposing (doFetchToken)
@@ -25,11 +26,11 @@ init flags =
             flags.jwt
                 |> Maybe.Extra.unwrap
                     ( "", doFetchToken () )
-                    (\t ->
-                        ( t
+                    (\token ->
+                        ( token
                         , Requests.fetchMeals
                             { configuration = flags.configuration
-                            , jwt = t
+                            , jwt = token
                             }
                         )
                     )
@@ -38,8 +39,8 @@ init flags =
             { configuration = flags.configuration
             , jwt = jwt
             }
-      , meals = []
-      , mealsToAdd = []
+      , meals = Dict.empty
+      , mealToAdd = Nothing
       }
     , cmd
     )
@@ -48,6 +49,9 @@ init flags =
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
 update msg model =
     case msg of
+        Page.UpdateMealCreation mealCreationClientInput ->
+            updateMealCreation model mealCreationClientInput
+
         Page.CreateMeal ->
             createMeal model
 
@@ -82,10 +86,19 @@ update msg model =
             updateJWT model jwt
 
 
+updateMealCreation : Page.Model -> Maybe MealCreationClientInput -> ( Page.Model, Cmd Page.Msg )
+updateMealCreation model mealToAdd =
+    ( model
+        |> Page.lenses.mealToAdd.set mealToAdd
+    , Cmd.none
+    )
+
+
 createMeal : Page.Model -> ( Page.Model, Cmd Page.Msg )
 createMeal model =
     ( model
-    , Requests.createMeal model.flagsWithJWT
+    , model.mealToAdd
+        |> Maybe.Extra.unwrap Cmd.none (MealCreationClientInput.toCreation >> Requests.createMeal model.flagsWithJWT)
     )
 
 
@@ -95,15 +108,10 @@ gotCreateMealResponse model dataOrError =
         |> Either.fromResult
         |> Either.unwrap model
             (\meal ->
-                Lens.modify Page.lenses.meals
-                    (\ts ->
-                        Right
-                            { original = meal
-                            , update = mealUpdateFromMeal meal
-                            }
-                            :: ts
-                    )
-                    model
+                model
+                    |> Lens.modify Page.lenses.meals
+                        (Dict.insert meal.id (Left meal))
+                    |> Page.lenses.mealToAdd.set Nothing
             )
     , Cmd.none
     )
@@ -128,7 +136,7 @@ saveMealEdit model mealId =
                 >> Requests.saveMeal model.flagsWithJWT
             )
         )
-        (List.Extra.find (Editing.is .id mealId) model.meals)
+        (Dict.get mealId model.meals)
     )
 
 
@@ -176,7 +184,7 @@ gotDeleteMealResponse model deletedId dataOrError =
         |> Either.unwrap model
             (\_ ->
                 Lens.modify Page.lenses.meals
-                    (List.Extra.filterNot (mealIdIs deletedId))
+                    (Dict.remove deletedId)
                     model
             )
     , Cmd.none
@@ -187,7 +195,11 @@ gotFetchMealsResponse : Page.Model -> Result Error (List Meal) -> ( Page.Model, 
 gotFetchMealsResponse model dataOrError =
     ( dataOrError
         |> Either.fromResult
-        |> Either.unwrap model (List.map Left >> flip Page.lenses.meals.set model)
+        |> Either.unwrap model
+            (List.map (\meal -> ( meal.id, Left meal ))
+                >> Dict.fromList
+                >> flip Page.lenses.meals.set model
+            )
     , Cmd.none
     )
 
@@ -214,12 +226,5 @@ mealUpdateFromMeal meal =
 mapMealOrUpdateById : MealId -> (Page.MealOrUpdate -> Page.MealOrUpdate) -> Page.Model -> Page.Model
 mapMealOrUpdateById mealId =
     Page.lenses.meals
-        |> Compose.lensWithOptional (mealId |> Editing.is .id |> LensUtil.firstSuch)
+        |> Compose.lensWithOptional (LensUtil.dictByKey mealId)
         |> Optional.modify
-
-
-mealIdIs : MealId -> Either Meal (Editing Meal MealUpdate) -> Bool
-mealIdIs mealId =
-    Either.unpack
-        (\i -> i.id == mealId)
-        (\e -> e.original.id == mealId)

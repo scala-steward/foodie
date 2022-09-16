@@ -1,11 +1,15 @@
 package services.stats
 
+import java.time.LocalDate
+
+import io.scalaland.chimney.dsl._
 import services.meal.Meal
 import services.nutrient.NutrientMap
 
 case class Stats(
     meals: Seq[Meal],
-    nutrientMap: NutrientMap
+    nutrientMap: NutrientMap,
+    referenceNutrientMap: NutrientMap
 )
 
 object Stats {
@@ -14,9 +18,12 @@ object Stats {
     val days = stats.meals
       .map(_.date.date)
       .distinct
-      .size
+      .map(_.transformInto[LocalDate])
+
+    val numberOfDays = days.max.toEpochDay - days.min.toEpochDay
+
     stats.nutrientMap.view
-      .mapValues(_ / days)
+      .mapValues(_ / numberOfDays)
       .toMap
   }
 

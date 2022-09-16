@@ -199,12 +199,10 @@ object RecipeService {
     override def allRecipes(userId: UserId)(implicit ec: ExecutionContext): DBIO[Seq[Recipe]] =
       Tables.Recipe
         .filter(_.userId === userId.transformInto[UUID])
-        .map(_.id)
         .result
-        .flatMap(
-          _.traverse(id => getRecipe(userId, id.transformInto[RecipeId]))
+        .map(
+          _.map(_.transformInto[Recipe])
         )
-        .map(_.flatten)
 
     override def getRecipe(userId: UserId, id: RecipeId)(implicit
         ec: ExecutionContext
@@ -281,12 +279,20 @@ object RecipeService {
     )(implicit
         ec: ExecutionContext
     ): DBIO[Ingredient] = {
-      val ingredient = IngredientCreation.create(id, ingredientCreation)
+      val ingredient    = IngredientCreation.create(id, ingredientCreation)
+      val ingredientRow = (ingredient, ingredientCreation.recipeId).transformInto[Tables.RecipeIngredientRow]
+      val query         = ingredientQuery(id)
       ifRecipeExists(userId, ingredientCreation.recipeId) {
-        (Tables.RecipeIngredient
-          .returning(Tables.RecipeIngredient) += (ingredient, ingredientCreation.recipeId)
-          .transformInto[Tables.RecipeIngredientRow])
-          .map(_.transformInto[Ingredient])
+        for {
+          exists <- query.exists.result
+          row <-
+            if (exists)
+              query
+                .update(ingredientRow)
+                .andThen(query.result.head)
+            else
+              Tables.RecipeIngredient.returning(Tables.RecipeIngredient) += ingredientRow
+        } yield row.transformInto[Ingredient]
       }
     }
 

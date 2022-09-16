@@ -1,4 +1,5 @@
 import { Elm } from './Main.elm';
+import './main.css';
 
 var app = Elm.Main.init({
   node: document.getElementById('root'),
@@ -11,6 +12,7 @@ var app = Elm.Main.init({
 var tokenKey = 'foodie-user-token';
 var foodsKey = 'foodie-foods-list';
 var measuresKey = 'foodie-measures-list';
+var nutrientsKey = 'foodie-nutrients-list';
 
 app.ports.storeToken.subscribe(function(token) {
     localStorage.setItem(tokenKey, token);
@@ -40,4 +42,14 @@ app.ports.doFetchMeasures.subscribe(function() {
     var storedMeasures = localStorage.getItem(measuresKey);
     var measuresOrEmpty = storedMeasures ? storedMeasures : '[]';
     app.ports.fetchMeasures.send(measuresOrEmpty);
+});
+
+app.ports.storeNutrients.subscribe(function(nutrients) {
+    localStorage.setItem(nutrientsKey, nutrients)
+});
+
+app.ports.doFetchNutrients.subscribe(function() {
+    var storedNutrients = localStorage.getItem(nutrientsKey);
+    var nutrientsOrEmpty = storedNutrients ? storedNutrients : '[]';
+    app.ports.fetchNutrients.send(nutrientsOrEmpty);
 });

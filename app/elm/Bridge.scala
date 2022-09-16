@@ -8,7 +8,15 @@ import bridges.elm._
 import controllers.login.Credentials
 import controllers.meal._
 import controllers.recipe._
-import controllers.stats.{ Amounts, NutrientInformation, NutrientUnit, Stats }
+import controllers.stats.{
+  Amounts,
+  Nutrient,
+  NutrientInformation,
+  ReferenceNutrient,
+  ReferenceNutrientCreation,
+  ReferenceNutrientUpdate,
+  Stats
+}
 import shapeless.Lazy
 import utils.date.{ Date, SimpleDate, Time }
 
@@ -30,6 +38,13 @@ object Bridge {
             imports = s"\nimport $elmModule.UUID exposing (..)",
             encoder = "encoderUUID",
             decoder = "decoderUUID"
+          ),
+        Ref("NutrientUnit")
+          -> TypeReplacement(
+            "NutrientUnit",
+            imports = s"\nimport $elmModule.NutrientUnit exposing (..)",
+            encoder = "encoderNutrientUnit",
+            decoder = "decoderNutrientUnit"
           )
       )
     )
@@ -90,8 +105,11 @@ object Bridge {
     mkAndWrite[RecipeUpdate]
     mkAndWrite[Amounts]
     mkAndWrite[NutrientInformation]
-    mkAndWrite[NutrientUnit]
     mkAndWrite[Stats]
+    mkAndWrite[ReferenceNutrient]
+    mkAndWrite[ReferenceNutrientCreation]
+    mkAndWrite[ReferenceNutrientUpdate]
+    mkAndWrite[Nutrient]
   }
 
 }

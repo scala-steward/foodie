@@ -6,7 +6,8 @@ import io.scalaland.chimney.Transformer
 @JsonCodec
 case class RecipeCreation(
     name: String,
-    description: Option[String]
+    description: Option[String],
+    numberOfServings: BigDecimal
 )
 
 object RecipeCreation {

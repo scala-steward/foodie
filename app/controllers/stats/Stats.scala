@@ -18,11 +18,14 @@ object Stats {
     val nutrients = stats.nutrientMap.map {
       case (nutrient, amount) =>
         NutrientInformation(
+          nutrientCode = nutrient.code,
           name = nutrient.name,
+          symbol = nutrient.symbol,
           unit = nutrient.unit.transformInto[NutrientUnit],
           amounts = Amounts(
             total = amount,
-            dailyAverage = daily(nutrient)
+            dailyAverage = daily(nutrient),
+            referenceDailyAverage = stats.referenceNutrientMap.get(nutrient)
           )
         )
     }.toSeq

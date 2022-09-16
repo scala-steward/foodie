@@ -1,4 +1,4 @@
-module Pages.Recipes.Requests exposing (fetchRecipes, createRecipe, saveRecipe, deleteRecipe)
+module Pages.Recipes.Requests exposing (createRecipe, deleteRecipe, fetchRecipes, saveRecipe)
 
 import Api.Auxiliary exposing (JWT, RecipeId)
 import Api.Types.Recipe exposing (Recipe, decoderRecipe)
@@ -7,11 +7,12 @@ import Api.Types.RecipeUpdate exposing (RecipeUpdate, encoderRecipeUpdate)
 import Configuration exposing (Configuration)
 import Json.Decode as Decode
 import Pages.Recipes.Page as Page
+import Pages.Util.FlagsWithJWT exposing (FlagsWithJWT)
 import Url.Builder
 import Util.HttpUtil as HttpUtil
 
 
-fetchRecipes : Page.FlagsWithJWT -> Cmd Page.Msg
+fetchRecipes : FlagsWithJWT -> Cmd Page.Msg
 fetchRecipes flags =
     HttpUtil.getJsonWithJWT flags.jwt
         { url = Url.Builder.relative [ flags.configuration.backendURL, "recipe", "all" ] []
@@ -19,22 +20,16 @@ fetchRecipes flags =
         }
 
 
-createRecipe : Page.FlagsWithJWT -> Cmd Page.Msg
-createRecipe flags =
-    let
-        defaultRecipeCreation =
-            { name = ""
-            , description = Nothing
-            }
-    in
+createRecipe : FlagsWithJWT -> RecipeCreation -> Cmd Page.Msg
+createRecipe flags recipeCreation =
     HttpUtil.postJsonWithJWT flags.jwt
         { url = Url.Builder.relative [ flags.configuration.backendURL, "recipe", "create" ] []
-        , body = encoderRecipeCreation defaultRecipeCreation
+        , body = encoderRecipeCreation recipeCreation
         , expect = HttpUtil.expectJson Page.GotCreateRecipeResponse decoderRecipe
         }
 
 
-saveRecipe : Page.FlagsWithJWT -> RecipeUpdate -> Cmd Page.Msg
+saveRecipe : FlagsWithJWT -> RecipeUpdate -> Cmd Page.Msg
 saveRecipe flags recipeUpdate =
     HttpUtil.patchJsonWithJWT flags.jwt
         { url = Url.Builder.relative [ flags.configuration.backendURL, "recipe", "update" ] []
@@ -43,7 +38,7 @@ saveRecipe flags recipeUpdate =
         }
 
 
-deleteRecipe : Page.FlagsWithJWT -> RecipeId -> Cmd Page.Msg
+deleteRecipe : FlagsWithJWT -> RecipeId -> Cmd Page.Msg
 deleteRecipe flags recipeId =
     HttpUtil.deleteWithJWT flags.jwt
         { url = Url.Builder.relative [ flags.configuration.backendURL, "recipe", "delete", recipeId ] []

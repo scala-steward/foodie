@@ -4,18 +4,20 @@ import Api.Auxiliary exposing (JWT, MealId)
 import Api.Types.Meal exposing (Meal)
 import Api.Types.MealUpdate exposing (MealUpdate)
 import Configuration exposing (Configuration)
+import Dict exposing (Dict)
 import Either exposing (Either)
 import Http exposing (Error)
 import Monocle.Lens exposing (Lens)
 import Pages.Meals.MealCreationClientInput exposing (MealCreationClientInput)
+import Pages.Util.FlagsWithJWT exposing (FlagsWithJWT)
 import Util.Editing exposing (Editing)
 import Util.LensUtil as LensUtil
 
 
 type alias Model =
     { flagsWithJWT : FlagsWithJWT
-    , meals : List MealOrUpdate
-    , mealsToAdd : List MealCreationClientInput
+    , meals : MealOrUpdateMap
+    , mealToAdd : Maybe MealCreationClientInput
     }
 
 
@@ -23,15 +25,19 @@ type alias MealOrUpdate =
     Either Meal (Editing Meal MealUpdate)
 
 
+type alias MealOrUpdateMap =
+    Dict MealId MealOrUpdate
+
+
 lenses :
     { jwt : Lens Model JWT
-    , meals : Lens Model (List MealOrUpdate)
-    , mealsToAdd : Lens Model (List MealCreationClientInput)
+    , meals : Lens Model MealOrUpdateMap
+    , mealToAdd : Lens Model (Maybe MealCreationClientInput)
     }
 lenses =
     { jwt = LensUtil.jwtSubLens
     , meals = Lens .meals (\b a -> { a | meals = b })
-    , mealsToAdd = Lens .mealsToAdd (\b a -> { a | mealsToAdd = b })
+    , mealToAdd = Lens .mealToAdd (\b a -> { a | mealToAdd = b })
     }
 
 
@@ -41,14 +47,9 @@ type alias Flags =
     }
 
 
-type alias FlagsWithJWT =
-    { configuration : Configuration
-    , jwt : String
-    }
-
-
 type Msg
-    = CreateMeal
+    = UpdateMealCreation (Maybe MealCreationClientInput)
+    | CreateMeal
     | GotCreateMealResponse (Result Error Meal)
     | UpdateMeal MealUpdate
     | SaveMealEdit MealId

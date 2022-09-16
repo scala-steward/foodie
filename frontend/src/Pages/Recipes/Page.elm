@@ -2,32 +2,40 @@ module Pages.Recipes.Page exposing (..)
 
 import Api.Auxiliary exposing (JWT, RecipeId)
 import Api.Types.Recipe exposing (Recipe)
-import Api.Types.RecipeUpdate exposing (RecipeUpdate)
 import Configuration exposing (Configuration)
+import Dict exposing (Dict)
 import Either exposing (Either)
 import Http exposing (Error)
 import Monocle.Lens exposing (Lens)
+import Pages.Recipes.RecipeCreationClientInput exposing (RecipeCreationClientInput)
+import Pages.Recipes.RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
+import Pages.Util.FlagsWithJWT exposing (FlagsWithJWT)
 import Util.Editing exposing (Editing)
 import Util.LensUtil as LensUtil
 
 
 type alias Model =
     { flagsWithJWT : FlagsWithJWT
-    , recipes : List RecipeOrUpdate
+    , recipes : RecipeOrUpdateMap
+    , recipeToAdd : Maybe RecipeCreationClientInput
     }
 
 
 type alias RecipeOrUpdate =
-    Either Recipe (Editing Recipe RecipeUpdate)
+    Either Recipe (Editing Recipe RecipeUpdateClientInput)
 
+type alias RecipeOrUpdateMap =
+    Dict RecipeId RecipeOrUpdate
 
 lenses :
     { jwt : Lens Model JWT
-    , recipes : Lens Model (List RecipeOrUpdate)
+    , recipes : Lens Model RecipeOrUpdateMap
+    , recipeToAdd : Lens Model (Maybe RecipeCreationClientInput)
     }
 lenses =
     { jwt = LensUtil.jwtSubLens
     , recipes = Lens .recipes (\b a -> { a | recipes = b })
+    , recipeToAdd = Lens .recipeToAdd (\b a -> { a | recipeToAdd = b })
     }
 
 
@@ -37,16 +45,11 @@ type alias Flags =
     }
 
 
-type alias FlagsWithJWT =
-    { configuration : Configuration
-    , jwt : String
-    }
-
-
 type Msg
-    = CreateRecipe
+    = UpdateRecipeCreation (Maybe RecipeCreationClientInput)
+    | CreateRecipe
     | GotCreateRecipeResponse (Result Error Recipe)
-    | UpdateRecipe RecipeUpdate
+    | UpdateRecipe RecipeUpdateClientInput
     | SaveRecipeEdit RecipeId
     | GotSaveRecipeResponse (Result Error Recipe)
     | EnterEditRecipe RecipeId

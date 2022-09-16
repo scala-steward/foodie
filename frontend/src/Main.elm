@@ -6,15 +6,15 @@ import Browser.Navigation as Nav
 import Configuration exposing (Configuration)
 import Html exposing (Html, div, text)
 import Monocle.Lens exposing (Lens)
-import Pages.IngredientEditor.Handler
-import Pages.IngredientEditor.Page
-import Pages.IngredientEditor.View
+import Pages.Ingredients.Handler
+import Pages.Ingredients.Page
+import Pages.Ingredients.View
 import Pages.Login.Handler
 import Pages.Login.Page
 import Pages.Login.View
-import Pages.MealEntryEditor.Handler
-import Pages.MealEntryEditor.Page
-import Pages.MealEntryEditor.View
+import Pages.MealEntries.Handler
+import Pages.MealEntries.Page
+import Pages.MealEntries.View
 import Pages.Meals.Handler
 import Pages.Meals.Page
 import Pages.Meals.View
@@ -24,8 +24,14 @@ import Pages.Overview.View
 import Pages.Recipes.Handler
 import Pages.Recipes.Page
 import Pages.Recipes.View
+import Pages.ReferenceNutrients.Handler
+import Pages.ReferenceNutrients.Page
+import Pages.ReferenceNutrients.View
+import Pages.Statistics.Handler
+import Pages.Statistics.Page
+import Pages.Statistics.View
 import Pages.Util.ParserUtil as ParserUtil
-import Ports exposing (doFetchToken, fetchFoods, fetchMeasures, fetchToken)
+import Ports exposing (doFetchToken, fetchFoods, fetchMeasures, fetchNutrients, fetchToken)
 import Url exposing (Url)
 import Url.Parser as Parser exposing ((</>), Parser, s)
 
@@ -48,6 +54,7 @@ subscriptions _ =
         [ fetchToken FetchToken
         , fetchFoods FetchFoods
         , fetchMeasures FetchMeasures
+        , fetchNutrients FetchNutrients
         ]
 
 
@@ -68,9 +75,11 @@ type Page
     = Login Pages.Login.Page.Model
     | Overview Pages.Overview.Page.Model
     | Recipes Pages.Recipes.Page.Model
-    | IngredientEditor Pages.IngredientEditor.Page.Model
+    | Ingredients Pages.Ingredients.Page.Model
     | Meals Pages.Meals.Page.Model
-    | MealEntryEditor Pages.MealEntryEditor.Page.Model
+    | MealEntries Pages.MealEntries.Page.Model
+    | Statistics Pages.Statistics.Page.Model
+    | ReferenceNutrients Pages.ReferenceNutrients.Page.Model
     | NotFound
 
 
@@ -80,12 +89,15 @@ type Msg
     | FetchToken String
     | FetchFoods String
     | FetchMeasures String
+    | FetchNutrients String
     | LoginMsg Pages.Login.Page.Msg
     | OverviewMsg Pages.Overview.Page.Msg
     | RecipesMsg Pages.Recipes.Page.Msg
-    | IngredientEditorMsg Pages.IngredientEditor.Page.Msg
+    | IngredientsMsg Pages.Ingredients.Page.Msg
     | MealsMsg Pages.Meals.Page.Msg
-    | MealEntryEditorMsg Pages.MealEntryEditor.Page.Msg
+    | MealEntriesMsg Pages.MealEntries.Page.Msg
+    | StatisticsMsg Pages.Statistics.Page.Msg
+    | ReferenceNutrientsMsg Pages.ReferenceNutrients.Page.Msg
 
 
 titleFor : Model -> String
@@ -119,14 +131,20 @@ view model =
         Recipes recipes ->
             Html.map RecipesMsg (Pages.Recipes.View.view recipes)
 
-        IngredientEditor ingredientEditor ->
-            Html.map IngredientEditorMsg (Pages.IngredientEditor.View.view ingredientEditor)
+        Ingredients ingredients ->
+            Html.map IngredientsMsg (Pages.Ingredients.View.view ingredients)
 
         Meals meals ->
             Html.map MealsMsg (Pages.Meals.View.view meals)
 
-        MealEntryEditor mealEntryEditor ->
-            Html.map MealEntryEditorMsg (Pages.MealEntryEditor.View.view mealEntryEditor)
+        MealEntries mealEntries ->
+            Html.map MealEntriesMsg (Pages.MealEntries.View.view mealEntries)
+
+        Statistics statistics ->
+            Html.map StatisticsMsg (Pages.Statistics.View.view statistics)
+
+        ReferenceNutrients referenceNutrients ->
+            Html.map ReferenceNutrientsMsg (Pages.ReferenceNutrients.View.view referenceNutrients)
 
         NotFound ->
             div [] [ text "Page not found" ]
@@ -147,7 +165,7 @@ update msg model =
             stepTo url model
 
         ( LoginMsg loginMsg, Login login ) ->
-            stepLogin model (Pages.Login.Handler.update loginMsg login)
+            stepThrough steps.login model (Pages.Login.Handler.update loginMsg login)
 
         -- todo: Check all cases, and possibly refactor to have less duplication.
         ( FetchToken token, page ) ->
@@ -156,43 +174,58 @@ update msg model =
                     ( jwtLens.set (Just token) model, Cmd.none )
 
                 Overview overview ->
-                    stepOverview model (Pages.Overview.Handler.update (Pages.Overview.Page.UpdateJWT token) overview)
+                    stepThrough steps.overview model (Pages.Overview.Handler.update (Pages.Overview.Page.UpdateJWT token) overview)
 
                 Recipes recipes ->
-                    stepRecipes model (Pages.Recipes.Handler.update (Pages.Recipes.Page.UpdateJWT token) recipes)
+                    stepThrough steps.recipes model (Pages.Recipes.Handler.update (Pages.Recipes.Page.UpdateJWT token) recipes)
 
-                IngredientEditor ingredientEditor ->
-                    stepIngredientEditor model (Pages.IngredientEditor.Handler.update (Pages.IngredientEditor.Page.UpdateJWT token) ingredientEditor)
+                Ingredients ingredients ->
+                    stepThrough steps.ingredients model (Pages.Ingredients.Handler.update (Pages.Ingredients.Page.UpdateJWT token) ingredients)
 
                 Meals meals ->
-                    stepMeals model (Pages.Meals.Handler.update (Pages.Meals.Page.UpdateJWT token) meals)
+                    stepThrough steps.meals model (Pages.Meals.Handler.update (Pages.Meals.Page.UpdateJWT token) meals)
 
-                MealEntryEditor mealEntryEditor ->
-                    stepMealEntryEditor model (Pages.MealEntryEditor.Handler.update (Pages.MealEntryEditor.Page.UpdateJWT token) mealEntryEditor)
+                MealEntries mealEntry ->
+                    stepThrough steps.mealEntries model (Pages.MealEntries.Handler.update (Pages.MealEntries.Page.UpdateJWT token) mealEntry)
+
+                Statistics statistics ->
+                    stepThrough steps.statistics model (Pages.Statistics.Handler.update (Pages.Statistics.Page.UpdateJWT token) statistics)
+
+                ReferenceNutrients referenceNutrients ->
+                    stepThrough steps.referenceNutrients model (Pages.ReferenceNutrients.Handler.update (Pages.ReferenceNutrients.Page.UpdateJWT token) referenceNutrients)
 
                 NotFound ->
                     ( jwtLens.set (Just token) model, Cmd.none )
 
-        ( FetchFoods foods, IngredientEditor ingredientEditor ) ->
-            stepIngredientEditor model (Pages.IngredientEditor.Handler.update (Pages.IngredientEditor.Page.UpdateFoods foods) ingredientEditor)
+        ( FetchFoods foods, Ingredients ingredients ) ->
+            stepThrough steps.ingredients model (Pages.Ingredients.Handler.update (Pages.Ingredients.Page.UpdateFoods foods) ingredients)
 
-        ( FetchMeasures measures, IngredientEditor ingredientEditor ) ->
-            stepIngredientEditor model (Pages.IngredientEditor.Handler.update (Pages.IngredientEditor.Page.UpdateMeasures measures) ingredientEditor)
+        ( FetchMeasures measures, Ingredients ingredients ) ->
+            stepThrough steps.ingredients model (Pages.Ingredients.Handler.update (Pages.Ingredients.Page.UpdateMeasures measures) ingredients)
+
+        ( FetchNutrients nutrients, ReferenceNutrients referenceNutrients ) ->
+            stepThrough steps.referenceNutrients model (Pages.ReferenceNutrients.Handler.update (Pages.ReferenceNutrients.Page.UpdateNutrients nutrients) referenceNutrients)
 
         ( OverviewMsg overviewMsg, Overview overview ) ->
-            stepOverview model (Pages.Overview.Handler.update overviewMsg overview)
+            stepThrough steps.overview model (Pages.Overview.Handler.update overviewMsg overview)
 
         ( RecipesMsg recipesMsg, Recipes recipes ) ->
-            stepRecipes model (Pages.Recipes.Handler.update recipesMsg recipes)
+            stepThrough steps.recipes model (Pages.Recipes.Handler.update recipesMsg recipes)
 
-        ( IngredientEditorMsg ingredientEditorMsg, IngredientEditor ingredientEditor ) ->
-            stepIngredientEditor model (Pages.IngredientEditor.Handler.update ingredientEditorMsg ingredientEditor)
+        ( IngredientsMsg ingredientsMsg, Ingredients ingredients ) ->
+            stepThrough steps.ingredients model (Pages.Ingredients.Handler.update ingredientsMsg ingredients)
 
         ( MealsMsg mealsMsg, Meals meals ) ->
-            stepMeals model (Pages.Meals.Handler.update mealsMsg meals)
+            stepThrough steps.meals model (Pages.Meals.Handler.update mealsMsg meals)
 
-        ( MealEntryEditorMsg mealEntryEditorMsg, MealEntryEditor mealEntryEditor ) ->
-            stepMealEntryEditor model (Pages.MealEntryEditor.Handler.update mealEntryEditorMsg mealEntryEditor)
+        ( MealEntriesMsg mealEntryMsg, MealEntries mealEntry ) ->
+            stepThrough steps.mealEntries model (Pages.MealEntries.Handler.update mealEntryMsg mealEntry)
+
+        ( StatisticsMsg statisticsMsg, Statistics statistics ) ->
+            stepThrough steps.statistics model (Pages.Statistics.Handler.update statisticsMsg statistics)
+
+        ( ReferenceNutrientsMsg referenceNutrientsMsg, ReferenceNutrients referenceNutrients ) ->
+            stepThrough steps.referenceNutrients model (Pages.ReferenceNutrients.Handler.update referenceNutrientsMsg referenceNutrients)
 
         _ ->
             ( model, Cmd.none )
@@ -204,64 +237,75 @@ stepTo url model =
         Just answer ->
             case answer of
                 LoginRoute flags ->
-                    Pages.Login.Handler.init flags |> stepLogin model
+                    Pages.Login.Handler.init flags |> stepThrough steps.login model
 
                 OverviewRoute flags ->
-                    Pages.Overview.Handler.init flags |> stepOverview model
+                    Pages.Overview.Handler.init flags |> stepThrough steps.overview model
 
                 RecipesRoute flags ->
-                    Pages.Recipes.Handler.init flags |> stepRecipes model
+                    Pages.Recipes.Handler.init flags |> stepThrough steps.recipes model
 
-                IngredientEditorRoute flags ->
-                    Pages.IngredientEditor.Handler.init flags |> stepIngredientEditor model
+                IngredientRoute flags ->
+                    Pages.Ingredients.Handler.init flags |> stepThrough steps.ingredients model
 
                 MealsRoute flags ->
-                    Pages.Meals.Handler.init flags |> stepMeals model
+                    Pages.Meals.Handler.init flags |> stepThrough steps.meals model
 
-                MealEntryEditorRoute flags ->
-                    Pages.MealEntryEditor.Handler.init flags |> stepMealEntryEditor model
+                MealEntriesRoute flags ->
+                    Pages.MealEntries.Handler.init flags |> stepThrough steps.mealEntries model
+
+                StatisticsRoute flags ->
+                    Pages.Statistics.Handler.init flags |> stepThrough steps.statistics model
+
+                ReferenceNutrientsRoute flags ->
+                    Pages.ReferenceNutrients.Handler.init flags |> stepThrough steps.referenceNutrients model
 
         Nothing ->
             ( { model | page = NotFound }, Cmd.none )
 
 
-stepLogin : Model -> ( Pages.Login.Page.Model, Cmd Pages.Login.Page.Msg ) -> ( Model, Cmd Msg )
-stepLogin model ( login, cmd ) =
-    ( { model | page = Login login }, Cmd.map LoginMsg cmd )
+type alias StepParameters model msg =
+    { page : model -> Page
+    , message : msg -> Msg
+    }
 
 
-stepOverview : Model -> ( Pages.Overview.Page.Model, Cmd Pages.Overview.Page.Msg ) -> ( Model, Cmd Msg )
-stepOverview model ( overview, cmd ) =
-    ( { model | page = Overview overview }, Cmd.map OverviewMsg cmd )
+steps :
+    { login : StepParameters Pages.Login.Page.Model Pages.Login.Page.Msg
+    , overview : StepParameters Pages.Overview.Page.Model Pages.Overview.Page.Msg
+    , recipes : StepParameters Pages.Recipes.Page.Model Pages.Recipes.Page.Msg
+    , ingredients : StepParameters Pages.Ingredients.Page.Model Pages.Ingredients.Page.Msg
+    , mealEntries : StepParameters Pages.MealEntries.Page.Model Pages.MealEntries.Page.Msg
+    , meals : StepParameters Pages.Meals.Page.Model Pages.Meals.Page.Msg
+    , statistics : StepParameters Pages.Statistics.Page.Model Pages.Statistics.Page.Msg
+    , referenceNutrients : StepParameters Pages.ReferenceNutrients.Page.Model Pages.ReferenceNutrients.Page.Msg
+    }
+steps =
+    { login = StepParameters Login LoginMsg
+    , overview = StepParameters Overview OverviewMsg
+    , recipes = StepParameters Recipes RecipesMsg
+    , ingredients = StepParameters Ingredients IngredientsMsg
+    , mealEntries = StepParameters MealEntries MealEntriesMsg
+    , meals = StepParameters Meals MealsMsg
+    , statistics = StepParameters Statistics StatisticsMsg
+    , referenceNutrients = StepParameters ReferenceNutrients ReferenceNutrientsMsg
+    }
 
 
-stepRecipes : Model -> ( Pages.Recipes.Page.Model, Cmd Pages.Recipes.Page.Msg ) -> ( Model, Cmd Msg )
-stepRecipes model ( recipes, cmd ) =
-    ( { model | page = Recipes recipes }, Cmd.map RecipesMsg cmd )
-
-
-stepIngredientEditor : Model -> ( Pages.IngredientEditor.Page.Model, Cmd Pages.IngredientEditor.Page.Msg ) -> ( Model, Cmd Msg )
-stepIngredientEditor model ( ingredientEditor, cmd ) =
-    ( { model | page = IngredientEditor ingredientEditor }, Cmd.map IngredientEditorMsg cmd )
-
-
-stepMealEntryEditor : Model -> ( Pages.MealEntryEditor.Page.Model, Cmd Pages.MealEntryEditor.Page.Msg ) -> ( Model, Cmd Msg )
-stepMealEntryEditor model ( mealEntryEditor, cmd ) =
-    ( { model | page = MealEntryEditor mealEntryEditor }, Cmd.map MealEntryEditorMsg cmd )
-
-
-stepMeals : Model -> ( Pages.Meals.Page.Model, Cmd Pages.Meals.Page.Msg ) -> ( Model, Cmd Msg )
-stepMeals model ( recipes, cmd ) =
-    ( { model | page = Meals recipes }, Cmd.map MealsMsg cmd )
+stepThrough : { page : model -> Page, message : msg -> Msg } -> Model -> ( model, Cmd msg ) -> ( Model, Cmd Msg )
+stepThrough ps model ( subModel, cmd ) =
+    ( { model | page = ps.page subModel }, Cmd.map ps.message cmd )
 
 
 type Route
     = LoginRoute Pages.Login.Page.Flags
     | OverviewRoute Pages.Overview.Page.Flags
     | RecipesRoute Pages.Recipes.Page.Flags
-    | IngredientEditorRoute Pages.IngredientEditor.Page.Flags
+    | IngredientRoute Pages.Ingredients.Page.Flags
     | MealsRoute Pages.Meals.Page.Flags
-    | MealEntryEditorRoute Pages.MealEntryEditor.Page.Flags
+    | MealEntriesRoute Pages.MealEntries.Page.Flags
+    | StatisticsRoute Pages.Statistics.Page.Flags
+    | ReferenceNutrientsRoute Pages.ReferenceNutrients.Page.Flags
 
 
 routeParser : Maybe String -> Configuration -> Parser (Route -> a) a
@@ -276,7 +320,7 @@ routeParser jwt configuration =
         recipesParser =
             s "recipes" |> Parser.map flags
 
-        ingredientEditorParser =
+        ingredientParser =
             (s "ingredient-editor" </> ParserUtil.uuidParser)
                 |> Parser.map
                     (\recipeId ->
@@ -289,7 +333,7 @@ routeParser jwt configuration =
         mealsParser =
             s "meals" |> Parser.map flags
 
-        mealEntryEditorParser =
+        mealEntriesParser =
             (s "meal-entry-editor" </> ParserUtil.uuidParser)
                 |> Parser.map
                     (\mealId ->
@@ -299,6 +343,12 @@ routeParser jwt configuration =
                         }
                     )
 
+        statisticsParser =
+            s "statistics" |> Parser.map flags
+
+        referenceNutrientParser =
+            s "reference-nutrients" |> Parser.map flags
+
         flags =
             { configuration = configuration, jwt = jwt }
     in
@@ -306,9 +356,11 @@ routeParser jwt configuration =
         [ route loginParser LoginRoute
         , route overviewParser OverviewRoute
         , route recipesParser RecipesRoute
-        , route ingredientEditorParser IngredientEditorRoute
+        , route ingredientParser IngredientRoute
         , route mealsParser MealsRoute
-        , route mealEntryEditorParser MealEntryEditorRoute
+        , route mealEntriesParser MealEntriesRoute
+        , route statisticsParser StatisticsRoute
+        , route referenceNutrientParser ReferenceNutrientsRoute
         ]
 
 
