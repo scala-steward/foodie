@@ -2,11 +2,14 @@ module Util.HttpUtil exposing (..)
 
 import Api.Auxiliary exposing (JWT)
 import Http exposing (Error(..), Expect, expectStringResponse)
-import Json.Decode as D
+import Json.Decode as Decode
 import Json.Encode as Encode
+import Monocle.Compose as Compose
+import Monocle.Lens exposing (Lens)
+import Util.Initialization as Initialization exposing (ErrorExplanation, Initialization)
 
 
-expectJson : (Result Http.Error a -> msg) -> D.Decoder a -> Expect msg
+expectJson : (Result Http.Error a -> msg) -> Decode.Decoder a -> Expect msg
 expectJson toMsg decoder =
     expectStringResponse toMsg <|
         \response ->
@@ -20,16 +23,16 @@ expectJson toMsg decoder =
                 Http.NetworkError_ ->
                     Err Http.NetworkError
 
-                Http.BadStatus_ _ body ->
-                    Err (BadBody body)
+                Http.BadStatus_ metadata _ ->
+                    Err (BadStatus metadata.statusCode)
 
                 Http.GoodStatus_ _ body ->
-                    case D.decodeString decoder body of
+                    case Decode.decodeString decoder body of
                         Ok value ->
                             Ok value
 
                         Err err ->
-                            Err (BadBody (D.errorToString err))
+                            Err (BadBody (Decode.errorToString err))
 
 
 expectWhatever : (Result Http.Error () -> msg) -> Expect msg
@@ -70,6 +73,45 @@ errorToString error =
 
         BadBody string ->
             string
+
+
+errorToExplanation : Error -> ErrorExplanation
+errorToExplanation error =
+    case error of
+        BadUrl string ->
+            { cause = "BadUrl: " ++ string
+            , possibleSolution = "Check address. If the error persists, please contact an administrator."
+            , redirectToLogin = False
+            }
+
+        Timeout ->
+            { cause = "Timeout"
+            , possibleSolution = "Try again later. If the error persists, please contact an administrator."
+            , redirectToLogin = False
+            }
+
+        NetworkError ->
+            { cause = "Timeout"
+            , possibleSolution = "Try again later. If the error persists, please contact an administrator."
+            , redirectToLogin = False
+            }
+
+        BadStatus code ->
+            { cause = "BadStatus: " ++ String.fromInt code
+            , possibleSolution =
+                if code == 401 then
+                    "Please log in again to continue."
+
+                else
+                    ""
+            , redirectToLogin = code == 401
+            }
+
+        BadBody string ->
+            { cause = "Bad body: " ++ string
+            , possibleSolution = ""
+            , redirectToLogin = False
+            }
 
 
 userTokenHeader : String
@@ -163,3 +205,16 @@ getJsonWithJWT jwt request =
         , timeout = Nothing
         , tracker = Nothing
         }
+
+
+setError : Lens model (Initialization status) -> Error -> model -> model
+setError initializationLens =
+    errorToExplanation
+        >> (initializationLens |> Compose.lensWithOptional Initialization.lenses.failure).set
+
+
+setJsonError : Lens model (Initialization status) -> Decode.Error -> model -> model
+setJsonError initializationLens =
+    Decode.errorToString
+        >> BadBody
+        >> setError initializationLens
