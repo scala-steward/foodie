@@ -30,6 +30,7 @@ view model =
         { isFinished = Status.isFinished
         , initialization = Page.lenses.initialization.get
         , flagsWithJWT = .flagsWithJWT
+        , currentPage = Just ViewUtil.Recipes
         }
         model
     <|
@@ -116,7 +117,6 @@ editOrDeleteRecipeLine configuration recipe =
                         []
                 , attributes = [ Style.classes.button.editor ]
                 , children = [ text "Ingredients" ]
-                , isDisabled = False
                 }
             ]
         ]

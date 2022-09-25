@@ -35,6 +35,7 @@ view model =
         { isFinished = Status.isFinished
         , initialization = .initialization
         , flagsWithJWT = .flagsWithJWT
+        , currentPage = Just ViewUtil.Meals
         }
         model
     <|
@@ -116,7 +117,6 @@ editOrDeleteMealLine configuration meal =
                         []
                 , attributes = [ Style.classes.button.editor ]
                 , children = [ text "Entries" ]
-                , isDisabled = False
                 }
             ]
         ]
