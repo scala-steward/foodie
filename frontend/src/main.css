@@ -1,24 +1,383 @@
+body, button, input {
+    font-family: Arial, sans-serif;
+}
+
 .tooltip {
-  position: relative;
-  display: inline-block;
-  border-bottom: 1px dotted black;
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted black;
 }
 
 .tooltip .tooltipText {
-  visibility: hidden;
-  background-color: black;
-  color: #fff;
-  text-align: center;
-  border-radius: 6px;
-  padding: 5px 0;
+    visibility: hidden;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
 
-  /* Position the tooltip */
-  position: absolute;
-  z-index: 1;
-  top: -5px;
-  left: 105%;
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 1;
+    top: -5px;
+    left: 105%;
 }
 
 .tooltip:hover .tooltipText {
-  visibility: visible;
+    visibility: visible;
+}
+
+#recipesButton button,
+#mealsButton button,
+#statisticsButton button,
+#referenceNutrientsButton button {
+    border: none;
+    text-align: center;
+    padding: 5%;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: xxx-large;
+    white-space: normal;
+    word-wrap: break-word;
+    width: 95%;
+    display: block;
+    margin: auto auto 1%;
+    color: rgb(250, 250, 250);
+    background-color: rgb(66, 100, 160);
+}
+
+#recipesButton button:hover,
+#mealsButton button:hover,
+#statisticsButton button:hover,
+#referenceNutrientsButton button:hover {
+    background-color: rgb(100, 149, 237);
+}
+
+.addButton {
+    background-color: rgb(50, 180, 50);
+    color: rgb(250, 250, 250);
+    border: none;
+    text-align: center;
+    padding: 1%;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: large;
+    white-space: normal;
+    display: inline-block;
+    margin: auto auto 1%;
+}
+
+.addButton:hover {
+    background-color: rgb(85, 225, 60);
+}
+
+#addRecipeView table,
+#addMealView table,
+#ingredientEditor table:not(.info),
+#mealEntryEditor table:not(.info),
+#referenceNutrientEditor table,
+#statistics table {
+    border-spacing: 0;
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    position: relative;
+}
+
+.searchArea {
+    display: inline-block;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.searchArea input {
+    width: 50%;
+    margin: 3px;
+}
+
+.searchArea label,
+.searchArea button {
+    width: 20%
+}
+
+.searchArea label,
+.searchArea input {
+    font-size: larger;
+}
+
+#addRecipeView thead th,
+#addMealView thead th,
+#ingredientEditor thead th,
+#mealEntryEditor thead th,
+#referenceNutrientEditor thead th,
+#statistics thead th {
+    font-size: larger;
+    font-weight: lighter;
+    font-style: italic;
+}
+
+#addRecipeView thead th:not(.numberLabel),
+#addMealView thead th:not(.numberLabel),
+#ingredientEditor thead th:not(.numberLabel),
+#mealEntryEditor thead th:not(.numberLabel),
+#referenceNutrientEditor thead th:not(.numberLabel),
+#statistics thead th:not(.numberLabel) {
+    text-align: left;
+}
+
+.editButton,
+.editorButton,
+.deleteButton,
+.confirmButton,
+.cancelButton,
+.selectButton {
+    color: rgb(250, 250, 250);
+    border: none;
+    text-align: center;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: large;
+    display: inline-block;
+    margin: auto;
+    vertical-align: center;
+    padding: 5px;
+    border: 0;
+    height: 100%;
+    width: 100%;
+    word-wrap: break-word;
+    white-space: break-spaces;
+}
+
+select {
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.editButton:disabled,
+.editorButton:disabled,
+.deleteButton:disabled,
+.confirmButton:disabled,
+.cancelButton:disabled,
+.selectButton:disabled {
+    background-color: gray;
+    cursor: not-allowed;
+}
+
+#addRecipeView .editable,
+#addMealView .editable:not(.date, .time),
+#ingredientEditor .editable,
+#mealEntryEditor .editable,
+#referenceNutrientEditor .editable,
+#statistics .editable:not(.date) {
+    white-space: break-spaces;
+    word-wrap: break-word;
+}
+
+th {
+    white-space: break-spaces;
+    word-wrap: break-word;
+    position: sticky;
+    top: 0;
+    background: white;
+}
+
+/*todo: Group column sizes by page*/
+#addRecipeView th:first-child,
+#addMealView th:nth-child(3),
+#mealEntryEditor th:first-child,
+#mealEntryEditor th:nth-child(2),
+#referenceNutrientEditor th:first-child {
+    width: 30%;
+}
+
+#addRecipeView th:nth-child(2) {
+    width: 25%;
+}
+
+#ingredientEditor th:first-child {
+    width: 30%
+}
+
+#addRecipeView th:nth-child(3),
+#mealEntryEditor th:nth-child(3) {
+    width: 10%;
+}
+
+#referenceNutrientEditor th:first-child {
+    width: 50%;
+}
+
+#referenceNutrientEditor th:nth-child(2) {
+    width: 20%
+}
+
+#referenceNutrientEditor th:nth-child(3) {
+    width: 5%
+}
+
+#addMealView th:first-child,
+#addMealView th:nth-child(2):not(input) {
+    width: 15%;
+}
+
+#ingredientEditor th:nth-child(2) {
+    width: 12%;
+}
+
+#ingredientEditor th:nth-child(3) {
+    width: 35%;
+}
+
+#statistics .intervalSelection th:first-child,
+#statistics .intervalSelection th:nth-child(2) {
+    width: 10%;
+}
+
+#statistics .intervalSelection th:nth-child(3) {
+    width: 20%;
+}
+
+#statistics .nutrients th:first-child {
+    width: 30%
+}
+
+#statistics .nutrients th:nth-child(3),
+#statistics .nutrients th:nth-child(4) {
+    width: 15%;
+}
+
+#statistics .nutrients th:nth-child(5) {
+    width: 5%;
+}
+
+#statistics .meals th:first-child {
+    width: 12%;
+}
+
+#statistics .meals th:nth-child(2) {
+    width: 8%;
+}
+
+#statistics .meals th:nth-child(3) {
+    width: 35%;
+}
+
+#statistics .high {
+    color: #fa8128; /* tangerine */
+}
+
+#statistics .exact {
+    color: black;
+}
+
+#statistics .low {
+    color: #0492c2; /* cerulean */
+}
+
+.numberLabel,
+.numberCell {
+    text-align: right;
+    padding-right: 5px;
+}
+
+.editButton {
+    background-color: #ffb527;
+}
+
+.editButton:hover:enabled {
+    background-color: rgba(255, 181, 39, 0.85);
+}
+
+.deleteButton,
+.cancelButton {
+    background-color: #d64546;
+}
+
+.deleteButton:hover:enabled,
+.cancelButton:hover:enabled {
+    background-color: rgba(214, 69, 70, 0.85);
+}
+
+.editorButton {
+    background-color: royalblue;
+}
+
+.editorButton:hover:enabled {
+    background-color: rgba(65, 105, 225, 0.85);
+}
+
+.selectButton,
+.confirmButton {
+    background-color: limegreen;
+}
+
+.selectButton:hover:enabled,
+.selectButton:hover:not(.disabled),
+.confirmButton:hover:enabled {
+    background-color: #36d936;
+}
+
+#addRecipeView input,
+#addMealView input,
+#ingredientEditor input:not(.searchField),
+#mealEntryEditor input:not(.searchField),
+#referenceNutrientEditor input:not(.searchField),
+#statistics input {
+    box-sizing: border-box;
+    width: 100%;
+    font-size: larger;
+}
+
+.editing:not(.controls):hover,
+.editLine:hover {
+    background-color: rgb(220, 220, 220);
+}
+
+.descriptionColumn, select {
+    font-size: larger;
+}
+
+.elements {
+    font-size: x-large;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.searchField {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+#login {
+    display: inline-block;
+    text-align: center;
+    width: 100%;
+}
+
+#login input ,
+#login label,
+#login button {
+    font-size: xx-large;
+}
+
+#login input {
+    box-sizing: border-box;
+    margin-bottom: 5px;
+    width: 80%;
+}
+
+#login label {
+    padding-right: 5px;
+    width: 40%
+}
+
+#login button {
+    margin-top: 5px;
+    width: 30%;
+}
+
+#error label {
+    font-size: larger;
+    margin-right: 5px;
 }

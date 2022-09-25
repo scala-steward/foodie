@@ -9,8 +9,9 @@ import Basics.Extra exposing (flip)
 import Dict exposing (Dict)
 import Dropdown exposing (Item, dropdown)
 import Either exposing (Either(..))
-import Html exposing (Html, button, div, input, label, td, text, thead, tr)
-import Html.Attributes exposing (class, disabled, id, value)
+import Html exposing (Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
+import Html.Attributes exposing (colspan, disabled, scope, value)
+import Html.Attributes.Extra exposing (stringProperty)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
@@ -23,7 +24,8 @@ import Pages.Ingredients.Page as Page
 import Pages.Ingredients.RecipeInfo exposing (RecipeInfo)
 import Pages.Ingredients.Status as Status
 import Pages.Util.DictUtil as DictUtil
-import Pages.Util.Links as Links
+import Pages.Util.HtmlUtil as HtmlUtil
+import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput
 import Pages.Util.ViewUtil as ViewUtil
 import Util.Editing as Editing
@@ -53,61 +55,106 @@ view model =
                     |> Dict.values
                     |> List.sortBy .name
                     |> List.map (viewFoodLine model.foods model.measures model.foodsToAdd model.ingredients)
+
+            anySelection =
+                model.foodsToAdd
+                    |> Dict.isEmpty
+                    |> not
+
+            ( amount, unit ) =
+                if anySelection then
+                    ( "Amount", "Unit" )
+
+                else
+                    ( "", "" )
         in
-        div [ id "editor" ]
-            [ div [ id "recipeInfo" ]
-                [ label [] [ text "Name" ]
-                , label [] [ text <| Maybe.Extra.unwrap "" .name <| model.recipeInfo ]
-                , label [] [ text "Description" ]
-                , label [] [ text <| Maybe.withDefault "" <| Maybe.andThen .description <| model.recipeInfo ]
-                ]
-            , div [ id "ingredientsView" ]
-                (thead []
+        div [ Style.ids.ingredientEditor ]
+            [ div []
+                [ table [ Style.classes.info ]
                     [ tr []
-                        [ td [] [ label [] [ text "Name" ] ]
-                        , td [] [ label [] [ text "Amount" ] ]
-                        , td [] [ label [] [ text "Unit" ] ]
+                        [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Recipe" ] ]
+                        , td [] [ label [] [ text <| Maybe.Extra.unwrap "" .name <| model.recipeInfo ] ]
+                        ]
+                    , tr []
+                        [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Description" ] ]
+                        , td [] [ label [] [ text <| Maybe.withDefault "" <| Maybe.andThen .description <| model.recipeInfo ] ]
                         ]
                     ]
-                    :: viewEditIngredients
-                        (model.ingredients
-                            |> Dict.values
-                            |> List.sortBy (Editing.field .foodId >> Page.ingredientNameOrEmpty model.foods >> String.toLower)
-                        )
-                )
-            , div [ id "addIngredientView" ]
-                (div [ id "addIngredient" ]
-                    [ div [ id "searchField" ]
-                        [ label [] [ text Links.lookingGlass ]
-                        , input [ onInput Page.SetFoodsSearchString ] []
+                ]
+            , div [Style.classes.elements ] [ label [] [ text "Ingredients" ] ]
+            , div [ Style.classes.choices ]
+                [ table []
+                    [ colgroup []
+                        [ col [] []
+                        , col [] []
+                        , col [] []
+                        , col [ stringProperty "span" "2" ] []
                         ]
-                    ]
-                    :: thead []
-                        [ tr []
-                            [ td [] [ label [] [ text "Name" ] ]
+                    , thead []
+                        [ tr [ Style.classes.tableHeader ]
+                            [ th [ scope "col" ] [ label [] [ text "Name" ] ]
+                            , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Amount" ] ]
+                            , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Unit" ] ]
+                            , th [ colspan 2, scope "colgroup", Style.classes.controlsGroup ] []
                             ]
                         ]
-                    :: viewFoods model.foodsSearchString
-                )
+                    , tbody []
+                        (viewEditIngredients
+                            (model.ingredients
+                                |> Dict.values
+                                |> List.sortBy (Editing.field .foodId >> Page.ingredientNameOrEmpty model.foods >> String.toLower)
+                            )
+                        )
+                    ]
+                ]
+            , div [ Style.classes.addView ]
+                [ div [ Style.classes.addElement ]
+                    [ HtmlUtil.searchAreaWith
+                        { msg = Page.SetFoodsSearchString
+                        , searchString = model.foodsSearchString
+                        }
+                    , table [ Style.classes.choiceTable ]
+                        [ colgroup []
+                            [ col [] []
+                            , col [] []
+                            , col [] []
+                            , col [ stringProperty "span" "2" ] []
+                            ]
+                        , thead []
+                            [ tr [ Style.classes.tableHeader ]
+                                [ th [ scope "col" ] [ label [] [ text "Name" ] ]
+                                , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text amount ] ]
+                                , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text unit ] ]
+                                , th [ colspan 2, scope "colgroup", Style.classes.controlsGroup ] []
+                                ]
+                            ]
+                        , tbody [] (viewFoods model.foodsSearchString)
+                        ]
+                    ]
+                ]
             ]
 
 
 editOrDeleteIngredientLine : Page.MeasureMap -> Page.FoodMap -> Ingredient -> Html Page.Msg
 editOrDeleteIngredientLine measureMap foodMap ingredient =
-    tr [ id "editingIngredient" ]
-        [ td [] [ label [] [ text (ingredient.foodId |> Page.ingredientNameOrEmpty foodMap) ] ]
-        , td [] [ label [] [ text (ingredient.amountUnit.factor |> String.fromFloat) ] ]
-        , td [] [ label [] [ text (ingredient.amountUnit.measureId |> flip Dict.get measureMap |> Maybe.Extra.unwrap "" .name) ] ]
-        , td [] [ button [ class "button", onClick (Page.EnterEditIngredient ingredient.id) ] [ text "Edit" ] ]
-        , td [] [ button [ class "button", onClick (Page.DeleteIngredient ingredient.id) ] [ text "Delete" ] ]
+    tr [ Style.classes.editing ]
+        [ td [ Style.classes.editable ] [ label [] [ text <| Page.ingredientNameOrEmpty foodMap <| ingredient.foodId ] ]
+        , td [ Style.classes.editable, Style.classes.numberLabel ] [ label [] [ text <| String.fromFloat <| ingredient.amountUnit.factor ] ]
+        , td [ Style.classes.editable, Style.classes.numberLabel ] [ label [] [ text <| Maybe.Extra.unwrap "" .name <| flip Dict.get measureMap <| ingredient.amountUnit.measureId ] ]
+        , td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick (Page.EnterEditIngredient ingredient.id) ] [ text "Edit" ] ]
+        , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.DeleteIngredient ingredient.id) ] [ text "Delete" ] ]
         ]
 
 
 editIngredientLine : Page.MeasureMap -> Page.FoodMap -> Ingredient -> IngredientUpdateClientInput -> Html Page.Msg
 editIngredientLine measureMap foodMap ingredient ingredientUpdateClientInput =
-    tr [ id "ingredientLine" ]
-        [ td [] [ label [] [ text (ingredient.foodId |> Page.ingredientNameOrEmpty foodMap) ] ]
-        , td []
+    let
+        saveMsg =
+            Page.SaveIngredientEdit ingredientUpdateClientInput
+    in
+    tr [ Style.classes.editLine ]
+        [ td [] [ label [] [ text <| Page.ingredientNameOrEmpty foodMap <| ingredient.foodId ] ]
+        , td [ Style.classes.numberCell ]
             [ input
                 [ value
                     (ingredientUpdateClientInput.amountUnit.factor.value
@@ -116,42 +163,43 @@ editIngredientLine measureMap foodMap ingredient ingredientUpdateClientInput =
                 , onInput
                     (flip
                         (ValidatedInput.lift
-                            (IngredientUpdateClientInput.amountUnit
+                            (IngredientUpdateClientInput.lenses.amountUnit
                                 |> Compose.lensWithLens AmountUnitClientInput.factor
                             )
                         ).set
                         ingredientUpdateClientInput
                         >> Page.UpdateIngredient
                     )
-                , onEnter (Page.SaveIngredientEdit ingredient.id)
+                , onEnter saveMsg
+                , Style.classes.numberLabel
                 ]
                 []
             ]
-        , td []
+        , td [ Style.classes.numberCell ]
             [ dropdown
                 { items = unitDropdown foodMap ingredient.foodId
                 , emptyItem =
                     Just <| startingDropdownUnit measureMap ingredient.amountUnit.measureId
                 , onChange =
                     onChangeDropdown
-                        { amountUnitLens = IngredientUpdateClientInput.amountUnit
+                        { amountUnitLens = IngredientUpdateClientInput.lenses.amountUnit
                         , measureIdOf = .amountUnit >> .measureId
                         , mkMsg = Page.UpdateIngredient
                         , input = ingredientUpdateClientInput
                         }
                 }
-                []
+                [ Style.classes.numberLabel ]
                 (ingredient.amountUnit.measureId
                     |> flip Dict.get measureMap
                     |> Maybe.map .name
                 )
             ]
         , td []
-            [ button [ class "button", onClick (Page.SaveIngredientEdit ingredient.id) ]
+            [ button [ Style.classes.button.confirm, onClick saveMsg ]
                 [ text "Save" ]
             ]
         , td []
-            [ button [ class "button", onClick (Page.ExitEditIngredientAt ingredient.id) ]
+            [ button [ Style.classes.button.cancel, onClick (Page.ExitEditIngredientAt ingredient.id) ]
                 [ text "Cancel" ]
             ]
         ]
@@ -200,12 +248,30 @@ viewFoodLine foodMap measureMap ingredientsToAdd ingredients food =
         process =
             case Dict.get food.id ingredientsToAdd of
                 Nothing ->
-                    [ td [] [ button [ class "button", onClick (Page.SelectFood food) ] [ text "Select" ] ] ]
+                    [ td [ Style.classes.editable, Style.classes.numberCell ] []
+                    , td [ Style.classes.editable, Style.classes.numberCell ] []
+                    , td [ Style.classes.controls ] []
+                    , td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick (Page.SelectFood food) ] [ text "Select" ] ]
+                    ]
 
                 Just ingredientToAdd ->
-                    [ td []
-                        [ label [] [ text "Amount" ]
-                        , input
+                    let
+                        ( confirmName, confirmMsg ) =
+                            case DictUtil.firstSuch (\ingredient -> Editing.field .foodId ingredient == ingredientToAdd.foodId) ingredients of
+                                Nothing ->
+                                    ( "Add", addMsg )
+
+                                Just ingredientOrUpdate ->
+                                    ( "Update"
+                                    , ingredientOrUpdate
+                                        |> Editing.field identity
+                                        |> IngredientUpdateClientInput.from
+                                        |> IngredientUpdateClientInput.lenses.amountUnit.set ingredientToAdd.amountUnit
+                                        |> Page.SaveIngredientEdit
+                                    )
+                    in
+                    [ td [ Style.classes.numberCell ]
+                        [ input
                             [ value ingredientToAdd.amountUnit.factor.text
                             , onInput
                                 (flip
@@ -217,13 +283,13 @@ viewFoodLine foodMap measureMap ingredientsToAdd ingredients food =
                                     ingredientToAdd
                                     >> Page.UpdateAddFood
                                 )
-                            , onEnter addMsg
+                            , onEnter confirmMsg
+                            , Style.classes.numberLabel
                             ]
                             []
                         ]
-                    , td []
-                        [ label [] [ text "Unit" ]
-                        , dropdown
+                    , td [ Style.classes.numberCell ]
+                        [ dropdown
                             { items = unitDropdown foodMap food.id
                             , emptyItem =
                                 Just <| startingDropdownUnit measureMap ingredientToAdd.amountUnit.measureId
@@ -235,29 +301,24 @@ viewFoodLine foodMap measureMap ingredientsToAdd ingredients food =
                                     , input = ingredientToAdd
                                     }
                             }
-                            []
+                            [ Style.classes.numberLabel ]
                             (ingredientToAdd.amountUnit.measureId |> String.fromInt |> Just)
                         ]
-                    , td []
+                    , td [ Style.classes.controls ]
                         [ button
-                            [ class "button"
+                            [ Style.classes.button.confirm
                             , disabled
                                 (ingredientToAdd.amountUnit.factor |> ValidatedInput.isValid |> not)
-                            , onClick addMsg
+                            , onClick confirmMsg
                             ]
-                            [ text
-                                (if DictUtil.existsValue (\i -> Editing.field .foodId i == ingredientToAdd.foodId) ingredients then
-                                    "Update"
-
-                                 else
-                                    "Add"
-                                )
+                            [ text confirmName
                             ]
                         ]
-                    , td [] [ button [ class "button", onClick (Page.DeselectFood food.id) ] [ text "Cancel" ] ]
+                    , td [ Style.classes.controls ]
+                        [ button [ Style.classes.button.cancel, onClick (Page.DeselectFood food.id) ] [ text "Cancel" ] ]
                     ]
     in
-    tr [ id "addingFoodLine" ]
-        (td [] [ label [] [ text food.name ] ]
+    tr [ Style.classes.editing ]
+        (td [ Style.classes.editable ] [ label [] [ text food.name ] ]
             :: process
         )

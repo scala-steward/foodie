@@ -1,9 +1,9 @@
 module Pages.Util.ViewUtil exposing (..)
 
 import Html exposing (Html, div, label, td, text, tr)
-import Html.Attributes exposing (class)
 import Pages.Util.FlagsWithJWT exposing (FlagsWithJWT)
 import Pages.Util.Links as Links
+import Pages.Util.Style as Style
 import Url.Builder
 import Util.Initialization exposing (Initialization(..))
 
@@ -40,7 +40,7 @@ viewWithErrorHandling params model html =
                                         , "login"
                                         ]
                                         []
-                                , attributes = [ class "button" ]
+                                , attributes = [ Style.classes.button.select ]
                                 , children = [ text "Login" ]
                                 , isDisabled = False
                                 }
@@ -50,13 +50,14 @@ viewWithErrorHandling params model html =
                     else
                         []
             in
-            div []
-                (tr []
+            div [ Style.ids.error ]
+                [ tr []
                     [ td [] [ label [] [ text "An error occurred:" ] ]
                     , td [] [ label [] [ text <| explanation.cause ] ]
                     ]
-                    :: [ tr [] solutionBlock, tr [] redirectBlock ]
-                )
+                , tr [] solutionBlock
+                , tr [] redirectBlock
+                ]
 
         Loading status ->
             if params.isFinished status then

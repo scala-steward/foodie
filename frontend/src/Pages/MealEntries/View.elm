@@ -5,8 +5,9 @@ import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Dict
 import Either
-import Html exposing (Html, button, div, input, label, td, text, thead, tr)
-import Html.Attributes exposing (class, disabled, id, value)
+import Html exposing (Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
+import Html.Attributes exposing (colspan, disabled, scope, value)
+import Html.Attributes.Extra exposing (stringProperty)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
@@ -16,7 +17,8 @@ import Pages.MealEntries.Page as Page exposing (RecipeMap)
 import Pages.MealEntries.Status as Status
 import Pages.Util.DateUtil as DateUtil
 import Pages.Util.DictUtil as DictUtil
-import Pages.Util.Links as Links
+import Pages.Util.HtmlUtil as HtmlUtil
+import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput
 import Pages.Util.ViewUtil as ViewUtil
 import Util.Editing as Editing
@@ -46,60 +48,103 @@ view model =
                     |> Dict.values
                     |> List.sortBy .name
                     |> List.map (viewRecipeLine model.mealEntriesToAdd model.mealEntries)
+
+            anySelection =
+                model.mealEntriesToAdd
+                    |> Dict.isEmpty
+                    |> not
+
+            numberOfServings =
+                if anySelection then
+                    "Servings"
+
+                else
+                    ""
         in
-        div [ id "mealEntry" ]
-            [ div [ id "mealInfo" ]
-                [ label [] [ text "Date" ]
-                , label [] [ text <| Maybe.Extra.unwrap "" (.date >> DateUtil.toString) <| model.mealInfo ]
-                , label [] [ text "Name" ]
-                , label [] [ text <| Maybe.withDefault "" <| Maybe.andThen .name <| model.mealInfo ]
-                ]
-            , div [ id "mealEntryView" ]
-                (thead []
+        div [ Style.ids.mealEntryEditor ]
+            [ div []
+                [ table [ Style.classes.info ]
                     [ tr []
-                        [ td [] [ label [] [ text "Name" ] ]
-                        , td [] [ label [] [ text "Number of servings" ] ]
+                        [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Date" ] ]
+                        , td [] [ label [] [ text <| Maybe.Extra.unwrap "" (.date >> DateUtil.toString) <| model.mealInfo ] ]
+                        ]
+                    , tr []
+                        [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Name" ] ]
+                        , td [] [ label [] [ text <| Maybe.withDefault "" <| Maybe.andThen .name <| model.mealInfo ] ]
                         ]
                     ]
-                    :: viewEditMealEntries
-                        (model.mealEntries
-                            |> Dict.values
-                            |> List.sortBy (Editing.field .recipeId >> Page.recipeNameOrEmpty model.recipes >> String.toLower)
-                        )
-                )
-            , div [ id "addMealEntryView" ]
-                (div [ id "addMealEntry" ]
-                    [ div [ id "searchField" ]
-                        [ label [] [ text Links.lookingGlass ]
-                        , input [ onInput Page.SetRecipesSearchString ] []
+                ]
+            , div [ Style.classes.elements ] [ label [] [ text "Dishes" ] ]
+            , div [ Style.classes.choices ]
+                [ table []
+                    [ colgroup []
+                        [ col [] []
+                        , col [] []
+                        , col [] []
+                        , col [ stringProperty "span" "2" ] []
                         ]
-                    ]
-                    :: thead []
+                    , thead []
                         [ tr []
-                            [ td [] [ label [] [ text "Name" ] ]
-                            , td [] [ label [] [ text "Description" ] ]
+                            [ th [ scope "col" ] [ label [] [ text "Name" ] ]
+                            , th [ scope "col" ] [ label [] [ text "Description" ] ]
+                            , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Servings" ] ]
+                            , th [ colspan 2, scope "colgroup", Style.classes.controlsGroup ] []
                             ]
                         ]
-                    :: viewRecipes model.recipesSearchString
-                )
+                    , tbody []
+                        (viewEditMealEntries
+                            (model.mealEntries
+                                |> Dict.values
+                                |> List.sortBy (Editing.field .recipeId >> Page.recipeNameOrEmpty model.recipes >> String.toLower)
+                            )
+                        )
+                    ]
+                ]
+            , div [ Style.classes.addView ]
+                [ div [ Style.classes.addElement ]
+                    [ HtmlUtil.searchAreaWith
+                        { msg = Page.SetRecipesSearchString
+                        , searchString = model.recipesSearchString
+                        }
+                    , table [ Style.classes.choiceTable ]
+                        [ colgroup []
+                            [ col [] []
+                            , col [] []
+                            , col [] []
+                            , col [ stringProperty "span" "2" ] []
+                            ]
+                        , thead []
+                            [ tr [ Style.classes.tableHeader ]
+                                [ th [ scope "col" ] [ label [] [ text "Name" ] ]
+                                , th [ scope "col" ] [ label [] [ text "Description" ] ]
+                                , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text numberOfServings ] ]
+                                , th [ colspan 2, scope "colgroup", Style.classes.controlsGroup ] []
+                                ]
+                            ]
+                        , tbody [] (viewRecipes model.recipesSearchString)
+                        ]
+                    ]
+                ]
             ]
 
 
 editOrDeleteMealEntryLine : Page.RecipeMap -> MealEntry -> Html Page.Msg
 editOrDeleteMealEntryLine recipeMap mealEntry =
-    tr [ id "editingMealEntry" ]
-        [ td [] [ label [] [ text (mealEntry.recipeId |> Page.recipeNameOrEmpty recipeMap) ] ]
-        , td [] [ label [] [ text (mealEntry.numberOfServings |> String.fromFloat) ] ]
-        , td [] [ button [ class "button", onClick (Page.EnterEditMealEntry mealEntry.id) ] [ text "Edit" ] ]
-        , td [] [ button [ class "button", onClick (Page.DeleteMealEntry mealEntry.id) ] [ text "Delete" ] ]
+    tr [ Style.classes.editing ]
+        [ td [ Style.classes.editable ] [ label [] [ text <| Page.recipeNameOrEmpty recipeMap <| mealEntry.recipeId ] ]
+        , td [ Style.classes.editable ] [ label [] [ text <| Page.descriptionOrEmpty recipeMap <| mealEntry.recipeId ] ]
+        , td [ Style.classes.editable, Style.classes.numberLabel ] [ label [] [ text <| String.fromFloat <| mealEntry.numberOfServings ] ]
+        , td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick (Page.EnterEditMealEntry mealEntry.id) ] [ text "Edit" ] ]
+        , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.DeleteMealEntry mealEntry.id) ] [ text "Delete" ] ]
         ]
 
 
 editMealEntryLine : Page.RecipeMap -> MealEntry -> MealEntryUpdateClientInput -> Html Page.Msg
 editMealEntryLine recipeMap mealEntry mealEntryUpdateClientInput =
-    tr [ id "mealEntryLine" ]
-        [ td [] [ label [] [ text (mealEntry.recipeId |> Page.recipeNameOrEmpty recipeMap) ] ]
-        , td []
+    tr [ Style.classes.editLine ]
+        [ td [] [ label [] [ text <| Page.recipeNameOrEmpty recipeMap <| mealEntry.recipeId ] ]
+        , td [] [ label [] [ text <| Page.descriptionOrEmpty recipeMap <| mealEntry.recipeId ] ]
+        , td [ Style.classes.numberCell ]
             [ input
                 [ value
                     (mealEntryUpdateClientInput.numberOfServings.value
@@ -113,16 +158,17 @@ editMealEntryLine recipeMap mealEntry mealEntryUpdateClientInput =
                         mealEntryUpdateClientInput
                         >> Page.UpdateMealEntry
                     )
-                , onEnter (Page.SaveMealEntryEdit mealEntry.id)
+                , onEnter (Page.SaveMealEntryEdit mealEntryUpdateClientInput)
+                , Style.classes.numberLabel
                 ]
                 []
             ]
         , td []
-            [ button [ class "button", onClick (Page.SaveMealEntryEdit mealEntry.id) ]
+            [ button [ Style.classes.button.confirm, onClick (Page.SaveMealEntryEdit mealEntryUpdateClientInput) ]
                 [ text "Save" ]
             ]
         , td []
-            [ button [ class "button", onClick (Page.ExitEditMealEntryAt mealEntry.id) ]
+            [ button [ Style.classes.button.cancel, onClick (Page.ExitEditMealEntryAt mealEntry.id) ]
                 [ text "Cancel" ]
             ]
         ]
@@ -137,12 +183,32 @@ viewRecipeLine mealEntriesToAdd mealEntries recipe =
         process =
             case Dict.get recipe.id mealEntriesToAdd of
                 Nothing ->
-                    [ td [] [ button [ class "button", onClick (Page.SelectRecipe recipe.id) ] [ text "Select" ] ] ]
+                    [ td [ Style.classes.editable, Style.classes.numberCell ] []
+                    , td [ Style.classes.controls ] []
+                    , td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick (Page.SelectRecipe recipe.id) ] [ text "Select" ] ]
+                    ]
 
                 Just mealEntryToAdd ->
-                    [ td []
-                        [ label [] [ text "Amount" ]
-                        , input
+                    let
+                        ( confirmName, confirmMsg ) =
+                            case DictUtil.firstSuch (\mealEntry -> Editing.field .recipeId mealEntry == mealEntryToAdd.recipeId) mealEntries of
+                                Nothing ->
+                                    ( "Add", addMsg )
+
+                                Just mealEntryOrUpdate ->
+                                    let
+                                        mealEntry =
+                                            Editing.field identity mealEntryOrUpdate
+                                    in
+                                    ( "Update"
+                                    , mealEntry
+                                        |> MealEntryUpdateClientInput.from
+                                        |> MealEntryUpdateClientInput.lenses.numberOfServings.set mealEntryToAdd.numberOfServings
+                                        |> Page.SaveMealEntryEdit
+                                    )
+                    in
+                    [ td [ Style.classes.numberCell ]
+                        [ input
                             [ value mealEntryToAdd.numberOfServings.text
                             , onInput
                                 (flip
@@ -152,30 +218,24 @@ viewRecipeLine mealEntriesToAdd mealEntries recipe =
                                     mealEntryToAdd
                                     >> Page.UpdateAddRecipe
                                 )
-                            , onEnter addMsg
+                            , onEnter confirmMsg
+                            , Style.classes.numberLabel
                             ]
                             []
                         ]
-                    , td []
+                    , td [ Style.classes.controls ]
                         [ button
-                            [ class "button"
+                            [ Style.classes.button.confirm
                             , disabled
                                 (mealEntryToAdd.numberOfServings |> ValidatedInput.isValid |> not)
-                            , onClick addMsg
+                            , onClick confirmMsg
                             ]
-                            [ text
-                                (if DictUtil.existsValue (\mealEntry -> Editing.field .recipeId mealEntry == mealEntryToAdd.recipeId) mealEntries then
-                                    "Update"
-
-                                 else
-                                    "Add"
-                                )
-                            ]
+                            [ text confirmName ]
                         ]
-                    , td [] [ button [ class "button", onClick (Page.DeselectRecipe recipe.id) ] [ text "Cancel" ] ]
+                    , td [ Style.classes.controls ] [ button [ Style.classes.button.cancel, onClick (Page.DeselectRecipe recipe.id) ] [ text "Cancel" ] ]
                     ]
     in
-    tr [ id "addingRecipeLine" ]
+    tr [ Style.classes.editing ]
         (td [] [ label [] [ text recipe.name ] ]
             :: td [] [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
             :: process

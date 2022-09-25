@@ -29,8 +29,7 @@ type alias Model =
     , recipes : RecipeMap
     , recipesSearchString : String
     , mealEntriesToAdd : AddMealEntriesMap
-    , initialization: Initialization Status
-
+    , initialization : Initialization Status
     }
 
 
@@ -82,9 +81,14 @@ recipeNameOrEmpty recipeMap =
     flip Dict.get recipeMap >> Maybe.Extra.unwrap "" .name
 
 
+descriptionOrEmpty : RecipeMap -> RecipeId -> String
+descriptionOrEmpty recipeMap =
+    flip Dict.get recipeMap >> Maybe.andThen .description >> Maybe.withDefault ""
+
+
 type Msg
     = UpdateMealEntry MealEntryUpdateClientInput
-    | SaveMealEntryEdit MealEntryId
+    | SaveMealEntryEdit MealEntryUpdateClientInput
     | GotSaveMealEntryResponse (Result Error MealEntry)
     | EnterEditMealEntry MealEntryId
     | ExitEditMealEntryAt MealEntryId

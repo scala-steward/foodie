@@ -8,9 +8,10 @@ import Api.Types.SimpleDate exposing (SimpleDate)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
 import Dict
-import Either
-import Html exposing (Html, button, div, input, label, td, text, thead, tr)
-import Html.Attributes exposing (class, id, type_, value)
+import Either exposing (Either(..))
+import Html exposing (Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
+import Html.Attributes exposing (colspan, scope, type_, value)
+import Html.Attributes.Extra exposing (stringProperty)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
@@ -21,6 +22,7 @@ import Pages.Meals.Page as Page
 import Pages.Meals.Status as Status
 import Pages.Util.DateUtil as DateUtil
 import Pages.Util.Links as Links
+import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
 import Parser
 import Url.Builder
@@ -43,46 +45,66 @@ view model =
                         (editOrDeleteMealLine model.flagsWithJWT.configuration)
                         (\e -> e.update |> editMealLine)
                     )
+
+            ( button, creationLine ) =
+                createMeal model.mealToAdd |> Either.unpack (\l -> ( [ l ], [] )) (\r -> ( [], [ r ] ))
         in
-        div [ id "addMealView" ]
-            (createMeal model.mealToAdd
-                :: thead []
-                    [ tr []
-                        [ td [] [ label [] [ text "Name" ] ]
-                        , td [] [ label [] [ text "Description" ] ]
+        div [ Style.ids.addMealView ]
+            (button
+                ++ [ table []
+                        [ colgroup []
+                            [ col [] []
+                            , col [] []
+                            , col [] []
+                            , col [ stringProperty "span" "3" ] []
+                            ]
+                        , thead []
+                            [ tr [ Style.classes.tableHeader ]
+                                [ th [ scope "col" ] [ label [] [ text "Date" ] ]
+                                , th [ scope "col" ] [ label [] [ text "Time" ] ]
+                                , th [ scope "col" ] [ label [] [ text "Name" ] ]
+                                , th [ colspan 3, scope "colgroup", Style.classes.controlsGroup ] []
+                                ]
+                            ]
+                        , tbody []
+                            (creationLine
+                                ++ viewEditMeals
+                                    (model.meals
+                                        |> Dict.values
+                                        |> List.sortBy (Editing.field .date >> DateUtil.toString)
+                                    )
+                            )
                         ]
-                    ]
-                :: viewEditMeals
-                    (model.meals
-                        |> Dict.values
-                        |> List.sortBy (Editing.field .date >> DateUtil.toString)
-                    )
+                   ]
             )
 
 
-createMeal : Maybe MealCreationClientInput -> Html Page.Msg
+createMeal : Maybe MealCreationClientInput -> Either (Html Page.Msg) (Html Page.Msg)
 createMeal maybeCreation =
     case maybeCreation of
         Nothing ->
-            div [ id "addMeal" ]
+            div [ Style.ids.add ]
                 [ button
-                    [ class "button"
+                    [ Style.classes.button.add
                     , onClick (MealCreationClientInput.default |> Just |> Page.UpdateMealCreation)
                     ]
                     [ text "New meal" ]
                 ]
+                |> Left
 
         Just creation ->
-            createMealLine creation
+            createMealLine creation |> Right
 
 
 editOrDeleteMealLine : Configuration -> Meal -> Html Page.Msg
 editOrDeleteMealLine configuration meal =
-    tr [ id "editingMeal" ]
-        [ td [] [ label [] [ text <| DateUtil.toString <| meal.date ] ]
-        , td [] [ label [] [ text <| Maybe.withDefault "" <| meal.name ] ]
-        , td [] [ button [ class "button", onClick (Page.EnterEditMeal meal.id) ] [ text "Edit" ] ]
-        , td []
+    tr [ Style.classes.editing ]
+        [ td [ Style.classes.editable ] [ label [] [ text <| DateUtil.dateToString <| meal.date.date ] ]
+        , td [ Style.classes.editable ] [ label [] [ text <| Maybe.Extra.unwrap "" DateUtil.timeToString <| meal.date.time ] ]
+        , td [ Style.classes.editable ] [ label [] [ text <| Maybe.withDefault "" <| meal.name ] ]
+        , td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick (Page.EnterEditMeal meal.id) ] [ text "Edit" ] ]
+        , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.DeleteMeal meal.id) ] [ text "Delete" ] ]
+        , td [ Style.classes.controls ]
             [ Links.linkButton
                 { url =
                     Url.Builder.relative
@@ -92,12 +114,11 @@ editOrDeleteMealLine configuration meal =
                         , meal.id
                         ]
                         []
-                , attributes = [ class "button" ]
-                , children = [ text "Edit meal entries" ]
+                , attributes = [ Style.classes.button.editor ]
+                , children = [ text "Entries" ]
                 , isDisabled = False
                 }
             ]
-        , td [] [ button [ class "button", onClick (Page.DeleteMeal meal.id) ] [ text "Delete" ] ]
         ]
 
 
@@ -151,8 +172,8 @@ editMealLineWith handling editedValue =
         name =
             Maybe.withDefault "" <| handling.nameLens.get <| editedValue
     in
-    tr [ id "mealLine" ]
-        [ td []
+    tr [ Style.classes.editLine ]
+        [ td [ Style.classes.editable, Style.classes.date ]
             [ input
                 [ type_ "date"
                 , value <| DateUtil.dateToString <| date.date
@@ -167,9 +188,12 @@ editMealLineWith handling editedValue =
                         >> handling.updateMsg
                     )
                 , onEnter handling.saveMsg
+                , Style.classes.date
                 ]
                 []
-            , input
+            ]
+        , td [ Style.classes.editable, Style.classes.time ]
+            [ input
                 [ type_ "time"
                 , value <| Maybe.Extra.unwrap "" DateUtil.timeToString <| date.time
                 , onInput
@@ -183,10 +207,11 @@ editMealLineWith handling editedValue =
                         >> handling.updateMsg
                     )
                 , onEnter handling.saveMsg
+                , Style.classes.time
                 ]
                 []
             ]
-        , td []
+        , td [ Style.classes.editable ]
             [ input
                 [ value <| name
                 , onInput
@@ -199,12 +224,12 @@ editMealLineWith handling editedValue =
                 ]
                 []
             ]
-        , td []
-            [ button [ class "button", onClick handling.confirmOnClick ]
+        , td [ Style.classes.controls ]
+            [ button [ Style.classes.button.confirm, onClick handling.confirmOnClick ]
                 [ text handling.confirmName ]
             ]
-        , td []
-            [ button [ class "button", onClick handling.cancelOnClick ]
+        , td [ Style.classes.controls ]
+            [ button [ Style.classes.button.cancel, onClick handling.cancelOnClick ]
                 [ text handling.cancelName ]
             ]
         ]
