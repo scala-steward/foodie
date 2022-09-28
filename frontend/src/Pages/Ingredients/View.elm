@@ -21,13 +21,16 @@ import Pages.Ingredients.AmountUnitClientInput as AmountUnitClientInput
 import Pages.Ingredients.IngredientCreationClientInput as IngredientCreationClientInput exposing (IngredientCreationClientInput)
 import Pages.Ingredients.IngredientUpdateClientInput as IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
 import Pages.Ingredients.Page as Page
+import Pages.Ingredients.Pagination as Pagination exposing (Pagination)
 import Pages.Ingredients.RecipeInfo exposing (RecipeInfo)
 import Pages.Ingredients.Status as Status
 import Pages.Util.DictUtil as DictUtil
 import Pages.Util.HtmlUtil as HtmlUtil
+import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput
 import Pages.Util.ViewUtil as ViewUtil
+import Paginate exposing (PaginatedList)
 import Util.Editing as Editing
 import Util.SearchUtil as SearchUtil
 
@@ -43,19 +46,29 @@ view model =
         model
     <|
         let
-            viewEditIngredients =
-                List.map
-                    (Either.unpack
-                        (editOrDeleteIngredientLine model.measures model.foods)
-                        (\e -> e.update |> editIngredientLine model.measures model.foods e.original)
-                    )
+            viewEditIngredient =
+                Either.unpack
+                    (editOrDeleteIngredientLine model.measures model.foods)
+                    (\e -> e.update |> editIngredientLine model.measures model.foods e.original)
 
-            viewFoods searchString =
+            viewEditIngredients =
+                model.ingredients
+                    |> Dict.values
+                    |> List.sortBy (Editing.field .foodId >> Page.ingredientNameOrEmpty model.foods >> String.toLower)
+                    |> ViewUtil.paginate
+                        { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.ingredients
+                        }
+                        model
+
+            viewFoods =
                 model.foods
-                    |> Dict.filter (\_ v -> SearchUtil.search searchString v.name)
+                    |> Dict.filter (\_ v -> SearchUtil.search model.foodsSearchString v.name)
                     |> Dict.values
                     |> List.sortBy .name
-                    |> List.map (viewFoodLine model.foods model.measures model.foodsToAdd model.ingredients)
+                    |> ViewUtil.paginate
+                        { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.foods
+                        }
+                        model
 
             anySelection =
                 model.foodsToAdd
@@ -82,7 +95,7 @@ view model =
                         ]
                     ]
                 ]
-            , div [Style.classes.elements ] [ label [] [ text "Ingredients" ] ]
+            , div [ Style.classes.elements ] [ label [] [ text "Ingredients" ] ]
             , div [ Style.classes.choices ]
                 [ table []
                     [ colgroup []
@@ -101,11 +114,21 @@ view model =
                         ]
                     , tbody []
                         (viewEditIngredients
-                            (model.ingredients
-                                |> Dict.values
-                                |> List.sortBy (Editing.field .foodId >> Page.ingredientNameOrEmpty model.foods >> String.toLower)
-                            )
+                            |> Paginate.page
+                            |> List.map viewEditIngredient
                         )
+                    ]
+                , div [ Style.classes.pagination ]
+                    [ ViewUtil.pagerButtons
+                        { msg =
+                            PaginationSettings.updateCurrentPage
+                                { pagination = Page.lenses.pagination
+                                , items = Pagination.lenses.ingredients
+                                }
+                                model
+                                >> Page.SetPagination
+                        , elements = viewEditIngredients
+                        }
                     ]
                 ]
             , div [ Style.classes.addView ]
@@ -129,7 +152,23 @@ view model =
                                 , th [ colspan 2, scope "colgroup", Style.classes.controlsGroup ] []
                                 ]
                             ]
-                        , tbody [] (viewFoods model.foodsSearchString)
+                        , tbody []
+                            (viewFoods
+                                |> Paginate.page
+                                |> List.map (viewFoodLine model.foods model.measures model.foodsToAdd model.ingredients)
+                            )
+                        ]
+                    , div [ Style.classes.pagination ]
+                        [ ViewUtil.pagerButtons
+                            { msg =
+                                PaginationSettings.updateCurrentPage
+                                    { pagination = Page.lenses.pagination
+                                    , items = Pagination.lenses.foods
+                                    }
+                                    model
+                                    >> Page.SetPagination
+                            , elements = viewFoods
+                            }
                         ]
                     ]
                 ]

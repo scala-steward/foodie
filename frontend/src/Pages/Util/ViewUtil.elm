@@ -1,11 +1,16 @@
-module Pages.Util.ViewUtil exposing (Page(..), viewWithErrorHandling)
+module Pages.Util.ViewUtil exposing (Page(..), pagerButtons, paginate, viewWithErrorHandling)
 
-import Html exposing (Html, button, div, label, table, td, text, th, thead, tr)
+import Html exposing (Html, button, div, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (disabled)
+import Html.Events exposing (onClick)
 import Maybe.Extra
+import Monocle.Compose as Compose
+import Monocle.Lens exposing (Lens)
 import Pages.Util.FlagsWithJWT exposing (FlagsWithJWT)
 import Pages.Util.Links as Links
+import Pages.Util.PaginationSettings as PaginationSettings exposing (PaginationSettings)
 import Pages.Util.Style as Style
+import Paginate exposing (PaginatedList)
 import Url.Builder
 import Util.Initialization exposing (Initialization(..))
 
@@ -195,7 +200,7 @@ navigationBar ps =
                             (\page ->
                                 th []
                                     [ navigationToPageButton
-                                        { page = Debug.log "page" page
+                                        { page = page
                                         , mainPageURL = ps.mainPageURL
                                         , currentPage = ps.currentPage
                                         }
@@ -205,3 +210,60 @@ navigationBar ps =
                 ]
             ]
         ]
+
+
+
+
+pagerButtons :
+    { msg : Int -> msg
+    , elements : PaginatedList a
+    }
+    -> Html msg
+pagerButtons ps =
+    let
+        pagerButton pageNum isCurrentPage =
+            button
+                ([ Style.classes.button.pager
+                 , onClick (ps.msg pageNum)
+                 ]
+                    ++ (if isCurrentPage then
+                            [ disabled True, Style.classes.disabled ]
+
+                        else
+                            []
+                       )
+                )
+                [ text <| String.fromInt pageNum
+                ]
+
+        cells =
+            if Paginate.totalPages ps.elements > 1 then
+                Paginate.elidedPager
+                    { innerWindow = 5
+                    , outerWindow = 1
+                    , pageNumberView = pagerButton
+                    , gapView = button [ Style.classes.ellipsis ] [ text "..." ]
+                    }
+                    ps.elements
+                    |> List.map (\elt -> td [] [ elt ])
+
+            else
+                []
+    in
+    table []
+        [ tbody []
+            [ tr []
+                cells
+            ]
+        ]
+
+
+paginate :
+    { pagination : Lens model PaginationSettings
+    }
+    -> model
+    -> List a
+    -> PaginatedList a
+paginate ps model =
+    Paginate.fromList ((ps.pagination |> Compose.lensWithLens PaginationSettings.lenses.itemsPerPage).get model)
+        >> Paginate.goTo (model |> (ps.pagination |> Compose.lensWithLens PaginationSettings.lenses.currentPage).get)
