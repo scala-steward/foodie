@@ -1,5 +1,6 @@
 module Pages.Recipes.View exposing (view)
 
+import Addresses.Frontend
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
@@ -24,7 +25,6 @@ import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
 import Pages.Util.ViewUtil as ViewUtil
 import Paginate
-import Url.Builder
 import Util.Editing as Editing
 
 
@@ -33,8 +33,10 @@ view model =
     ViewUtil.viewWithErrorHandling
         { isFinished = Status.isFinished
         , initialization = Page.lenses.initialization.get
-        , flagsWithJWT = .flagsWithJWT
+        , configuration = .flagsWithJWT >> .configuration
+        , jwt = .flagsWithJWT >> .jwt >> Just
         , currentPage = Just ViewUtil.Recipes
+        , showNavigation = True
         }
         model
     <|
@@ -126,14 +128,7 @@ editOrDeleteRecipeLine configuration recipe =
             ]
         , td [ Style.classes.controls ]
             [ Links.linkButton
-                { url =
-                    Url.Builder.relative
-                        [ configuration.mainPageURL
-                        , "#"
-                        , "ingredient-editor"
-                        , recipe.id
-                        ]
-                        []
+                { url = Links.frontendPage configuration <| Addresses.Frontend.ingredientEditor.address <| recipe.id
                 , attributes = [ Style.classes.button.editor ]
                 , children = [ text "Ingredients" ]
                 }

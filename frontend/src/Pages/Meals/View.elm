@@ -1,5 +1,6 @@
 module Pages.Meals.View exposing (view)
 
+import Addresses.Frontend
 import Api.Lenses.MealUpdateLens as MealUpdateLens
 import Api.Lenses.SimpleDateLens as SimpleDateLens
 import Api.Types.Meal exposing (Meal)
@@ -28,7 +29,6 @@ import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
 import Paginate
 import Parser
-import Url.Builder
 import Util.Editing as Editing
 
 
@@ -37,8 +37,10 @@ view model =
     ViewUtil.viewWithErrorHandling
         { isFinished = Status.isFinished
         , initialization = .initialization
-        , flagsWithJWT = .flagsWithJWT
+        , configuration = .flagsWithJWT >> .configuration
+        , jwt = .flagsWithJWT >> .jwt >> Just
         , currentPage = Just ViewUtil.Meals
+        , showNavigation = True
         }
         model
     <|
@@ -127,14 +129,7 @@ editOrDeleteMealLine configuration meal =
         , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.DeleteMeal meal.id) ] [ text "Delete" ] ]
         , td [ Style.classes.controls ]
             [ Links.linkButton
-                { url =
-                    Url.Builder.relative
-                        [ configuration.mainPageURL
-                        , "#"
-                        , "meal-entry-editor"
-                        , meal.id
-                        ]
-                        []
+                { url = Links.frontendPage configuration <| Addresses.Frontend.mealEntryEditor.address <| meal.id
                 , attributes = [ Style.classes.button.editor ]
                 , children = [ text "Entries" ]
                 }

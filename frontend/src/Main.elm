@@ -1,11 +1,16 @@
 module Main exposing (main)
 
+import Addresses.Frontend
+import Api.Auxiliary exposing (JWT)
 import Basics.Extra exposing (flip)
 import Browser exposing (UrlRequest)
 import Browser.Navigation as Nav
 import Configuration exposing (Configuration)
 import Html exposing (Html, div, text)
 import Monocle.Lens exposing (Lens)
+import Pages.Deletion.Handler
+import Pages.Deletion.Page
+import Pages.Deletion.View
 import Pages.Ingredients.Handler
 import Pages.Ingredients.Page
 import Pages.Ingredients.View
@@ -24,16 +29,30 @@ import Pages.Overview.View
 import Pages.Recipes.Handler
 import Pages.Recipes.Page
 import Pages.Recipes.View
+import Pages.Recovery.Confirm.Handler
+import Pages.Recovery.Confirm.Page
+import Pages.Recovery.Confirm.View
+import Pages.Recovery.Request.Handler
+import Pages.Recovery.Request.Page
+import Pages.Recovery.Request.View
 import Pages.ReferenceNutrients.Handler
 import Pages.ReferenceNutrients.Page
 import Pages.ReferenceNutrients.View
+import Pages.Registration.Confirm.Handler
+import Pages.Registration.Confirm.Page
+import Pages.Registration.Confirm.View
+import Pages.Registration.Request.Handler
+import Pages.Registration.Request.Page
+import Pages.Registration.Request.View
 import Pages.Statistics.Handler
 import Pages.Statistics.Page
 import Pages.Statistics.View
-import Pages.Util.ParserUtil as ParserUtil
+import Pages.UserSettings.Handler
+import Pages.UserSettings.Page
+import Pages.UserSettings.View
 import Ports exposing (doFetchToken, fetchFoods, fetchMeasures, fetchNutrients, fetchToken)
 import Url exposing (Url)
-import Url.Parser as Parser exposing ((</>), Parser, s)
+import Url.Parser as Parser exposing ((</>), Parser)
 
 
 main : Program Configuration Model Msg
@@ -66,9 +85,13 @@ type alias Model =
     }
 
 
-jwtLens : Lens Model (Maybe String)
-jwtLens =
-    Lens .jwt (\b a -> { a | jwt = b })
+lenses :
+    { jwt : Lens Model (Maybe JWT)
+    }
+lenses =
+    { jwt =
+        Lens .jwt (\b a -> { a | jwt = b })
+    }
 
 
 type Page
@@ -80,6 +103,12 @@ type Page
     | MealEntries Pages.MealEntries.Page.Model
     | Statistics Pages.Statistics.Page.Model
     | ReferenceNutrients Pages.ReferenceNutrients.Page.Model
+    | RequestRegistration Pages.Registration.Request.Page.Model
+    | ConfirmRegistration Pages.Registration.Confirm.Page.Model
+    | UserSettings Pages.UserSettings.Page.Model
+    | Deletion Pages.Deletion.Page.Model
+    | RequestRecovery Pages.Recovery.Request.Page.Model
+    | ConfirmRecovery Pages.Recovery.Confirm.Page.Model
     | NotFound
 
 
@@ -98,6 +127,12 @@ type Msg
     | MealEntriesMsg Pages.MealEntries.Page.Msg
     | StatisticsMsg Pages.Statistics.Page.Msg
     | ReferenceNutrientsMsg Pages.ReferenceNutrients.Page.Msg
+    | RequestRegistrationMsg Pages.Registration.Request.Page.Msg
+    | ConfirmRegistrationMsg Pages.Registration.Confirm.Page.Msg
+    | UserSettingsMsg Pages.UserSettings.Page.Msg
+    | DeletionMsg Pages.Deletion.Page.Msg
+    | RequestRecoveryMsg Pages.Recovery.Request.Page.Msg
+    | ConfirmRecoveryMsg Pages.Recovery.Confirm.Page.Msg
 
 
 titleFor : Model -> String
@@ -146,6 +181,24 @@ view model =
         ReferenceNutrients referenceNutrients ->
             Html.map ReferenceNutrientsMsg (Pages.ReferenceNutrients.View.view referenceNutrients)
 
+        RequestRegistration requestRegistration ->
+            Html.map RequestRegistrationMsg (Pages.Registration.Request.View.view requestRegistration)
+
+        ConfirmRegistration confirmRegistration ->
+            Html.map ConfirmRegistrationMsg (Pages.Registration.Confirm.View.view confirmRegistration)
+
+        UserSettings userSettings ->
+            Html.map UserSettingsMsg (Pages.UserSettings.View.view userSettings)
+
+        Deletion deletion ->
+            Html.map DeletionMsg (Pages.Deletion.View.view deletion)
+
+        RequestRecovery requestRecovery ->
+            Html.map RequestRecoveryMsg (Pages.Recovery.Request.View.view requestRecovery)
+
+        ConfirmRecovery confirmRecovery ->
+            Html.map ConfirmRecoveryMsg (Pages.Recovery.Confirm.View.view confirmRecovery)
+
         NotFound ->
             div [] [ text "Page not found" ]
 
@@ -167,35 +220,10 @@ update msg model =
         ( LoginMsg loginMsg, Login login ) ->
             stepThrough steps.login model (Pages.Login.Handler.update loginMsg login)
 
-        -- todo: Check all cases, and possibly refactor to have less duplication.
         ( FetchToken token, page ) ->
-            case page of
-                Login _ ->
-                    ( jwtLens.set (Just token) model, Cmd.none )
-
-                Overview overview ->
-                    stepThrough steps.overview model (Pages.Overview.Handler.update (Pages.Overview.Page.UpdateJWT token) overview)
-
-                Recipes recipes ->
-                    stepThrough steps.recipes model (Pages.Recipes.Handler.update (Pages.Recipes.Page.UpdateJWT token) recipes)
-
-                Ingredients ingredients ->
-                    stepThrough steps.ingredients model (Pages.Ingredients.Handler.update (Pages.Ingredients.Page.UpdateJWT token) ingredients)
-
-                Meals meals ->
-                    stepThrough steps.meals model (Pages.Meals.Handler.update (Pages.Meals.Page.UpdateJWT token) meals)
-
-                MealEntries mealEntry ->
-                    stepThrough steps.mealEntries model (Pages.MealEntries.Handler.update (Pages.MealEntries.Page.UpdateJWT token) mealEntry)
-
-                Statistics statistics ->
-                    stepThrough steps.statistics model (Pages.Statistics.Handler.update (Pages.Statistics.Page.UpdateJWT token) statistics)
-
-                ReferenceNutrients referenceNutrients ->
-                    stepThrough steps.referenceNutrients model (Pages.ReferenceNutrients.Handler.update (Pages.ReferenceNutrients.Page.UpdateJWT token) referenceNutrients)
-
-                NotFound ->
-                    ( jwtLens.set (Just token) model, Cmd.none )
+            model
+                |> lenses.jwt.set (Just token)
+                |> (\m -> handleFetchToken m page token)
 
         ( FetchFoods foods, Ingredients ingredients ) ->
             stepThrough steps.ingredients model (Pages.Ingredients.Handler.update (Pages.Ingredients.Page.UpdateFoods foods) ingredients)
@@ -227,7 +255,74 @@ update msg model =
         ( ReferenceNutrientsMsg referenceNutrientsMsg, ReferenceNutrients referenceNutrients ) ->
             stepThrough steps.referenceNutrients model (Pages.ReferenceNutrients.Handler.update referenceNutrientsMsg referenceNutrients)
 
+        ( RequestRegistrationMsg requestRegistrationMsg, RequestRegistration requestRegistration ) ->
+            stepThrough steps.requestRegistration model (Pages.Registration.Request.Handler.update requestRegistrationMsg requestRegistration)
+
+        ( ConfirmRegistrationMsg confirmRegistrationMsg, ConfirmRegistration confirmRegistration ) ->
+            stepThrough steps.confirmRegistration model (Pages.Registration.Confirm.Handler.update confirmRegistrationMsg confirmRegistration)
+
+        ( UserSettingsMsg userSettingsMsg, UserSettings userSettings ) ->
+            stepThrough steps.userSettings model (Pages.UserSettings.Handler.update userSettingsMsg userSettings)
+
+        ( DeletionMsg deletionMsg, Deletion deletion ) ->
+            stepThrough steps.deletion model (Pages.Deletion.Handler.update deletionMsg deletion)
+
+        ( RequestRecoveryMsg requestRecoveryMsg, RequestRecovery requestRecovery ) ->
+            stepThrough steps.requestRecovery model (Pages.Recovery.Request.Handler.update requestRecoveryMsg requestRecovery)
+
+        ( ConfirmRecoveryMsg confirmRecoveryMsg, ConfirmRecovery confirmRecovery ) ->
+            stepThrough steps.confirmRecovery model (Pages.Recovery.Confirm.Handler.update confirmRecoveryMsg confirmRecovery)
+
         _ ->
+            ( model, Cmd.none )
+
+
+handleFetchToken : Model -> Page -> JWT -> ( Model, Cmd Msg )
+handleFetchToken model page token =
+    case page of
+        Overview overview ->
+            stepThrough steps.overview model (Pages.Overview.Handler.update (Pages.Overview.Page.UpdateJWT token) overview)
+
+        Recipes recipes ->
+            stepThrough steps.recipes model (Pages.Recipes.Handler.update (Pages.Recipes.Page.UpdateJWT token) recipes)
+
+        Ingredients ingredients ->
+            stepThrough steps.ingredients model (Pages.Ingredients.Handler.update (Pages.Ingredients.Page.UpdateJWT token) ingredients)
+
+        Meals meals ->
+            stepThrough steps.meals model (Pages.Meals.Handler.update (Pages.Meals.Page.UpdateJWT token) meals)
+
+        MealEntries mealEntry ->
+            stepThrough steps.mealEntries model (Pages.MealEntries.Handler.update (Pages.MealEntries.Page.UpdateJWT token) mealEntry)
+
+        Statistics statistics ->
+            stepThrough steps.statistics model (Pages.Statistics.Handler.update (Pages.Statistics.Page.UpdateJWT token) statistics)
+
+        ReferenceNutrients referenceNutrients ->
+            stepThrough steps.referenceNutrients model (Pages.ReferenceNutrients.Handler.update (Pages.ReferenceNutrients.Page.UpdateJWT token) referenceNutrients)
+
+        UserSettings userSettings ->
+            stepThrough steps.userSettings model (Pages.UserSettings.Handler.update (Pages.UserSettings.Page.UpdateJWT token) userSettings)
+
+        RequestRegistration _ ->
+            ( model, Cmd.none )
+
+        ConfirmRegistration _ ->
+            ( model, Cmd.none )
+
+        Deletion _ ->
+            ( model, Cmd.none )
+
+        RequestRecovery _ ->
+            ( model, Cmd.none )
+
+        ConfirmRecovery _ ->
+            ( model, Cmd.none )
+
+        Login _ ->
+            ( model, Cmd.none )
+
+        NotFound ->
             ( model, Cmd.none )
 
 
@@ -260,6 +355,24 @@ stepTo url model =
                 ReferenceNutrientsRoute flags ->
                     Pages.ReferenceNutrients.Handler.init flags |> stepThrough steps.referenceNutrients model
 
+                RequestRegistrationRoute flags ->
+                    Pages.Registration.Request.Handler.init flags |> stepThrough steps.requestRegistration model
+
+                ConfirmRegistrationRoute flags ->
+                    Pages.Registration.Confirm.Handler.init flags |> stepThrough steps.confirmRegistration model
+
+                UserSettingsRoute flags ->
+                    Pages.UserSettings.Handler.init flags |> stepThrough steps.userSettings model
+
+                DeletionRoute flags ->
+                    Pages.Deletion.Handler.init flags |> stepThrough steps.deletion model
+
+                RequestRecoveryRoute flags ->
+                    Pages.Recovery.Request.Handler.init flags |> stepThrough steps.requestRecovery model
+
+                ConfirmRecoveryRoute flags ->
+                    Pages.Recovery.Confirm.Handler.init flags |> stepThrough steps.confirmRecovery model
+
         Nothing ->
             ( { model | page = NotFound }, Cmd.none )
 
@@ -279,6 +392,12 @@ steps :
     , meals : StepParameters Pages.Meals.Page.Model Pages.Meals.Page.Msg
     , statistics : StepParameters Pages.Statistics.Page.Model Pages.Statistics.Page.Msg
     , referenceNutrients : StepParameters Pages.ReferenceNutrients.Page.Model Pages.ReferenceNutrients.Page.Msg
+    , requestRegistration : StepParameters Pages.Registration.Request.Page.Model Pages.Registration.Request.Page.Msg
+    , confirmRegistration : StepParameters Pages.Registration.Confirm.Page.Model Pages.Registration.Confirm.Page.Msg
+    , userSettings : StepParameters Pages.UserSettings.Page.Model Pages.UserSettings.Page.Msg
+    , deletion : StepParameters Pages.Deletion.Page.Model Pages.Deletion.Page.Msg
+    , requestRecovery : StepParameters Pages.Recovery.Request.Page.Model Pages.Recovery.Request.Page.Msg
+    , confirmRecovery : StepParameters Pages.Recovery.Confirm.Page.Model Pages.Recovery.Confirm.Page.Msg
     }
 steps =
     { login = StepParameters Login LoginMsg
@@ -289,6 +408,12 @@ steps =
     , meals = StepParameters Meals MealsMsg
     , statistics = StepParameters Statistics StatisticsMsg
     , referenceNutrients = StepParameters ReferenceNutrients ReferenceNutrientsMsg
+    , requestRegistration = StepParameters RequestRegistration RequestRegistrationMsg
+    , confirmRegistration = StepParameters ConfirmRegistration ConfirmRegistrationMsg
+    , userSettings = StepParameters UserSettings UserSettingsMsg
+    , deletion = StepParameters Deletion DeletionMsg
+    , requestRecovery = StepParameters RequestRecovery RequestRecoveryMsg
+    , confirmRecovery = StepParameters ConfirmRecovery ConfirmRecoveryMsg
     }
 
 
@@ -306,48 +431,68 @@ type Route
     | MealEntriesRoute Pages.MealEntries.Page.Flags
     | StatisticsRoute Pages.Statistics.Page.Flags
     | ReferenceNutrientsRoute Pages.ReferenceNutrients.Page.Flags
+    | RequestRegistrationRoute Pages.Registration.Request.Page.Flags
+    | ConfirmRegistrationRoute Pages.Registration.Confirm.Page.Flags
+    | UserSettingsRoute Pages.UserSettings.Page.Flags
+    | DeletionRoute Pages.Deletion.Page.Flags
+    | RequestRecoveryRoute Pages.Recovery.Request.Page.Flags
+    | ConfirmRecoveryRoute Pages.Recovery.Confirm.Page.Flags
 
 
 routeParser : Maybe String -> Configuration -> Parser (Route -> a) a
 routeParser jwt configuration =
     let
         loginParser =
-            s "login" |> Parser.map { configuration = configuration }
+            Addresses.Frontend.login.parser |> Parser.map { configuration = configuration }
 
         overviewParser =
-            s "overview" |> Parser.map flags
+            Addresses.Frontend.overview.parser |> Parser.map flags
 
         recipesParser =
-            s "recipes" |> Parser.map flags
+            Addresses.Frontend.recipes.parser |> Parser.map flags
 
         ingredientParser =
-            (s "ingredient-editor" </> ParserUtil.uuidParser)
+            Addresses.Frontend.ingredientEditor.parser
                 |> Parser.map
-                    (\recipeId ->
-                        { recipeId = recipeId
-                        , configuration = configuration
-                        , jwt = jwt
-                        }
-                    )
+                    (Pages.Ingredients.Page.Flags configuration jwt)
 
         mealsParser =
-            s "meals" |> Parser.map flags
+            Addresses.Frontend.meals.parser |> Parser.map flags
 
         mealEntriesParser =
-            (s "meal-entry-editor" </> ParserUtil.uuidParser)
+            Addresses.Frontend.mealEntryEditor.parser
                 |> Parser.map
-                    (\mealId ->
-                        { mealId = mealId
-                        , configuration = configuration
-                        , jwt = jwt
-                        }
-                    )
+                    (Pages.MealEntries.Page.Flags configuration jwt)
 
         statisticsParser =
-            s "statistics" |> Parser.map flags
+            Addresses.Frontend.statistics.parser |> Parser.map flags
 
         referenceNutrientParser =
-            s "reference-nutrients" |> Parser.map flags
+            Addresses.Frontend.referenceNutrients.parser |> Parser.map flags
+
+        requestRegistrationParser =
+            Addresses.Frontend.requestRegistration.parser |> Parser.map { configuration = configuration }
+
+        confirmRegistrationParser =
+            Addresses.Frontend.confirmRegistration.parser
+                |> Parser.map
+                    (Pages.Registration.Confirm.Page.Flags configuration)
+
+        userSettingsParser =
+            Addresses.Frontend.userSettings.parser |> Parser.map flags
+
+        deletionParser =
+            Addresses.Frontend.deleteAccount.parser
+                |> Parser.map
+                    (Pages.Deletion.Page.Flags configuration)
+
+        requestRecoveryParser =
+            Addresses.Frontend.requestRecovery.parser |> Parser.map { configuration = configuration }
+
+        confirmRecoveryParser =
+            Addresses.Frontend.confirmRecovery.parser
+                |> Parser.map
+                    (Pages.Recovery.Confirm.Page.Flags configuration)
 
         flags =
             { configuration = configuration, jwt = jwt }
@@ -361,6 +506,12 @@ routeParser jwt configuration =
         , route mealEntriesParser MealEntriesRoute
         , route statisticsParser StatisticsRoute
         , route referenceNutrientParser ReferenceNutrientsRoute
+        , route requestRegistrationParser RequestRegistrationRoute
+        , route confirmRegistrationParser ConfirmRegistrationRoute
+        , route userSettingsParser UserSettingsRoute
+        , route deletionParser DeletionRoute
+        , route requestRecoveryParser RequestRecoveryRoute
+        , route confirmRecoveryParser ConfirmRecoveryRoute
         ]
 
 

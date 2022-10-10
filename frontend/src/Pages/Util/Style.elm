@@ -14,12 +14,14 @@ classes :
         , delete : Attribute msg
         , edit : Attribute msg
         , editor : Attribute msg
+        , logout : Attribute msg
         , navigation : Attribute msg
         , pager: Attribute msg
         , select : Attribute msg
         }
     , choices : Attribute msg
     , choiceTable : Attribute msg
+    , confirm : Attribute msg
     , controlsGroup : Attribute msg
     , controls : Attribute msg
     , date : Attribute msg
@@ -42,6 +44,7 @@ classes :
         , exact : Attribute msg
         , high : Attribute msg
         }
+    , request : Attribute msg
     , search :
         { area : Attribute msg
         , field : Attribute msg
@@ -59,12 +62,14 @@ classes =
         , delete = class "deleteButton"
         , edit = class "editButton"
         , editor = class "editorButton"
+        , logout = class "logoutButton"
         , navigation = class "navigationButton"
         , pager = class "pagerButton"
         , select = class "selectButton"
         }
     , choices = class "choices"
     , choiceTable = class "choiceTable"
+    , confirm = class "confirm"
     , controlsGroup = class "controlsGroup"
     , controls = class "controls"
     , date = class "date"
@@ -87,6 +92,7 @@ classes =
         , exact = class "exact"
         , high = class "high"
         }
+        , request = class "request"
     , search =
         { area = class "searchArea"
         , field = class "searchField"
@@ -102,7 +108,6 @@ ids :
     , addRecipeView : Attribute msg
     , error : Attribute msg
     , ingredientEditor : Attribute msg
-    , login : Attribute msg
     , mealEntryEditor : Attribute msg
     , mealsButton : Attribute msg
     , navigation : Attribute msg
@@ -112,6 +117,7 @@ ids :
     , referenceNutrientsButton : Attribute msg
     , statistics : Attribute msg
     , statisticsButton : Attribute msg
+    , userSettingsButton : Attribute msg
     }
 ids =
     { add = id "add"
@@ -119,7 +125,6 @@ ids =
     , addRecipeView = id "addRecipeView"
     , error = id "error"
     , ingredientEditor = id "ingredientEditor"
-    , login = id "login"
     , mealEntryEditor = id "mealEntryEditor"
     , mealsButton = id "mealsButton"
     , navigation = id "navigation"
@@ -129,4 +134,5 @@ ids =
     , referenceNutrientsButton = id "referenceNutrientsButton"
     , statistics = id "statistics"
     , statisticsButton = id "statisticsButton"
+    , userSettingsButton = id "userSettingsButton"
     }

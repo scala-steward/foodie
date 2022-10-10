@@ -2,10 +2,11 @@ body, button, input {
     font-family: Arial, sans-serif;
 }
 
-#recipesButton button,
-#mealsButton button,
-#statisticsButton button,
-#referenceNutrientsButton button {
+#recipesButton,
+#mealsButton,
+#statisticsButton,
+#referenceNutrientsButton,
+#userSettingsButton {
     border: none;
     text-align: center;
     padding: 5%;
@@ -21,10 +22,11 @@ body, button, input {
     background-color: rgb(66, 100, 160);
 }
 
-#recipesButton button:hover,
-#mealsButton button:hover,
-#statisticsButton button:hover,
-#referenceNutrientsButton button:hover,
+#recipesButton:hover,
+#mealsButton:hover,
+#statisticsButton:hover,
+#referenceNutrientsButton:hover,
+#userSettingsButton:hover,
 .navigationButton:hover:not(.disabled),
 .pagerButton:hover:not(.disabled) {
     background-color: rgb(100, 149, 237);
@@ -109,7 +111,8 @@ body, button, input {
 .deleteButton,
 .confirmButton,
 .cancelButton,
-.selectButton {
+.selectButton,
+.logoutButton {
     color: rgb(250, 250, 250);
     border: none;
     text-align: center;
@@ -279,6 +282,14 @@ th {
     background-color: rgba(214, 69, 70, 0.85);
 }
 
+.logoutButton {
+    background-color: rgb(66, 100, 160);
+}
+
+.logoutButton:hover:enabled {
+    background-color: rgb(100, 149, 237);
+}
+
 .editorButton {
     background-color: royalblue;
 }
@@ -329,7 +340,7 @@ th {
     margin-bottom: 20px;
 }
 
-#login {
+#login, .request, .confirm {
     display: inline-block;
     text-align: center;
     width: 100%;
@@ -337,24 +348,53 @@ th {
 
 #login input,
 #login label,
-#login button {
+#login button,
+.request input,
+.request label,
+.request button,
+.confirm input,
+.confirm label,
+.confirm button,
+.confirm a {
     font-size: xx-large;
 }
 
-#login input {
+#login input,
+.request input,
+.confirm input {
     box-sizing: border-box;
     margin-bottom: 5px;
-    width: 80%;
 }
 
-#login label {
+#login label,
+.request label,
+.confirm label {
     padding-right: 5px;
     width: 40%
 }
 
-#login button {
+#login button,
+.request button,
+.confirm button,
+.confirm a {
     margin-top: 5px;
     width: 30%;
+    margin-bottom: 0;
+}
+
+.request .info,
+.confirm .info {
+    font-size: xx-large;
+    font-weight: bold;
+    font-style: italic;
+    margin-bottom: 10px;
+}
+
+.request table,
+.confirm table {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: left;
 }
 
 #error label {

@@ -8,6 +8,7 @@ module Pages.Ingredients.Requests exposing
     , saveIngredient
     )
 
+import Addresses.Backend
 import Api.Auxiliary exposing (FoodId, IngredientId, JWT, MeasureId, RecipeId)
 import Api.Types.Food exposing (Food, decoderFood)
 import Api.Types.Ingredient exposing (Ingredient, decoderIngredient)
@@ -20,82 +21,81 @@ import Http exposing (Error)
 import Json.Decode as Decode
 import Pages.Ingredients.Page as Page
 import Pages.Util.FlagsWithJWT exposing (FlagsWithJWT)
-import Url.Builder
 import Util.HttpUtil as HttpUtil
 
 
 fetchIngredients : FlagsWithJWT -> RecipeId -> Cmd Page.Msg
 fetchIngredients flags recipeId =
-    fetchList
-        { addressSuffix = Url.Builder.relative [ "recipe", recipeId, "ingredient", "all" ] []
-        , decoder = decoderIngredient
-        , gotMsg = Page.GotFetchIngredientsResponse
-        }
+    HttpUtil.runPatternWithJwt
         flags
+        (Addresses.Backend.recipes.ingredients.allOf recipeId)
+        { body = Http.emptyBody
+        , expect = HttpUtil.expectJson Page.GotFetchIngredientsResponse (Decode.list decoderIngredient)
+        }
 
 
 fetchRecipe : FlagsWithJWT -> RecipeId -> Cmd Page.Msg
 fetchRecipe flags recipeId =
-    HttpUtil.getJsonWithJWT flags.jwt
-        { url = Url.Builder.relative [ flags.configuration.backendURL, "recipe", recipeId ] []
+    HttpUtil.runPatternWithJwt
+        flags
+        (Addresses.Backend.recipes.single recipeId)
+        { body = Http.emptyBody
         , expect = HttpUtil.expectJson Page.GotFetchRecipeResponse decoderRecipe
         }
 
 
 fetchFoods : FlagsWithJWT -> Cmd Page.Msg
-fetchFoods =
-    fetchList
-        { addressSuffix = Url.Builder.relative [ "recipe", "foods" ] []
-        , decoder = decoderFood
-        , gotMsg = Page.GotFetchFoodsResponse
+fetchFoods flags =
+    HttpUtil.runPatternWithJwt
+        flags
+        Addresses.Backend.recipes.foods
+        { body = Http.emptyBody
+        , expect = HttpUtil.expectJson Page.GotFetchFoodsResponse (Decode.list decoderFood)
         }
 
 
 fetchMeasures : FlagsWithJWT -> Cmd Page.Msg
-fetchMeasures =
-    fetchList
-        { addressSuffix = Url.Builder.relative [ "recipe", "measures" ] []
-        , decoder = decoderMeasure
-        , gotMsg = Page.GotFetchMeasuresResponse
+fetchMeasures flags =
+    HttpUtil.runPatternWithJwt
+        flags
+        Addresses.Backend.recipes.measures
+        { body = Http.emptyBody
+        , expect = HttpUtil.expectJson Page.GotFetchMeasuresResponse (Decode.list decoderMeasure)
         }
 
 
-fetchList :
-    { addressSuffix : String
-    , decoder : Decode.Decoder a
-    , gotMsg : Result Error (List a) -> Page.Msg
+addFood :
+    { configuration : Configuration
+    , jwt : JWT
+    , ingredientCreation : IngredientCreation
     }
-    -> FlagsWithJWT
     -> Cmd Page.Msg
-fetchList ps flags =
-    HttpUtil.getJsonWithJWT flags.jwt
-        { url = Url.Builder.relative [ flags.configuration.backendURL, ps.addressSuffix ] []
-        , expect = HttpUtil.expectJson ps.gotMsg (Decode.list ps.decoder)
-        }
-
-
-addFood : { configuration : Configuration, jwt : JWT, ingredientCreation : IngredientCreation } -> Cmd Page.Msg
 addFood ps =
-    HttpUtil.patchJsonWithJWT ps.jwt
-        { url = Url.Builder.relative [ ps.configuration.backendURL, "recipe", "ingredient", "create" ] []
-        , body = encoderIngredientCreation ps.ingredientCreation
+    HttpUtil.runPatternWithJwt
+        { configuration = ps.configuration
+        , jwt = ps.jwt
+        }
+        Addresses.Backend.recipes.ingredients.create
+        { body = encoderIngredientCreation ps.ingredientCreation |> Http.jsonBody
         , expect = HttpUtil.expectJson Page.GotAddFoodResponse decoderIngredient
         }
 
 
 saveIngredient : FlagsWithJWT -> IngredientUpdate -> Cmd Page.Msg
 saveIngredient flags ingredientUpdate =
-    HttpUtil.patchJsonWithJWT
-        flags.jwt
-        { url = Url.Builder.relative [ flags.configuration.backendURL, "recipe", "ingredient", "update" ] []
-        , body = encoderIngredientUpdate ingredientUpdate
+    HttpUtil.runPatternWithJwt
+        flags
+        Addresses.Backend.recipes.ingredients.update
+        { body = encoderIngredientUpdate ingredientUpdate |> Http.jsonBody
         , expect = HttpUtil.expectJson Page.GotSaveIngredientResponse decoderIngredient
         }
 
 
 deleteIngredient : FlagsWithJWT -> IngredientId -> Cmd Page.Msg
-deleteIngredient fs iid =
-    HttpUtil.deleteWithJWT fs.jwt
-        { url = Url.Builder.relative [ fs.configuration.backendURL, "recipe", "ingredient", "delete", iid ] []
-        , expect = HttpUtil.expectWhatever (Page.GotDeleteIngredientResponse iid)
+deleteIngredient flags ingredientId =
+    HttpUtil.runPatternWithJwt
+        flags
+        (Addresses.Backend.recipes.ingredients.delete ingredientId)
+        { body = Http.emptyBody
+        , expect = HttpUtil.expectWhatever (Page.GotDeleteIngredientResponse ingredientId)
         }

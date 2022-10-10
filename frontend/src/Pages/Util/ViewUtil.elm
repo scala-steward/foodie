@@ -1,12 +1,15 @@
 module Pages.Util.ViewUtil exposing (Page(..), pagerButtons, paginate, viewWithErrorHandling)
 
+import Api.Auxiliary exposing (JWT)
+import Api.Types.LoginContent exposing (decoderLoginContent)
+import Configuration exposing (Configuration)
 import Html exposing (Html, button, div, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (disabled)
 import Html.Events exposing (onClick)
+import Jwt
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
-import Pages.Util.FlagsWithJWT exposing (FlagsWithJWT)
 import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings exposing (PaginationSettings)
 import Pages.Util.Style as Style
@@ -18,8 +21,10 @@ import Util.Initialization exposing (Initialization(..))
 viewWithErrorHandling :
     { isFinished : status -> Bool
     , initialization : model -> Initialization status
-    , flagsWithJWT : model -> FlagsWithJWT
+    , configuration : model -> Configuration
+    , jwt : model -> Maybe JWT
     , currentPage : Maybe Page
+    , showNavigation : Bool
     }
     -> model
     -> Html msg
@@ -27,7 +32,7 @@ viewWithErrorHandling :
 viewWithErrorHandling params model html =
     let
         mainPageURL =
-            model |> params.flagsWithJWT |> .configuration |> .mainPageURL
+            model |> params.configuration |> .mainPageURL
     in
     case params.initialization model of
         Failure explanation ->
@@ -67,20 +72,34 @@ viewWithErrorHandling params model html =
         Loading status ->
             if params.isFinished status then
                 let
-                    navigationLine =
-                        case params.currentPage of
-                            Just Overview ->
-                                []
+                    unknown =
+                        "<unknown>"
 
-                            _ ->
-                                [ navigationBar
-                                    { mainPageURL = mainPageURL
-                                    , currentPage = params.currentPage
-                                    }
-                                ]
+                    nickname =
+                        model
+                            |> params.jwt
+                            |> Maybe.andThen
+                                (Jwt.decodeToken decoderLoginContent
+                                    >> Result.toMaybe
+                                )
+                            |> Maybe.Extra.unwrap unknown .nickname
+
+                    navigation =
+                        if params.showNavigation then
+                            [ navigationBar
+                                { mainPageURL = mainPageURL
+                                , currentPage = params.currentPage
+                                , nickname = nickname
+                                }
+                            ]
+
+                        else
+                            []
                 in
                 div []
-                    (navigationLine ++ [ html ])
+                    (navigation
+                        ++ [ html ]
+                    )
 
             else
                 div [] [ Links.loadingSymbol ]
@@ -91,13 +110,14 @@ type Page
     | Meals
     | Statistics
     | ReferenceNutrients
+    | UserSettings String
     | Login
     | Overview
 
 
-navigationPages : List Page
-navigationPages =
-    [ Recipes, Meals, Statistics, ReferenceNutrients ]
+navigationPages : String -> List Page
+navigationPages nickname =
+    [ Recipes, Meals, Statistics, ReferenceNutrients, UserSettings nickname ]
 
 
 addressSuffix : Page -> String
@@ -114,6 +134,9 @@ addressSuffix page =
 
         ReferenceNutrients ->
             "reference-nutrients"
+
+        UserSettings _ ->
+            "user-settings"
 
         Login ->
             "login"
@@ -136,6 +159,9 @@ nameOf page =
 
         ReferenceNutrients ->
             "Reference nutrients"
+
+        UserSettings nickname ->
+            nickname
 
         Login ->
             "Login"
@@ -188,6 +214,7 @@ navigationToPageButton ps =
 navigationBar :
     { mainPageURL : String
     , currentPage : Maybe Page
+    , nickname : String
     }
     -> Html msg
 navigationBar ps =
@@ -195,7 +222,7 @@ navigationBar ps =
         [ table []
             [ thead []
                 [ tr []
-                    (navigationPages
+                    (navigationPages ps.nickname
                         |> List.map
                             (\page ->
                                 th []
@@ -210,8 +237,6 @@ navigationBar ps =
                 ]
             ]
         ]
-
-
 
 
 pagerButtons :
