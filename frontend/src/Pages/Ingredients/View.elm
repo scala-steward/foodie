@@ -179,11 +179,15 @@ view model =
 
 editOrDeleteIngredientLine : Page.MeasureMap -> Page.FoodMap -> Ingredient -> Html Page.Msg
 editOrDeleteIngredientLine measureMap foodMap ingredient =
-    tr [ Style.classes.editing ]
+    let
+        editMsg =
+            Page.EnterEditIngredient ingredient.id
+    in
+    tr [ Style.classes.editing, onClick editMsg ]
         [ td [ Style.classes.editable ] [ label [] [ text <| Page.ingredientNameOrEmpty foodMap <| ingredient.foodId ] ]
         , td [ Style.classes.editable, Style.classes.numberLabel ] [ label [] [ text <| String.fromFloat <| ingredient.amountUnit.factor ] ]
         , td [ Style.classes.editable, Style.classes.numberLabel ] [ label [] [ text <| Maybe.Extra.unwrap "" .name <| flip Dict.get measureMap <| ingredient.amountUnit.measureId ] ]
-        , td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick (Page.EnterEditIngredient ingredient.id) ] [ text "Edit" ] ]
+        , td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick editMsg ] [ text "Edit" ] ]
         , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.DeleteIngredient ingredient.id) ] [ text "Delete" ] ]
         ]
 
@@ -287,17 +291,33 @@ viewFoodLine foodMap measureMap ingredientsToAdd ingredients food =
         addMsg =
             Page.AddFood food.id
 
+        selectMsg =
+            Page.SelectFood food
+
+        maybeIngredientToAdd =
+            Dict.get food.id ingredientsToAdd
+
+        rowClickAction =
+            if Maybe.Extra.isJust maybeIngredientToAdd then
+                []
+
+            else
+                [ onClick selectMsg ]
+
         process =
-            case Dict.get food.id ingredientsToAdd of
+            case maybeIngredientToAdd of
                 Nothing ->
                     [ td [ Style.classes.editable, Style.classes.numberCell ] []
                     , td [ Style.classes.editable, Style.classes.numberCell ] []
                     , td [ Style.classes.controls ] []
-                    , td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick (Page.SelectFood food) ] [ text "Select" ] ]
+                    , td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick selectMsg ] [ text "Select" ] ]
                     ]
 
                 Just ingredientToAdd ->
                     let
+                        validInput =
+                            ingredientToAdd.amountUnit.factor |> ValidatedInput.isValid
+
                         ( confirmName, confirmMsg ) =
                             case DictUtil.firstSuch (\ingredient -> Editing.field .foodId ingredient == ingredientToAdd.foodId) ingredients of
                                 Nothing ->
@@ -314,8 +334,8 @@ viewFoodLine foodMap measureMap ingredientsToAdd ingredients food =
                     in
                     [ td [ Style.classes.numberCell ]
                         [ input
-                            [ value ingredientToAdd.amountUnit.factor.text
-                            , onInput
+                            ([ value ingredientToAdd.amountUnit.factor.text
+                             , onInput
                                 (flip
                                     (ValidatedInput.lift
                                         (IngredientCreationClientInput.amountUnit
@@ -325,9 +345,15 @@ viewFoodLine foodMap measureMap ingredientsToAdd ingredients food =
                                     ingredientToAdd
                                     >> Page.UpdateAddFood
                                 )
-                            , onEnter confirmMsg
-                            , Style.classes.numberLabel
-                            ]
+                             , Style.classes.numberLabel
+                             ]
+                                ++ (if validInput then
+                                        [ onEnter confirmMsg ]
+
+                                    else
+                                        []
+                                   )
+                            )
                             []
                         ]
                     , td [ Style.classes.numberCell ]
@@ -349,8 +375,7 @@ viewFoodLine foodMap measureMap ingredientsToAdd ingredients food =
                     , td [ Style.classes.controls ]
                         [ button
                             [ Style.classes.button.confirm
-                            , disabled
-                                (ingredientToAdd.amountUnit.factor |> ValidatedInput.isValid |> not)
+                            , disabled <| not <| validInput
                             , onClick confirmMsg
                             ]
                             [ text confirmName
@@ -360,7 +385,7 @@ viewFoodLine foodMap measureMap ingredientsToAdd ingredients food =
                         [ button [ Style.classes.button.cancel, onClick (Page.DeselectFood food.id) ] [ text "Cancel" ] ]
                     ]
     in
-    tr [ Style.classes.editing ]
+    tr ([ Style.classes.editing ] ++ rowClickAction)
         (td [ Style.classes.editable ] [ label [] [ text food.name ] ]
             :: process
         )
