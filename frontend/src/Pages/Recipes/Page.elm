@@ -2,7 +2,6 @@ module Pages.Recipes.Page exposing (..)
 
 import Api.Auxiliary exposing (JWT, RecipeId)
 import Api.Types.Recipe exposing (Recipe)
-import Configuration exposing (Configuration)
 import Dict exposing (Dict)
 import Either exposing (Either)
 import Http exposing (Error)
@@ -11,14 +10,13 @@ import Pages.Recipes.Pagination exposing (Pagination)
 import Pages.Recipes.RecipeCreationClientInput exposing (RecipeCreationClientInput)
 import Pages.Recipes.RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
 import Pages.Recipes.Status exposing (Status)
-import Pages.Util.FlagsWithJWT exposing (FlagsWithJWT)
+import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Util.Editing exposing (Editing)
 import Util.Initialization exposing (Initialization)
-import Util.LensUtil as LensUtil
 
 
 type alias Model =
-    { flagsWithJWT : FlagsWithJWT
+    { authorizedAccess : AuthorizedAccess
     , recipes : RecipeOrUpdateMap
     , recipeToAdd : Maybe RecipeCreationClientInput
     , initialization : Initialization Status
@@ -35,15 +33,13 @@ type alias RecipeOrUpdateMap =
 
 
 lenses :
-    { jwt : Lens Model JWT
-    , recipes : Lens Model RecipeOrUpdateMap
+    { recipes : Lens Model RecipeOrUpdateMap
     , recipeToAdd : Lens Model (Maybe RecipeCreationClientInput)
     , initialization : Lens Model (Initialization Status)
     , pagination : Lens Model Pagination
     }
 lenses =
-    { jwt = LensUtil.jwtSubLens
-    , recipes = Lens .recipes (\b a -> { a | recipes = b })
+    { recipes = Lens .recipes (\b a -> { a | recipes = b })
     , recipeToAdd = Lens .recipeToAdd (\b a -> { a | recipeToAdd = b })
     , initialization = Lens .initialization (\b a -> { a | initialization = b })
     , pagination = Lens .pagination (\b a -> { a | pagination = b })
@@ -51,8 +47,7 @@ lenses =
 
 
 type alias Flags =
-    { configuration : Configuration
-    , jwt : Maybe String
+    { authorizedAccess : AuthorizedAccess
     }
 
 
@@ -68,5 +63,4 @@ type Msg
     | DeleteRecipe RecipeId
     | GotDeleteRecipeResponse RecipeId (Result Error ())
     | GotFetchRecipesResponse (Result Error (List Recipe))
-    | UpdateJWT JWT
     | SetPagination Pagination

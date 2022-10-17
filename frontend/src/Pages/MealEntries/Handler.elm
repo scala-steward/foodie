@@ -18,8 +18,7 @@ import Pages.MealEntries.Page as Page exposing (Msg(..))
 import Pages.MealEntries.Pagination as Pagination exposing (Pagination)
 import Pages.MealEntries.Requests as Requests
 import Pages.MealEntries.Status as Status
-import Pages.Util.FlagsWithJWT exposing (FlagsWithJWT)
-import Pages.Util.InitUtil as InitUtil
+import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.PaginationSettings as PaginationSettings
 import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil as HttpUtil
@@ -29,40 +28,28 @@ import Util.LensUtil as LensUtil
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    let
-        ( jwt, cmd ) =
-            InitUtil.fetchIfEmpty flags.jwt
-                (\token ->
-                    initialFetch
-                        { configuration = flags.configuration
-                        , jwt = token
-                        }
-                        flags.mealId
-                )
-    in
-    ( { flagsWithJWT =
-            { configuration = flags.configuration
-            , jwt = jwt
-            }
+    ( { authorizedAccess = flags.authorizedAccess
       , mealId = flags.mealId
       , mealInfo = Nothing
       , mealEntries = Dict.empty
       , recipes = Dict.empty
       , recipesSearchString = ""
       , mealEntriesToAdd = Dict.empty
-      , initialization = Loading (Status.initial |> Status.lenses.jwt.set (jwt |> String.isEmpty |> not))
+      , initialization = Loading Status.initial
       , pagination = Pagination.initial
       }
-    , cmd
+    , initialFetch
+        flags.authorizedAccess
+        flags.mealId
     )
 
 
-initialFetch : FlagsWithJWT -> MealId -> Cmd Page.Msg
-initialFetch flags mealId =
+initialFetch : AuthorizedAccess -> MealId -> Cmd Page.Msg
+initialFetch authorizedAccess mealId =
     Cmd.batch
-        [ Requests.fetchMeal flags mealId
-        , Requests.fetchRecipes flags
-        , Requests.fetchMealEntries flags mealId
+        [ Requests.fetchMeal authorizedAccess mealId
+        , Requests.fetchRecipes authorizedAccess
+        , Requests.fetchMealEntries authorizedAccess mealId
         ]
 
 
@@ -114,9 +101,6 @@ update msg model =
         UpdateAddRecipe mealEntryCreationClientInput ->
             updateAddRecipe model mealEntryCreationClientInput
 
-        UpdateJWT jwt ->
-            updateJWT model jwt
-
         SetRecipesSearchString string ->
             setRecipesSearchString model string
 
@@ -138,7 +122,7 @@ saveMealEntryEdit model mealEntryUpdateClientInput =
     ( model
     , mealEntryUpdateClientInput
         |> MealEntryUpdateClientInput.to
-        |> Requests.saveMealEntry model.flagsWithJWT
+        |> Requests.saveMealEntry model.authorizedAccess
     )
 
 
@@ -184,7 +168,7 @@ exitEditMealEntryAt model mealEntryId =
 deleteMealEntry : Page.Model -> MealEntryId -> ( Page.Model, Cmd Page.Msg )
 deleteMealEntry model mealEntryId =
     ( model
-    , Requests.deleteMealEntry model.flagsWithJWT mealEntryId
+    , Requests.deleteMealEntry model.authorizedAccess mealEntryId
     )
 
 
@@ -267,7 +251,7 @@ addRecipe model recipeId =
     , Dict.get recipeId model.mealEntriesToAdd
         |> Maybe.map
             (MealEntryCreationClientInput.toCreation
-                >> Requests.AddMealEntryParams model.flagsWithJWT.configuration model.flagsWithJWT.jwt
+                >> Requests.AddMealEntryParams model.authorizedAccess
                 >> Requests.addMealEntry
             )
         |> Maybe.withDefault Cmd.none
@@ -297,18 +281,6 @@ updateAddRecipe model mealEntryCreationClientInput =
     , Cmd.none
     )
 
-
-updateJWT : Page.Model -> JWT -> ( Page.Model, Cmd Page.Msg )
-updateJWT model jwt =
-    let
-        newModel =
-            model
-                |> Page.lenses.jwt.set jwt
-                |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.jwt).set True
-    in
-    ( newModel
-    , initialFetch newModel.flagsWithJWT newModel.mealId
-    )
 
 
 setRecipesSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )

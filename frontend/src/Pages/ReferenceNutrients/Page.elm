@@ -5,24 +5,22 @@ import Api.Types.Nutrient exposing (Nutrient)
 import Api.Types.NutrientUnit as NutrientUnit exposing (NutrientUnit)
 import Api.Types.ReferenceNutrient exposing (ReferenceNutrient)
 import Basics.Extra exposing (flip)
-import Configuration exposing (Configuration)
 import Dict exposing (Dict)
 import Either exposing (Either)
 import Http exposing (Error)
 import Maybe.Extra
-import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
 import Pages.ReferenceNutrients.Pagination exposing (Pagination)
 import Pages.ReferenceNutrients.ReferenceNutrientCreationClientInput exposing (ReferenceNutrientCreationClientInput)
 import Pages.ReferenceNutrients.ReferenceNutrientUpdateClientInput exposing (ReferenceNutrientUpdateClientInput)
 import Pages.ReferenceNutrients.Status exposing (Status)
-import Pages.Util.FlagsWithJWT exposing (FlagsWithJWT)
+import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Util.Editing exposing (Editing)
 import Util.Initialization exposing (Initialization)
 
 
 type alias Model =
-    { flagsWithJWT : FlagsWithJWT
+    { authorizedAccess : AuthorizedAccess
     , referenceNutrients : ReferenceNutrientOrUpdateMap
     , nutrients : NutrientMap
     , nutrientsSearchString : String
@@ -49,14 +47,12 @@ type alias ReferenceNutrientOrUpdateMap =
 
 
 type alias Flags =
-    { configuration : Configuration
-    , jwt : Maybe JWT
+    { authorizedAccess : AuthorizedAccess
     }
 
 
 lenses :
-    { jwt : Lens Model JWT
-    , referenceNutrients : Lens Model ReferenceNutrientOrUpdateMap
+    { referenceNutrients : Lens Model ReferenceNutrientOrUpdateMap
     , referenceNutrientsToAdd : Lens Model AddNutrientMap
     , nutrients : Lens Model NutrientMap
     , nutrientsSearchString : Lens Model String
@@ -64,16 +60,7 @@ lenses :
     , pagination : Lens Model Pagination
     }
 lenses =
-    { jwt =
-        let
-            flagsLens =
-                Lens .flagsWithJWT (\b a -> { a | flagsWithJWT = b })
-
-            jwtLens =
-                Lens .jwt (\b a -> { a | jwt = b })
-        in
-        flagsLens |> Compose.lensWithLens jwtLens
-    , referenceNutrients = Lens .referenceNutrients (\b a -> { a | referenceNutrients = b })
+    { referenceNutrients = Lens .referenceNutrients (\b a -> { a | referenceNutrients = b })
     , referenceNutrientsToAdd = Lens .referenceNutrientsToAdd (\b a -> { a | referenceNutrientsToAdd = b })
     , nutrients = Lens .nutrients (\b a -> { a | nutrients = b })
     , nutrientsSearchString = Lens .nutrientsSearchString (\b a -> { a | nutrientsSearchString = b })
@@ -107,7 +94,6 @@ type Msg
     | AddNutrient NutrientCode
     | GotAddReferenceNutrientResponse (Result Error ReferenceNutrient)
     | UpdateAddNutrient ReferenceNutrientCreationClientInput
-    | UpdateJWT JWT
     | UpdateNutrients String
     | SetNutrientsSearchString String
     | SetPagination Pagination

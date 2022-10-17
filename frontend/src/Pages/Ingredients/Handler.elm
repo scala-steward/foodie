@@ -22,8 +22,7 @@ import Pages.Ingredients.Pagination as Pagination exposing (Pagination)
 import Pages.Ingredients.RecipeInfo as RecipeInfo exposing (RecipeInfo)
 import Pages.Ingredients.Requests as Requests
 import Pages.Ingredients.Status as Status
-import Pages.Util.FlagsWithJWT exposing (FlagsWithJWT)
-import Pages.Util.InitUtil as InitUtil
+import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.PaginationSettings as PaginationSettings
 import Ports exposing (doFetchFoods, doFetchMeasures, storeFoods, storeMeasures)
 import Util.Editing as Editing exposing (Editing)
@@ -32,11 +31,11 @@ import Util.Initialization exposing (Initialization(..))
 import Util.LensUtil as LensUtil
 
 
-initialFetch : FlagsWithJWT -> RecipeId -> Cmd Page.Msg
-initialFetch flags recipeId =
+initialFetch : AuthorizedAccess -> RecipeId -> Cmd Page.Msg
+initialFetch authorizedAccess recipeId =
     Cmd.batch
-        [ Requests.fetchIngredients flags recipeId
-        , Requests.fetchRecipe flags recipeId
+        [ Requests.fetchIngredients authorizedAccess recipeId
+        , Requests.fetchRecipe authorizedAccess recipeId
         , doFetchFoods ()
         , doFetchMeasures ()
         ]
@@ -44,21 +43,7 @@ initialFetch flags recipeId =
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    let
-        ( jwt, cmd ) =
-            InitUtil.fetchIfEmpty flags.jwt
-                (\token ->
-                    initialFetch
-                        { configuration = flags.configuration
-                        , jwt = token
-                        }
-                        flags.recipeId
-                )
-    in
-    ( { flagsWithJWT =
-            { configuration = flags.configuration
-            , jwt = jwt
-            }
+    ( { authorizedAccess = flags.authorizedAccess
       , recipeId = flags.recipeId
       , ingredients = Dict.empty
       , foods = Dict.empty
@@ -66,10 +51,12 @@ init flags =
       , foodsSearchString = ""
       , foodsToAdd = Dict.empty
       , recipeInfo = Nothing
-      , initialization = Loading (Status.initial |> Status.lenses.jwt.set (jwt |> String.isEmpty |> not))
+      , initialization = Loading Status.initial
       , pagination = Pagination.initial
       }
-    , cmd
+    , initialFetch
+        flags.authorizedAccess
+        flags.recipeId
     )
 
 
@@ -108,9 +95,6 @@ update msg model =
 
         Page.GotFetchRecipeResponse result ->
             gotFetchRecipeResponse model result
-
-        Page.UpdateJWT token ->
-            updateJWT model token
 
         Page.UpdateFoods string ->
             updateFoods model string
@@ -161,7 +145,7 @@ saveIngredientEdit model ingredientUpdateClientInput =
     ( model
     , ingredientUpdateClientInput
         |> IngredientUpdateClientInput.to
-        |> Requests.saveIngredient model.flagsWithJWT
+        |> Requests.saveIngredient model.authorizedAccess
     )
 
 
@@ -199,7 +183,7 @@ exitEditIngredientAt model ingredientId =
 deleteIngredient : Page.Model -> IngredientId -> ( Page.Model, Cmd Page.Msg )
 deleteIngredient model ingredientId =
     ( model
-    , Requests.deleteIngredient model.flagsWithJWT ingredientId
+    , Requests.deleteIngredient model.authorizedAccess ingredientId
     )
 
 
@@ -276,19 +260,6 @@ gotFetchRecipeResponse model result =
     )
 
 
-updateJWT : Page.Model -> JWT -> ( Page.Model, Cmd Page.Msg )
-updateJWT model token =
-    let
-        newModel =
-            model
-                |> Page.lenses.jwt.set token
-                |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.jwt).set True
-    in
-    ( newModel
-    , initialFetch newModel.flagsWithJWT model.recipeId
-    )
-
-
 updateFoods : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 updateFoods model =
     Decode.decodeString (Decode.list decoderFood)
@@ -303,7 +274,7 @@ updateFoods model =
                             |> not
                         )
                 , if List.isEmpty foods then
-                    Requests.fetchFoods model.flagsWithJWT
+                    Requests.fetchFoods model.authorizedAccess
 
                   else
                     Cmd.none
@@ -325,7 +296,7 @@ updateMeasures model =
                             |> not
                         )
                 , if List.isEmpty measures then
-                    Requests.fetchMeasures model.flagsWithJWT
+                    Requests.fetchMeasures model.authorizedAccess
 
                   else
                     Cmd.none
@@ -376,8 +347,8 @@ addFood model foodId =
                     |> IngredientCreationClientInput.toCreation
                     |> (\ic ->
                             Requests.addFood
-                                { configuration = model.flagsWithJWT.configuration
-                                , jwt = model.flagsWithJWT.jwt
+                                { configuration = model.authorizedAccess.configuration
+                                , jwt = model.authorizedAccess.jwt
                                 , ingredientCreation = ic
                                 }
                        )

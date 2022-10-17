@@ -1,6 +1,5 @@
 module Pages.Statistics.Handler exposing (init, update)
 
-import Api.Auxiliary exposing (JWT)
 import Api.Lenses.RequestIntervalLens as RequestIntervalLens
 import Api.Lenses.StatsLens as StatsLens
 import Api.Types.Date exposing (Date)
@@ -12,30 +11,19 @@ import Monocle.Lens as Lens
 import Pages.Statistics.Page as Page
 import Pages.Statistics.Pagination as Pagination exposing (Pagination)
 import Pages.Statistics.Requests as Requests
-import Pages.Statistics.Status as Status
-import Pages.Util.InitUtil as InitUtil
 import Util.HttpUtil as HttpUtil
 import Util.Initialization as Initialization
-import Util.LensUtil as LensUtil
 
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    let
-        ( jwt, cmd ) =
-            InitUtil.fetchIfEmpty flags.jwt
-                (always Cmd.none)
-    in
-    ( { flagsWithJWT =
-            { configuration = flags.configuration
-            , jwt = jwt
-            }
+    ( { authorizedAccess = flags.authorizedAccess
       , requestInterval = RequestIntervalLens.default
       , stats = defaultStats
-      , initialization = Initialization.Loading (Status.initial |> Status.lenses.jwt.set (jwt |> String.isEmpty |> not))
+      , initialization = Initialization.Loading ()
       , pagination = Pagination.initial
       }
-    , cmd
+    , Cmd.none
     )
 
 
@@ -61,9 +49,6 @@ update msg model =
         Page.GotFetchStatsResponse result ->
             gotFetchStatsResponse model result
 
-        Page.UpdateJWT jwt ->
-            updateJWT model jwt
-
         Page.SetPagination pagination ->
             setPagination model pagination
 
@@ -86,19 +71,10 @@ setToDate model maybeDate =
     )
 
 
-updateJWT : Page.Model -> JWT -> ( Page.Model, Cmd Page.Msg )
-updateJWT model jwt =
-    ( model
-        |> Page.lenses.jwt.set jwt
-        |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.jwt).set True
-    , Cmd.none
-    )
-
-
 fetchStats : Page.Model -> ( Page.Model, Cmd Page.Msg )
 fetchStats model =
     ( model
-    , Requests.fetchStats model.flagsWithJWT model.requestInterval
+    , Requests.fetchStats model.authorizedAccess model.requestInterval
     )
 
 

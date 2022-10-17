@@ -1,4 +1,4 @@
-module Pages.Meals.Handler exposing (init, update, updateJWT)
+module Pages.Meals.Handler exposing (init, update)
 
 import Api.Auxiliary exposing (JWT, MealId)
 import Api.Types.Meal exposing (Meal)
@@ -16,7 +16,6 @@ import Pages.Meals.Page as Page
 import Pages.Meals.Pagination as Pagination exposing (Pagination)
 import Pages.Meals.Requests as Requests
 import Pages.Meals.Status as Status
-import Pages.Util.InitUtil as InitUtil
 import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil as HttpUtil
 import Util.Initialization as Initialization
@@ -25,26 +24,13 @@ import Util.LensUtil as LensUtil
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    let
-        ( jwt, cmd ) =
-            InitUtil.fetchIfEmpty flags.jwt
-                (\token ->
-                    Requests.fetchMeals
-                        { configuration = flags.configuration
-                        , jwt = token
-                        }
-                )
-    in
-    ( { flagsWithJWT =
-            { configuration = flags.configuration
-            , jwt = jwt
-            }
+    ( { authorizedAccess = flags.authorizedAccess
       , meals = Dict.empty
       , mealToAdd = Nothing
-      , initialization = Initialization.Loading (Status.initial |> Status.lenses.jwt.set (jwt |> String.isEmpty |> not))
+      , initialization = Initialization.Loading Status.initial
       , pagination = Pagination.initial
       }
-    , cmd
+    , Requests.fetchMeals flags.authorizedAccess
     )
 
 
@@ -84,9 +70,6 @@ update msg model =
         Page.GotFetchMealsResponse dataOrError ->
             gotFetchMealsResponse model dataOrError
 
-        Page.UpdateJWT jwt ->
-            updateJWT model jwt
-
         Page.SetPagination pagination ->
             setPagination model pagination
 
@@ -104,7 +87,7 @@ createMeal model =
     ( model
     , model.mealToAdd
         |> Maybe.andThen MealCreationClientInput.toCreation
-        |> Maybe.Extra.unwrap Cmd.none (Requests.createMeal model.flagsWithJWT)
+        |> Maybe.Extra.unwrap Cmd.none (Requests.createMeal model.authorizedAccess)
     )
 
 
@@ -142,7 +125,7 @@ saveMealEdit model mealId =
         |> Maybe.andThen (.update >> MealUpdateClientInput.to)
         |> Maybe.Extra.unwrap
             Cmd.none
-            (Requests.saveMeal model.flagsWithJWT)
+            (Requests.saveMeal model.authorizedAccess)
     )
 
 
@@ -179,7 +162,7 @@ exitEditMealAt model mealId =
 deleteMeal : Page.Model -> MealId -> ( Page.Model, Cmd Page.Msg )
 deleteMeal model mealId =
     ( model
-    , Requests.deleteMeal model.flagsWithJWT mealId
+    , Requests.deleteMeal model.authorizedAccess mealId
     )
 
 
@@ -212,19 +195,6 @@ gotFetchMealsResponse model dataOrError =
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.meals).set True
             )
     , Cmd.none
-    )
-
-
-updateJWT : Page.Model -> JWT -> ( Page.Model, Cmd Page.Msg )
-updateJWT model jwt =
-    let
-        newModel =
-            model
-                |> Page.lenses.jwt.set jwt
-                |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.jwt).set True
-    in
-    ( newModel
-    , Requests.fetchMeals newModel.flagsWithJWT
     )
 
 

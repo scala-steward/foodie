@@ -14,7 +14,6 @@ import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
 import Pages.Statistics.Page as Page
 import Pages.Statistics.Pagination as Pagination
-import Pages.Statistics.Status as Status
 import Pages.Util.DateUtil as DateUtil
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
@@ -36,10 +35,10 @@ view model =
                     model
     in
     ViewUtil.viewWithErrorHandling
-        { isFinished = Status.isFinished
+        { isFinished = always True
         , initialization = .initialization
-        , configuration = .flagsWithJWT >> .configuration
-        , jwt = .flagsWithJWT >> .jwt >> Just
+        , configuration = .authorizedAccess >> .configuration
+        , jwt = .authorizedAccess >> .jwt >> Just
         , currentPage = Just ViewUtil.Statistics
         , showNavigation = True
         }

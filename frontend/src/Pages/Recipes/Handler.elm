@@ -16,7 +16,6 @@ import Pages.Recipes.RecipeCreationClientInput as RecipeCreationClientInput expo
 import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
 import Pages.Recipes.Requests as Requests
 import Pages.Recipes.Status as Status
-import Pages.Util.InitUtil as InitUtil
 import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil as HttpUtil
 import Util.Initialization as Initialization exposing (Initialization(..))
@@ -25,26 +24,13 @@ import Util.LensUtil as LensUtil
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    let
-        ( jwt, cmd ) =
-            InitUtil.fetchIfEmpty flags.jwt
-                (\token ->
-                    Requests.fetchRecipes
-                        { configuration = flags.configuration
-                        , jwt = token
-                        }
-                )
-    in
-    ( { flagsWithJWT =
-            { configuration = flags.configuration
-            , jwt = jwt
-            }
+    ( { authorizedAccess = flags.authorizedAccess
       , recipes = Dict.empty
       , recipeToAdd = Nothing
-      , initialization = Initialization.Loading (Status.initial |> Status.lenses.jwt.set (jwt |> String.isEmpty |> not))
+      , initialization = Initialization.Loading Status.initial
       , pagination = Pagination.initial
       }
-    , cmd
+    , Requests.fetchRecipes flags.authorizedAccess
     )
 
 
@@ -84,9 +70,6 @@ update msg model =
         Page.GotFetchRecipesResponse dataOrError ->
             gotFetchRecipesResponse model dataOrError
 
-        Page.UpdateJWT jwt ->
-            updateJWT model jwt
-
         Page.SetPagination pagination ->
             setPagination model pagination
 
@@ -103,7 +86,7 @@ createRecipe : Page.Model -> ( Page.Model, Cmd Page.Msg )
 createRecipe model =
     ( model
     , model.recipeToAdd
-        |> Maybe.Extra.unwrap Cmd.none (RecipeCreationClientInput.toCreation >> Requests.createRecipe model.flagsWithJWT)
+        |> Maybe.Extra.unwrap Cmd.none (RecipeCreationClientInput.toCreation >> Requests.createRecipe model.authorizedAccess)
     )
 
 
@@ -142,7 +125,7 @@ saveRecipeEdit model recipeId =
             Cmd.none
             (.update
                 >> RecipeUpdateClientInput.to
-                >> Requests.saveRecipe model.flagsWithJWT
+                >> Requests.saveRecipe model.authorizedAccess
             )
     )
 
@@ -180,7 +163,7 @@ exitEditRecipeAt model recipeId =
 deleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 deleteRecipe model recipeId =
     ( model
-    , Requests.deleteRecipe model.flagsWithJWT recipeId
+    , Requests.deleteRecipe model.authorizedAccess recipeId
     )
 
 
@@ -210,19 +193,6 @@ gotFetchRecipesResponse model dataOrError =
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.recipes).set True
             )
     , Cmd.none
-    )
-
-
-updateJWT : Page.Model -> JWT -> ( Page.Model, Cmd Page.Msg )
-updateJWT model jwt =
-    let
-        newModel =
-            model
-                |> Page.lenses.jwt.set jwt
-                |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.jwt).set True
-    in
-    ( newModel
-    , Requests.fetchRecipes newModel.flagsWithJWT
     )
 
 

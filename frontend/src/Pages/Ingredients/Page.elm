@@ -5,7 +5,6 @@ import Api.Types.Food exposing (Food)
 import Api.Types.Ingredient exposing (Ingredient)
 import Api.Types.Measure exposing (Measure)
 import Api.Types.Recipe exposing (Recipe)
-import Configuration exposing (Configuration)
 import Dict exposing (Dict)
 import Either exposing (Either(..))
 import Http exposing (Error)
@@ -16,14 +15,13 @@ import Pages.Ingredients.IngredientUpdateClientInput exposing (IngredientUpdateC
 import Pages.Ingredients.Pagination exposing (Pagination)
 import Pages.Ingredients.RecipeInfo exposing (RecipeInfo)
 import Pages.Ingredients.Status exposing (Status)
-import Pages.Util.FlagsWithJWT exposing (FlagsWithJWT)
+import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Util.Editing exposing (Editing)
 import Util.Initialization exposing (Initialization)
-import Util.LensUtil as LensUtil
 
 
 type alias Model =
-    { flagsWithJWT : FlagsWithJWT
+    { authorizedAccess : AuthorizedAccess
     , recipeId : RecipeId
     , recipeInfo : Maybe RecipeInfo
     , ingredients : IngredientOrUpdateMap
@@ -57,8 +55,7 @@ type alias IngredientOrUpdateMap =
 
 
 lenses :
-    { jwt : Lens Model JWT
-    , foods : Lens Model FoodMap
+    { foods : Lens Model FoodMap
     , measures : Lens Model MeasureMap
     , ingredients : Lens Model IngredientOrUpdateMap
     , foodsToAdd : Lens Model AddFoodsMap
@@ -68,8 +65,7 @@ lenses :
     , pagination : Lens Model Pagination
     }
 lenses =
-    { jwt = LensUtil.jwtSubLens
-    , foods = Lens .foods (\b a -> { a | foods = b })
+    { foods = Lens .foods (\b a -> { a | foods = b })
     , measures = Lens .measures (\b a -> { a | measures = b })
     , ingredients = Lens .ingredients (\b a -> { a | ingredients = b })
     , foodsToAdd = Lens .foodsToAdd (\b a -> { a | foodsToAdd = b })
@@ -97,7 +93,6 @@ type Msg
     | AddFood FoodId
     | GotAddFoodResponse (Result Error Ingredient)
     | UpdateAddFood IngredientCreationClientInput
-    | UpdateJWT JWT
     | UpdateFoods String
     | UpdateMeasures String
     | SetFoodsSearchString String
@@ -105,8 +100,7 @@ type Msg
 
 
 type alias Flags =
-    { configuration : Configuration
-    , jwt : Maybe JWT
+    { authorizedAccess : AuthorizedAccess
     , recipeId : RecipeId
     }
 

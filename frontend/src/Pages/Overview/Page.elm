@@ -1,35 +1,28 @@
 module Pages.Overview.Page exposing (..)
 
-import Api.Auxiliary exposing (JWT)
-import Configuration exposing (Configuration)
 import Monocle.Lens exposing (Lens)
-import Pages.Overview.Status exposing (Status)
-import Pages.Util.FlagsWithJWT exposing (FlagsWithJWT)
+import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Util.Initialization exposing (Initialization)
-import Util.LensUtil as LensUtil
 
 
 type alias Model =
-    { flagsWithJWT : FlagsWithJWT
-    , initialization : Initialization Status
+    { authorizedAccess : AuthorizedAccess
+    , initialization : Initialization ()
     }
 
 
 lenses :
-    { jwt : Lens Model JWT
-    , initialization : Lens Model (Initialization Status)
+    { initialization : Lens Model (Initialization ())
     }
 lenses =
-    { jwt = LensUtil.jwtSubLens
-    , initialization = Lens .initialization (\b a -> { a | initialization = b })
+    { initialization = Lens .initialization (\b a -> { a | initialization = b })
     }
 
 
-type Msg
-    =  UpdateJWT String
+type alias Msg =
+    ()
 
 
 type alias Flags =
-    { configuration : Configuration
-    , jwt : Maybe String
+    { authorizedAccess : AuthorizedAccess
     }

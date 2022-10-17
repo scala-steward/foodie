@@ -2,7 +2,6 @@ module Pages.Meals.Page exposing (..)
 
 import Api.Auxiliary exposing (JWT, MealId)
 import Api.Types.Meal exposing (Meal)
-import Configuration exposing (Configuration)
 import Dict exposing (Dict)
 import Either exposing (Either)
 import Http exposing (Error)
@@ -11,14 +10,13 @@ import Pages.Meals.MealCreationClientInput exposing (MealCreationClientInput)
 import Pages.Meals.MealUpdateClientInput exposing (MealUpdateClientInput)
 import Pages.Meals.Pagination exposing (Pagination)
 import Pages.Meals.Status exposing (Status)
-import Pages.Util.FlagsWithJWT exposing (FlagsWithJWT)
+import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Util.Editing exposing (Editing)
 import Util.Initialization exposing (Initialization)
-import Util.LensUtil as LensUtil
 
 
 type alias Model =
-    { flagsWithJWT : FlagsWithJWT
+    { authorizedAccess : AuthorizedAccess
     , meals : MealOrUpdateMap
     , mealToAdd : Maybe MealCreationClientInput
     , initialization : Initialization Status
@@ -35,15 +33,13 @@ type alias MealOrUpdateMap =
 
 
 lenses :
-    { jwt : Lens Model JWT
-    , meals : Lens Model MealOrUpdateMap
+    { meals : Lens Model MealOrUpdateMap
     , mealToAdd : Lens Model (Maybe MealCreationClientInput)
     , initialization : Lens Model (Initialization Status)
     , pagination : Lens Model Pagination
     }
 lenses =
-    { jwt = LensUtil.jwtSubLens
-    , meals = Lens .meals (\b a -> { a | meals = b })
+    { meals = Lens .meals (\b a -> { a | meals = b })
     , mealToAdd = Lens .mealToAdd (\b a -> { a | mealToAdd = b })
     , initialization = Lens .initialization (\b a -> { a | initialization = b })
     , pagination = Lens .pagination (\b a -> { a | pagination = b })
@@ -51,8 +47,7 @@ lenses =
 
 
 type alias Flags =
-    { configuration : Configuration
-    , jwt : Maybe String
+    { authorizedAccess : AuthorizedAccess
     }
 
 
@@ -68,5 +63,4 @@ type Msg
     | DeleteMeal MealId
     | GotDeleteMealResponse MealId (Result Error ())
     | GotFetchMealsResponse (Result Error (List Meal))
-    | UpdateJWT String
     | SetPagination Pagination

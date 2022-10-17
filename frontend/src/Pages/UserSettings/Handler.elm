@@ -1,7 +1,6 @@
 module Pages.UserSettings.Handler exposing (init, update)
 
 import Addresses.Frontend
-import Api.Auxiliary exposing (JWT, UserId)
 import Api.Types.Mode exposing (Mode)
 import Api.Types.User exposing (User)
 import Basics.Extra exposing (flip)
@@ -13,9 +12,8 @@ import Monocle.Lens as Lens
 import Pages.UserSettings.Page as Page
 import Pages.UserSettings.Requests as Requests
 import Pages.UserSettings.Status as Status
+import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.ComplementInput as ComplementInput exposing (ComplementInput)
-import Pages.Util.FlagsWithJWT exposing (FlagsWithJWT)
-import Pages.Util.InitUtil as InitUtil
 import Pages.Util.Links as Links
 import Pages.Util.PasswordInput as PasswordInput
 import Ports
@@ -24,27 +22,14 @@ import Util.Initialization exposing (Initialization(..))
 import Util.LensUtil as LensUtil
 
 
-initialFetch : FlagsWithJWT -> Cmd Page.Msg
+initialFetch : AuthorizedAccess -> Cmd Page.Msg
 initialFetch =
     Requests.fetchUser
 
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    let
-        ( jwt, cmd ) =
-            InitUtil.fetchIfEmpty flags.jwt
-                (\token ->
-                    Requests.fetchUser
-                        { configuration = flags.configuration
-                        , jwt = token
-                        }
-                )
-    in
-    ( { flagsWithJWT =
-            { configuration = flags.configuration
-            , jwt = jwt
-            }
+    ( { authorizedAccess = flags.authorizedAccess
       , user =
             { id = ""
             , nickname = ""
@@ -52,19 +37,16 @@ init flags =
             , email = ""
             }
       , complementInput = ComplementInput.initial
-      , initialization = Loading (Status.initial |> Status.lenses.jwt.set (jwt |> String.isEmpty |> not))
+      , initialization = Loading Status.initial
       , mode = Page.Regular
       }
-    , cmd
+    , initialFetch flags.authorizedAccess
     )
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
 update msg model =
     case msg of
-        Page.UpdateJWT jwt ->
-            updateJWT model jwt
-
         Page.GotFetchUserResponse result ->
             gotFetchUserResponse model result
 
@@ -96,19 +78,6 @@ update msg model =
             gotLogoutResponse model result
 
 
-updateJWT : Page.Model -> JWT -> ( Page.Model, Cmd Page.Msg )
-updateJWT model token =
-    let
-        newModel =
-            model
-                |> Page.lenses.jwt.set token
-                |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.jwt).set True
-    in
-    ( newModel
-    , initialFetch newModel.flagsWithJWT
-    )
-
-
 gotFetchUserResponse : Page.Model -> Result Error User -> ( Page.Model, Cmd Page.Msg )
 gotFetchUserResponse model result =
     ( result
@@ -128,7 +97,7 @@ updatePassword : Page.Model -> ( Page.Model, Cmd Page.Msg )
 updatePassword model =
     ( model
     , Requests.updatePassword
-        model.flagsWithJWT
+        model.authorizedAccess
         { password = model.complementInput.passwordInput.password1 }
     )
 
@@ -151,7 +120,7 @@ updateSettings : Page.Model -> ( Page.Model, Cmd Page.Msg )
 updateSettings model =
     ( model
     , Requests.updateSettings
-        model.flagsWithJWT
+        model.authorizedAccess
         { displayName = model.complementInput.displayName }
     )
 
@@ -169,7 +138,7 @@ gotUpdateSettingsResponse model result =
 requestDeletion : Page.Model -> ( Page.Model, Cmd Page.Msg )
 requestDeletion model =
     ( model
-    , Requests.requestDeletion model.flagsWithJWT
+    , Requests.requestDeletion model.authorizedAccess
     )
 
 
@@ -193,7 +162,7 @@ setComplementInput model complementInput =
 logout : Page.Model -> Api.Types.Mode.Mode -> ( Page.Model, Cmd Page.Msg )
 logout model mode =
     ( model
-    , Requests.logout model.flagsWithJWT mode
+    , Requests.logout model.authorizedAccess mode
     )
 
 
@@ -206,7 +175,7 @@ gotLogoutResponse model result =
                 ( model
                 , Cmd.batch
                     [ Ports.doDeleteToken ()
-                    , () |> Addresses.Frontend.login.address |> Links.frontendPage model.flagsWithJWT.configuration |> Browser.Navigation.load
+                    , () |> Addresses.Frontend.login.address |> Links.frontendPage model.authorizedAccess.configuration |> Browser.Navigation.load
                     ]
                 )
             )
