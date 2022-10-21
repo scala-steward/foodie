@@ -5,7 +5,7 @@ body, button, input {
 #recipesButton,
 #mealsButton,
 #statisticsButton,
-#referenceNutrientsButton,
+#referenceMapsButton,
 #userSettingsButton {
     border: none;
     text-align: center;
@@ -25,7 +25,7 @@ body, button, input {
 #recipesButton:hover,
 #mealsButton:hover,
 #statisticsButton:hover,
-#referenceNutrientsButton:hover,
+#referenceMapsButton:hover,
 #userSettingsButton:hover,
 .navigationButton:hover:not(.disabled),
 .pagerButton:hover:not(.disabled) {
@@ -52,9 +52,10 @@ body, button, input {
 
 #addRecipeView table,
 #addMealView table,
+#addReferenceMapView table,
 #ingredientEditor table:not(.info),
 #mealEntryEditor table:not(.info),
-#referenceNutrientEditor table,
+#referenceEntryEditor table,
 #statistics table,
 #navigation table {
     border-spacing: 0;
@@ -88,9 +89,10 @@ body, button, input {
 
 #addRecipeView thead th,
 #addMealView thead th,
+#addReferenceMapView thead th,
 #ingredientEditor thead th,
 #mealEntryEditor thead th,
-#referenceNutrientEditor thead th,
+#referenceEntryEditor thead th,
 #statistics thead th {
     font-size: larger;
     font-weight: lighter;
@@ -99,9 +101,10 @@ body, button, input {
 
 #addRecipeView thead th:not(.numberLabel),
 #addMealView thead th:not(.numberLabel),
+#addReferenceMapView thead th:not(.numberLabel),
 #ingredientEditor thead th:not(.numberLabel),
 #mealEntryEditor thead th:not(.numberLabel),
-#referenceNutrientEditor thead th:not(.numberLabel),
+#referenceEntryEditor thead th:not(.numberLabel),
 #statistics thead th:not(.numberLabel) {
     text-align: left;
 }
@@ -149,9 +152,10 @@ select {
 
 #addRecipeView .editable,
 #addMealView .editable:not(.date, .time),
+#addReferenceMapView .editable,
 #ingredientEditor .editable,
 #mealEntryEditor .editable,
-#referenceNutrientEditor .editable,
+#referenceEntryEditor .editable,
 #statistics .editable:not(.date) {
     white-space: break-spaces;
     word-wrap: break-word;
@@ -168,9 +172,10 @@ th {
 /*todo: Group column sizes by page*/
 #addRecipeView th:first-child,
 #addMealView th:nth-child(3),
+#addReferenceMapView th:first-child,
 #mealEntryEditor th:first-child,
 #mealEntryEditor th:nth-child(2),
-#referenceNutrientEditor th:first-child {
+#referenceEntryEditor th:first-child {
     width: 30%;
 }
 
@@ -183,19 +188,20 @@ th {
 }
 
 #addRecipeView th:nth-child(3),
+#addReferenceMapView th:nth-child(2),
 #mealEntryEditor th:nth-child(3) {
     width: 10%;
 }
 
-#referenceNutrientEditor th:first-child {
+#referenceEntryEditor th:first-child {
     width: 50%;
 }
 
-#referenceNutrientEditor th:nth-child(2) {
+#referenceEntryEditor th:nth-child(2) {
     width: 20%
 }
 
-#referenceNutrientEditor th:nth-child(3) {
+#referenceEntryEditor th:nth-child(3) {
     width: 5%
 }
 
@@ -311,9 +317,10 @@ th {
 
 #addRecipeView input,
 #addMealView input,
+#addReferenceMapView input,
 #ingredientEditor input:not(.searchField),
 #mealEntryEditor input:not(.searchField),
-#referenceNutrientEditor input:not(.searchField),
+#referenceEntryEditor input:not(.searchField),
 #statistics input {
     box-sizing: border-box;
     width: 100%;

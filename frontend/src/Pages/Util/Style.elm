@@ -106,6 +106,7 @@ ids :
     { add : Attribute msg
     , addMealView : Attribute msg
     , addRecipeView : Attribute msg
+    , addReferenceMapView : Attribute msg
     , error : Attribute msg
     , ingredientEditor : Attribute msg
     , mealEntryEditor : Attribute msg
@@ -113,8 +114,8 @@ ids :
     , navigation : Attribute msg
     , overviewMain : Attribute msg
     , recipesButton : Attribute msg
-    , referenceNutrientEditor : Attribute msg
-    , referenceNutrientsButton : Attribute msg
+    , referenceEntryEditor : Attribute msg
+    , referenceMapsButton : Attribute msg
     , statistics : Attribute msg
     , statisticsButton : Attribute msg
     , userSettingsButton : Attribute msg
@@ -123,6 +124,7 @@ ids =
     { add = id "add"
     , addMealView = id "addMealView"
     , addRecipeView = id "addRecipeView"
+    , addReferenceMapView = id "addReferenceMapView"
     , error = id "error"
     , ingredientEditor = id "ingredientEditor"
     , mealEntryEditor = id "mealEntryEditor"
@@ -130,8 +132,8 @@ ids =
     , navigation = id "navigation"
     , overviewMain = id "overviewMain"
     , recipesButton = id "recipesButton"
-    , referenceNutrientEditor = id "referenceNutrientEditor"
-    , referenceNutrientsButton = id "referenceNutrientsButton"
+    , referenceEntryEditor = id "referenceEntryEditor"
+    , referenceMapsButton = id "referenceMapsButton"
     , statistics = id "statistics"
     , statisticsButton = id "statisticsButton"
     , userSettingsButton = id "userSettingsButton"
