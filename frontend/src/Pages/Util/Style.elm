@@ -9,6 +9,7 @@ classes :
     , addView : Attribute msg
     , button :
         { add : Attribute msg
+        , alternative : Attribute msg
         , cancel : Attribute msg
         , confirm : Attribute msg
         , delete : Attribute msg
@@ -16,7 +17,8 @@ classes :
         , editor : Attribute msg
         , logout : Attribute msg
         , navigation : Attribute msg
-        , pager: Attribute msg
+        , overview : Attribute msg
+        , pager : Attribute msg
         , select : Attribute msg
         }
     , choices : Attribute msg
@@ -57,6 +59,7 @@ classes =
     , addView = class "addView"
     , button =
         { add = class "addButton"
+        , alternative = class "alternativeButton"
         , cancel = class "cancelButton"
         , confirm = class "confirmButton"
         , delete = class "deleteButton"
@@ -64,6 +67,7 @@ classes =
         , editor = class "editorButton"
         , logout = class "logoutButton"
         , navigation = class "navigationButton"
+        , overview = class "overviewButton"
         , pager = class "pagerButton"
         , select = class "selectButton"
         }
@@ -92,7 +96,7 @@ classes =
         , exact = class "exact"
         , high = class "high"
         }
-        , request = class "request"
+    , request = class "request"
     , search =
         { area = class "searchArea"
         , field = class "searchField"
@@ -107,34 +111,26 @@ ids :
     , addMealView : Attribute msg
     , addRecipeView : Attribute msg
     , addReferenceMapView : Attribute msg
+    , complexFoodEditor : Attribute msg
     , error : Attribute msg
     , ingredientEditor : Attribute msg
     , mealEntryEditor : Attribute msg
-    , mealsButton : Attribute msg
     , navigation : Attribute msg
     , overviewMain : Attribute msg
-    , recipesButton : Attribute msg
     , referenceEntryEditor : Attribute msg
-    , referenceMapsButton : Attribute msg
     , statistics : Attribute msg
-    , statisticsButton : Attribute msg
-    , userSettingsButton : Attribute msg
     }
 ids =
     { add = id "add"
     , addMealView = id "addMealView"
     , addRecipeView = id "addRecipeView"
     , addReferenceMapView = id "addReferenceMapView"
+    , complexFoodEditor = id "complexFoodEditor"
     , error = id "error"
     , ingredientEditor = id "ingredientEditor"
     , mealEntryEditor = id "mealEntryEditor"
-    , mealsButton = id "mealsButton"
     , navigation = id "navigation"
     , overviewMain = id "overviewMain"
-    , recipesButton = id "recipesButton"
     , referenceEntryEditor = id "referenceEntryEditor"
-    , referenceMapsButton = id "referenceMapsButton"
     , statistics = id "statistics"
-    , statisticsButton = id "statisticsButton"
-    , userSettingsButton = id "userSettingsButton"
     }

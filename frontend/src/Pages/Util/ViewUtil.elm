@@ -113,11 +113,12 @@ type Page
     | UserSettings String
     | Login
     | Overview
+    | ComplexFoods
 
 
 navigationPages : String -> List Page
 navigationPages nickname =
-    [ Recipes, Meals, Statistics, ReferenceMaps, UserSettings nickname ]
+    [ Recipes, Meals, ComplexFoods, Statistics, ReferenceMaps, UserSettings nickname ]
 
 
 addressSuffix : Page -> String
@@ -144,6 +145,9 @@ addressSuffix page =
         Overview ->
             "overview"
 
+        ComplexFoods ->
+            "complex-foods"
+
 
 nameOf : Page -> String
 nameOf page =
@@ -168,6 +172,9 @@ nameOf page =
 
         Overview ->
             "Overview"
+
+        ComplexFoods ->
+            "Complex foods"
 
 
 navigationLink : { mainPageURL : String, page : String } -> String

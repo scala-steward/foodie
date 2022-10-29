@@ -5,11 +5,9 @@ import Api.Types.Meal exposing (Meal)
 import Basics.Extra exposing (flip)
 import Dict
 import Either exposing (Either(..))
-import Http exposing (Error)
 import Maybe.Extra
-import Monocle.Compose as Compose
 import Monocle.Lens as Lens
-import Monocle.Optional as Optional
+import Monocle.Optional
 import Pages.Meals.MealCreationClientInput as MealCreationClientInput exposing (MealCreationClientInput)
 import Pages.Meals.MealUpdateClientInput as MealUpdateClientInput exposing (MealUpdateClientInput)
 import Pages.Meals.Page as Page
@@ -17,7 +15,7 @@ import Pages.Meals.Pagination as Pagination exposing (Pagination)
 import Pages.Meals.Requests as Requests
 import Pages.Meals.Status as Status
 import Util.Editing as Editing exposing (Editing)
-import Util.HttpUtil as HttpUtil
+import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization as Initialization
 import Util.LensUtil as LensUtil
 
@@ -110,7 +108,7 @@ updateMeal : Page.Model -> MealUpdateClientInput -> ( Page.Model, Cmd Page.Msg )
 updateMeal model mealUpdateClientInput =
     ( model
         |> mapMealOrUpdateById mealUpdateClientInput.id
-            (Either.mapRight (Editing.updateLens.set mealUpdateClientInput))
+            (Either.mapRight (Editing.lenses.update.set mealUpdateClientInput))
     , Cmd.none
     )
 
@@ -208,8 +206,7 @@ setPagination model pagination =
 mapMealOrUpdateById : MealId -> (Page.MealOrUpdate -> Page.MealOrUpdate) -> Page.Model -> Page.Model
 mapMealOrUpdateById mealId =
     Page.lenses.meals
-        |> Compose.lensWithOptional (LensUtil.dictByKey mealId)
-        |> Optional.modify
+        |> LensUtil.updateById mealId
 
 
 setError : Error -> Page.Model -> Page.Model

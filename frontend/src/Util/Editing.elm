@@ -10,9 +10,12 @@ type alias Editing a b =
     }
 
 
-updateLens : Lens (Editing a b) b
-updateLens =
-    Lens .update (\b a -> { a | update = b })
+lenses :
+    { update : Lens (Editing a b) b
+    }
+lenses =
+    { update = Lens .update (\b a -> { a | update = b })
+    }
 
 
 field : (a -> field) -> Either a (Editing a b) -> field

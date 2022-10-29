@@ -7,10 +7,9 @@ import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Dict
 import Either exposing (Either(..))
-import Http exposing (Error)
 import Monocle.Compose as Compose
 import Monocle.Lens as Lens
-import Monocle.Optional as Optional
+import Monocle.Optional
 import Pages.MealEntries.MealEntryCreationClientInput as MealEntryCreationClientInput exposing (MealEntryCreationClientInput)
 import Pages.MealEntries.MealEntryUpdateClientInput as MealEntryUpdateClientInput exposing (MealEntryUpdateClientInput)
 import Pages.MealEntries.MealInfo as MealInfo
@@ -21,7 +20,7 @@ import Pages.MealEntries.Status as Status
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.PaginationSettings as PaginationSettings
 import Util.Editing as Editing exposing (Editing)
-import Util.HttpUtil as HttpUtil
+import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization(..))
 import Util.LensUtil as LensUtil
 
@@ -112,7 +111,7 @@ updateMealEntry : Page.Model -> MealEntryUpdateClientInput -> ( Page.Model, Cmd 
 updateMealEntry model mealEntryUpdateClientInput =
     ( model
         |> mapMealEntryOrUpdateById mealEntryUpdateClientInput.mealEntryId
-            (Either.mapRight (Editing.updateLens.set mealEntryUpdateClientInput))
+            (Either.mapRight (Editing.lenses.update.set mealEntryUpdateClientInput))
     , Cmd.none
     )
 
@@ -251,8 +250,7 @@ addRecipe model recipeId =
     , Dict.get recipeId model.mealEntriesToAdd
         |> Maybe.map
             (MealEntryCreationClientInput.toCreation
-                >> Requests.AddMealEntryParams model.authorizedAccess
-                >> Requests.addMealEntry
+                >> Requests.addMealEntry model.authorizedAccess
             )
         |> Maybe.withDefault Cmd.none
     )
@@ -282,16 +280,17 @@ updateAddRecipe model mealEntryCreationClientInput =
     )
 
 
-
 setRecipesSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 setRecipesSearchString model string =
-    ( model
-        |> Page.lenses.recipesSearchString.set string
-        |> (Page.lenses.pagination
+    ( PaginationSettings.setSearchStringAndReset
+        { searchStringLens =
+            Page.lenses.recipesSearchString
+        , paginationSettingsLens =
+            Page.lenses.pagination
                 |> Compose.lensWithLens Pagination.lenses.recipes
-                |> Compose.lensWithLens PaginationSettings.lenses.currentPage
-           ).set
-            1
+        }
+        model
+        string
     , Cmd.none
     )
 
@@ -306,8 +305,7 @@ setPagination model pagination =
 mapMealEntryOrUpdateById : MealEntryId -> (Page.MealEntryOrUpdate -> Page.MealEntryOrUpdate) -> Page.Model -> Page.Model
 mapMealEntryOrUpdateById mealEntryId =
     Page.lenses.mealEntries
-        |> Compose.lensWithOptional (LensUtil.dictByKey mealEntryId)
-        |> Optional.modify
+        |> LensUtil.updateById mealEntryId
 
 
 setError : Error -> Page.Model -> Page.Model

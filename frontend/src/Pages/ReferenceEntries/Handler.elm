@@ -7,12 +7,11 @@ import Api.Types.ReferenceMap exposing (ReferenceMap)
 import Basics.Extra exposing (flip)
 import Dict
 import Either exposing (Either(..))
-import Http exposing (Error)
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Monocle.Compose as Compose
 import Monocle.Lens as Lens
-import Monocle.Optional as Optional
+import Monocle.Optional
 import Pages.ReferenceEntries.Page as Page exposing (Msg(..))
 import Pages.ReferenceEntries.Pagination as Pagination exposing (Pagination)
 import Pages.ReferenceEntries.ReferenceEntryCreationClientInput as ReferenceEntryCreationClientInput exposing (ReferenceEntryCreationClientInput)
@@ -22,7 +21,7 @@ import Pages.ReferenceEntries.Status as Status
 import Pages.Util.PaginationSettings as PaginationSettings
 import Ports
 import Util.Editing as Editing exposing (Editing)
-import Util.HttpUtil as HttpUtil
+import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization as Initialization
 import Util.LensUtil as LensUtil
 
@@ -77,7 +76,7 @@ update msg model =
             gotDeleteReferenceEntryResponse model nutrientCode result
 
         Page.GotFetchReferenceEntriesResponse result ->
-            gotFetchReferenceEntrysResponse model result
+            gotFetchReferenceEntriesResponse model result
 
         Page.GotFetchReferenceMapResponse result ->
             gotFetchReferenceMapResponse model result
@@ -114,7 +113,7 @@ updateReferenceEntry : Page.Model -> ReferenceEntryUpdateClientInput -> ( Page.M
 updateReferenceEntry model referenceEntryUpdateClientInput =
     ( model
         |> mapReferenceEntryOrUpdateById referenceEntryUpdateClientInput.nutrientCode
-            (Either.mapRight (Editing.updateLens.set referenceEntryUpdateClientInput))
+            (Either.mapRight (Editing.lenses.update.set referenceEntryUpdateClientInput))
     , Cmd.none
     )
 
@@ -186,8 +185,8 @@ gotDeleteReferenceEntryResponse model nutrientCode result =
     )
 
 
-gotFetchReferenceEntrysResponse : Page.Model -> Result Error (List ReferenceEntry) -> ( Page.Model, Cmd Page.Msg )
-gotFetchReferenceEntrysResponse model result =
+gotFetchReferenceEntriesResponse : Page.Model -> Result Error (List ReferenceEntry) -> ( Page.Model, Cmd Page.Msg )
+gotFetchReferenceEntriesResponse model result =
     ( result
         |> Either.fromResult
         |> Either.unpack (flip setError model)
@@ -308,13 +307,15 @@ updateNutrients model =
 
 setNutrientsSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 setNutrientsSearchString model string =
-    ( model
-        |> Page.lenses.nutrientsSearchString.set string
-        |> (Page.lenses.pagination
+    ( PaginationSettings.setSearchStringAndReset
+        { searchStringLens =
+            Page.lenses.nutrientsSearchString
+        , paginationSettingsLens =
+            Page.lenses.pagination
                 |> Compose.lensWithLens Pagination.lenses.nutrients
-                |> Compose.lensWithLens PaginationSettings.lenses.currentPage
-           ).set
-            1
+        }
+        model
+        string
     , Cmd.none
     )
 
@@ -329,8 +330,7 @@ setPagination model pagination =
 mapReferenceEntryOrUpdateById : NutrientCode -> (Page.ReferenceEntryOrUpdate -> Page.ReferenceEntryOrUpdate) -> Page.Model -> Page.Model
 mapReferenceEntryOrUpdateById ingredientId =
     Page.lenses.referenceEntries
-        |> Compose.lensWithOptional (LensUtil.dictByKey ingredientId)
-        |> Optional.modify
+        |> LensUtil.updateById ingredientId
 
 
 setError : Error -> Page.Model -> Page.Model

@@ -5,11 +5,9 @@ import Api.Types.ReferenceMap exposing (ReferenceMap)
 import Basics.Extra exposing (flip)
 import Dict
 import Either exposing (Either(..))
-import Http exposing (Error)
 import Maybe.Extra
-import Monocle.Compose as Compose
 import Monocle.Lens as Lens
-import Monocle.Optional as Optional
+import Monocle.Optional
 import Pages.ReferenceMaps.Page as Page exposing (ReferenceMapOrUpdate)
 import Pages.ReferenceMaps.Pagination as Pagination exposing (Pagination)
 import Pages.ReferenceMaps.ReferenceMapCreationClientInput as ReferenceMapCreationClientInput exposing (ReferenceMapCreationClientInput)
@@ -17,7 +15,7 @@ import Pages.ReferenceMaps.ReferenceMapUpdateClientInput as ReferenceMapUpdateCl
 import Pages.ReferenceMaps.Requests as Requests
 import Pages.ReferenceMaps.Status as Status
 import Util.Editing as Editing exposing (Editing)
-import Util.HttpUtil as HttpUtil
+import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization as Initialization exposing (Initialization(..))
 import Util.LensUtil as LensUtil
 
@@ -109,7 +107,7 @@ updateReferenceMap : Page.Model -> ReferenceMapUpdateClientInput -> ( Page.Model
 updateReferenceMap model referenceMapUpdate =
     ( model
         |> mapReferenceMapOrUpdateById referenceMapUpdate.id
-            (Either.mapRight (Editing.updateLens.set referenceMapUpdate))
+            (Either.mapRight (Editing.lenses.update.set referenceMapUpdate))
     , Cmd.none
     )
 
@@ -206,8 +204,7 @@ setPagination model pagination =
 mapReferenceMapOrUpdateById : ReferenceMapId -> (Page.ReferenceMapOrUpdate -> Page.ReferenceMapOrUpdate) -> Page.Model -> Page.Model
 mapReferenceMapOrUpdateById referenceMapId =
     Page.lenses.referenceMaps
-        |> Compose.lensWithOptional (LensUtil.dictByKey referenceMapId)
-        |> Optional.modify
+        |> LensUtil.updateById referenceMapId
 
 
 setError : Error -> Page.Model -> Page.Model

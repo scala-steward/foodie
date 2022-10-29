@@ -1,7 +1,10 @@
 module Pages.Ingredients.View exposing (view)
 
-import Api.Auxiliary exposing (FoodId, IngredientId, JWT, MeasureId, RecipeId)
+import Api.Auxiliary exposing (ComplexFoodId, FoodId, IngredientId, JWT, MeasureId, RecipeId)
 import Api.Types.AmountUnit exposing (AmountUnit)
+import Api.Types.ComplexFood exposing (ComplexFood)
+import Api.Types.ComplexFoodUnit as ComplexFoodUnit
+import Api.Types.ComplexIngredient exposing (ComplexIngredient)
 import Api.Types.Food exposing (Food)
 import Api.Types.Ingredient exposing (Ingredient)
 import Api.Types.Measure exposing (Measure)
@@ -18,6 +21,8 @@ import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
 import Pages.Ingredients.AmountUnitClientInput as AmountUnitClientInput
+import Pages.Ingredients.ComplexIngredientClientInput as ComplexIngredientClientInput exposing (ComplexIngredientClientInput)
+import Pages.Ingredients.FoodGroup as FoodGroup exposing (FoodGroup, IngredientOrUpdate)
 import Pages.Ingredients.IngredientCreationClientInput as IngredientCreationClientInput exposing (IngredientCreationClientInput)
 import Pages.Ingredients.IngredientUpdateClientInput as IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
 import Pages.Ingredients.Page as Page
@@ -50,39 +55,34 @@ view model =
         let
             viewEditIngredient =
                 Either.unpack
-                    (editOrDeleteIngredientLine model.measures model.foods)
-                    (\e -> e.update |> editIngredientLine model.measures model.foods e.original)
+                    (editOrDeleteIngredientLine model.measures model.ingredientsGroup.foods)
+                    (\e -> e.update |> editIngredientLine model.measures model.ingredientsGroup.foods e.original)
+
+            viewEditComplexIngredient =
+                Either.unpack
+                    (editOrDeleteComplexIngredientLine model.allRecipes model.complexIngredientsGroup.foods)
+                    (\e -> e.update |> editComplexIngredientLine model.allRecipes model.complexIngredientsGroup.foods e.original)
+
+            viewEditIngredientsWith : Lens Page.Model (FoodGroup ingredientId ingredient update comparableFoodId food creation) -> (ingredient -> comparableFoodId) -> Dict comparableFoodId { a | name : String } -> PaginatedList (IngredientOrUpdate ingredient update)
+            viewEditIngredientsWith groupLens idOf nameMap =
+                model
+                    |> groupLens.get
+                    |> .ingredients
+                    |> Dict.values
+                    |> List.sortBy (Editing.field idOf >> DictUtil.nameOrEmpty nameMap >> String.toLower)
+                    |> ViewUtil.paginate
+                        { pagination =
+                            groupLens
+                                |> Compose.lensWithLens FoodGroup.lenses.pagination
+                                |> Compose.lensWithLens Pagination.lenses.ingredients
+                        }
+                        model
 
             viewEditIngredients =
-                model.ingredients
-                    |> Dict.values
-                    |> List.sortBy (Editing.field .foodId >> Page.ingredientNameOrEmpty model.foods >> String.toLower)
-                    |> ViewUtil.paginate
-                        { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.ingredients
-                        }
-                        model
+                viewEditIngredientsWith Page.lenses.ingredientsGroup .foodId model.ingredientsGroup.foods
 
-            viewFoods =
-                model.foods
-                    |> Dict.filter (\_ v -> SearchUtil.search model.foodsSearchString v.name)
-                    |> Dict.values
-                    |> List.sortBy .name
-                    |> ViewUtil.paginate
-                        { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.foods
-                        }
-                        model
-
-            anySelection =
-                model.foodsToAdd
-                    |> Dict.isEmpty
-                    |> not
-
-            ( amount, unit ) =
-                if anySelection then
-                    ( "Amount", "Unit" )
-
-                else
-                    ( "", "" )
+            viewEditComplexIngredients =
+                viewEditIngredientsWith Page.lenses.complexIngredientsGroup .complexFoodId model.allRecipes
         in
         div [ Style.ids.ingredientEditor ]
             [ div []
@@ -124,57 +124,205 @@ view model =
                     [ ViewUtil.pagerButtons
                         { msg =
                             PaginationSettings.updateCurrentPage
-                                { pagination = Page.lenses.pagination
+                                { pagination = Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.pagination
                                 , items = Pagination.lenses.ingredients
                                 }
                                 model
-                                >> Page.SetPagination
+                                >> Page.SetIngredientsPagination
                         , elements = viewEditIngredients
                         }
                     ]
                 ]
-            , div [ Style.classes.addView ]
-                [ div [ Style.classes.addElement ]
-                    [ HtmlUtil.searchAreaWith
-                        { msg = Page.SetFoodsSearchString
-                        , searchString = model.foodsSearchString
+            , div [ Style.classes.elements ] [ label [] [ text "Complex ingredients" ] ]
+            , div [ Style.classes.choices ]
+                [ table []
+                    [ colgroup []
+                        [ col [] []
+                        , col [] []
+                        , col [] []
+                        , col [ stringProperty "span" "2" ] []
+                        ]
+                    , thead []
+                        [ tr [ Style.classes.tableHeader ]
+                            [ th [ scope "col" ] [ label [] [ text "Name" ] ]
+                            , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Factor" ] ]
+                            , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Amount" ] ]
+                            , th [ colspan 2, scope "colgroup", Style.classes.controlsGroup ] []
+                            ]
+                        ]
+                    , tbody []
+                        (viewEditComplexIngredients
+                            |> Paginate.page
+                            |> List.map viewEditComplexIngredient
+                        )
+                    ]
+                , div [ Style.classes.pagination ]
+                    [ ViewUtil.pagerButtons
+                        { msg =
+                            PaginationSettings.updateCurrentPage
+                                { pagination = Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.pagination
+                                , items = Pagination.lenses.ingredients
+                                }
+                                model
+                                >> Page.SetComplexIngredientsPagination
+                        , elements = viewEditComplexIngredients
                         }
-                    , table [ Style.classes.choiceTable ]
-                        [ colgroup []
-                            [ col [] []
-                            , col [] []
-                            , col [] []
-                            , col [ stringProperty "span" "2" ] []
-                            ]
-                        , thead []
-                            [ tr [ Style.classes.tableHeader ]
-                                [ th [ scope "col" ] [ label [] [ text "Name" ] ]
-                                , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text amount ] ]
-                                , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text unit ] ]
-                                , th [ colspan 2, scope "colgroup", Style.classes.controlsGroup ] []
-                                ]
-                            ]
-                        , tbody []
-                            (viewFoods
-                                |> Paginate.page
-                                |> List.map (viewFoodLine model.foods model.foodsToAdd model.ingredients)
-                            )
-                        ]
-                    , div [ Style.classes.pagination ]
-                        [ ViewUtil.pagerButtons
-                            { msg =
-                                PaginationSettings.updateCurrentPage
-                                    { pagination = Page.lenses.pagination
-                                    , items = Pagination.lenses.foods
-                                    }
-                                    model
-                                    >> Page.SetPagination
-                            , elements = viewFoods
-                            }
-                        ]
                     ]
                 ]
+            , div []
+                [ button
+                    [ disabled <| model.foodsMode == Page.Plain
+                    , onClick <| Page.ChangeFoodsMode Page.Plain
+                    , Style.classes.button.alternative
+                    ]
+                    [ text "Ingredients" ]
+                , button
+                    [ disabled <| model.foodsMode == Page.Complex
+                    , onClick <| Page.ChangeFoodsMode Page.Complex
+                    , Style.classes.button.alternative
+                    ]
+                    [ text "Complex ingredients" ]
+                ]
+            , case model.foodsMode of
+                Page.Plain ->
+                    viewPlain model
+
+                Page.Complex ->
+                    viewComplex model
             ]
+
+
+viewPlain : Page.Model -> Html Page.Msg
+viewPlain model =
+    let
+        viewFoods =
+            model.ingredientsGroup.foods
+                |> Dict.filter (\_ v -> SearchUtil.search model.ingredientsGroup.foodsSearchString v.name)
+                |> Dict.values
+                |> List.sortBy .name
+                |> ViewUtil.paginate
+                    { pagination =
+                        Page.lenses.ingredientsGroup
+                            |> Compose.lensWithLens FoodGroup.lenses.pagination
+                            |> Compose.lensWithLens Pagination.lenses.foods
+                    }
+                    model
+
+        ( amount, unit ) =
+            if anySelection Page.lenses.ingredientsGroup model then
+                ( "Amount", "Unit" )
+
+            else
+                ( "", "" )
+    in
+    div [ Style.classes.addView ]
+        [ div [ Style.classes.addElement ]
+            [ HtmlUtil.searchAreaWith
+                { msg = Page.SetComplexFoodsSearchString
+                , searchString = model.ingredientsGroup.foodsSearchString
+                }
+            , table [ Style.classes.choiceTable ]
+                [ colgroup []
+                    [ col [] []
+                    , col [] []
+                    , col [] []
+                    , col [ stringProperty "span" "2" ] []
+                    ]
+                , thead []
+                    [ tr [ Style.classes.tableHeader ]
+                        [ th [ scope "col" ] [ label [] [ text "Name" ] ]
+                        , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text amount ] ]
+                        , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text unit ] ]
+                        , th [ colspan 2, scope "colgroup", Style.classes.controlsGroup ] []
+                        ]
+                    ]
+                , tbody []
+                    (viewFoods
+                        |> Paginate.page
+                        |> List.map (viewFoodLine model.ingredientsGroup.foods model.ingredientsGroup.foodsToAdd model.ingredientsGroup.ingredients)
+                    )
+                ]
+            , div [ Style.classes.pagination ]
+                [ ViewUtil.pagerButtons
+                    { msg =
+                        PaginationSettings.updateCurrentPage
+                            { pagination = Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.pagination
+                            , items = Pagination.lenses.foods
+                            }
+                            model
+                            >> Page.SetComplexIngredientsPagination
+                    , elements = viewFoods
+                    }
+                ]
+            ]
+        ]
+
+
+viewComplex : Page.Model -> Html Page.Msg
+viewComplex model =
+    let
+        viewComplexFoods =
+            model.complexIngredientsGroup.foods
+                |> Dict.filter (\k _ -> SearchUtil.search model.complexIngredientsGroup.foodsSearchString (DictUtil.nameOrEmpty model.allRecipes k))
+                |> Dict.toList
+                |> List.sortBy (Tuple.first >> DictUtil.nameOrEmpty model.allRecipes)
+                |> List.map Tuple.second
+                |> ViewUtil.paginate
+                    { pagination =
+                        Page.lenses.complexIngredientsGroup
+                            |> Compose.lensWithLens FoodGroup.lenses.pagination
+                            |> Compose.lensWithLens Pagination.lenses.foods
+                    }
+                    model
+
+        ( amount, unit ) =
+            if anySelection Page.lenses.complexIngredientsGroup model then
+                ( "Factor", "Amount" )
+
+            else
+                ( "", "" )
+    in
+    div [ Style.classes.addView ]
+        [ div [ Style.classes.addElement ]
+            [ HtmlUtil.searchAreaWith
+                { msg = Page.SetComplexFoodsSearchString
+                , searchString = model.complexIngredientsGroup.foodsSearchString
+                }
+            , table [ Style.classes.choiceTable ]
+                [ colgroup []
+                    [ col [] []
+                    , col [] []
+                    , col [] []
+                    , col [ stringProperty "span" "2" ] []
+                    ]
+                , thead []
+                    [ tr [ Style.classes.tableHeader ]
+                        [ th [ scope "col" ] [ label [] [ text "Name" ] ]
+                        , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text amount ] ]
+                        , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text unit ] ]
+                        , th [ colspan 2, scope "colgroup", Style.classes.controlsGroup ] []
+                        ]
+                    ]
+                , tbody []
+                    (viewComplexFoods
+                        |> Paginate.page
+                        |> List.map (viewComplexFoodLine model.allRecipes model.complexIngredientsGroup.foods model.complexIngredientsGroup.foodsToAdd model.complexIngredientsGroup.ingredients)
+                    )
+                ]
+            , div [ Style.classes.pagination ]
+                [ ViewUtil.pagerButtons
+                    { msg =
+                        PaginationSettings.updateCurrentPage
+                            { pagination = Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.pagination
+                            , items = Pagination.lenses.foods
+                            }
+                            model
+                            >> Page.SetComplexIngredientsPagination
+                    , elements = viewComplexFoods
+                    }
+                ]
+            ]
+        ]
 
 
 editOrDeleteIngredientLine : Page.MeasureMap -> Page.FoodMap -> Ingredient -> Html Page.Msg
@@ -184,11 +332,29 @@ editOrDeleteIngredientLine measureMap foodMap ingredient =
             Page.EnterEditIngredient ingredient.id
     in
     tr [ Style.classes.editing ]
-        [ td [ Style.classes.editable, onClick editMsg ] [ label [] [ text <| Page.ingredientNameOrEmpty foodMap <| ingredient.foodId ] ]
+        [ td [ Style.classes.editable, onClick editMsg ] [ label [] [ text <| DictUtil.nameOrEmpty foodMap <| ingredient.foodId ] ]
         , td [ Style.classes.editable, Style.classes.numberLabel, onClick editMsg ] [ label [] [ text <| String.fromFloat <| ingredient.amountUnit.factor ] ]
-        , td [ Style.classes.editable, Style.classes.numberLabel, onClick editMsg ] [ label [] [ text <| Maybe.Extra.unwrap "" .name <| flip Dict.get measureMap <| ingredient.amountUnit.measureId ] ]
+        , td [ Style.classes.editable, Style.classes.numberLabel, onClick editMsg ] [ label [] [ text <| DictUtil.nameOrEmpty measureMap <| ingredient.amountUnit.measureId ] ]
         , td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick editMsg ] [ text "Edit" ] ]
         , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.DeleteIngredient ingredient.id) ] [ text "Delete" ] ]
+        ]
+
+
+editOrDeleteComplexIngredientLine : Page.RecipeMap -> Page.ComplexFoodMap -> ComplexIngredient -> Html Page.Msg
+editOrDeleteComplexIngredientLine recipeMap complexFoodMap complexIngredient =
+    let
+        editMsg =
+            Page.EnterEditComplexIngredient complexIngredient.complexFoodId
+
+        info =
+            complexFoodInfo complexIngredient.complexFoodId recipeMap complexFoodMap
+    in
+    tr [ Style.classes.editing ]
+        [ td [ Style.classes.editable, onClick editMsg ] [ label [] [ text <| info.name ] ]
+        , td [ Style.classes.editable, Style.classes.numberLabel, onClick editMsg ] [ label [] [ text <| String.fromFloat <| complexIngredient.factor ] ]
+        , td [ Style.classes.editable, Style.classes.numberLabel, onClick editMsg ] [ label [] [ text <| info.amount ] ]
+        , td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick editMsg ] [ text "Edit" ] ]
+        , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.DeleteComplexIngredient complexIngredient.complexFoodId) ] [ text "Delete" ] ]
         ]
 
 
@@ -202,7 +368,7 @@ editIngredientLine measureMap foodMap ingredient ingredientUpdateClientInput =
             Page.ExitEditIngredientAt ingredient.id
     in
     tr [ Style.classes.editLine ]
-        [ td [] [ label [] [ text <| Page.ingredientNameOrEmpty foodMap <| ingredient.foodId ] ]
+        [ td [] [ label [] [ text <| DictUtil.nameOrEmpty foodMap <| ingredient.foodId ] ]
         , td [ Style.classes.numberCell ]
             [ input
                 [ value
@@ -211,7 +377,7 @@ editIngredientLine measureMap foodMap ingredient ingredientUpdateClientInput =
                     (flip
                         (ValidatedInput.lift
                             (IngredientUpdateClientInput.lenses.amountUnit
-                                |> Compose.lensWithLens AmountUnitClientInput.factor
+                                |> Compose.lensWithLens AmountUnitClientInput.lenses.factor
                             )
                         ).set
                         ingredientUpdateClientInput
@@ -253,6 +419,52 @@ editIngredientLine measureMap foodMap ingredient ingredientUpdateClientInput =
         ]
 
 
+editComplexIngredientLine : Page.RecipeMap -> Page.ComplexFoodMap -> ComplexIngredient -> ComplexIngredientClientInput -> Html Page.Msg
+editComplexIngredientLine recipeMap complexFoodMap complexIngredient complexIngredientUpdateClientInput =
+    let
+        saveMsg =
+            Page.SaveComplexIngredientEdit complexIngredientUpdateClientInput
+
+        cancelMsg =
+            Page.ExitEditComplexIngredientAt complexIngredient.complexFoodId
+
+        info =
+            complexFoodInfo complexIngredient.complexFoodId recipeMap complexFoodMap
+    in
+    tr [ Style.classes.editLine ]
+        [ td [] [ label [] [ text <| info.name ] ]
+        , td [ Style.classes.numberCell ]
+            [ input
+                [ value
+                    complexIngredientUpdateClientInput.factor.text
+                , onInput
+                    (flip
+                        (ValidatedInput.lift
+                            ComplexIngredientClientInput.lenses.factor
+                        ).set
+                        complexIngredientUpdateClientInput
+                        >> Page.UpdateComplexIngredient
+                    )
+                , onEnter saveMsg
+                , HtmlUtil.onEscape cancelMsg
+                , Style.classes.numberLabel
+                ]
+                []
+            ]
+        , td [ Style.classes.numberCell ]
+            [ label [ Style.classes.editable, Style.classes.numberLabel ] [ text <| info.amount ]
+            ]
+        , td []
+            [ button [ Style.classes.button.confirm, onClick saveMsg ]
+                [ text "Save" ]
+            ]
+        , td []
+            [ button [ Style.classes.button.cancel, onClick cancelMsg ]
+                [ text "Cancel" ]
+            ]
+        ]
+
+
 unitDropdown : Page.FoodMap -> FoodId -> List Dropdown.Item
 unitDropdown fm fId =
     fm
@@ -262,12 +474,9 @@ unitDropdown fm fId =
 
 
 startingDropdownUnit : Page.MeasureMap -> MeasureId -> Dropdown.Item
-startingDropdownUnit mm mId =
-    { value = String.fromInt mId
-    , text =
-        mm
-            |> Dict.get mId
-            |> Maybe.Extra.unwrap "" .name
+startingDropdownUnit measureMap measureId =
+    { value = String.fromInt measureId
+    , text = DictUtil.nameOrEmpty measureMap measureId
     , enabled = True
     }
 
@@ -283,11 +492,27 @@ onChangeDropdown :
 onChangeDropdown ps =
     Maybe.andThen String.toInt
         >> Maybe.withDefault (ps.measureIdOf ps.input)
-        >> flip (ps.amountUnitLens |> Compose.lensWithLens AmountUnitClientInput.measureId).set ps.input
+        >> flip (ps.amountUnitLens |> Compose.lensWithLens AmountUnitClientInput.lenses.measureId).set ps.input
         >> ps.mkMsg
 
 
-viewFoodLine : Page.FoodMap -> Page.AddFoodsMap -> Page.IngredientOrUpdateMap -> Food -> Html Page.Msg
+type alias ComplexFoodInfo =
+    { name : String
+    , amount : String
+    }
+
+
+complexFoodInfo : ComplexFoodId -> Page.RecipeMap -> Page.ComplexFoodMap -> ComplexFoodInfo
+complexFoodInfo complexFoodId recipeMap complexFoodMap =
+    { name = recipeMap |> flip DictUtil.nameOrEmpty complexFoodId
+    , amount =
+        complexFoodMap
+            |> Dict.get complexFoodId
+            |> Maybe.Extra.unwrap "" (\complexFood -> String.concat [ complexFood.amount |> String.fromFloat, complexFood.unit |> ComplexFoodUnit.toPrettyString ])
+    }
+
+
+viewFoodLine : Page.FoodMap -> Page.AddFoodsMap -> Page.PlainIngredientOrUpdateMap -> Food -> Html Page.Msg
 viewFoodLine foodMap ingredientsToAdd ingredients food =
     let
         addMsg =
@@ -345,7 +570,7 @@ viewFoodLine foodMap ingredientsToAdd ingredients food =
                                 (flip
                                     (ValidatedInput.lift
                                         (IngredientCreationClientInput.amountUnit
-                                            |> Compose.lensWithLens AmountUnitClientInput.factor
+                                            |> Compose.lensWithLens AmountUnitClientInput.lenses.factor
                                         )
                                     ).set
                                     ingredientToAdd
@@ -397,3 +622,107 @@ viewFoodLine foodMap ingredientsToAdd ingredients food =
         (td [ Style.classes.editable ] [ label [] [ text food.name ] ]
             :: process
         )
+
+
+viewComplexFoodLine : Page.RecipeMap -> Page.ComplexFoodMap -> Page.AddComplexFoodsMap -> Page.ComplexIngredientOrUpdateMap -> ComplexFood -> Html Page.Msg
+viewComplexFoodLine recipeMap complexFoodMap complexIngredientsToAdd complexIngredients complexFood =
+    let
+        addMsg =
+            Page.AddComplexFood complexFood.recipeId
+
+        selectMsg =
+            Page.SelectComplexFood complexFood
+
+        cancelMsg =
+            Page.DeselectComplexFood complexFood.recipeId
+
+        maybeComplexIngredientToAdd =
+            Dict.get complexFood.recipeId complexIngredientsToAdd
+
+        rowClickAction =
+            if Maybe.Extra.isJust maybeComplexIngredientToAdd then
+                []
+
+            else
+                [ onClick selectMsg ]
+
+        info =
+            complexFoodInfo complexFood.recipeId recipeMap complexFoodMap
+
+        process =
+            case maybeComplexIngredientToAdd of
+                Nothing ->
+                    [ td [ Style.classes.editable, Style.classes.numberCell ] []
+                    , td [ Style.classes.editable, Style.classes.numberCell ] []
+                    , td [ Style.classes.controls ] []
+                    , td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick selectMsg ] [ text "Select" ] ]
+                    ]
+
+                Just complexIngredientToAdd ->
+                    let
+                        validInput =
+                            complexIngredientToAdd.factor |> ValidatedInput.isValid
+
+                        ( confirmName, confirmMsg, confirmStyle ) =
+                            case DictUtil.firstSuch (\complexIngredient -> Editing.field .complexFoodId complexIngredient == complexIngredientToAdd.complexFoodId) complexIngredients of
+                                Nothing ->
+                                    ( "Add", addMsg, Style.classes.button.confirm )
+
+                                Just ingredientOrUpdate ->
+                                    ( "Update"
+                                    , ingredientOrUpdate
+                                        |> Editing.field identity
+                                        |> ComplexIngredientClientInput.from
+                                        |> ComplexIngredientClientInput.lenses.factor.set complexIngredientToAdd.factor
+                                        |> Page.SaveComplexIngredientEdit
+                                    , Style.classes.button.edit
+                                    )
+                    in
+                    [ td [ Style.classes.numberCell ]
+                        [ input
+                            ([ value complexIngredientToAdd.factor.text
+                             , onInput
+                                (flip
+                                    (ValidatedInput.lift
+                                        ComplexIngredientClientInput.lenses.factor
+                                    ).set
+                                    complexIngredientToAdd
+                                    >> Page.UpdateAddComplexFood
+                                )
+                             , Style.classes.numberLabel
+                             , HtmlUtil.onEscape cancelMsg
+                             ]
+                                ++ (if validInput then
+                                        [ onEnter confirmMsg ]
+
+                                    else
+                                        []
+                                   )
+                            )
+                            []
+                        ]
+                    , td [ Style.classes.editable, Style.classes.numberLabel, onClick selectMsg ] [ label [] [ text <| info.amount ] ]
+                    , td [ Style.classes.controls ]
+                        [ button
+                            [ confirmStyle
+                            , disabled <| not <| validInput
+                            , onClick confirmMsg
+                            ]
+                            [ text confirmName
+                            ]
+                        ]
+                    , td [ Style.classes.controls ]
+                        [ button [ Style.classes.button.cancel, onClick cancelMsg ] [ text "Cancel" ] ]
+                    ]
+    in
+    tr ([ Style.classes.editing ] ++ rowClickAction)
+        (td [ Style.classes.editable ] [ label [] [ text info.name ] ]
+            :: process
+        )
+
+
+anySelection : Lens Page.Model (FoodGroup ingredientId ingredient update foodId food creation) -> Page.Model -> Bool
+anySelection foodGroupLens =
+    (foodGroupLens |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd).get
+        >> Dict.isEmpty
+        >> not
