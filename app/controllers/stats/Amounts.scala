@@ -4,6 +4,7 @@ import io.circe.generic.JsonCodec
 
 @JsonCodec
 case class Amounts(
-    total: BigDecimal,
-    dailyAverage: BigDecimal
+    values: Option[Values],
+    numberOfIngredients: Int,
+    numberOfDefinedValues: Int
 )
