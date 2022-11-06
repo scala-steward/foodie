@@ -6,7 +6,7 @@ import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
 import Dict
 import Either exposing (Either(..))
-import Html exposing (Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, disabled, scope, value)
 import Html.Attributes.Extra exposing (stringProperty)
 import Html.Events exposing (onClick, onInput)
@@ -131,9 +131,15 @@ createRecipe maybeCreation =
 
 viewRecipeLine : Configuration -> Recipe -> Html Page.Msg
 viewRecipeLine configuration recipe =
+    let
+        editMsg =
+            Page.EnterEditRecipe recipe.id |> onClick
+    in
     recipeLineWith
         { controls =
             [ td [ Style.classes.controls ]
+                [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
+            , td [ Style.classes.controls ]
                 [ button
                     [ Style.classes.button.delete, onClick (Page.RequestDeleteRecipe recipe.id) ]
                     [ text "Delete" ]
@@ -146,6 +152,7 @@ viewRecipeLine configuration recipe =
                     }
                 ]
             ]
+        , onClick = [ editMsg ]
         }
         recipe
 
@@ -162,26 +169,26 @@ deleteRecipeLine recipe =
                     [ text "Cancel" ]
                 ]
             ]
+        , onClick = []
         }
         recipe
 
 
 recipeLineWith :
     { controls : List (Html Page.Msg)
+    , onClick : List (Attribute Page.Msg)
     }
     -> Recipe
     -> Html Page.Msg
 recipeLineWith ps recipe =
     let
-        editMsg =
-            Page.EnterEditRecipe recipe.id
+        withOnClick =
+            (++) ps.onClick
     in
     tr [ Style.classes.editing ]
-        ([ td [ Style.classes.editable, onClick editMsg ] [ label [] [ text recipe.name ] ]
-         , td [ Style.classes.editable, onClick editMsg ] [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
-         , td [ Style.classes.editable, Style.classes.numberLabel, onClick editMsg ] [ label [] [ text <| String.fromFloat <| recipe.numberOfServings ] ]
-         , td [ Style.classes.controls ]
-            [ button [ Style.classes.button.edit, onClick editMsg ] [ text "Edit" ] ]
+        ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text recipe.name ] ]
+         , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
+         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| recipe.numberOfServings ] ]
          ]
             ++ ps.controls
         )

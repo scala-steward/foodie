@@ -36,12 +36,12 @@ type alias Model =
     }
 
 
-type alias PlainIngredientOrUpdate =
-    FoodGroup.IngredientOrUpdate Ingredient IngredientUpdateClientInput
+type alias PlainIngredientState =
+    FoodGroup.IngredientState Ingredient IngredientUpdateClientInput
 
 
 type alias ComplexIngredientOrUpdate =
-    FoodGroup.IngredientOrUpdate ComplexIngredient ComplexIngredientClientInput
+    FoodGroup.IngredientState ComplexIngredient ComplexIngredientClientInput
 
 
 type alias FoodMap =
@@ -68,11 +68,11 @@ type alias AddComplexFoodsMap =
     Dict ComplexFoodId ComplexIngredientClientInput
 
 
-type alias PlainIngredientOrUpdateMap =
-    Dict IngredientId PlainIngredientOrUpdate
+type alias PlainIngredientStateMap =
+    Dict IngredientId PlainIngredientState
 
 
-type alias ComplexIngredientOrUpdateMap =
+type alias ComplexIngredientStateMap =
     Dict ComplexIngredientId ComplexIngredientOrUpdate
 
 
@@ -116,8 +116,12 @@ type Msg
     | EnterEditComplexIngredient ComplexIngredientId
     | ExitEditIngredientAt IngredientId
     | ExitEditComplexIngredientAt ComplexIngredientId
-    | DeleteIngredient IngredientId
-    | DeleteComplexIngredient ComplexIngredientId
+    | RequestDeleteIngredient IngredientId
+    | ConfirmDeleteIngredient IngredientId
+    | CancelDeleteIngredient IngredientId
+    | RequestDeleteComplexIngredient ComplexIngredientId
+    | ConfirmDeleteComplexIngredient ComplexIngredientId
+    | CancelDeleteComplexIngredient ComplexIngredientId
     | GotDeleteIngredientResponse IngredientId (Result Error ())
     | GotDeleteComplexIngredientResponse ComplexIngredientId (Result Error ())
     | GotFetchIngredientsResponse (Result Error (List Ingredient))

@@ -100,11 +100,23 @@ update msg model =
         Page.ExitEditComplexIngredientAt complexIngredientId ->
             exitEditComplexIngredientAt model complexIngredientId
 
-        Page.DeleteIngredient ingredientId ->
-            deleteIngredient model ingredientId
+        Page.RequestDeleteIngredient ingredientId ->
+            requestDeleteIngredient model ingredientId
 
-        Page.DeleteComplexIngredient complexIngredientId ->
-            deleteComplexIngredient model complexIngredientId
+        Page.ConfirmDeleteIngredient ingredientId ->
+            confirmDeleteIngredient model ingredientId
+
+        Page.CancelDeleteIngredient ingredientId ->
+            cancelDeleteIngredient model ingredientId
+
+        Page.RequestDeleteComplexIngredient complexIngredientId ->
+            requestDeleteComplexIngredient model complexIngredientId
+
+        Page.ConfirmDeleteComplexIngredient complexIngredientId ->
+            confirmDeleteComplexIngredient model complexIngredientId
+
+        Page.CancelDeleteComplexIngredient complexIngredientId ->
+            cancelDeleteComplexIngredient model complexIngredientId
 
         Page.GotDeleteIngredientResponse ingredientId result ->
             gotDeleteIngredientResponse model ingredientId result
@@ -191,7 +203,7 @@ update msg model =
             setComplexIngredientsSearchString model string
 
 
-mapIngredientOrUpdateById : IngredientId -> (Page.PlainIngredientOrUpdate -> Page.PlainIngredientOrUpdate) -> Page.Model -> Page.Model
+mapIngredientOrUpdateById : IngredientId -> (Page.PlainIngredientState -> Page.PlainIngredientState) -> Page.Model -> Page.Model
 mapIngredientOrUpdateById ingredientId =
     Page.lenses.ingredientsGroup
         |> Compose.lensWithLens FoodGroup.lenses.ingredients
@@ -209,7 +221,7 @@ updateIngredient : Page.Model -> IngredientUpdateClientInput -> ( Page.Model, Cm
 updateIngredient model ingredientUpdateClientInput =
     ( model
         |> mapIngredientOrUpdateById ingredientUpdateClientInput.ingredientId
-            (Either.mapRight (Editing.lenses.update.set ingredientUpdateClientInput))
+            (Editing.lenses.update.set ingredientUpdateClientInput)
     , Cmd.none
     )
 
@@ -218,7 +230,7 @@ updateComplexIngredient : Page.Model -> ComplexIngredientClientInput -> ( Page.M
 updateComplexIngredient model complexIngredientClientInput =
     ( model
         |> mapComplexIngredientOrUpdateById complexIngredientClientInput.complexFoodId
-            (Either.mapRight (Editing.lenses.update.set complexIngredientClientInput))
+            (Editing.lenses.update.set complexIngredientClientInput)
     , Cmd.none
     )
 
@@ -249,7 +261,7 @@ gotSaveIngredientResponse model result =
             (\ingredient ->
                 model
                     |> mapIngredientOrUpdateById ingredient.id
-                        (always (Left ingredient))
+                        (Editing.asView ingredient |> always)
                     |> Lens.modify
                         (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
                         (Dict.remove ingredient.foodId)
@@ -266,7 +278,7 @@ gotSaveComplexIngredientResponse model result =
             (\complexIngredient ->
                 model
                     |> mapComplexIngredientOrUpdateById complexIngredient.complexFoodId
-                        (always (Left complexIngredient))
+                        (Editing.asView complexIngredient |> always)
                     |> Lens.modify
                         (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
                         (Dict.remove complexIngredient.complexFoodId)
@@ -278,7 +290,7 @@ gotSaveComplexIngredientResponse model result =
 enterEditIngredient : Page.Model -> IngredientId -> ( Page.Model, Cmd Page.Msg )
 enterEditIngredient model ingredientId =
     ( model
-        |> mapIngredientOrUpdateById ingredientId (Either.andThenLeft (\i -> Right { original = i, update = IngredientUpdateClientInput.from i }))
+        |> mapIngredientOrUpdateById ingredientId (Editing.toUpdate IngredientUpdateClientInput.from)
     , Cmd.none
     )
 
@@ -286,7 +298,7 @@ enterEditIngredient model ingredientId =
 enterEditComplexIngredient : Page.Model -> ComplexIngredientId -> ( Page.Model, Cmd Page.Msg )
 enterEditComplexIngredient model complexIngredientId =
     ( model
-        |> mapComplexIngredientOrUpdateById complexIngredientId (Either.andThenLeft (\i -> Right { original = i, update = ComplexIngredientClientInput.from i }))
+        |> mapComplexIngredientOrUpdateById complexIngredientId (Editing.toUpdate ComplexIngredientClientInput.from)
     , Cmd.none
     )
 
@@ -294,7 +306,7 @@ enterEditComplexIngredient model complexIngredientId =
 exitEditIngredientAt : Page.Model -> IngredientId -> ( Page.Model, Cmd Page.Msg )
 exitEditIngredientAt model ingredientId =
     ( model
-        |> mapIngredientOrUpdateById ingredientId (Either.andThen (.original >> Left))
+        |> mapIngredientOrUpdateById ingredientId Editing.toView
     , Cmd.none
     )
 
@@ -302,22 +314,54 @@ exitEditIngredientAt model ingredientId =
 exitEditComplexIngredientAt : Page.Model -> ComplexIngredientId -> ( Page.Model, Cmd Page.Msg )
 exitEditComplexIngredientAt model complexIngredientId =
     ( model
-        |> mapComplexIngredientOrUpdateById complexIngredientId (Either.andThen (.original >> Left))
+        |> mapComplexIngredientOrUpdateById complexIngredientId Editing.toView
     , Cmd.none
     )
 
 
-deleteIngredient : Page.Model -> IngredientId -> ( Page.Model, Cmd Page.Msg )
-deleteIngredient model ingredientId =
+requestDeleteIngredient : Page.Model -> IngredientId -> ( Page.Model, Cmd Page.Msg )
+requestDeleteIngredient model ingredientId =
+    ( model
+        |> mapIngredientOrUpdateById ingredientId Editing.toDelete
+    , Cmd.none
+    )
+
+
+confirmDeleteIngredient : Page.Model -> IngredientId -> ( Page.Model, Cmd Page.Msg )
+confirmDeleteIngredient model ingredientId =
     ( model
     , Requests.deleteIngredient model.authorizedAccess ingredientId
     )
 
 
-deleteComplexIngredient : Page.Model -> ComplexIngredientId -> ( Page.Model, Cmd Page.Msg )
-deleteComplexIngredient model complexIngredientId =
+cancelDeleteIngredient : Page.Model -> IngredientId -> ( Page.Model, Cmd Page.Msg )
+cancelDeleteIngredient model ingredientId =
+    ( model
+        |> mapIngredientOrUpdateById ingredientId Editing.toView
+    , Cmd.none
+    )
+
+
+requestDeleteComplexIngredient : Page.Model -> ComplexIngredientId -> ( Page.Model, Cmd Page.Msg )
+requestDeleteComplexIngredient model complexIngredientId =
+    ( model
+        |> mapComplexIngredientOrUpdateById complexIngredientId Editing.toDelete
+    , Cmd.none
+    )
+
+
+confirmDeleteComplexIngredient : Page.Model -> ComplexIngredientId -> ( Page.Model, Cmd Page.Msg )
+confirmDeleteComplexIngredient model complexIngredientId =
     ( model
     , Requests.deleteComplexIngredient model.authorizedAccess model.recipeId complexIngredientId
+    )
+
+
+cancelDeleteComplexIngredient : Page.Model -> ComplexIngredientId -> ( Page.Model, Cmd Page.Msg )
+cancelDeleteComplexIngredient model complexIngredientId =
+    ( model
+        |> mapComplexIngredientOrUpdateById complexIngredientId Editing.toView
+    , Cmd.none
     )
 
 
@@ -359,7 +403,7 @@ gotFetchIngredientsResponse model result =
             (\ingredients ->
                 model
                     |> (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients).set
-                        (ingredients |> List.map (\ingredient -> ( ingredient.id, Left ingredient )) |> Dict.fromList)
+                        (ingredients |> List.map (\ingredient -> ( ingredient.id, ingredient |> Editing.asView)) |> Dict.fromList)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.ingredients).set True
             )
     , Cmd.none
@@ -374,7 +418,7 @@ gotFetchComplexIngredientsResponse model result =
             (\complexIngredients ->
                 model
                     |> (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients).set
-                        (complexIngredients |> List.map (\complexIngredient -> ( complexIngredient.complexFoodId, Left complexIngredient )) |> Dict.fromList)
+                        (complexIngredients |> List.map (\complexIngredient -> ( complexIngredient.complexFoodId, complexIngredient |> Editing.asView )) |> Dict.fromList)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.complexIngredients).set True
             )
     , Cmd.none
@@ -614,7 +658,7 @@ gotAddFoodResponse model result =
                 model
                     |> Lens.modify
                         (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients)
-                        (Dict.update ingredient.id (always ingredient >> Left >> Just))
+                        (Dict.update ingredient.id (always ingredient >> Editing.asView >> Just))
                     |> Lens.modify
                         (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
                         (Dict.remove ingredient.foodId)
@@ -632,7 +676,7 @@ gotAddComplexFoodResponse model result =
                 model
                     |> Lens.modify
                         (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients)
-                        (Dict.update complexIngredient.complexFoodId (always complexIngredient >> Left >> Just))
+                        (Dict.update complexIngredient.complexFoodId (always complexIngredient >> Editing.asView >> Just))
                     |> Lens.modify
                         (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
                         (Dict.remove complexIngredient.complexFoodId)

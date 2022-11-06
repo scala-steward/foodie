@@ -1,14 +1,13 @@
 module Pages.Ingredients.FoodGroup exposing (..)
 
 import Dict exposing (Dict)
-import Either exposing (Either)
 import Monocle.Lens exposing (Lens)
 import Pages.Ingredients.Pagination as Pagination exposing (Pagination)
 import Util.Editing exposing (Editing)
 
 
 type alias FoodGroup ingredientId ingredient update foodId food creation =
-    { ingredients : Dict ingredientId (IngredientOrUpdate ingredient update)
+    { ingredients : Dict ingredientId (IngredientState ingredient update)
     , foods : Dict foodId food
     , foodsToAdd : Dict foodId creation
     , pagination : Pagination
@@ -16,8 +15,8 @@ type alias FoodGroup ingredientId ingredient update foodId food creation =
     }
 
 
-type alias IngredientOrUpdate ingredient update =
-    Either ingredient (Editing ingredient update)
+type alias IngredientState ingredient update =
+    Editing ingredient update
 
 
 initial : FoodGroup ingredientId ingredient update foodId food creation
@@ -31,7 +30,7 @@ initial =
 
 
 lenses :
-    { ingredients : Lens (FoodGroup ingredientId ingredient update foodId food creation) (Dict ingredientId (IngredientOrUpdate ingredient update))
+    { ingredients : Lens (FoodGroup ingredientId ingredient update foodId food creation) (Dict ingredientId (IngredientState ingredient update))
     , foods : Lens (FoodGroup ingredientId ingredient update foodId food creation) (Dict foodId food)
     , foodsToAdd : Lens (FoodGroup ingredientId ingredient update foodId food creation) (Dict foodId creation)
     , pagination : Lens (FoodGroup ingredientId ingredient update foodId food creation) Pagination

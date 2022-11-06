@@ -11,8 +11,7 @@ import Api.Types.Measure exposing (Measure)
 import Basics.Extra exposing (flip)
 import Dict exposing (Dict)
 import Dropdown exposing (Item, dropdown)
-import Either exposing (Either(..))
-import Html exposing (Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, disabled, scope, value)
 import Html.Attributes.Extra exposing (stringProperty)
 import Html.Events exposing (onClick, onInput)
@@ -22,7 +21,7 @@ import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
 import Pages.Ingredients.AmountUnitClientInput as AmountUnitClientInput
 import Pages.Ingredients.ComplexIngredientClientInput as ComplexIngredientClientInput exposing (ComplexIngredientClientInput)
-import Pages.Ingredients.FoodGroup as FoodGroup exposing (FoodGroup, IngredientOrUpdate)
+import Pages.Ingredients.FoodGroup as FoodGroup exposing (FoodGroup, IngredientState)
 import Pages.Ingredients.IngredientCreationClientInput as IngredientCreationClientInput exposing (IngredientCreationClientInput)
 import Pages.Ingredients.IngredientUpdateClientInput as IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
 import Pages.Ingredients.Page as Page
@@ -54,28 +53,32 @@ view model =
     <|
         let
             viewEditIngredient =
-                Either.unpack
-                    (editOrDeleteIngredientLine model.measures model.ingredientsGroup.foods)
-                    (\e -> e.update |> editIngredientLine model.measures model.ingredientsGroup.foods e.original)
+                Editing.unpack
+                    { onView = viewIngredientLine model.measures model.ingredientsGroup.foods
+                    , onUpdate = updateIngredientLine model.measures model.ingredientsGroup.foods
+                    , onDelete = deleteIngredientLine model.measures model.ingredientsGroup.foods
+                    }
 
             viewEditComplexIngredient =
-                Either.unpack
-                    (editOrDeleteComplexIngredientLine model.allRecipes model.complexIngredientsGroup.foods)
-                    (\e -> e.update |> editComplexIngredientLine model.allRecipes model.complexIngredientsGroup.foods e.original)
+                Editing.unpack
+                    { onView = viewComplexIngredientLine model.allRecipes model.complexIngredientsGroup.foods
+                    , onUpdate = updateComplexIngredientLine model.allRecipes model.complexIngredientsGroup.foods
+                    , onDelete = deleteComplexIngredientLine model.allRecipes model.complexIngredientsGroup.foods
+                    }
 
             viewEditIngredientsWith :
-                (IngredientOrUpdate ingredient update -> Bool)
+                (IngredientState ingredient update -> Bool)
                 -> Lens Page.Model (FoodGroup comparableIngredientId ingredient update comparableFoodId food creation)
                 -> (ingredient -> comparableFoodId)
                 -> Dict comparableFoodId { a | name : String }
-                -> PaginatedList (IngredientOrUpdate ingredient update)
+                -> PaginatedList (IngredientState ingredient update)
             viewEditIngredientsWith searchFilter groupLens idOf nameMap =
                 model
                     |> groupLens.get
                     |> .ingredients
                     |> Dict.filter (\_ v -> searchFilter v)
                     |> Dict.values
-                    |> List.sortBy (Editing.field idOf >> DictUtil.nameOrEmpty nameMap >> String.toLower)
+                    |> List.sortBy (.original >> idOf >> DictUtil.nameOrEmpty nameMap >> String.toLower)
                     |> ViewUtil.paginate
                         { pagination =
                             groupLens
@@ -86,7 +89,9 @@ view model =
 
             viewEditIngredients =
                 viewEditIngredientsWith
-                    (Editing.field (.foodId >> DictUtil.nameOrEmpty model.ingredientsGroup.foods)
+                    (.original
+                        >> .foodId
+                        >> DictUtil.nameOrEmpty model.ingredientsGroup.foods
                         >> SearchUtil.search model.ingredientsSearchString
                     )
                     Page.lenses.ingredientsGroup
@@ -95,7 +100,8 @@ view model =
 
             viewEditComplexIngredients =
                 viewEditIngredientsWith
-                    (Editing.field .complexFoodId
+                    (.original
+                        >> .complexFoodId
                         >> (\id -> complexFoodInfo id model.allRecipes model.complexIngredientsGroup.foods)
                         >> .name
                         >> SearchUtil.search model.complexIngredientsSearchString
@@ -353,41 +359,119 @@ viewComplex model =
         ]
 
 
-editOrDeleteIngredientLine : Page.MeasureMap -> Page.FoodMap -> Ingredient -> Html Page.Msg
-editOrDeleteIngredientLine measureMap foodMap ingredient =
+viewIngredientLine : Page.MeasureMap -> Page.FoodMap -> Ingredient -> Html Page.Msg
+viewIngredientLine measureMap foodMap ingredient =
     let
         editMsg =
-            Page.EnterEditIngredient ingredient.id
+            Page.EnterEditIngredient ingredient.id |> onClick
+    in
+    ingredientLineWith
+        { controls =
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
+            , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.RequestDeleteIngredient ingredient.id) ] [ text "Delete" ] ]
+            ]
+        , onClick = [ editMsg ]
+        , foodMap = foodMap
+        , measureMap = measureMap
+        }
+        ingredient
+
+
+deleteIngredientLine : Page.MeasureMap -> Page.FoodMap -> Ingredient -> Html Page.Msg
+deleteIngredientLine measureMap foodMap ingredient =
+    ingredientLineWith
+        { controls =
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick (Page.ConfirmDeleteIngredient ingredient.id) ] [ text "Confirm" ] ]
+            , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.CancelDeleteIngredient ingredient.id) ] [ text "Delete" ] ]
+            ]
+        , onClick = []
+        , foodMap = foodMap
+        , measureMap = measureMap
+        }
+        ingredient
+
+
+ingredientLineWith :
+    { controls : List (Html Page.Msg)
+    , onClick : List (Attribute Page.Msg)
+    , foodMap : Page.FoodMap
+    , measureMap : Page.MeasureMap
+    }
+    -> Ingredient
+    -> Html Page.Msg
+ingredientLineWith ps ingredient =
+    let
+        withOnClick =
+            (++) ps.onClick
     in
     tr [ Style.classes.editing ]
-        [ td [ Style.classes.editable, onClick editMsg ] [ label [] [ text <| DictUtil.nameOrEmpty foodMap <| ingredient.foodId ] ]
-        , td [ Style.classes.editable, Style.classes.numberLabel, onClick editMsg ] [ label [] [ text <| String.fromFloat <| ingredient.amountUnit.factor ] ]
-        , td [ Style.classes.editable, Style.classes.numberLabel, onClick editMsg ] [ label [] [ text <| DictUtil.nameOrEmpty measureMap <| ingredient.amountUnit.measureId ] ]
-        , td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick editMsg ] [ text "Edit" ] ]
-        , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.DeleteIngredient ingredient.id) ] [ text "Delete" ] ]
-        ]
+        ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| DictUtil.nameOrEmpty ps.foodMap <| ingredient.foodId ] ]
+         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| ingredient.amountUnit.factor ] ]
+         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| DictUtil.nameOrEmpty ps.measureMap <| ingredient.amountUnit.measureId ] ]
+         ]
+            ++ ps.controls
+        )
 
 
-editOrDeleteComplexIngredientLine : Page.RecipeMap -> Page.ComplexFoodMap -> ComplexIngredient -> Html Page.Msg
-editOrDeleteComplexIngredientLine recipeMap complexFoodMap complexIngredient =
+viewComplexIngredientLine : Page.RecipeMap -> Page.ComplexFoodMap -> ComplexIngredient -> Html Page.Msg
+viewComplexIngredientLine recipeMap complexFoodMap complexIngredient =
     let
         editMsg =
-            Page.EnterEditComplexIngredient complexIngredient.complexFoodId
+            Page.EnterEditComplexIngredient complexIngredient.complexFoodId |> onClick
+    in
+    complexIngredientLineWith
+        { controls =
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
+            , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.RequestDeleteComplexIngredient complexIngredient.complexFoodId) ] [ text "Delete" ] ]
+            ]
+        , onClick = [ editMsg ]
+        , recipeMap = recipeMap
+        , complexFoodMap = complexFoodMap
+        }
+        complexIngredient
+
+
+deleteComplexIngredientLine : Page.RecipeMap -> Page.ComplexFoodMap -> ComplexIngredient -> Html Page.Msg
+deleteComplexIngredientLine recipeMap complexFoodMap complexIngredient =
+    complexIngredientLineWith
+        { controls =
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick (Page.ConfirmDeleteComplexIngredient complexIngredient.complexFoodId) ] [ text "Edit" ] ]
+            , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.CancelDeleteComplexIngredient complexIngredient.complexFoodId) ] [ text "Delete" ] ]
+            ]
+        , onClick = []
+        , recipeMap = recipeMap
+        , complexFoodMap = complexFoodMap
+        }
+        complexIngredient
+
+
+complexIngredientLineWith :
+    { controls : List (Html Page.Msg)
+    , onClick : List (Attribute Page.Msg)
+    , recipeMap : Page.RecipeMap
+    , complexFoodMap : Page.ComplexFoodMap
+    }
+    -> ComplexIngredient
+    -> Html Page.Msg
+complexIngredientLineWith ps complexIngredient =
+    let
+        withOnClick =
+            (++) ps.onClick
 
         info =
-            complexFoodInfo complexIngredient.complexFoodId recipeMap complexFoodMap
+            complexFoodInfo complexIngredient.complexFoodId ps.recipeMap ps.complexFoodMap
     in
     tr [ Style.classes.editing ]
-        [ td [ Style.classes.editable, onClick editMsg ] [ label [] [ text <| info.name ] ]
-        , td [ Style.classes.editable, Style.classes.numberLabel, onClick editMsg ] [ label [] [ text <| String.fromFloat <| complexIngredient.factor ] ]
-        , td [ Style.classes.editable, Style.classes.numberLabel, onClick editMsg ] [ label [] [ text <| info.amount ] ]
-        , td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick editMsg ] [ text "Edit" ] ]
-        , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.DeleteComplexIngredient complexIngredient.complexFoodId) ] [ text "Delete" ] ]
-        ]
+        ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| info.name ] ]
+         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| complexIngredient.factor ] ]
+         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| info.amount ] ]
+         ]
+            ++ ps.controls
+        )
 
 
-editIngredientLine : Page.MeasureMap -> Page.FoodMap -> Ingredient -> IngredientUpdateClientInput -> Html Page.Msg
-editIngredientLine measureMap foodMap ingredient ingredientUpdateClientInput =
+updateIngredientLine : Page.MeasureMap -> Page.FoodMap -> Ingredient -> IngredientUpdateClientInput -> Html Page.Msg
+updateIngredientLine measureMap foodMap ingredient ingredientUpdateClientInput =
     let
         saveMsg =
             Page.SaveIngredientEdit ingredientUpdateClientInput
@@ -447,8 +531,8 @@ editIngredientLine measureMap foodMap ingredient ingredientUpdateClientInput =
         ]
 
 
-editComplexIngredientLine : Page.RecipeMap -> Page.ComplexFoodMap -> ComplexIngredient -> ComplexIngredientClientInput -> Html Page.Msg
-editComplexIngredientLine recipeMap complexFoodMap complexIngredient complexIngredientUpdateClientInput =
+updateComplexIngredientLine : Page.RecipeMap -> Page.ComplexFoodMap -> ComplexIngredient -> ComplexIngredientClientInput -> Html Page.Msg
+updateComplexIngredientLine recipeMap complexFoodMap complexIngredient complexIngredientUpdateClientInput =
     let
         saveMsg =
             Page.SaveComplexIngredientEdit complexIngredientUpdateClientInput
@@ -540,7 +624,7 @@ complexFoodInfo complexFoodId recipeMap complexFoodMap =
     }
 
 
-viewFoodLine : Page.FoodMap -> Page.AddFoodsMap -> Page.PlainIngredientOrUpdateMap -> Food -> Html Page.Msg
+viewFoodLine : Page.FoodMap -> Page.AddFoodsMap -> Page.PlainIngredientStateMap -> Food -> Html Page.Msg
 viewFoodLine foodMap ingredientsToAdd ingredients food =
     let
         addMsg =
@@ -577,14 +661,14 @@ viewFoodLine foodMap ingredientsToAdd ingredients food =
                             ingredientToAdd.amountUnit.factor |> ValidatedInput.isValid
 
                         ( confirmName, confirmMsg, confirmStyle ) =
-                            case DictUtil.firstSuch (\ingredient -> Editing.field .foodId ingredient == ingredientToAdd.foodId) ingredients of
+                            case DictUtil.firstSuch (\ingredient -> ingredient.original.foodId == ingredientToAdd.foodId) ingredients of
                                 Nothing ->
                                     ( "Add", addMsg, Style.classes.button.confirm )
 
                                 Just ingredientOrUpdate ->
                                     ( "Update"
                                     , ingredientOrUpdate
-                                        |> Editing.field identity
+                                        |> .original
                                         |> IngredientUpdateClientInput.from
                                         |> IngredientUpdateClientInput.lenses.amountUnit.set ingredientToAdd.amountUnit
                                         |> Page.SaveIngredientEdit
@@ -652,7 +736,7 @@ viewFoodLine foodMap ingredientsToAdd ingredients food =
         )
 
 
-viewComplexFoodLine : Page.RecipeMap -> Page.ComplexFoodMap -> Page.AddComplexFoodsMap -> Page.ComplexIngredientOrUpdateMap -> ComplexFood -> Html Page.Msg
+viewComplexFoodLine : Page.RecipeMap -> Page.ComplexFoodMap -> Page.AddComplexFoodsMap -> Page.ComplexIngredientStateMap -> ComplexFood -> Html Page.Msg
 viewComplexFoodLine recipeMap complexFoodMap complexIngredientsToAdd complexIngredients complexFood =
     let
         addMsg =
@@ -692,14 +776,14 @@ viewComplexFoodLine recipeMap complexFoodMap complexIngredientsToAdd complexIngr
                             complexIngredientToAdd.factor |> ValidatedInput.isValid
 
                         ( confirmName, confirmMsg, confirmStyle ) =
-                            case DictUtil.firstSuch (\complexIngredient -> Editing.field .complexFoodId complexIngredient == complexIngredientToAdd.complexFoodId) complexIngredients of
+                            case DictUtil.firstSuch (\complexIngredient -> complexIngredient.original.complexFoodId == complexIngredientToAdd.complexFoodId) complexIngredients of
                                 Nothing ->
                                     ( "Add", addMsg, Style.classes.button.confirm )
 
                                 Just ingredientOrUpdate ->
                                     ( "Update"
                                     , ingredientOrUpdate
-                                        |> Editing.field identity
+                                        |> .original
                                         |> ComplexIngredientClientInput.from
                                         |> ComplexIngredientClientInput.lenses.factor.set complexIngredientToAdd.factor
                                         |> Page.SaveComplexIngredientEdit
