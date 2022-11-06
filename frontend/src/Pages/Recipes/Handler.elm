@@ -8,7 +8,7 @@ import Either exposing (Either(..))
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens as Lens
-import Monocle.Optional
+import Monocle.Optional as Optional
 import Pages.Recipes.Page as Page exposing (RecipeState)
 import Pages.Recipes.Pagination as Pagination exposing (Pagination)
 import Pages.Recipes.RecipeCreationClientInput as RecipeCreationClientInput exposing (RecipeCreationClientInput)
@@ -16,7 +16,6 @@ import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput exposing
 import Pages.Recipes.Requests as Requests
 import Pages.Recipes.Status as Status
 import Pages.Util.PaginationSettings as PaginationSettings
-import Set
 import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization as Initialization exposing (Initialization(..))
@@ -28,7 +27,6 @@ init flags =
     ( { authorizedAccess = flags.authorizedAccess
       , recipes = Dict.empty
       , recipeToAdd = Nothing
-      , recipesToDelete = Set.empty
       , searchString = ""
       , initialization = Initialization.Loading Status.initial
       , pagination = Pagination.initial
@@ -173,7 +171,12 @@ exitEditRecipeAt model recipeId =
 
 requestDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 requestDeleteRecipe model recipeId =
-    ( model |> Lens.modify Page.lenses.recipesToDelete (Set.insert recipeId)
+    ( model
+        |> Optional.modify
+            (Page.lenses.recipes
+                |> Compose.lensWithOptional (LensUtil.dictByKey recipeId)
+            )
+            Editing.viewToDelete
     , Cmd.none
     )
 
@@ -187,7 +190,12 @@ confirmDeleteRecipe model recipeId =
 
 cancelDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 cancelDeleteRecipe model recipeId =
-    ( model |> Lens.modify Page.lenses.recipesToDelete (Set.remove recipeId)
+    ( model
+        |> Optional.modify
+            (Page.lenses.recipes
+                |> Compose.lensWithOptional (LensUtil.dictByKey recipeId)
+            )
+            Editing.anyToView
     , Cmd.none
     )
 
@@ -200,7 +208,6 @@ gotDeleteRecipeResponse model deletedId dataOrError =
             (always
                 (model
                     |> Lens.modify Page.lenses.recipes (Dict.remove deletedId)
-                    |> Lens.modify Page.lenses.recipesToDelete (Set.remove deletedId)
                 )
             )
     , Cmd.none

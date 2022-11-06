@@ -9,7 +9,6 @@ import Pages.Recipes.RecipeCreationClientInput exposing (RecipeCreationClientInp
 import Pages.Recipes.RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
 import Pages.Recipes.Status exposing (Status)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Set exposing (Set)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization)
@@ -19,7 +18,6 @@ type alias Model =
     { authorizedAccess : AuthorizedAccess
     , recipes : RecipeStateMap
     , recipeToAdd : Maybe RecipeCreationClientInput
-    , recipesToDelete: Set RecipeId
     , searchString: String
     , initialization : Initialization Status
     , pagination : Pagination
@@ -37,7 +35,6 @@ type alias RecipeStateMap =
 lenses :
     { recipes : Lens Model RecipeStateMap
     , recipeToAdd : Lens Model (Maybe RecipeCreationClientInput)
-    , recipesToDelete : Lens Model (Set RecipeId)
     , searchString : Lens Model String
     , initialization : Lens Model (Initialization Status)
     , pagination : Lens Model Pagination
@@ -45,7 +42,6 @@ lenses :
 lenses =
     { recipes = Lens .recipes (\b a -> { a | recipes = b })
     , recipeToAdd = Lens .recipeToAdd (\b a -> { a | recipeToAdd = b })
-    , recipesToDelete = Lens .recipesToDelete (\b a -> { a | recipesToDelete = b })
     , searchString = Lens .searchString (\b a -> { a | searchString = b })
     , initialization = Lens .initialization (\b a -> { a | initialization = b })
     , pagination = Lens .pagination (\b a -> { a | pagination = b })
