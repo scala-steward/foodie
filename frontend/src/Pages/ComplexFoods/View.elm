@@ -6,8 +6,7 @@ import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Dict exposing (Dict)
 import Dropdown exposing (Item, dropdown)
-import Either exposing (Either(..))
-import Html exposing (Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, disabled, scope, value)
 import Html.Attributes.Extra exposing (stringProperty)
 import Html.Events exposing (onClick, onInput)
@@ -44,15 +43,17 @@ view model =
     <|
         let
             viewEditComplexFood =
-                Either.unpack
-                    (editOrDeleteComplexFoodLine model.recipes)
-                    (\e -> e.update |> editComplexFoodLine model.recipes e.original)
+                Editing.unpack
+                    { onView = viewComplexFoodLine model.recipes
+                    , onUpdate = updateComplexFoodLine model.recipes
+                    , onDelete = deleteComplexFoodLine model.recipes
+                    }
 
             viewEditComplexFoods =
                 model.complexFoods
                     |> Dict.filter (\complexFoodId _ -> SearchUtil.search model.complexFoodsSearchString (Page.complexFoodNameOrEmpty model.recipes complexFoodId))
                     |> Dict.values
-                    |> List.sortBy (Editing.field .recipeId >> Page.complexFoodNameOrEmpty model.recipes >> String.toLower)
+                    |> List.sortBy (.original >> .recipeId >> Page.complexFoodNameOrEmpty model.recipes >> String.toLower)
                     |> ViewUtil.paginate
                         { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.complexFoods
                         }
@@ -165,23 +166,59 @@ view model =
             ]
 
 
-editOrDeleteComplexFoodLine : Page.RecipeMap -> ComplexFood -> Html Page.Msg
-editOrDeleteComplexFoodLine recipeMap complexFood =
+viewComplexFoodLine : Page.RecipeMap -> ComplexFood -> Html Page.Msg
+viewComplexFoodLine recipeMap complexFood =
     let
         editMsg =
-            Page.EnterEditComplexFood complexFood.recipeId
+            Page.EnterEditComplexFood complexFood.recipeId |> onClick
+    in
+    complexFoodLineWith
+        { controls =
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
+            , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.RequestDeleteComplexFood complexFood.recipeId) ] [ text "Delete" ] ]
+            ]
+        , onClick = [ editMsg ]
+        , recipeMap = recipeMap
+        }
+        complexFood
+
+
+deleteComplexFoodLine : Page.RecipeMap -> ComplexFood -> Html Page.Msg
+deleteComplexFoodLine recipeMap complexFood =
+    complexFoodLineWith
+        { controls =
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick (Page.ConfirmDeleteComplexFood complexFood.recipeId) ] [ text "Confirm" ] ]
+            , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.CancelDeleteComplexFood complexFood.recipeId) ] [ text "Cancel" ] ]
+            ]
+        , onClick = []
+        , recipeMap = recipeMap
+        }
+        complexFood
+
+
+complexFoodLineWith :
+    { controls : List (Html Page.Msg)
+    , onClick : List (Attribute Page.Msg)
+    , recipeMap : Page.RecipeMap
+    }
+    -> ComplexFood
+    -> Html Page.Msg
+complexFoodLineWith ps complexFood =
+    let
+        withOnClick =
+            (++) ps.onClick
     in
     tr [ Style.classes.editing ]
-        [ td [ Style.classes.editable, onClick editMsg ] [ label [] [ text <| Page.complexFoodNameOrEmpty recipeMap <| complexFood.recipeId ] ]
-        , td [ Style.classes.editable, Style.classes.numberLabel, onClick editMsg ] [ label [] [ text <| String.fromFloat <| complexFood.amount ] ]
-        , td [ Style.classes.editable, Style.classes.numberLabel, onClick editMsg ] [ label [] [ text <| ComplexFoodUnit.toPrettyString <| complexFood.unit ] ]
-        , td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick editMsg ] [ text "Edit" ] ]
-        , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.DeleteComplexFood complexFood.recipeId) ] [ text "Delete" ] ]
-        ]
+        ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Page.complexFoodNameOrEmpty ps.recipeMap <| complexFood.recipeId ] ]
+         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| complexFood.amount ] ]
+         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| ComplexFoodUnit.toPrettyString <| complexFood.unit ] ]
+         ]
+            ++ ps.controls
+        )
 
 
-editComplexFoodLine : Page.RecipeMap -> ComplexFood -> ComplexFoodClientInput -> Html Page.Msg
-editComplexFoodLine recipeMap complexFood complexFoodClientInput =
+updateComplexFoodLine : Page.RecipeMap -> ComplexFood -> ComplexFoodClientInput -> Html Page.Msg
+updateComplexFoodLine recipeMap complexFood complexFoodClientInput =
     let
         saveMsg =
             Page.SaveComplexFoodEdit complexFoodClientInput
@@ -287,14 +324,14 @@ viewRecipeLine complexFoodsToCreate complexFoods recipe =
                             complexFoodToAdd.amount |> ValidatedInput.isValid
 
                         ( confirmName, confirmMsg, confirmStyle ) =
-                            case DictUtil.firstSuch (\complexFood -> Editing.field .recipeId complexFood == complexFoodToAdd.recipeId) complexFoods of
+                            case DictUtil.firstSuch (\complexFood -> complexFood.original.recipeId == complexFoodToAdd.recipeId) complexFoods of
                                 Nothing ->
                                     ( "Add", createMsg, Style.classes.button.confirm )
 
                                 Just complexFoodOrUpdate ->
                                     ( "Update"
                                     , complexFoodOrUpdate
-                                        |> Editing.field identity
+                                        |> .original
                                         |> ComplexFoodClientInput.from
                                         |> ComplexFoodClientInput.lenses.amount.set complexFoodToAdd.amount
                                         |> ComplexFoodClientInput.lenses.unit.set complexFoodToAdd.unit
