@@ -70,8 +70,14 @@ update msg model =
         Page.ExitEditReferenceEntryAt nutrientCode ->
             exitEditReferenceEntryAt model nutrientCode
 
-        Page.DeleteReferenceEntry nutrientCode ->
-            deleteReferenceEntry model nutrientCode
+        Page.RequestDeleteReferenceEntry nutrientCode ->
+            requestDeleteReferenceEntry model nutrientCode
+
+        Page.ConfirmDeleteReferenceEntry nutrientCode ->
+            confirmDeleteReferenceEntry model nutrientCode
+
+        Page.CancelDeleteReferenceEntry nutrientCode ->
+            cancelDeleteReferenceEntry model nutrientCode
 
         Page.GotDeleteReferenceEntryResponse nutrientCode result ->
             gotDeleteReferenceEntryResponse model nutrientCode result
@@ -116,8 +122,8 @@ update msg model =
 updateReferenceEntry : Page.Model -> ReferenceEntryUpdateClientInput -> ( Page.Model, Cmd Page.Msg )
 updateReferenceEntry model referenceEntryUpdateClientInput =
     ( model
-        |> mapReferenceEntryOrUpdateById referenceEntryUpdateClientInput.nutrientCode
-            (Either.mapRight (Editing.lenses.update.set referenceEntryUpdateClientInput))
+        |> mapReferenceEntryStateById referenceEntryUpdateClientInput.nutrientCode
+            (Editing.lenses.update.set referenceEntryUpdateClientInput)
     , Cmd.none
     )
 
@@ -138,8 +144,8 @@ gotSaveReferenceEntryResponse model result =
         |> Either.unpack (flip setError model)
             (\referenceEntry ->
                 model
-                    |> mapReferenceEntryOrUpdateById referenceEntry.nutrientCode
-                        (always (Left referenceEntry))
+                    |> mapReferenceEntryStateById referenceEntry.nutrientCode
+                        (referenceEntry |> Editing.asView |> always)
                     |> Lens.modify Page.lenses.referenceEntriesToAdd (Dict.remove referenceEntry.nutrientCode)
             )
     , Cmd.none
@@ -149,15 +155,8 @@ gotSaveReferenceEntryResponse model result =
 enterEditReferenceEntry : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
 enterEditReferenceEntry model nutrientCode =
     ( model
-        |> mapReferenceEntryOrUpdateById nutrientCode
-            (Either.andThenLeft
-                (\me ->
-                    Right
-                        { original = me
-                        , update = ReferenceEntryUpdateClientInput.from me
-                        }
-                )
-            )
+        |> mapReferenceEntryStateById nutrientCode
+            (Editing.toUpdate ReferenceEntryUpdateClientInput.from)
     , Cmd.none
     )
 
@@ -165,15 +164,29 @@ enterEditReferenceEntry model nutrientCode =
 exitEditReferenceEntryAt : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
 exitEditReferenceEntryAt model nutrientCode =
     ( model
-        |> mapReferenceEntryOrUpdateById nutrientCode (Either.andThen (.original >> Left))
+        |> mapReferenceEntryStateById nutrientCode Editing.toView
     , Cmd.none
     )
 
 
-deleteReferenceEntry : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
-deleteReferenceEntry model nutrientCode =
+requestDeleteReferenceEntry : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
+requestDeleteReferenceEntry model nutrientCode =
+    ( model |> mapReferenceEntryStateById nutrientCode Editing.toDelete
+    , Cmd.none
+    )
+
+
+confirmDeleteReferenceEntry : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
+confirmDeleteReferenceEntry model nutrientCode =
     ( model
     , Requests.deleteReferenceEntry model.authorizedAccess model.referenceMapId nutrientCode
+    )
+
+
+cancelDeleteReferenceEntry : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
+cancelDeleteReferenceEntry model nutrientCode =
+    ( model |> mapReferenceEntryStateById nutrientCode Editing.toView
+    , Cmd.none
     )
 
 
@@ -196,7 +209,7 @@ gotFetchReferenceEntriesResponse model result =
         |> Either.unpack (flip setError model)
             (\referenceEntries ->
                 model
-                    |> Page.lenses.referenceEntries.set (referenceEntries |> List.map (\r -> ( r.nutrientCode, Left r )) |> Dict.fromList)
+                    |> Page.lenses.referenceEntries.set (referenceEntries |> List.map (\r -> ( r.nutrientCode, r |> Editing.asView )) |> Dict.fromList)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.referenceEntries).set True
             )
     , Cmd.none
@@ -271,7 +284,7 @@ gotAddReferenceEntryResponse model result =
             (\referenceEntry ->
                 model
                     |> Lens.modify Page.lenses.referenceEntries
-                        (Dict.update referenceEntry.nutrientCode (always referenceEntry >> Left >> Just))
+                        (Dict.insert referenceEntry.nutrientCode (referenceEntry |> Editing.asView))
                     |> Lens.modify Page.lenses.referenceEntriesToAdd (Dict.remove referenceEntry.nutrientCode)
             )
     , Cmd.none
@@ -323,6 +336,7 @@ setNutrientsSearchString model string =
     , Cmd.none
     )
 
+
 setReferenceEntriesSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 setReferenceEntriesSearchString model string =
     ( PaginationSettings.setSearchStringAndReset
@@ -337,6 +351,7 @@ setReferenceEntriesSearchString model string =
     , Cmd.none
     )
 
+
 setPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.Msg )
 setPagination model pagination =
     ( model |> Page.lenses.pagination.set pagination
@@ -344,8 +359,8 @@ setPagination model pagination =
     )
 
 
-mapReferenceEntryOrUpdateById : NutrientCode -> (Page.ReferenceEntryOrUpdate -> Page.ReferenceEntryOrUpdate) -> Page.Model -> Page.Model
-mapReferenceEntryOrUpdateById ingredientId =
+mapReferenceEntryStateById : NutrientCode -> (Page.ReferenceEntryState -> Page.ReferenceEntryState) -> Page.Model -> Page.Model
+mapReferenceEntryStateById ingredientId =
     Page.lenses.referenceEntries
         |> LensUtil.updateById ingredientId
 

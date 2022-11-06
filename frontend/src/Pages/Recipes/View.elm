@@ -43,7 +43,7 @@ view model =
         model
     <|
         let
-            viewEditRecipe =
+            viewRecipeState =
                 Editing.unpack
                     { onView = viewRecipeLine model.authorizedAccess.configuration
                     , onUpdate = always updateRecipeLine
@@ -93,7 +93,7 @@ view model =
                             ]
                         , tbody []
                             (creationLine
-                                ++ (viewEditRecipes |> Paginate.page |> List.map viewEditRecipe)
+                                ++ (viewEditRecipes |> Paginate.page |> List.map viewRecipeState)
                             )
                         ]
                    , div [ Style.classes.pagination ]
@@ -162,7 +162,7 @@ deleteRecipeLine recipe =
     recipeLineWith
         { controls =
             [ td [ Style.classes.controls ]
-                [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteRecipe recipe.id) ] [ text "Confirm" ] ]
+                [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteRecipe recipe.id) ] [ text "Delete?" ] ]
             , td [ Style.classes.controls ]
                 [ button
                     [ Style.classes.button.confirm, onClick (Page.CancelDeleteRecipe recipe.id) ]

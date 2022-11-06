@@ -7,7 +7,6 @@ import Api.Types.ReferenceEntry exposing (ReferenceEntry)
 import Api.Types.ReferenceMap exposing (ReferenceMap)
 import Basics.Extra exposing (flip)
 import Dict exposing (Dict)
-import Either exposing (Either)
 import Maybe.Extra
 import Monocle.Lens exposing (Lens)
 import Pages.ReferenceEntries.Pagination exposing (Pagination)
@@ -24,7 +23,7 @@ type alias Model =
     { authorizedAccess : AuthorizedAccess
     , referenceMapId : ReferenceMapId
     , referenceMap : Maybe ReferenceMap
-    , referenceEntries : ReferenceEntryOrUpdateMap
+    , referenceEntries : ReferenceEntryStateMap
     , nutrients : NutrientMap
     , nutrientsSearchString : String
     , referenceEntriesSearchString : String
@@ -34,8 +33,8 @@ type alias Model =
     }
 
 
-type alias ReferenceEntryOrUpdate =
-    Either ReferenceEntry (Editing ReferenceEntry ReferenceEntryUpdateClientInput)
+type alias ReferenceEntryState =
+    Editing ReferenceEntry ReferenceEntryUpdateClientInput
 
 
 type alias NutrientMap =
@@ -46,8 +45,8 @@ type alias AddNutrientMap =
     Dict NutrientCode ReferenceEntryCreationClientInput
 
 
-type alias ReferenceEntryOrUpdateMap =
-    Dict NutrientCode ReferenceEntryOrUpdate
+type alias ReferenceEntryStateMap =
+    Dict NutrientCode ReferenceEntryState
 
 
 type alias Flags =
@@ -58,7 +57,7 @@ type alias Flags =
 
 lenses :
     { referenceMap : Lens Model (Maybe ReferenceMap)
-    , referenceEntries : Lens Model ReferenceEntryOrUpdateMap
+    , referenceEntries : Lens Model ReferenceEntryStateMap
     , referenceEntriesToAdd : Lens Model AddNutrientMap
     , nutrients : Lens Model NutrientMap
     , nutrientsSearchString : Lens Model String
@@ -78,14 +77,7 @@ lenses =
     }
 
 
-nutrientNameOrEmpty : NutrientMap -> NutrientCode -> String
-nutrientNameOrEmpty nutrientMap =
-    flip Dict.get nutrientMap >> Maybe.Extra.unwrap "" .name
 
-
-nutrientUnitOrEmpty : NutrientMap -> NutrientCode -> String
-nutrientUnitOrEmpty nutrientMap =
-    flip Dict.get nutrientMap >> Maybe.Extra.unwrap "" (.unit >> NutrientUnit.toString)
 
 
 type Msg
@@ -94,7 +86,9 @@ type Msg
     | GotSaveReferenceEntryResponse (Result Error ReferenceEntry)
     | EnterEditReferenceEntry NutrientCode
     | ExitEditReferenceEntryAt NutrientCode
-    | DeleteReferenceEntry NutrientCode
+    | RequestDeleteReferenceEntry NutrientCode
+    | ConfirmDeleteReferenceEntry NutrientCode
+    | CancelDeleteReferenceEntry NutrientCode
     | GotDeleteReferenceEntryResponse NutrientCode (Result Error ())
     | GotFetchReferenceEntriesResponse (Result Error (List ReferenceEntry))
     | GotFetchReferenceMapResponse (Result Error ReferenceMap)

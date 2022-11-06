@@ -47,7 +47,7 @@ view model =
         model
     <|
         let
-            viewEditMeal =
+            viewMealState =
                 Editing.unpack
                     { onView = viewMealLine model.authorizedAccess.configuration
                     , onUpdate = updateMealLine |> always
@@ -57,7 +57,7 @@ view model =
             filterOn =
                 SearchUtil.search model.searchString
 
-            viewEditMeals =
+            viewMeals =
                 model.meals
                     |> Dict.filter
                         (\_ v ->
@@ -97,9 +97,9 @@ view model =
                             ]
                         , tbody []
                             (creationLine
-                                ++ (viewEditMeals
+                                ++ (viewMeals
                                         |> Paginate.page
-                                        |> List.map viewEditMeal
+                                        |> List.map viewMealState
                                    )
                             )
                         ]
@@ -112,7 +112,7 @@ view model =
                                     }
                                     model
                                     >> Page.SetPagination
-                            , elements = viewEditMeals
+                            , elements = viewMeals
                             }
                         ]
                    ]
@@ -164,7 +164,7 @@ deleteMealLine : Configuration -> Meal -> Html Page.Msg
 deleteMealLine configuration meal =
     mealLineWith
         { controls =
-            [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteMeal meal.id) ] [ text "Confirm" ] ]
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteMeal meal.id) ] [ text "Delete?" ] ]
             , td [ Style.classes.controls ] [ button [ Style.classes.button.confirm, onClick (Page.CancelDeleteMeal meal.id) ] [ text "Cancel" ] ]
             ]
         , onClick = []

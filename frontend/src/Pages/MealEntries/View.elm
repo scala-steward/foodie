@@ -41,14 +41,14 @@ view model =
         model
     <|
         let
-            viewEditMealEntry =
+            viewMealEntryState =
                 Editing.unpack
                     { onView = viewMealEntryLine model.recipes
                     , onUpdate = updateEntryLine model.recipes
                     , onDelete = deleteMealEntryLine model.recipes
                     }
 
-            viewEditMealEntries =
+            viewMealEntries =
                 model.mealEntries
                     |> Dict.filter (\_ v -> SearchUtil.search model.entriesSearchString (DictUtil.nameOrEmpty model.recipes v.original.recipeId))
                     |> Dict.values
@@ -115,9 +115,9 @@ view model =
                             ]
                         ]
                     , tbody []
-                        (viewEditMealEntries
+                        (viewMealEntries
                             |> Paginate.page
-                            |> List.map viewEditMealEntry
+                            |> List.map viewMealEntryState
                         )
                     ]
                 , div [ Style.classes.pagination ]
@@ -129,7 +129,7 @@ view model =
                                 }
                                 model
                                 >> Page.SetPagination
-                        , elements = viewEditMealEntries
+                        , elements = viewMealEntries
                         }
                     ]
                 ]
@@ -198,7 +198,7 @@ deleteMealEntryLine : Page.RecipeMap -> MealEntry -> Html Page.Msg
 deleteMealEntryLine recipeMap mealEntry =
     mealEntryLineWith
         { controls =
-            [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteMealEntry mealEntry.id) ] [ text "Confirm" ] ]
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteMealEntry mealEntry.id) ] [ text "Delete?" ] ]
             , td [ Style.classes.controls ] [ button [ Style.classes.button.confirm, onClick (Page.CancelDeleteMealEntry mealEntry.id) ] [ text "Cancel" ] ]
             ]
         , onClick = []

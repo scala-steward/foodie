@@ -52,27 +52,27 @@ view model =
         model
     <|
         let
-            viewEditIngredient =
+            viewIngredientState =
                 Editing.unpack
                     { onView = viewIngredientLine model.measures model.ingredientsGroup.foods
                     , onUpdate = updateIngredientLine model.measures model.ingredientsGroup.foods
                     , onDelete = deleteIngredientLine model.measures model.ingredientsGroup.foods
                     }
 
-            viewEditComplexIngredient =
+            viewComplexIngredientState =
                 Editing.unpack
                     { onView = viewComplexIngredientLine model.allRecipes model.complexIngredientsGroup.foods
                     , onUpdate = updateComplexIngredientLine model.allRecipes model.complexIngredientsGroup.foods
                     , onDelete = deleteComplexIngredientLine model.allRecipes model.complexIngredientsGroup.foods
                     }
 
-            viewEditIngredientsWith :
+            viewIngredientsWith :
                 (IngredientState ingredient update -> Bool)
                 -> Lens Page.Model (FoodGroup comparableIngredientId ingredient update comparableFoodId food creation)
                 -> (ingredient -> comparableFoodId)
                 -> Dict comparableFoodId { a | name : String }
                 -> PaginatedList (IngredientState ingredient update)
-            viewEditIngredientsWith searchFilter groupLens idOf nameMap =
+            viewIngredientsWith searchFilter groupLens idOf nameMap =
                 model
                     |> groupLens.get
                     |> .ingredients
@@ -87,8 +87,8 @@ view model =
                         }
                         model
 
-            viewEditIngredients =
-                viewEditIngredientsWith
+            viewIngredients =
+                viewIngredientsWith
                     (.original
                         >> .foodId
                         >> DictUtil.nameOrEmpty model.ingredientsGroup.foods
@@ -98,8 +98,8 @@ view model =
                     .foodId
                     model.ingredientsGroup.foods
 
-            viewEditComplexIngredients =
-                viewEditIngredientsWith
+            viewComplexIngredients =
+                viewIngredientsWith
                     (.original
                         >> .complexFoodId
                         >> (\id -> complexFoodInfo id model.allRecipes model.complexIngredientsGroup.foods)
@@ -145,9 +145,9 @@ view model =
                             ]
                         ]
                     , tbody []
-                        (viewEditIngredients
+                        (viewIngredients
                             |> Paginate.page
-                            |> List.map viewEditIngredient
+                            |> List.map viewIngredientState
                         )
                     ]
                 , div [ Style.classes.pagination ]
@@ -159,7 +159,7 @@ view model =
                                 }
                                 model
                                 >> Page.SetIngredientsPagination
-                        , elements = viewEditIngredients
+                        , elements = viewIngredients
                         }
                     ]
                 ]
@@ -185,9 +185,9 @@ view model =
                             ]
                         ]
                     , tbody []
-                        (viewEditComplexIngredients
+                        (viewComplexIngredients
                             |> Paginate.page
-                            |> List.map viewEditComplexIngredient
+                            |> List.map viewComplexIngredientState
                         )
                     ]
                 , div [ Style.classes.pagination ]
@@ -199,7 +199,7 @@ view model =
                                 }
                                 model
                                 >> Page.SetComplexIngredientsPagination
-                        , elements = viewEditComplexIngredients
+                        , elements = viewComplexIngredients
                         }
                     ]
                 ]
@@ -381,7 +381,7 @@ deleteIngredientLine : Page.MeasureMap -> Page.FoodMap -> Ingredient -> Html Pag
 deleteIngredientLine measureMap foodMap ingredient =
     ingredientLineWith
         { controls =
-            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick (Page.ConfirmDeleteIngredient ingredient.id) ] [ text "Confirm" ] ]
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick (Page.ConfirmDeleteIngredient ingredient.id) ] [ text "Delete?" ] ]
             , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.CancelDeleteIngredient ingredient.id) ] [ text "Cancel" ] ]
             ]
         , onClick = []
@@ -435,7 +435,7 @@ deleteComplexIngredientLine : Page.RecipeMap -> Page.ComplexFoodMap -> ComplexIn
 deleteComplexIngredientLine recipeMap complexFoodMap complexIngredient =
     complexIngredientLineWith
         { controls =
-            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick (Page.ConfirmDeleteComplexIngredient complexIngredient.complexFoodId) ] [ text "Confirm" ] ]
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick (Page.ConfirmDeleteComplexIngredient complexIngredient.complexFoodId) ] [ text "Delete?" ] ]
             , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.CancelDeleteComplexIngredient complexIngredient.complexFoodId) ] [ text "Cancel" ] ]
             ]
         , onClick = []

@@ -1,11 +1,12 @@
 module Pages.ReferenceEntries.View exposing (view)
 
+import Api.Auxiliary exposing (NutrientCode)
 import Api.Types.Nutrient exposing (Nutrient)
+import Api.Types.NutrientUnit as NutrientUnit
 import Api.Types.ReferenceEntry exposing (ReferenceEntry)
 import Basics.Extra exposing (flip)
 import Dict
-import Either
-import Html exposing (Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, disabled, scope, value)
 import Html.Attributes.Extra exposing (stringProperty)
 import Html.Events exposing (onClick, onInput)
@@ -40,16 +41,18 @@ view model =
         model
     <|
         let
-            viewEditReferenceEntry =
-                Either.unpack
-                    (editOrDeleteReferenceEntryLine model.nutrients)
-                    (\e -> e.update |> editReferenceEntryLine model.nutrients e.original)
+            viewReferenceEntryState =
+                Editing.unpack
+                    { onView = viewReferenceEntryLine model.nutrients
+                    , onUpdate = updateReferenceEntryLine model.nutrients
+                    , onDelete = deleteReferenceEntryLine model.nutrients
+                    }
 
-            viewEditReferenceEntries =
+            viewReferenceEntries =
                 model.referenceEntries
-                    |> Dict.filter (\_ v -> SearchUtil.search model.referenceEntriesSearchString (Editing.field .nutrientCode v |> Page.nutrientNameOrEmpty model.nutrients))
+                    |> Dict.filter (\_ v -> SearchUtil.search model.referenceEntriesSearchString (v.original.nutrientCode |> nutrientInfo model.nutrients |> .name))
                     |> Dict.toList
-                    |> List.sortBy (\( k, _ ) -> Page.nutrientNameOrEmpty model.nutrients k |> String.toLower)
+                    |> List.sortBy (\( k, _ ) -> nutrientInfo model.nutrients k |> .unitName |> String.toLower)
                     |> List.map Tuple.second
                     |> ViewUtil.paginate
                         { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.referenceEntries
@@ -100,9 +103,9 @@ view model =
                             ]
                         ]
                     , tbody []
-                        (viewEditReferenceEntries
+                        (viewReferenceEntries
                             |> Paginate.page
-                            |> List.map viewEditReferenceEntry
+                            |> List.map viewReferenceEntryState
                         )
                     ]
                 ]
@@ -115,7 +118,7 @@ view model =
                             }
                             model
                             >> Page.SetPagination
-                    , elements = viewEditReferenceEntries
+                    , elements = viewReferenceEntries
                     }
                 ]
             , div [ Style.classes.addView ]
@@ -162,32 +165,74 @@ view model =
             ]
 
 
-editOrDeleteReferenceEntryLine : Page.NutrientMap -> ReferenceEntry -> Html Page.Msg
-editOrDeleteReferenceEntryLine nutrientMap referenceNutrient =
+viewReferenceEntryLine : Page.NutrientMap -> ReferenceEntry -> Html Page.Msg
+viewReferenceEntryLine nutrientMap referenceEntry =
     let
         editMsg =
-            Page.EnterEditReferenceEntry referenceNutrient.nutrientCode
+            Page.EnterEditReferenceEntry referenceEntry.nutrientCode |> onClick
+    in
+    referenceEntryLineWith
+        { controls =
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
+            , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.RequestDeleteReferenceEntry referenceEntry.nutrientCode) ] [ text "Delete" ] ]
+            ]
+        , onClick = [ editMsg ]
+        , nutrientMap = nutrientMap
+        }
+        referenceEntry
+
+
+deleteReferenceEntryLine : Page.NutrientMap -> ReferenceEntry -> Html Page.Msg
+deleteReferenceEntryLine nutrientMap referenceEntry =
+    referenceEntryLineWith
+        { controls =
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteReferenceEntry referenceEntry.nutrientCode) ] [ text "Delete?" ] ]
+            , td [ Style.classes.controls ] [ button [ Style.classes.button.confirm, onClick (Page.CancelDeleteReferenceEntry referenceEntry.nutrientCode) ] [ text "Cancel" ] ]
+            ]
+        , onClick = []
+        , nutrientMap = nutrientMap
+        }
+        referenceEntry
+
+
+referenceEntryLineWith :
+    { controls : List (Html Page.Msg)
+    , onClick : List (Attribute Page.Msg)
+    , nutrientMap : Page.NutrientMap
+    }
+    -> ReferenceEntry
+    -> Html Page.Msg
+referenceEntryLineWith ps referenceNutrient =
+    let
+        withOnClick =
+            (++) ps.onClick
+
+        info =
+            nutrientInfo ps.nutrientMap referenceNutrient.nutrientCode
     in
     tr [ Style.classes.editing ]
-        [ td [ Style.classes.editable, onClick editMsg ] [ label [] [ text <| Page.nutrientNameOrEmpty nutrientMap <| referenceNutrient.nutrientCode ] ]
-        , td [ Style.classes.editable, Style.classes.numberLabel, onClick editMsg ] [ label [] [ text <| String.fromFloat <| referenceNutrient.amount ] ]
-        , td [ Style.classes.editable, Style.classes.numberLabel, onClick editMsg ] [ label [] [ text <| Page.nutrientUnitOrEmpty nutrientMap <| referenceNutrient.nutrientCode ] ]
-        , td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick editMsg ] [ text "Edit" ] ]
-        , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.DeleteReferenceEntry referenceNutrient.nutrientCode) ] [ text "Delete" ] ]
-        ]
+        ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| info.name ] ]
+         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| referenceNutrient.amount ] ]
+         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| info.unitName ] ]
+         ]
+            ++ ps.controls
+        )
 
 
-editReferenceEntryLine : Page.NutrientMap -> ReferenceEntry -> ReferenceEntryUpdateClientInput -> Html Page.Msg
-editReferenceEntryLine nutrientMap referenceNutrient referenceNutrientUpdateClientInput =
+updateReferenceEntryLine : Page.NutrientMap -> ReferenceEntry -> ReferenceEntryUpdateClientInput -> Html Page.Msg
+updateReferenceEntryLine nutrientMap referenceNutrient referenceNutrientUpdateClientInput =
     let
         saveMsg =
             Page.SaveReferenceEntryEdit referenceNutrientUpdateClientInput
 
         cancelMsg =
             Page.ExitEditReferenceEntryAt referenceNutrient.nutrientCode
+
+        info =
+            nutrientInfo nutrientMap referenceNutrient.nutrientCode
     in
     tr [ Style.classes.editLine ]
-        [ td [] [ label [] [ text (referenceNutrient.nutrientCode |> Page.nutrientNameOrEmpty nutrientMap) ] ]
+        [ td [] [ label [] [ text <| .name <| info ] ]
         , td [ Style.classes.numberCell ]
             [ input
                 [ value
@@ -208,7 +253,7 @@ editReferenceEntryLine nutrientMap referenceNutrient referenceNutrientUpdateClie
             ]
         , td [ Style.classes.numberCell ]
             [ label [ Style.classes.numberLabel ]
-                [ text <| Page.nutrientUnitOrEmpty nutrientMap <| referenceNutrient.nutrientCode
+                [ text <| .unitName <| info
                 ]
             ]
         , td []
@@ -222,7 +267,7 @@ editReferenceEntryLine nutrientMap referenceNutrient referenceNutrientUpdateClie
         ]
 
 
-viewNutrientLine : Page.NutrientMap -> Page.ReferenceEntryOrUpdateMap -> Page.AddNutrientMap -> Nutrient -> Html Page.Msg
+viewNutrientLine : Page.NutrientMap -> Page.ReferenceEntryStateMap -> Page.AddNutrientMap -> Nutrient -> Html Page.Msg
 viewNutrientLine nutrientMap referenceEntries referenceEntriesToAdd nutrient =
     let
         addMsg =
@@ -263,7 +308,7 @@ viewNutrientLine nutrientMap referenceEntries referenceEntriesToAdd nutrient =
                                 Just referenceNutrient ->
                                     ( "Update"
                                     , referenceNutrient
-                                        |> Editing.field identity
+                                        |> .original
                                         |> ReferenceEntryUpdateClientInput.from
                                         |> ReferenceEntryUpdateClientInput.lenses.amount.set referenceNutrientToAdd.amount
                                         |> Page.SaveReferenceEntryEdit
@@ -287,7 +332,7 @@ viewNutrientLine nutrientMap referenceEntries referenceEntriesToAdd nutrient =
                             ]
                             []
                         ]
-                    , td [ Style.classes.numberCell ] [ label [] [ text (referenceNutrientToAdd.nutrientCode |> Page.nutrientUnitOrEmpty nutrientMap) ] ]
+                    , td [ Style.classes.numberCell ] [ label [] [ text <| .unitName <| nutrientInfo nutrientMap <| referenceNutrientToAdd.nutrientCode ] ]
                     , td [ Style.classes.controls ]
                         [ button
                             [ confirmStyle
@@ -303,3 +348,17 @@ viewNutrientLine nutrientMap referenceEntries referenceEntriesToAdd nutrient =
         (td [ Style.classes.editable ] [ label [] [ text nutrient.name ] ]
             :: process
         )
+
+
+nutrientInfo : NutrientMap -> NutrientCode -> { name : String, unitName : String }
+nutrientInfo nutrientMap =
+    flip Dict.get nutrientMap
+        >> Maybe.Extra.unwrap
+            { name = ""
+            , unitName = ""
+            }
+            (\nutrient ->
+                { name = nutrient.name
+                , unitName = nutrient.unit |> NutrientUnit.toString
+                }
+            )

@@ -42,12 +42,12 @@ view model =
         model
     <|
         let
-            viewEditReferenceMap =
+            viewReferenceMapState =
                 Either.unpack
                     (editOrDeleteReferenceMapLine model.authorizedAccess.configuration)
                     (\e -> e.update |> editReferenceMapLine)
 
-            viewEditReferenceMaps =
+            viewReferenceMaps =
                 model.referenceMaps
                     |> Dict.filter (\_ v -> SearchUtil.search model.searchString (Editing.field .name v))
                     |> Dict.values
@@ -79,7 +79,7 @@ view model =
                             ]
                         , tbody []
                             (creationLine
-                                ++ (viewEditReferenceMaps |> Paginate.page |> List.map viewEditReferenceMap)
+                                ++ (viewReferenceMaps |> Paginate.page |> List.map viewReferenceMapState)
                             )
                         ]
                    , div [ Style.classes.pagination ]
@@ -91,7 +91,7 @@ view model =
                                     }
                                     model
                                     >> Page.SetPagination
-                            , elements = viewEditReferenceMaps
+                            , elements = viewReferenceMaps
                             }
                         ]
                    ]

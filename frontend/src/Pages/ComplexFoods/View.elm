@@ -42,14 +42,14 @@ view model =
         model
     <|
         let
-            viewEditComplexFood =
+            viewComplexFoodState =
                 Editing.unpack
                     { onView = viewComplexFoodLine model.recipes
                     , onUpdate = updateComplexFoodLine model.recipes
                     , onDelete = deleteComplexFoodLine model.recipes
                     }
 
-            viewEditComplexFoods =
+            viewComplexFoods =
                 model.complexFoods
                     |> Dict.filter (\complexFoodId _ -> SearchUtil.search model.complexFoodsSearchString (Page.complexFoodNameOrEmpty model.recipes complexFoodId))
                     |> Dict.values
@@ -104,9 +104,9 @@ view model =
                             ]
                         ]
                     , tbody []
-                        (viewEditComplexFoods
+                        (viewComplexFoods
                             |> Paginate.page
-                            |> List.map viewEditComplexFood
+                            |> List.map viewComplexFoodState
                         )
                     ]
                 , div [ Style.classes.pagination ]
@@ -118,7 +118,7 @@ view model =
                                 }
                                 model
                                 >> Page.SetPagination
-                        , elements = viewEditComplexFoods
+                        , elements = viewComplexFoods
                         }
                     ]
                 ]
@@ -187,7 +187,7 @@ deleteComplexFoodLine : Page.RecipeMap -> ComplexFood -> Html Page.Msg
 deleteComplexFoodLine recipeMap complexFood =
     complexFoodLineWith
         { controls =
-            [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteComplexFood complexFood.recipeId) ] [ text "Confirm" ] ]
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteComplexFood complexFood.recipeId) ] [ text "Delete?" ] ]
             , td [ Style.classes.controls ] [ button [ Style.classes.button.confirm, onClick (Page.CancelDeleteComplexFood complexFood.recipeId) ] [ text "Cancel" ] ]
             ]
         , onClick = []
