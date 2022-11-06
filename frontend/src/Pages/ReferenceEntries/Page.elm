@@ -2,12 +2,9 @@ module Pages.ReferenceEntries.Page exposing (..)
 
 import Api.Auxiliary exposing (JWT, NutrientCode, ReferenceMapId)
 import Api.Types.Nutrient exposing (Nutrient)
-import Api.Types.NutrientUnit as NutrientUnit exposing (NutrientUnit)
 import Api.Types.ReferenceEntry exposing (ReferenceEntry)
 import Api.Types.ReferenceMap exposing (ReferenceMap)
-import Basics.Extra exposing (flip)
 import Dict exposing (Dict)
-import Maybe.Extra
 import Monocle.Lens exposing (Lens)
 import Pages.ReferenceEntries.Pagination exposing (Pagination)
 import Pages.ReferenceEntries.ReferenceEntryCreationClientInput exposing (ReferenceEntryCreationClientInput)
