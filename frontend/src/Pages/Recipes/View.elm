@@ -1,7 +1,6 @@
 module Pages.Recipes.View exposing (view)
 
 import Addresses.Frontend
-import Api.Auxiliary exposing (RecipeId)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
@@ -27,7 +26,6 @@ import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
 import Pages.Util.ViewUtil as ViewUtil
 import Paginate
-import Set exposing (Set)
 import Util.Editing as Editing
 import Util.SearchUtil as SearchUtil
 
@@ -46,9 +44,11 @@ view model =
     <|
         let
             viewEditRecipe =
-                Either.unpack
-                    (editOrDeleteRecipeLine model.authorizedAccess.configuration model.recipesToDelete)
-                    (.update >> editRecipeLine)
+                Editing.unpack
+                    { onView = viewRecipeLine model.authorizedAccess.configuration
+                    , onUpdate = always updateRecipeLine
+                    , onDelete = deleteRecipeLine
+                    }
 
             filterOn =
                 SearchUtil.search model.searchString
@@ -57,11 +57,11 @@ view model =
                 model.recipes
                     |> Dict.filter
                         (\_ v ->
-                            filterOn (Editing.field .name v)
-                                || filterOn (Editing.field .description v |> Maybe.withDefault "")
+                            filterOn v.original.name
+                                || filterOn (v.original.description |> Maybe.withDefault "")
                         )
                     |> Dict.values
-                    |> List.sortBy (Editing.field .name >> String.toLower)
+                    |> List.sortBy (.original >> .name >> String.toLower)
                     |> ViewUtil.paginate
                         { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.recipes
                         }
@@ -129,51 +129,66 @@ createRecipe maybeCreation =
             createRecipeLine creation |> Right
 
 
-editOrDeleteRecipeLine : Configuration -> Set RecipeId -> Recipe -> Html Page.Msg
-editOrDeleteRecipeLine configuration toDelete recipe =
+viewRecipeLine : Configuration -> Recipe -> Html Page.Msg
+viewRecipeLine configuration recipe =
+    recipeLineWith
+        { controls =
+            [ td [ Style.classes.controls ]
+                [ button
+                    [ Style.classes.button.delete, onClick (Page.RequestDeleteRecipe recipe.id) ]
+                    [ text "Delete" ]
+                ]
+            , td [ Style.classes.controls ]
+                [ Links.linkButton
+                    { url = Links.frontendPage configuration <| Addresses.Frontend.ingredientEditor.address <| recipe.id
+                    , attributes = [ Style.classes.button.editor ]
+                    , children = [ text "Ingredients" ]
+                    }
+                ]
+            ]
+        }
+        recipe
+
+
+deleteRecipeLine : Recipe -> Html Page.Msg
+deleteRecipeLine recipe =
+    recipeLineWith
+        { controls =
+            [ td [ Style.classes.controls ]
+                [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteRecipe recipe.id) ] [ text "Confirm" ] ]
+            , td [ Style.classes.controls ]
+                [ button
+                    [ Style.classes.button.confirm, onClick (Page.CancelDeleteRecipe recipe.id) ]
+                    [ text "Cancel" ]
+                ]
+            ]
+        }
+        recipe
+
+
+recipeLineWith :
+    { controls : List (Html Page.Msg)
+    }
+    -> Recipe
+    -> Html Page.Msg
+recipeLineWith ps recipe =
     let
         editMsg =
             Page.EnterEditRecipe recipe.id
-
-        controls =
-            if Set.member recipe.id toDelete then
-                [ td [ Style.classes.controls ]
-                    [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteRecipe recipe.id) ] [ text "Confirm" ] ]
-                , td [ Style.classes.controls ]
-                    [ button
-                        [ Style.classes.button.confirm, onClick (Page.CancelDeleteRecipe recipe.id) ]
-                        [ text "Cancel" ]
-                    ]
-                ]
-
-            else
-                [ td [ Style.classes.controls ]
-                    [ button [ Style.classes.button.edit, onClick editMsg ] [ text "Edit" ] ]
-                , td [ Style.classes.controls ]
-                    [ button
-                        [ Style.classes.button.delete, onClick (Page.RequestDeleteRecipe recipe.id) ]
-                        [ text "Delete" ]
-                    ]
-                , td [ Style.classes.controls ]
-                    [ Links.linkButton
-                        { url = Links.frontendPage configuration <| Addresses.Frontend.ingredientEditor.address <| recipe.id
-                        , attributes = [ Style.classes.button.editor ]
-                        , children = [ text "Ingredients" ]
-                        }
-                    ]
-                ]
     in
     tr [ Style.classes.editing ]
         ([ td [ Style.classes.editable, onClick editMsg ] [ label [] [ text recipe.name ] ]
          , td [ Style.classes.editable, onClick editMsg ] [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
          , td [ Style.classes.editable, Style.classes.numberLabel, onClick editMsg ] [ label [] [ text <| String.fromFloat <| recipe.numberOfServings ] ]
+         , td [ Style.classes.controls ]
+            [ button [ Style.classes.button.edit, onClick editMsg ] [ text "Edit" ] ]
          ]
-            ++ controls
+            ++ ps.controls
         )
 
 
-editRecipeLine : RecipeUpdateClientInput -> Html Page.Msg
-editRecipeLine recipeUpdateClientInput =
+updateRecipeLine : RecipeUpdateClientInput -> Html Page.Msg
+updateRecipeLine recipeUpdateClientInput =
     editRecipeLineWith
         { saveMsg = Page.SaveRecipeEdit recipeUpdateClientInput.id
         , nameLens = RecipeUpdateClientInput.lenses.name
