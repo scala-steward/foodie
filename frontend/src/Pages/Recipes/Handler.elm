@@ -9,7 +9,7 @@ import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens as Lens
 import Monocle.Optional
-import Pages.Recipes.Page as Page exposing (RecipeOrUpdate)
+import Pages.Recipes.Page as Page exposing (RecipeState)
 import Pages.Recipes.Pagination as Pagination exposing (Pagination)
 import Pages.Recipes.RecipeCreationClientInput as RecipeCreationClientInput exposing (RecipeCreationClientInput)
 import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
@@ -110,7 +110,7 @@ gotCreateRecipeResponse model dataOrError =
             (\recipe ->
                 model
                     |> Lens.modify Page.lenses.recipes
-                        (Dict.insert recipe.id (Left recipe))
+                        (Dict.insert recipe.id (Editing.asView recipe))
                     |> Page.lenses.recipeToAdd.set Nothing
             )
     , Cmd.none
@@ -121,7 +121,7 @@ updateRecipe : Page.Model -> RecipeUpdateClientInput -> ( Page.Model, Cmd Page.M
 updateRecipe model recipeUpdate =
     ( model
         |> mapRecipeOrUpdateById recipeUpdate.id
-            (Either.mapRight (Editing.lenses.update.set recipeUpdate))
+            (Editing.lenses.update.set recipeUpdate)
     , Cmd.none
     )
 
@@ -132,11 +132,10 @@ saveRecipeEdit model recipeId =
     , model
         |> Page.lenses.recipes.get
         |> Dict.get recipeId
-        |> Maybe.andThen Either.rightToMaybe
+        |> Maybe.andThen Editing.extractUpdate
         |> Maybe.Extra.unwrap
             Cmd.none
-            (.update
-                >> RecipeUpdateClientInput.to
+            (RecipeUpdateClientInput.to
                 >> Requests.saveRecipe model.authorizedAccess
             )
     )
@@ -150,7 +149,7 @@ gotSaveRecipeResponse model dataOrError =
             (\recipe ->
                 model
                     |> mapRecipeOrUpdateById recipe.id
-                        (Either.andThenRight (always (Left recipe)))
+                        (always (Editing.asView recipe))
             )
     , Cmd.none
     )
@@ -160,14 +159,14 @@ enterEditRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 enterEditRecipe model recipeId =
     ( model
         |> mapRecipeOrUpdateById recipeId
-            (Either.unpack (\recipe -> { original = recipe, update = RecipeUpdateClientInput.from recipe }) identity >> Right)
+            (Editing.viewToUpdate RecipeUpdateClientInput.from)
     , Cmd.none
     )
 
 
 exitEditRecipeAt : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 exitEditRecipeAt model recipeId =
-    ( model |> mapRecipeOrUpdateById recipeId (Either.andThen (.original >> Left))
+    ( model |> mapRecipeOrUpdateById recipeId Editing.anyToView
     , Cmd.none
     )
 
@@ -215,7 +214,11 @@ gotFetchRecipesResponse model dataOrError =
         |> Either.unpack (flip setError model)
             (\recipes ->
                 model
-                    |> Page.lenses.recipes.set (recipes |> List.map (\r -> ( r.id, Left r )) |> Dict.fromList)
+                    |> Page.lenses.recipes.set
+                        (recipes
+                            |> List.map (\r -> ( r.id, r |> Editing.asView ))
+                            |> Dict.fromList
+                        )
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.recipes).set True
             )
     , Cmd.none
@@ -244,7 +247,7 @@ setSearchString model string =
     )
 
 
-mapRecipeOrUpdateById : RecipeId -> (Page.RecipeOrUpdate -> Page.RecipeOrUpdate) -> Page.Model -> Page.Model
+mapRecipeOrUpdateById : RecipeId -> (Page.RecipeState -> Page.RecipeState) -> Page.Model -> Page.Model
 mapRecipeOrUpdateById recipeId =
     Page.lenses.recipes
         |> LensUtil.updateById recipeId
