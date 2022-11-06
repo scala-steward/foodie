@@ -3,7 +3,6 @@ module Pages.ReferenceMaps.Page exposing (..)
 import Api.Auxiliary exposing (JWT, ReferenceMapId)
 import Api.Types.ReferenceMap exposing (ReferenceMap)
 import Dict exposing (Dict)
-import Either exposing (Either)
 import Monocle.Lens exposing (Lens)
 import Pages.ReferenceMaps.Pagination exposing (Pagination)
 import Pages.ReferenceMaps.ReferenceMapCreationClientInput exposing (ReferenceMapCreationClientInput)
@@ -17,7 +16,7 @@ import Util.Initialization exposing (Initialization)
 
 type alias Model =
     { authorizedAccess : AuthorizedAccess
-    , referenceMaps : ReferenceMapOrUpdateMap
+    , referenceMaps : ReferenceMapStateMap
     , referenceMapToAdd : Maybe ReferenceMapCreationClientInput
     , searchString : String
     , initialization : Initialization Status
@@ -25,16 +24,16 @@ type alias Model =
     }
 
 
-type alias ReferenceMapOrUpdate =
-    Either ReferenceMap (Editing ReferenceMap ReferenceMapUpdateClientInput)
+type alias ReferenceMapState =
+    Editing ReferenceMap ReferenceMapUpdateClientInput
 
 
-type alias ReferenceMapOrUpdateMap =
-    Dict ReferenceMapId ReferenceMapOrUpdate
+type alias ReferenceMapStateMap =
+    Dict ReferenceMapId ReferenceMapState
 
 
 lenses :
-    { referenceMaps : Lens Model ReferenceMapOrUpdateMap
+    { referenceMaps : Lens Model ReferenceMapStateMap
     , referenceMapToAdd : Lens Model (Maybe ReferenceMapCreationClientInput)
     , searchString : Lens Model String
     , initialization : Lens Model (Initialization Status)
@@ -63,7 +62,9 @@ type Msg
     | GotSaveReferenceMapResponse (Result Error ReferenceMap)
     | EnterEditReferenceMap ReferenceMapId
     | ExitEditReferenceMapAt ReferenceMapId
-    | DeleteReferenceMap ReferenceMapId
+    | RequestDeleteReferenceMap ReferenceMapId
+    | ConfirmDeleteReferenceMap ReferenceMapId
+    | CancelDeleteReferenceMap ReferenceMapId
     | GotDeleteReferenceMapResponse ReferenceMapId (Result Error ())
     | GotFetchReferenceMapsResponse (Result Error (List ReferenceMap))
     | SetPagination Pagination

@@ -9,7 +9,7 @@ import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens as Lens
 import Monocle.Optional
-import Pages.ReferenceMaps.Page as Page exposing (ReferenceMapOrUpdate)
+import Pages.ReferenceMaps.Page as Page exposing (ReferenceMapState)
 import Pages.ReferenceMaps.Pagination as Pagination exposing (Pagination)
 import Pages.ReferenceMaps.ReferenceMapCreationClientInput as ReferenceMapCreationClientInput exposing (ReferenceMapCreationClientInput)
 import Pages.ReferenceMaps.ReferenceMapUpdateClientInput as ReferenceMapUpdateClientInput exposing (ReferenceMapUpdateClientInput)
@@ -62,8 +62,14 @@ update msg model =
         Page.ExitEditReferenceMapAt referenceMapId ->
             exitEditReferenceMapAt model referenceMapId
 
-        Page.DeleteReferenceMap referenceMapId ->
-            deleteReferenceMap model referenceMapId
+        Page.RequestDeleteReferenceMap referenceMapId ->
+            requestDeleteReferenceMap model referenceMapId
+
+        Page.ConfirmDeleteReferenceMap referenceMapId ->
+            confirmDeleteReferenceMap model referenceMapId
+
+        Page.CancelDeleteReferenceMap referenceMapId ->
+            cancelDeleteReferenceMap model referenceMapId
 
         Page.GotDeleteReferenceMapResponse deletedId dataOrError ->
             gotDeleteReferenceMapResponse model deletedId dataOrError
@@ -102,7 +108,7 @@ gotCreateReferenceMapResponse model dataOrError =
             (\referenceMap ->
                 model
                     |> Lens.modify Page.lenses.referenceMaps
-                        (Dict.insert referenceMap.id (Left referenceMap))
+                        (Dict.insert referenceMap.id (referenceMap |> Editing.asView))
                     |> Page.lenses.referenceMapToAdd.set Nothing
             )
     , Cmd.none
@@ -113,7 +119,7 @@ updateReferenceMap : Page.Model -> ReferenceMapUpdateClientInput -> ( Page.Model
 updateReferenceMap model referenceMapUpdate =
     ( model
         |> mapReferenceMapOrUpdateById referenceMapUpdate.id
-            (Either.mapRight (Editing.lenses.update.set referenceMapUpdate))
+            (Editing.lenses.update.set referenceMapUpdate)
     , Cmd.none
     )
 
@@ -124,11 +130,10 @@ saveReferenceMapEdit model referenceMapId =
     , model
         |> Page.lenses.referenceMaps.get
         |> Dict.get referenceMapId
-        |> Maybe.andThen Either.rightToMaybe
+        |> Maybe.andThen Editing.extractUpdate
         |> Maybe.Extra.unwrap
             Cmd.none
-            (.update
-                >> ReferenceMapUpdateClientInput.to
+            (ReferenceMapUpdateClientInput.to
                 >> Requests.saveReferenceMap model.authorizedAccess
             )
     )
@@ -142,7 +147,7 @@ gotSaveReferenceMapResponse model dataOrError =
             (\referenceMap ->
                 model
                     |> mapReferenceMapOrUpdateById referenceMap.id
-                        (Either.andThenRight (always (Left referenceMap)))
+                        (referenceMap |> Editing.asView |> always)
             )
     , Cmd.none
     )
@@ -152,22 +157,36 @@ enterEditReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.M
 enterEditReferenceMap model referenceMapId =
     ( model
         |> mapReferenceMapOrUpdateById referenceMapId
-            (Either.unpack (\referenceMap -> { original = referenceMap, update = ReferenceMapUpdateClientInput.from referenceMap }) identity >> Right)
+            (Editing.toUpdate ReferenceMapUpdateClientInput.from)
     , Cmd.none
     )
 
 
 exitEditReferenceMapAt : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
 exitEditReferenceMapAt model referenceMapId =
-    ( model |> mapReferenceMapOrUpdateById referenceMapId (Either.andThen (.original >> Left))
+    ( model |> mapReferenceMapOrUpdateById referenceMapId Editing.toView
     , Cmd.none
     )
 
 
-deleteReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
-deleteReferenceMap model referenceMapId =
+requestDeleteReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
+requestDeleteReferenceMap model referenceMapId =
+    ( model |> mapReferenceMapOrUpdateById referenceMapId Editing.toDelete
+    , Cmd.none
+    )
+
+
+confirmDeleteReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
+confirmDeleteReferenceMap model referenceMapId =
     ( model
     , Requests.deleteReferenceMap model.authorizedAccess referenceMapId
+    )
+
+
+cancelDeleteReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
+cancelDeleteReferenceMap model referenceMapId =
+    ( model |> mapReferenceMapOrUpdateById referenceMapId Editing.toView
+    , Cmd.none
     )
 
 
@@ -193,7 +212,7 @@ gotFetchReferenceMapsResponse model dataOrError =
         |> Either.unpack (flip setError model)
             (\referenceMaps ->
                 model
-                    |> Page.lenses.referenceMaps.set (referenceMaps |> List.map (\r -> ( r.id, Left r )) |> Dict.fromList)
+                    |> Page.lenses.referenceMaps.set (referenceMaps |> List.map (\r -> ( r.id, r |> Editing.asView )) |> Dict.fromList)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.referenceMaps).set True
             )
     , Cmd.none
@@ -222,7 +241,7 @@ setSearchString model string =
     )
 
 
-mapReferenceMapOrUpdateById : ReferenceMapId -> (Page.ReferenceMapOrUpdate -> Page.ReferenceMapOrUpdate) -> Page.Model -> Page.Model
+mapReferenceMapOrUpdateById : ReferenceMapId -> (Page.ReferenceMapState -> Page.ReferenceMapState) -> Page.Model -> Page.Model
 mapReferenceMapOrUpdateById referenceMapId =
     Page.lenses.referenceMaps
         |> LensUtil.updateById referenceMapId
