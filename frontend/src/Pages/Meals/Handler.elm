@@ -62,8 +62,14 @@ update msg model =
         Page.ExitEditMealAt mealId ->
             exitEditMealAt model mealId
 
-        Page.DeleteMeal mealId ->
-            deleteMeal model mealId
+        Page.RequestDeleteMeal mealId ->
+            requestDeleteMeal model mealId
+
+        Page.ConfirmDeleteMeal mealId ->
+            confirmDeleteMeal model mealId
+
+        Page.CancelDeleteMeal mealId ->
+            cancelDeleteMeal model mealId
 
         Page.GotDeleteMealResponse deletedId dataOrError ->
             gotDeleteMealResponse model deletedId dataOrError
@@ -102,8 +108,7 @@ gotCreateMealResponse model dataOrError =
         |> Either.unpack (flip setError model)
             (\meal ->
                 model
-                    |> Lens.modify Page.lenses.meals
-                        (Dict.insert meal.id (Left meal))
+                    |> Lens.modify Page.lenses.meals (Dict.insert meal.id (meal |> Editing.asView))
                     |> Page.lenses.mealToAdd.set Nothing
             )
     , Cmd.none
@@ -113,8 +118,8 @@ gotCreateMealResponse model dataOrError =
 updateMeal : Page.Model -> MealUpdateClientInput -> ( Page.Model, Cmd Page.Msg )
 updateMeal model mealUpdateClientInput =
     ( model
-        |> mapMealOrUpdateById mealUpdateClientInput.id
-            (Either.mapRight (Editing.lenses.update.set mealUpdateClientInput))
+        |> mapMealStateById mealUpdateClientInput.id
+            (Editing.lenses.update.set mealUpdateClientInput)
     , Cmd.none
     )
 
@@ -125,8 +130,8 @@ saveMealEdit model mealId =
     , model
         |> Page.lenses.meals.get
         |> Dict.get mealId
-        |> Maybe.andThen Either.rightToMaybe
-        |> Maybe.andThen (.update >> MealUpdateClientInput.to)
+        |> Maybe.andThen Editing.extractUpdate
+        |> Maybe.andThen MealUpdateClientInput.to
         |> Maybe.Extra.unwrap
             Cmd.none
             (Requests.saveMeal model.authorizedAccess)
@@ -140,8 +145,8 @@ gotSaveMealResponse model dataOrError =
         |> Either.unpack (flip setError model)
             (\meal ->
                 model
-                    |> mapMealOrUpdateById meal.id
-                        (Either.andThenRight (always (Left meal)))
+                    |> mapMealStateById meal.id
+                        (meal |> Editing.asView |> always)
             )
     , Cmd.none
     )
@@ -150,23 +155,37 @@ gotSaveMealResponse model dataOrError =
 enterEditMeal : Page.Model -> MealId -> ( Page.Model, Cmd Page.Msg )
 enterEditMeal model mealId =
     ( model
-        |> mapMealOrUpdateById mealId
-            (Either.unpack (\meal -> { original = meal, update = MealUpdateClientInput.from meal }) identity >> Right)
+        |> mapMealStateById mealId
+            (Editing.toUpdate MealUpdateClientInput.from)
     , Cmd.none
     )
 
 
 exitEditMealAt : Page.Model -> MealId -> ( Page.Model, Cmd Page.Msg )
 exitEditMealAt model mealId =
-    ( model |> mapMealOrUpdateById mealId (Either.andThen (.original >> Left))
+    ( model |> mapMealStateById mealId Editing.toView
     , Cmd.none
     )
 
 
-deleteMeal : Page.Model -> MealId -> ( Page.Model, Cmd Page.Msg )
-deleteMeal model mealId =
+requestDeleteMeal : Page.Model -> MealId -> ( Page.Model, Cmd Page.Msg )
+requestDeleteMeal model mealId =
+    ( model |> mapMealStateById mealId Editing.toDelete
+    , Cmd.none
+    )
+
+
+confirmDeleteMeal : Page.Model -> MealId -> ( Page.Model, Cmd Page.Msg )
+confirmDeleteMeal model mealId =
     ( model
     , Requests.deleteMeal model.authorizedAccess mealId
+    )
+
+
+cancelDeleteMeal : Page.Model -> MealId -> ( Page.Model, Cmd Page.Msg )
+cancelDeleteMeal model mealId =
+    ( model |> mapMealStateById mealId Editing.toView
+    , Cmd.none
     )
 
 
@@ -176,9 +195,9 @@ gotDeleteMealResponse model deletedId dataOrError =
         |> Either.fromResult
         |> Either.unpack (flip setError model)
             (\_ ->
-                Lens.modify Page.lenses.meals
-                    (Dict.remove deletedId)
-                    model
+                model
+                    |> Lens.modify Page.lenses.meals
+                        (Dict.remove deletedId)
             )
     , Cmd.none
     )
@@ -193,7 +212,7 @@ gotFetchMealsResponse model dataOrError =
                 model
                     |> Page.lenses.meals.set
                         (meals
-                            |> List.map (\meal -> ( meal.id, Left meal ))
+                            |> List.map (\meal -> ( meal.id, meal |> Editing.asView ))
                             |> Dict.fromList
                         )
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.meals).set True
@@ -224,8 +243,8 @@ setSearchString model string =
     )
 
 
-mapMealOrUpdateById : MealId -> (Page.MealOrUpdate -> Page.MealOrUpdate) -> Page.Model -> Page.Model
-mapMealOrUpdateById mealId =
+mapMealStateById : MealId -> (Page.MealState -> Page.MealState) -> Page.Model -> Page.Model
+mapMealStateById mealId =
     Page.lenses.meals
         |> LensUtil.updateById mealId
 

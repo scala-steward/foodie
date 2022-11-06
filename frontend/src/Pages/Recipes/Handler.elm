@@ -118,7 +118,7 @@ gotCreateRecipeResponse model dataOrError =
 updateRecipe : Page.Model -> RecipeUpdateClientInput -> ( Page.Model, Cmd Page.Msg )
 updateRecipe model recipeUpdate =
     ( model
-        |> mapRecipeOrUpdateById recipeUpdate.id
+        |> mapRecipeStateById recipeUpdate.id
             (Editing.lenses.update.set recipeUpdate)
     , Cmd.none
     )
@@ -146,7 +146,7 @@ gotSaveRecipeResponse model dataOrError =
         |> Either.unpack (flip setError model)
             (\recipe ->
                 model
-                    |> mapRecipeOrUpdateById recipe.id
+                    |> mapRecipeStateById recipe.id
                         (always (Editing.asView recipe))
             )
     , Cmd.none
@@ -156,7 +156,7 @@ gotSaveRecipeResponse model dataOrError =
 enterEditRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 enterEditRecipe model recipeId =
     ( model
-        |> mapRecipeOrUpdateById recipeId
+        |> mapRecipeStateById recipeId
             (Editing.toUpdate RecipeUpdateClientInput.from)
     , Cmd.none
     )
@@ -164,14 +164,14 @@ enterEditRecipe model recipeId =
 
 exitEditRecipeAt : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 exitEditRecipeAt model recipeId =
-    ( model |> mapRecipeOrUpdateById recipeId Editing.toView
+    ( model |> mapRecipeStateById recipeId Editing.toView
     , Cmd.none
     )
 
 
 requestDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 requestDeleteRecipe model recipeId =
-    ( model |> mapRecipeOrUpdateById recipeId Editing.toDelete
+    ( model |> mapRecipeStateById recipeId Editing.toDelete
     , Cmd.none
     )
 
@@ -185,7 +185,7 @@ confirmDeleteRecipe model recipeId =
 
 cancelDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 cancelDeleteRecipe model recipeId =
-    ( model |> mapRecipeOrUpdateById recipeId Editing.toView
+    ( model |> mapRecipeStateById recipeId Editing.toView
     , Cmd.none
     )
 
@@ -244,8 +244,8 @@ setSearchString model string =
     )
 
 
-mapRecipeOrUpdateById : RecipeId -> (Page.RecipeState -> Page.RecipeState) -> Page.Model -> Page.Model
-mapRecipeOrUpdateById recipeId =
+mapRecipeStateById : RecipeId -> (Page.RecipeState -> Page.RecipeState) -> Page.Model -> Page.Model
+mapRecipeStateById recipeId =
     Page.lenses.recipes
         |> LensUtil.updateById recipeId
 
