@@ -381,8 +381,8 @@ deleteIngredientLine : Page.MeasureMap -> Page.FoodMap -> Ingredient -> Html Pag
 deleteIngredientLine measureMap foodMap ingredient =
     ingredientLineWith
         { controls =
-            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick (Page.ConfirmDeleteIngredient ingredient.id) ] [ text "Delete?" ] ]
-            , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.CancelDeleteIngredient ingredient.id) ] [ text "Cancel" ] ]
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteIngredient ingredient.id) ] [ text "Delete?" ] ]
+            , td [ Style.classes.controls ] [ button [ Style.classes.button.confirm, onClick (Page.CancelDeleteIngredient ingredient.id) ] [ text "Cancel" ] ]
             ]
         , onClick = []
         , foodMap = foodMap
