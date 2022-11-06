@@ -382,7 +382,7 @@ deleteIngredientLine measureMap foodMap ingredient =
     ingredientLineWith
         { controls =
             [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick (Page.ConfirmDeleteIngredient ingredient.id) ] [ text "Confirm" ] ]
-            , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.CancelDeleteIngredient ingredient.id) ] [ text "Delete" ] ]
+            , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.CancelDeleteIngredient ingredient.id) ] [ text "Cancel" ] ]
             ]
         , onClick = []
         , foodMap = foodMap
@@ -435,8 +435,8 @@ deleteComplexIngredientLine : Page.RecipeMap -> Page.ComplexFoodMap -> ComplexIn
 deleteComplexIngredientLine recipeMap complexFoodMap complexIngredient =
     complexIngredientLineWith
         { controls =
-            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick (Page.ConfirmDeleteComplexIngredient complexIngredient.complexFoodId) ] [ text "Edit" ] ]
-            , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.CancelDeleteComplexIngredient complexIngredient.complexFoodId) ] [ text "Delete" ] ]
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick (Page.ConfirmDeleteComplexIngredient complexIngredient.complexFoodId) ] [ text "Confirm" ] ]
+            , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.CancelDeleteComplexIngredient complexIngredient.complexFoodId) ] [ text "Cancel" ] ]
             ]
         , onClick = []
         , recipeMap = recipeMap
