@@ -44,43 +44,21 @@ unpack fs editing =
         editing.editState
 
 
-viewToUpdate : (original -> update) -> Editing original update -> Editing original update
-viewToUpdate to editing =
+toUpdate : (original -> update) -> Editing original update -> Editing original update
+toUpdate to editing =
     lenses.editState.set
-        (EditState.unpack
-            { onView = editing.original |> to |> EditState.Update
-            , onUpdate = EditState.Update
-            , onDelete = EditState.Delete
-            }
-            editing.editState
-        )
+        (EditState.Update <| to <| editing.original)
         editing
 
 
-viewToDelete : Editing original update -> Editing original update
-viewToDelete editing =
-    lenses.editState.set
-        (EditState.unpack
-            { onView = EditState.Delete
-            , onUpdate = EditState.Update
-            , onDelete = EditState.Delete
-            }
-            editing.editState
-        )
-        editing
+toDelete : Editing original update -> Editing original update
+toDelete =
+    lenses.editState.set EditState.Delete
 
 
-anyToView : Editing original update -> Editing original update
-anyToView editing =
-    lenses.editState.set
-        (EditState.unpack
-            { onView = EditState.View
-            , onUpdate = EditState.View |> always
-            , onDelete = EditState.View
-            }
-            editing.editState
-        )
-        editing
+toView : Editing original update -> Editing original update
+toView =
+    lenses.editState.set EditState.View
 
 
 extractUpdate : Editing original update -> Maybe update

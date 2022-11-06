@@ -157,21 +157,21 @@ enterEditRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 enterEditRecipe model recipeId =
     ( model
         |> mapRecipeOrUpdateById recipeId
-            (Editing.viewToUpdate RecipeUpdateClientInput.from)
+            (Editing.toUpdate RecipeUpdateClientInput.from)
     , Cmd.none
     )
 
 
 exitEditRecipeAt : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 exitEditRecipeAt model recipeId =
-    ( model |> mapRecipeOrUpdateById recipeId Editing.anyToView
+    ( model |> mapRecipeOrUpdateById recipeId Editing.toView
     , Cmd.none
     )
 
 
 requestDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 requestDeleteRecipe model recipeId =
-    ( model |> mapRecipeOrUpdateById recipeId Editing.viewToDelete
+    ( model |> mapRecipeOrUpdateById recipeId Editing.toDelete
     , Cmd.none
     )
 
@@ -185,7 +185,7 @@ confirmDeleteRecipe model recipeId =
 
 cancelDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 cancelDeleteRecipe model recipeId =
-    ( model |> mapRecipeOrUpdateById recipeId Editing.anyToView
+    ( model |> mapRecipeOrUpdateById recipeId Editing.toView
     , Cmd.none
     )
 
