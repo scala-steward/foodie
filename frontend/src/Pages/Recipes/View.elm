@@ -1,6 +1,7 @@
 module Pages.Recipes.View exposing (view)
 
 import Addresses.Frontend
+import Api.Auxiliary exposing (RecipeId)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
@@ -26,6 +27,7 @@ import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
 import Pages.Util.ViewUtil as ViewUtil
 import Paginate
+import Set exposing (Set)
 import Util.Editing as Editing
 import Util.SearchUtil as SearchUtil
 
@@ -45,8 +47,8 @@ view model =
         let
             viewEditRecipe =
                 Either.unpack
-                    (editOrDeleteRecipeLine model.authorizedAccess.configuration)
-                    (\e -> e.update |> editRecipeLine)
+                    (editOrDeleteRecipeLine model.authorizedAccess.configuration model.recipesToDelete)
+                    (.update >> editRecipeLine)
 
             filterOn =
                 SearchUtil.search model.searchString
@@ -127,31 +129,47 @@ createRecipe maybeCreation =
             createRecipeLine creation |> Right
 
 
-editOrDeleteRecipeLine : Configuration -> Recipe -> Html Page.Msg
-editOrDeleteRecipeLine configuration recipe =
+editOrDeleteRecipeLine : Configuration -> Set RecipeId -> Recipe -> Html Page.Msg
+editOrDeleteRecipeLine configuration toDelete recipe =
     let
         editMsg =
             Page.EnterEditRecipe recipe.id
+
+        controls =
+            if Set.member recipe.id toDelete then
+                [ td [ Style.classes.controls ]
+                    [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteRecipe recipe.id) ] [ text "Confirm" ] ]
+                , td [ Style.classes.controls ]
+                    [ button
+                        [ Style.classes.button.confirm, onClick (Page.CancelDeleteRecipe recipe.id) ]
+                        [ text "Cancel" ]
+                    ]
+                ]
+
+            else
+                [ td [ Style.classes.controls ]
+                    [ button [ Style.classes.button.edit, onClick editMsg ] [ text "Edit" ] ]
+                , td [ Style.classes.controls ]
+                    [ button
+                        [ Style.classes.button.delete, onClick (Page.RequestDeleteRecipe recipe.id) ]
+                        [ text "Delete" ]
+                    ]
+                , td [ Style.classes.controls ]
+                    [ Links.linkButton
+                        { url = Links.frontendPage configuration <| Addresses.Frontend.ingredientEditor.address <| recipe.id
+                        , attributes = [ Style.classes.button.editor ]
+                        , children = [ text "Ingredients" ]
+                        }
+                    ]
+                ]
     in
     tr [ Style.classes.editing ]
-        [ td [ Style.classes.editable, onClick editMsg ] [ label [] [ text recipe.name ] ]
-        , td [ Style.classes.editable, onClick editMsg ] [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
-        , td [ Style.classes.editable, Style.classes.numberLabel, onClick editMsg ] [ label [] [ text <| String.fromFloat <| recipe.numberOfServings ] ]
-        , td [ Style.classes.controls ]
-            [ button [ Style.classes.button.edit, onClick editMsg ] [ text "Edit" ] ]
-        , td [ Style.classes.controls ]
-            [ button
-                [ Style.classes.button.delete, onClick (Page.DeleteRecipe recipe.id) ]
-                [ text "Delete" ]
-            ]
-        , td [ Style.classes.controls ]
-            [ Links.linkButton
-                { url = Links.frontendPage configuration <| Addresses.Frontend.ingredientEditor.address <| recipe.id
-                , attributes = [ Style.classes.button.editor ]
-                , children = [ text "Ingredients" ]
-                }
-            ]
-        ]
+        ([ td [ Style.classes.editable, onClick editMsg ] [ label [] [ text recipe.name ] ]
+         , td [ Style.classes.editable, onClick editMsg ] [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
+         , td [ Style.classes.editable, Style.classes.numberLabel, onClick editMsg ] [ label [] [ text <| String.fromFloat <| recipe.numberOfServings ] ]
+         ]
+            ++ controls
+        )
 
 
 editRecipeLine : RecipeUpdateClientInput -> Html Page.Msg

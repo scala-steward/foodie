@@ -16,6 +16,7 @@ import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput exposing
 import Pages.Recipes.Requests as Requests
 import Pages.Recipes.Status as Status
 import Pages.Util.PaginationSettings as PaginationSettings
+import Set
 import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization as Initialization exposing (Initialization(..))
@@ -27,6 +28,7 @@ init flags =
     ( { authorizedAccess = flags.authorizedAccess
       , recipes = Dict.empty
       , recipeToAdd = Nothing
+      , recipesToDelete = Set.empty
       , searchString = ""
       , initialization = Initialization.Loading Status.initial
       , pagination = Pagination.initial
@@ -62,8 +64,14 @@ update msg model =
         Page.ExitEditRecipeAt recipeId ->
             exitEditRecipeAt model recipeId
 
-        Page.DeleteRecipe recipeId ->
-            deleteRecipe model recipeId
+        Page.RequestDeleteRecipe recipeId ->
+            requestDeleteRecipe model recipeId
+
+        Page.ConfirmDeleteRecipe recipeId ->
+            confirmDeleteRecipe model recipeId
+
+        Page.CancelDeleteRecipe recipeId ->
+            cancelDeleteRecipe model recipeId
 
         Page.GotDeleteRecipeResponse deletedId dataOrError ->
             gotDeleteRecipeResponse model deletedId dataOrError
@@ -164,10 +172,24 @@ exitEditRecipeAt model recipeId =
     )
 
 
-deleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
-deleteRecipe model recipeId =
+requestDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
+requestDeleteRecipe model recipeId =
+    ( model |> Lens.modify Page.lenses.recipesToDelete (Set.insert recipeId)
+    , Cmd.none
+    )
+
+
+confirmDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
+confirmDeleteRecipe model recipeId =
     ( model
     , Requests.deleteRecipe model.authorizedAccess recipeId
+    )
+
+
+cancelDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
+cancelDeleteRecipe model recipeId =
+    ( model |> Lens.modify Page.lenses.recipesToDelete (Set.remove recipeId)
+    , Cmd.none
     )
 
 
@@ -178,8 +200,8 @@ gotDeleteRecipeResponse model deletedId dataOrError =
         |> Either.unpack (flip setError model)
             (always
                 (model
-                    |> Lens.modify Page.lenses.recipes
-                        (Dict.remove deletedId)
+                    |> Lens.modify Page.lenses.recipes (Dict.remove deletedId)
+                    |> Lens.modify Page.lenses.recipesToDelete (Set.remove deletedId)
                 )
             )
     , Cmd.none
