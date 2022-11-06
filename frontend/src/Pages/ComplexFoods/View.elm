@@ -187,8 +187,8 @@ deleteComplexFoodLine : Page.RecipeMap -> ComplexFood -> Html Page.Msg
 deleteComplexFoodLine recipeMap complexFood =
     complexFoodLineWith
         { controls =
-            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick (Page.ConfirmDeleteComplexFood complexFood.recipeId) ] [ text "Confirm" ] ]
-            , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.CancelDeleteComplexFood complexFood.recipeId) ] [ text "Cancel" ] ]
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteComplexFood complexFood.recipeId) ] [ text "Confirm" ] ]
+            , td [ Style.classes.controls ] [ button [ Style.classes.button.confirm, onClick (Page.CancelDeleteComplexFood complexFood.recipeId) ] [ text "Cancel" ] ]
             ]
         , onClick = []
         , recipeMap = recipeMap

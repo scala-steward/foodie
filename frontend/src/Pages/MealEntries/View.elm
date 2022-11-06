@@ -4,8 +4,7 @@ import Api.Types.MealEntry exposing (MealEntry)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Dict
-import Either
-import Html exposing (Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, disabled, scope, value)
 import Html.Attributes.Extra exposing (stringProperty)
 import Html.Events exposing (onClick, onInput)
@@ -43,15 +42,17 @@ view model =
     <|
         let
             viewEditMealEntry =
-                Either.unpack
-                    (editOrDeleteMealEntryLine model.recipes)
-                    (\e -> e.update |> editMealEntryLine model.recipes e.original)
+                Editing.unpack
+                    { onView = viewMealEntryLine model.recipes
+                    , onUpdate = updateEntryLine model.recipes
+                    , onDelete = deleteMealEntryLine model.recipes
+                    }
 
             viewEditMealEntries =
                 model.mealEntries
-                    |> Dict.filter (\_ v -> SearchUtil.search model.entriesSearchString (DictUtil.nameOrEmpty model.recipes (Editing.field .recipeId v)))
+                    |> Dict.filter (\_ v -> SearchUtil.search model.entriesSearchString (DictUtil.nameOrEmpty model.recipes v.original.recipeId))
                     |> Dict.values
-                    |> List.sortBy (Editing.field .recipeId >> DictUtil.nameOrEmpty model.recipes >> String.toLower)
+                    |> List.sortBy (.original >> .recipeId >> DictUtil.nameOrEmpty model.recipes >> String.toLower)
                     |> ViewUtil.paginate
                         { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.mealEntries
                         }
@@ -176,23 +177,59 @@ view model =
             ]
 
 
-editOrDeleteMealEntryLine : Page.RecipeMap -> MealEntry -> Html Page.Msg
-editOrDeleteMealEntryLine recipeMap mealEntry =
+viewMealEntryLine : Page.RecipeMap -> MealEntry -> Html Page.Msg
+viewMealEntryLine recipeMap mealEntry =
     let
         editMsg =
-            Page.EnterEditMealEntry mealEntry.id
+            Page.EnterEditMealEntry mealEntry.id |> onClick
+    in
+    mealEntryLineWith
+        { controls =
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
+            , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.RequestDeleteMealEntry mealEntry.id) ] [ text "Delete" ] ]
+            ]
+        , onClick = [ editMsg ]
+        , recipeMap = recipeMap
+        }
+        mealEntry
+
+
+deleteMealEntryLine : Page.RecipeMap -> MealEntry -> Html Page.Msg
+deleteMealEntryLine recipeMap mealEntry =
+    mealEntryLineWith
+        { controls =
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteMealEntry mealEntry.id) ] [ text "Confirm" ] ]
+            , td [ Style.classes.controls ] [ button [ Style.classes.button.confirm, onClick (Page.CancelDeleteMealEntry mealEntry.id) ] [ text "Cancel" ] ]
+            ]
+        , onClick = []
+        , recipeMap = recipeMap
+        }
+        mealEntry
+
+
+mealEntryLineWith :
+    { controls : List (Html Page.Msg)
+    , onClick : List (Attribute Page.Msg)
+    , recipeMap : Page.RecipeMap
+    }
+    -> MealEntry
+    -> Html Page.Msg
+mealEntryLineWith ps mealEntry =
+    let
+        withOnClick =
+            (++) ps.onClick
     in
     tr [ Style.classes.editing ]
-        [ td [ Style.classes.editable, onClick editMsg ] [ label [] [ text <| DictUtil.nameOrEmpty recipeMap <| mealEntry.recipeId ] ]
-        , td [ Style.classes.editable, onClick editMsg ] [ label [] [ text <| Page.descriptionOrEmpty recipeMap <| mealEntry.recipeId ] ]
-        , td [ Style.classes.editable, Style.classes.numberLabel, onClick editMsg ] [ label [] [ text <| String.fromFloat <| mealEntry.numberOfServings ] ]
-        , td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick (Page.EnterEditMealEntry mealEntry.id) ] [ text "Edit" ] ]
-        , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.DeleteMealEntry mealEntry.id) ] [ text "Delete" ] ]
-        ]
+        ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| DictUtil.nameOrEmpty ps.recipeMap <| mealEntry.recipeId ] ]
+         , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Page.descriptionOrEmpty ps.recipeMap <| mealEntry.recipeId ] ]
+         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| mealEntry.numberOfServings ] ]
+         ]
+            ++ ps.controls
+        )
 
 
-editMealEntryLine : Page.RecipeMap -> MealEntry -> MealEntryUpdateClientInput -> Html Page.Msg
-editMealEntryLine recipeMap mealEntry mealEntryUpdateClientInput =
+updateEntryLine : Page.RecipeMap -> MealEntry -> MealEntryUpdateClientInput -> Html Page.Msg
+updateEntryLine recipeMap mealEntry mealEntryUpdateClientInput =
     let
         saveMsg =
             Page.SaveMealEntryEdit mealEntryUpdateClientInput
@@ -232,7 +269,7 @@ editMealEntryLine recipeMap mealEntry mealEntryUpdateClientInput =
         ]
 
 
-viewRecipeLine : Page.AddMealEntriesMap -> Page.MealEntryOrUpdateMap -> Recipe -> Html Page.Msg
+viewRecipeLine : Page.AddMealEntriesMap -> Page.MealEntryStateMap -> Recipe -> Html Page.Msg
 viewRecipeLine mealEntriesToAdd mealEntries recipe =
     let
         addMsg =
@@ -265,17 +302,14 @@ viewRecipeLine mealEntriesToAdd mealEntries recipe =
                             mealEntryToAdd.numberOfServings |> ValidatedInput.isValid
 
                         ( confirmName, confirmMsg, confirmStyle ) =
-                            case DictUtil.firstSuch (\mealEntry -> Editing.field .recipeId mealEntry == mealEntryToAdd.recipeId) mealEntries of
+                            case DictUtil.firstSuch (\mealEntry -> mealEntry.original.recipeId == mealEntryToAdd.recipeId) mealEntries of
                                 Nothing ->
                                     ( "Add", addMsg, Style.classes.button.confirm )
 
                                 Just mealEntryOrUpdate ->
-                                    let
-                                        mealEntry =
-                                            Editing.field identity mealEntryOrUpdate
-                                    in
                                     ( "Update"
-                                    , mealEntry
+                                    , mealEntryOrUpdate
+                                        |> .original
                                         |> MealEntryUpdateClientInput.from
                                         |> MealEntryUpdateClientInput.lenses.numberOfServings.set mealEntryToAdd.numberOfServings
                                         |> Page.SaveMealEntryEdit
