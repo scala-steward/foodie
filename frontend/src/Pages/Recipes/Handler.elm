@@ -8,7 +8,7 @@ import Either exposing (Either(..))
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens as Lens
-import Monocle.Optional as Optional
+import Monocle.Optional
 import Pages.Recipes.Page as Page exposing (RecipeState)
 import Pages.Recipes.Pagination as Pagination exposing (Pagination)
 import Pages.Recipes.RecipeCreationClientInput as RecipeCreationClientInput exposing (RecipeCreationClientInput)
@@ -171,12 +171,7 @@ exitEditRecipeAt model recipeId =
 
 requestDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 requestDeleteRecipe model recipeId =
-    ( model
-        |> Optional.modify
-            (Page.lenses.recipes
-                |> Compose.lensWithOptional (LensUtil.dictByKey recipeId)
-            )
-            Editing.viewToDelete
+    ( model |> mapRecipeOrUpdateById recipeId Editing.viewToDelete
     , Cmd.none
     )
 
@@ -190,12 +185,7 @@ confirmDeleteRecipe model recipeId =
 
 cancelDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 cancelDeleteRecipe model recipeId =
-    ( model
-        |> Optional.modify
-            (Page.lenses.recipes
-                |> Compose.lensWithOptional (LensUtil.dictByKey recipeId)
-            )
-            Editing.anyToView
+    ( model |> mapRecipeOrUpdateById recipeId Editing.anyToView
     , Cmd.none
     )
 
