@@ -403,7 +403,7 @@ gotFetchIngredientsResponse model result =
             (\ingredients ->
                 model
                     |> (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients).set
-                        (ingredients |> List.map (\ingredient -> ( ingredient.id, ingredient |> Editing.asView)) |> Dict.fromList)
+                        (ingredients |> List.map (\ingredient -> ( ingredient.id, ingredient |> Editing.asView )) |> Dict.fromList)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.ingredients).set True
             )
     , Cmd.none
@@ -589,7 +589,7 @@ selectFood : Page.Model -> Food -> ( Page.Model, Cmd msg )
 selectFood model food =
     ( model
         |> Lens.modify (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
-            (Dict.update food.id (always (IngredientCreationClientInput.default model.recipeId food.id (food.measures |> List.head |> Maybe.Extra.unwrap 0 .id)) >> Just))
+            (Dict.insert food.id (IngredientCreationClientInput.default model.recipeId food.id (food.measures |> List.head |> Maybe.Extra.unwrap 0 .id)))
     , Cmd.none
     )
 
@@ -598,7 +598,7 @@ selectComplexFood : Page.Model -> ComplexFood -> ( Page.Model, Cmd msg )
 selectComplexFood model complexFood =
     ( model
         |> Lens.modify (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
-            (Dict.update complexFood.recipeId (always (ComplexIngredientClientInput.fromFood complexFood |> Just)))
+            (Dict.insert complexFood.recipeId (ComplexIngredientClientInput.fromFood complexFood))
     , Cmd.none
     )
 
@@ -658,7 +658,7 @@ gotAddFoodResponse model result =
                 model
                     |> Lens.modify
                         (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients)
-                        (Dict.update ingredient.id (always ingredient >> Editing.asView >> Just))
+                        (Dict.insert ingredient.id (ingredient |> Editing.asView))
                     |> Lens.modify
                         (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
                         (Dict.remove ingredient.foodId)
@@ -676,7 +676,7 @@ gotAddComplexFoodResponse model result =
                 model
                     |> Lens.modify
                         (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients)
-                        (Dict.update complexIngredient.complexFoodId (always complexIngredient >> Editing.asView >> Just))
+                        (Dict.insert complexIngredient.complexFoodId (complexIngredient |> Editing.asView))
                     |> Lens.modify
                         (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
                         (Dict.remove complexIngredient.complexFoodId)
@@ -689,7 +689,7 @@ updateAddFood : Page.Model -> IngredientCreationClientInput -> ( Page.Model, Cmd
 updateAddFood model ingredientCreationClientInput =
     ( model
         |> Lens.modify (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
-            (Dict.update ingredientCreationClientInput.foodId (always ingredientCreationClientInput >> Just))
+            (Dict.insert ingredientCreationClientInput.foodId ingredientCreationClientInput)
     , Cmd.none
     )
 
@@ -698,7 +698,7 @@ updateAddComplexFood : Page.Model -> ComplexIngredientClientInput -> ( Page.Mode
 updateAddComplexFood model complexIngredientClientInput =
     ( model
         |> Lens.modify (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
-            (Dict.update complexIngredientClientInput.complexFoodId (always complexIngredientClientInput >> Just))
+            (Dict.insert complexIngredientClientInput.complexFoodId complexIngredientClientInput)
     , Cmd.none
     )
 

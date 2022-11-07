@@ -11,7 +11,7 @@ import Util.Initialization as Initialization exposing (Initialization)
 dictByKey : comparable -> Optional (Dict comparable a) a
 dictByKey k =
     { getOption = Dict.get k
-    , set = \v -> Dict.update k (always v >> Just)
+    , set = Dict.insert k
     }
 
 

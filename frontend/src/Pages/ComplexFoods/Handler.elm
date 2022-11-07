@@ -113,7 +113,7 @@ updateComplexFoodCreation : Page.Model -> ComplexFoodClientInput -> ( Page.Model
 updateComplexFoodCreation model complexFoodClientInput =
     ( model
         |> Lens.modify Page.lenses.complexFoodsToCreate
-            (Dict.update complexFoodClientInput.recipeId (always complexFoodClientInput >> Just))
+            (Dict.insert complexFoodClientInput.recipeId complexFoodClientInput)
     , Cmd.none
     )
 
@@ -267,7 +267,7 @@ selectRecipe : Page.Model -> Recipe -> ( Page.Model, Cmd Page.Msg )
 selectRecipe model recipe =
     ( model
         |> Lens.modify Page.lenses.complexFoodsToCreate
-            (Dict.update recipe.id (always { recipeId = recipe.id, amount = ValidatedInput.positive, unit = ComplexFoodUnit.G } >> Just))
+            (Dict.insert recipe.id { recipeId = recipe.id, amount = ValidatedInput.positive, unit = ComplexFoodUnit.G })
     , Cmd.none
     )
 

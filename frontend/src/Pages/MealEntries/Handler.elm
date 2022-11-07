@@ -246,9 +246,7 @@ selectRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 selectRecipe model recipeId =
     ( model
         |> Lens.modify Page.lenses.mealEntriesToAdd
-            (Dict.update recipeId
-                (always (MealEntryCreationClientInput.default model.mealId recipeId) >> Just)
-            )
+            (Dict.insert recipeId (MealEntryCreationClientInput.default model.mealId recipeId))
     , Cmd.none
     )
 

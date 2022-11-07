@@ -251,7 +251,7 @@ selectNutrient : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
 selectNutrient model nutrientCode =
     ( model
         |> Lens.modify Page.lenses.referenceEntriesToAdd
-            (Dict.update nutrientCode (always (ReferenceEntryCreationClientInput.default nutrientCode) >> Just))
+            (Dict.insert nutrientCode (ReferenceEntryCreationClientInput.default nutrientCode))
     , Cmd.none
     )
 
@@ -295,7 +295,7 @@ updateAddNutrient : Page.Model -> ReferenceEntryCreationClientInput -> ( Page.Mo
 updateAddNutrient model referenceEntryCreationClientInput =
     ( model
         |> Lens.modify Page.lenses.referenceEntriesToAdd
-            (Dict.update referenceEntryCreationClientInput.nutrientCode (always referenceEntryCreationClientInput >> Just))
+            (Dict.insert referenceEntryCreationClientInput.nutrientCode referenceEntryCreationClientInput)
     , Cmd.none
     )
 
