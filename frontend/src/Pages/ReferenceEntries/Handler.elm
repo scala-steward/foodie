@@ -6,7 +6,6 @@ import Api.Types.ReferenceEntry exposing (ReferenceEntry)
 import Api.Types.ReferenceMap exposing (ReferenceMap)
 import Basics.Extra exposing (flip)
 import Dict
-import Either exposing (Either(..))
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Monocle.Compose as Compose
@@ -20,6 +19,7 @@ import Pages.ReferenceEntries.Requests as Requests
 import Pages.ReferenceEntries.Status as Status
 import Pages.Util.PaginationSettings as PaginationSettings
 import Ports
+import Result.Extra
 import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization as Initialization
@@ -140,8 +140,7 @@ saveReferenceEntryEdit model referenceEntryUpdateClientInput =
 gotSaveReferenceEntryResponse : Page.Model -> Result Error ReferenceEntry -> ( Page.Model, Cmd Page.Msg )
 gotSaveReferenceEntryResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\referenceEntry ->
                 model
                     |> mapReferenceEntryStateById referenceEntry.nutrientCode
@@ -193,8 +192,7 @@ cancelDeleteReferenceEntry model nutrientCode =
 gotDeleteReferenceEntryResponse : Page.Model -> NutrientCode -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteReferenceEntryResponse model nutrientCode result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\_ ->
                 model
                     |> LensUtil.deleteAtId nutrientCode Page.lenses.referenceEntries
@@ -206,8 +204,7 @@ gotDeleteReferenceEntryResponse model nutrientCode result =
 gotFetchReferenceEntriesResponse : Page.Model -> Result Error (List ReferenceEntry) -> ( Page.Model, Cmd Page.Msg )
 gotFetchReferenceEntriesResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\referenceEntries ->
                 model
                     |> Page.lenses.referenceEntries.set (referenceEntries |> List.map (\r -> ( r.nutrientCode, r |> Editing.asView )) |> Dict.fromList)
@@ -220,8 +217,7 @@ gotFetchReferenceEntriesResponse model result =
 gotFetchReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.Msg )
 gotFetchReferenceMapResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\referenceMap ->
                 model
                     |> Page.lenses.referenceMap.set (Just referenceMap)
@@ -234,8 +230,7 @@ gotFetchReferenceMapResponse model result =
 gotFetchNutrientsResponse : Page.Model -> Result Error (List Nutrient) -> ( Page.Model, Cmd Page.Msg )
 gotFetchNutrientsResponse model result =
     result
-        |> Either.fromResult
-        |> Either.unpack (\error -> ( setError error model, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( setError error model, Cmd.none ))
             (\nutrients ->
                 ( model
                     |> LensUtil.set nutrients .code Page.lenses.nutrients
@@ -281,8 +276,7 @@ addNutrient model nutrientCode =
 gotAddReferenceEntryResponse : Page.Model -> Result Error ReferenceEntry -> ( Page.Model, Cmd Page.Msg )
 gotAddReferenceEntryResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\referenceEntry ->
                 model
                     |> LensUtil.insertAtId referenceEntry.nutrientCode
@@ -307,8 +301,7 @@ updateAddNutrient model referenceEntryCreationClientInput =
 updateNutrients : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 updateNutrients model =
     Decode.decodeString (Decode.list decoderNutrient)
-        >> Either.fromResult
-        >> Either.unpack (\error -> ( setJsonError error model, Cmd.none ))
+        >> Result.Extra.unpack (\error -> ( setJsonError error model, Cmd.none ))
             (\nutrients ->
                 ( model
                     |> LensUtil.set nutrients .code Page.lenses.nutrients

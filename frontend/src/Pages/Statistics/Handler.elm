@@ -8,13 +8,13 @@ import Api.Types.ReferenceTree exposing (ReferenceTree)
 import Api.Types.Stats exposing (Stats)
 import Basics.Extra exposing (flip)
 import Dict
-import Either
 import Monocle.Lens as Lens
 import Pages.Statistics.Page as Page
 import Pages.Statistics.Pagination as Pagination exposing (Pagination)
 import Pages.Statistics.Requests as Requests
 import Pages.Statistics.Status as Status
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Result.Extra
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization as Initialization
 
@@ -104,8 +104,7 @@ fetchStats model =
 gotFetchStatsResponse : Page.Model -> Result Error Stats -> ( Page.Model, Cmd Page.Msg )
 gotFetchStatsResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\stats ->
                 model
                     |> Page.lenses.stats.set
@@ -119,8 +118,7 @@ gotFetchStatsResponse model result =
 gotFetchReferenceTreesResponse : Page.Model -> Result Error (List ReferenceTree) -> ( Page.Model, Cmd Page.Msg )
 gotFetchReferenceTreesResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\referenceTrees ->
                 let
                     referenceNutrientTrees =

@@ -6,7 +6,6 @@ import Api.Types.MealEntry exposing (MealEntry)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Dict
-import Either exposing (Either(..))
 import Monocle.Compose as Compose
 import Monocle.Lens
 import Monocle.Optional as Optional
@@ -19,6 +18,7 @@ import Pages.MealEntries.Requests as Requests
 import Pages.MealEntries.Status as Status
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.PaginationSettings as PaginationSettings
+import Result.Extra
 import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization(..))
@@ -138,8 +138,7 @@ saveMealEntryEdit model mealEntryUpdateClientInput =
 gotSaveMealEntryResponse : Page.Model -> Result Error MealEntry -> ( Page.Model, Cmd Page.Msg )
 gotSaveMealEntryResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\mealEntry ->
                 model
                     |> mapMealEntryStateById mealEntry.id
@@ -191,8 +190,7 @@ cancelDeleteMealEntry model mealEntryId =
 gotDeleteMealEntryResponse : Page.Model -> MealEntryId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteMealEntryResponse model mealEntryId result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\_ ->
                 model
                     |> LensUtil.deleteAtId mealEntryId Page.lenses.mealEntries
@@ -204,8 +202,7 @@ gotDeleteMealEntryResponse model mealEntryId result =
 gotFetchMealEntriesResponse : Page.Model -> Result Error (List MealEntry) -> ( Page.Model, Cmd Page.Msg )
 gotFetchMealEntriesResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\mealEntries ->
                 model
                     |> Page.lenses.mealEntries.set (mealEntries |> List.map (\mealEntry -> ( mealEntry.id, mealEntry |> Editing.asView )) |> Dict.fromList)
@@ -218,8 +215,7 @@ gotFetchMealEntriesResponse model result =
 gotFetchRecipesResponse : Page.Model -> Result Error (List Recipe) -> ( Page.Model, Cmd Page.Msg )
 gotFetchRecipesResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\recipes ->
                 model
                     |> Page.lenses.recipes.set (recipes |> List.map (\r -> ( r.id, r )) |> Dict.fromList)
@@ -232,8 +228,7 @@ gotFetchRecipesResponse model result =
 gotFetchMealResponse : Page.Model -> Result Error Meal -> ( Page.Model, Cmd Page.Msg )
 gotFetchMealResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\meal ->
                 model
                     |> Page.lenses.mealInfo.set (meal |> MealInfo.from |> Just)
@@ -276,8 +271,7 @@ addRecipe model recipeId =
 gotAddMealEntryResponse : Page.Model -> Result Error MealEntry -> ( Page.Model, Cmd Page.Msg )
 gotAddMealEntryResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\mealEntry ->
                 model
                     |> LensUtil.insertAtId mealEntry.id Page.lenses.mealEntries (mealEntry |> Editing.asView)

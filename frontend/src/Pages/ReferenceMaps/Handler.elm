@@ -4,7 +4,6 @@ import Api.Auxiliary exposing (JWT, ReferenceMapId)
 import Api.Types.ReferenceMap exposing (ReferenceMap)
 import Basics.Extra exposing (flip)
 import Dict
-import Either exposing (Either(..))
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens
@@ -16,6 +15,7 @@ import Pages.ReferenceMaps.ReferenceMapUpdateClientInput as ReferenceMapUpdateCl
 import Pages.ReferenceMaps.Requests as Requests
 import Pages.ReferenceMaps.Status as Status
 import Pages.Util.PaginationSettings as PaginationSettings
+import Result.Extra
 import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization as Initialization exposing (Initialization(..))
@@ -103,8 +103,7 @@ createReferenceMap model =
 gotCreateReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.Msg )
 gotCreateReferenceMapResponse model dataOrError =
     ( dataOrError
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\referenceMap ->
                 model
                     |> LensUtil.insertAtId referenceMap.id
@@ -143,8 +142,7 @@ saveReferenceMapEdit model referenceMapId =
 gotSaveReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.Msg )
 gotSaveReferenceMapResponse model dataOrError =
     ( dataOrError
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\referenceMap ->
                 model
                     |> mapReferenceMapStateById referenceMap.id
@@ -194,8 +192,7 @@ cancelDeleteReferenceMap model referenceMapId =
 gotDeleteReferenceMapResponse : Page.Model -> ReferenceMapId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteReferenceMapResponse model deletedId dataOrError =
     ( dataOrError
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\_ ->
                 model
                     |> LensUtil.deleteAtId deletedId Page.lenses.referenceMaps
@@ -207,8 +204,7 @@ gotDeleteReferenceMapResponse model deletedId dataOrError =
 gotFetchReferenceMapsResponse : Page.Model -> Result Error (List ReferenceMap) -> ( Page.Model, Cmd Page.Msg )
 gotFetchReferenceMapsResponse model dataOrError =
     ( dataOrError
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\referenceMaps ->
                 model
                     |> Page.lenses.referenceMaps.set (referenceMaps |> List.map (\r -> ( r.id, r |> Editing.asView )) |> Dict.fromList)

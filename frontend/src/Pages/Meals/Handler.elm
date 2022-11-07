@@ -4,7 +4,6 @@ import Api.Auxiliary exposing (JWT, MealId)
 import Api.Types.Meal exposing (Meal)
 import Basics.Extra exposing (flip)
 import Dict
-import Either exposing (Either(..))
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens
@@ -16,6 +15,7 @@ import Pages.Meals.Pagination as Pagination exposing (Pagination)
 import Pages.Meals.Requests as Requests
 import Pages.Meals.Status as Status
 import Pages.Util.PaginationSettings as PaginationSettings
+import Result.Extra
 import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization as Initialization
@@ -104,8 +104,7 @@ createMeal model =
 gotCreateMealResponse : Page.Model -> Result Error Meal -> ( Page.Model, Cmd msg )
 gotCreateMealResponse model dataOrError =
     ( dataOrError
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\meal ->
                 model
                     |> LensUtil.insertAtId meal.id Page.lenses.meals (meal |> Editing.asView)
@@ -141,8 +140,7 @@ saveMealEdit model mealId =
 gotSaveMealResponse : Page.Model -> Result Error Meal -> ( Page.Model, Cmd Page.Msg )
 gotSaveMealResponse model dataOrError =
     ( dataOrError
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\meal ->
                 model
                     |> mapMealStateById meal.id
@@ -192,8 +190,7 @@ cancelDeleteMeal model mealId =
 gotDeleteMealResponse : Page.Model -> MealId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteMealResponse model deletedId dataOrError =
     ( dataOrError
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\_ ->
                 model
                     |> LensUtil.deleteAtId deletedId Page.lenses.meals
@@ -205,8 +202,7 @@ gotDeleteMealResponse model deletedId dataOrError =
 gotFetchMealsResponse : Page.Model -> Result Error (List Meal) -> ( Page.Model, Cmd Page.Msg )
 gotFetchMealsResponse model dataOrError =
     ( dataOrError
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\meals ->
                 model
                     |> Page.lenses.meals.set

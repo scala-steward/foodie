@@ -4,7 +4,6 @@ import Api.Auxiliary exposing (JWT, RecipeId)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Dict
-import Either exposing (Either(..))
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens
@@ -16,6 +15,7 @@ import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput exposing
 import Pages.Recipes.Requests as Requests
 import Pages.Recipes.Status as Status
 import Pages.Util.PaginationSettings as PaginationSettings
+import Result.Extra
 import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization as Initialization exposing (Initialization(..))
@@ -103,8 +103,7 @@ createRecipe model =
 gotCreateRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.Msg )
 gotCreateRecipeResponse model dataOrError =
     ( dataOrError
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\recipe ->
                 model
                     |> LensUtil.insertAtId recipe.id
@@ -143,8 +142,7 @@ saveRecipeEdit model recipeId =
 gotSaveRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.Msg )
 gotSaveRecipeResponse model dataOrError =
     ( dataOrError
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\recipe ->
                 model
                     |> mapRecipeStateById recipe.id
@@ -194,8 +192,7 @@ cancelDeleteRecipe model recipeId =
 gotDeleteRecipeResponse : Page.Model -> RecipeId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteRecipeResponse model deletedId dataOrError =
     ( dataOrError
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (always
                 (model
                     |> LensUtil.deleteAtId deletedId Page.lenses.recipes
@@ -208,8 +205,7 @@ gotDeleteRecipeResponse model deletedId dataOrError =
 gotFetchRecipesResponse : Page.Model -> Result Error (List Recipe) -> ( Page.Model, Cmd Page.Msg )
 gotFetchRecipesResponse model dataOrError =
     ( dataOrError
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\recipes ->
                 model
                     |> Page.lenses.recipes.set

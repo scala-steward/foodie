@@ -5,7 +5,6 @@ import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Dict
-import Either exposing (Either(..))
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens
@@ -17,6 +16,7 @@ import Pages.ComplexFoods.Requests as Requests
 import Pages.ComplexFoods.Status as Status
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.PaginationSettings as PaginationSettings
+import Result.Extra
 import Util.Editing as Editing
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization as Initialization
@@ -135,8 +135,7 @@ createComplexFood model recipeId =
 gotCreateComplexFoodResponse : Page.Model -> Result Error ComplexFood -> ( Page.Model, Cmd Page.Msg )
 gotCreateComplexFoodResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\complexFood ->
                 model
                     |> mapComplexFoodStateByRecipeId complexFood.recipeId (complexFood |> Editing.asView |> always)
@@ -167,8 +166,7 @@ saveComplexFoodEdit model complexFoodClientInput =
 gotSaveComplexFoodResponse : Page.Model -> Result Error ComplexFood -> ( Page.Model, Cmd Page.Msg )
 gotSaveComplexFoodResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\complexFood ->
                 model
                     |> mapComplexFoodStateByRecipeId complexFood.recipeId (always complexFood >> Editing.asView)
@@ -218,8 +216,7 @@ cancelDeleteComplexFood model complexFoodId =
 gotDeleteComplexFoodResponse : Page.Model -> ComplexFoodId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteComplexFoodResponse model complexFoodId result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (always
                 (model
                     |> LensUtil.deleteAtId complexFoodId Page.lenses.complexFoods
@@ -232,8 +229,7 @@ gotDeleteComplexFoodResponse model complexFoodId result =
 gotFetchRecipesResponse : Page.Model -> Result Error (List Recipe) -> ( Page.Model, Cmd Page.Msg )
 gotFetchRecipesResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\recipes ->
                 model
                     |> Page.lenses.recipes.set (recipes |> List.map (\r -> ( r.id, r )) |> Dict.fromList)
@@ -246,8 +242,7 @@ gotFetchRecipesResponse model result =
 gotFetchComplexFoodsResponse : Page.Model -> Result Error (List ComplexFood) -> ( Page.Model, Cmd Page.Msg )
 gotFetchComplexFoodsResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\complexFoods ->
                 model
                     |> Page.lenses.complexFoods.set (complexFoods |> List.map (\r -> ( r.recipeId, r |> Editing.asView )) |> Dict.fromList)

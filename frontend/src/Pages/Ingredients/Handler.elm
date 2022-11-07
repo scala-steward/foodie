@@ -9,7 +9,6 @@ import Api.Types.Measure exposing (Measure, decoderMeasure, encoderMeasure)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Dict exposing (Dict)
-import Either exposing (Either(..))
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Maybe.Extra
@@ -28,6 +27,7 @@ import Pages.Ingredients.Status as Status
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.PaginationSettings as PaginationSettings
 import Ports exposing (doFetchFoods, doFetchMeasures, storeFoods, storeMeasures)
+import Result.Extra
 import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization(..))
@@ -256,8 +256,7 @@ saveComplexIngredientEdit model complexIngredientClientInput =
 gotSaveIngredientResponse : Page.Model -> Result Error Ingredient -> ( Page.Model, Cmd msg )
 gotSaveIngredientResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\ingredient ->
                 model
                     |> mapIngredientStateById ingredient.id
@@ -272,8 +271,7 @@ gotSaveIngredientResponse model result =
 gotSaveComplexIngredientResponse : Page.Model -> Result Error ComplexIngredient -> ( Page.Model, Cmd msg )
 gotSaveComplexIngredientResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\complexIngredient ->
                 model
                     |> mapComplexIngredientStateById complexIngredient.complexFoodId
@@ -366,8 +364,7 @@ cancelDeleteComplexIngredient model complexIngredientId =
 gotDeleteIngredientResponse : Page.Model -> IngredientId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteIngredientResponse model ingredientId result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (model
                 |> LensUtil.deleteAtId ingredientId
                     (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients)
@@ -380,8 +377,7 @@ gotDeleteIngredientResponse model ingredientId result =
 gotDeleteComplexIngredientResponse : Page.Model -> ComplexIngredientId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteComplexIngredientResponse model complexIngredientId result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (model
                 |> LensUtil.deleteAtId complexIngredientId
                     (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients)
@@ -394,8 +390,7 @@ gotDeleteComplexIngredientResponse model complexIngredientId result =
 gotFetchIngredientsResponse : Page.Model -> Result Error (List Ingredient) -> ( Page.Model, Cmd Page.Msg )
 gotFetchIngredientsResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\ingredients ->
                 model
                     |> (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients).set
@@ -409,8 +404,7 @@ gotFetchIngredientsResponse model result =
 gotFetchComplexIngredientsResponse : Page.Model -> Result Error (List ComplexIngredient) -> ( Page.Model, Cmd Page.Msg )
 gotFetchComplexIngredientsResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\complexIngredients ->
                 model
                     |> (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients).set
@@ -424,8 +418,7 @@ gotFetchComplexIngredientsResponse model result =
 gotFetchFoodsResponse : Page.Model -> Result Error (List Food) -> ( Page.Model, Cmd Page.Msg )
 gotFetchFoodsResponse model result =
     result
-        |> Either.fromResult
-        |> Either.unpack (\error -> ( setError error model, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( setError error model, Cmd.none ))
             (\foods ->
                 ( LensUtil.set
                     foods
@@ -443,8 +436,7 @@ gotFetchFoodsResponse model result =
 gotFetchComplexFoodsResponse : Page.Model -> Result Error (List ComplexFood) -> ( Page.Model, Cmd Page.Msg )
 gotFetchComplexFoodsResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\complexFoods ->
                 model
                     |> LensUtil.set
@@ -460,8 +452,7 @@ gotFetchComplexFoodsResponse model result =
 gotFetchMeasuresResponse : Page.Model -> Result Error (List Measure) -> ( Page.Model, Cmd Page.Msg )
 gotFetchMeasuresResponse model result =
     result
-        |> Either.fromResult
-        |> Either.unpack (\error -> ( setError error model, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( setError error model, Cmd.none ))
             (\measures ->
                 ( LensUtil.set measures .id Page.lenses.measures model
                 , measures
@@ -475,8 +466,7 @@ gotFetchMeasuresResponse model result =
 gotFetchRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.Msg )
 gotFetchRecipeResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\recipe ->
                 model
                     |> Page.lenses.recipeInfo.set (RecipeInfo.from recipe |> Just)
@@ -489,8 +479,7 @@ gotFetchRecipeResponse model result =
 gotFetchRecipesResponse : Page.Model -> Result Error (List Recipe) -> ( Page.Model, Cmd Page.Msg )
 gotFetchRecipesResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\recipes ->
                 model
                     |> Page.lenses.allRecipes.set (recipes |> List.map (\r -> ( r.id, r )) |> Dict.fromList)
@@ -503,8 +492,7 @@ gotFetchRecipesResponse model result =
 updateFoods : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 updateFoods model =
     Decode.decodeString (Decode.list decoderFood)
-        >> Either.fromResult
-        >> Either.unpack (\error -> ( setJsonError error model, Cmd.none ))
+        >> Result.Extra.unpack (\error -> ( setJsonError error model, Cmd.none ))
             (\foods ->
                 ( model
                     |> LensUtil.set
@@ -528,8 +516,7 @@ updateFoods model =
 updateMeasures : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 updateMeasures model =
     Decode.decodeString (Decode.list decoderMeasure)
-        >> Either.fromResult
-        >> Either.unpack (\error -> ( setJsonError error model, Cmd.none ))
+        >> Result.Extra.unpack (\error -> ( setJsonError error model, Cmd.none ))
             (\measures ->
                 ( model
                     |> LensUtil.set measures .id Page.lenses.measures
@@ -650,8 +637,7 @@ addComplexFood model complexFoodId =
 gotAddFoodResponse : Page.Model -> Result Error Ingredient -> ( Page.Model, Cmd Page.Msg )
 gotAddFoodResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\ingredient ->
                 model
                     |> LensUtil.insertAtId ingredient.id
@@ -667,8 +653,7 @@ gotAddFoodResponse model result =
 gotAddComplexFoodResponse : Page.Model -> Result Error ComplexIngredient -> ( Page.Model, Cmd Page.Msg )
 gotAddComplexFoodResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\complexIngredient ->
                 model
                     |> LensUtil.insertAtId complexIngredient.complexFoodId
