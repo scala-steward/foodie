@@ -166,10 +166,6 @@ saveComplexFoodEdit model complexFoodClientInput =
     )
 
 
-
---todo: Test save behaviour
-
-
 gotSaveComplexFoodResponse : Page.Model -> Result Error ComplexFood -> ( Page.Model, Cmd Page.Msg )
 gotSaveComplexFoodResponse model result =
     ( result
