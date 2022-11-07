@@ -157,7 +157,7 @@ deleteReferenceMapLine configuration referenceMap =
                 ]
             , td [ Style.classes.controls ]
                 [ button
-                    [ Style.classes.button.confirm, onClick (Page.RequestDeleteReferenceMap referenceMap.id) ]
+                    [ Style.classes.button.confirm, onClick (Page.CancelDeleteReferenceMap referenceMap.id) ]
                     [ text "Cancel" ]
                 ]
             ]
