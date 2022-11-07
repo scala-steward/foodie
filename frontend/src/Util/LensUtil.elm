@@ -3,7 +3,7 @@ module Util.LensUtil exposing (..)
 import Basics.Extra exposing (flip)
 import Dict exposing (Dict)
 import Monocle.Compose as Compose
-import Monocle.Lens exposing (Lens)
+import Monocle.Lens as Lens exposing (Lens)
 import Monocle.Optional as Optional exposing (Optional)
 import Util.Initialization as Initialization exposing (Initialization)
 
@@ -39,3 +39,13 @@ updateById : comparable -> Lens a (Dict comparable b) -> (b -> b) -> a -> a
 updateById id =
     Compose.lensWithOptional (dictByKey id)
         >> Optional.modify
+
+
+insertAtId : comparable -> Lens a (Dict comparable b) -> b -> a -> a
+insertAtId id lens =
+    Lens.modify lens << Dict.insert id
+
+
+deleteAtId : comparable -> Lens a (Dict comparable b) -> a -> a
+deleteAtId id lens =
+    Lens.modify lens <| Dict.remove id

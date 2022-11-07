@@ -10,7 +10,7 @@ import Either exposing (Either(..))
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Monocle.Compose as Compose
-import Monocle.Lens as Lens
+import Monocle.Lens
 import Monocle.Optional
 import Pages.ReferenceEntries.Page as Page exposing (Msg(..))
 import Pages.ReferenceEntries.Pagination as Pagination exposing (Pagination)
@@ -146,7 +146,7 @@ gotSaveReferenceEntryResponse model result =
                 model
                     |> mapReferenceEntryStateById referenceEntry.nutrientCode
                         (referenceEntry |> Editing.asView |> always)
-                    |> Lens.modify Page.lenses.referenceEntriesToAdd (Dict.remove referenceEntry.nutrientCode)
+                    |> LensUtil.deleteAtId referenceEntry.nutrientCode Page.lenses.referenceEntriesToAdd
             )
     , Cmd.none
     )
@@ -195,8 +195,9 @@ gotDeleteReferenceEntryResponse model nutrientCode result =
     ( result
         |> Either.fromResult
         |> Either.unpack (flip setError model)
-            (Lens.modify Page.lenses.referenceEntries (Dict.remove nutrientCode) model
-                |> always
+            (\_ ->
+                model
+                    |> LensUtil.deleteAtId nutrientCode Page.lenses.referenceEntries
             )
     , Cmd.none
     )
@@ -250,8 +251,9 @@ gotFetchNutrientsResponse model result =
 selectNutrient : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
 selectNutrient model nutrientCode =
     ( model
-        |> Lens.modify Page.lenses.referenceEntriesToAdd
-            (Dict.insert nutrientCode (ReferenceEntryCreationClientInput.default nutrientCode))
+        |> LensUtil.insertAtId nutrientCode
+            Page.lenses.referenceEntriesToAdd
+            (ReferenceEntryCreationClientInput.default nutrientCode)
     , Cmd.none
     )
 
@@ -259,7 +261,7 @@ selectNutrient model nutrientCode =
 deselectNutrient : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
 deselectNutrient model nutrientCode =
     ( model
-        |> Lens.modify Page.lenses.referenceEntriesToAdd (Dict.remove nutrientCode)
+        |> LensUtil.deleteAtId nutrientCode Page.lenses.referenceEntriesToAdd
     , Cmd.none
     )
 
@@ -283,9 +285,10 @@ gotAddReferenceEntryResponse model result =
         |> Either.unpack (flip setError model)
             (\referenceEntry ->
                 model
-                    |> Lens.modify Page.lenses.referenceEntries
-                        (Dict.insert referenceEntry.nutrientCode (referenceEntry |> Editing.asView))
-                    |> Lens.modify Page.lenses.referenceEntriesToAdd (Dict.remove referenceEntry.nutrientCode)
+                    |> LensUtil.insertAtId referenceEntry.nutrientCode
+                        Page.lenses.referenceEntries
+                        (referenceEntry |> Editing.asView)
+                    |> LensUtil.deleteAtId referenceEntry.nutrientCode Page.lenses.referenceEntriesToAdd
             )
     , Cmd.none
     )
@@ -294,8 +297,9 @@ gotAddReferenceEntryResponse model result =
 updateAddNutrient : Page.Model -> ReferenceEntryCreationClientInput -> ( Page.Model, Cmd Page.Msg )
 updateAddNutrient model referenceEntryCreationClientInput =
     ( model
-        |> Lens.modify Page.lenses.referenceEntriesToAdd
-            (Dict.insert referenceEntryCreationClientInput.nutrientCode referenceEntryCreationClientInput)
+        |> LensUtil.insertAtId referenceEntryCreationClientInput.nutrientCode
+            Page.lenses.referenceEntriesToAdd
+            referenceEntryCreationClientInput
     , Cmd.none
     )
 

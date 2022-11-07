@@ -8,7 +8,7 @@ import Basics.Extra exposing (flip)
 import Dict
 import Either exposing (Either(..))
 import Monocle.Compose as Compose
-import Monocle.Lens as Lens
+import Monocle.Lens
 import Monocle.Optional as Optional
 import Pages.MealEntries.MealEntryCreationClientInput as MealEntryCreationClientInput exposing (MealEntryCreationClientInput)
 import Pages.MealEntries.MealEntryUpdateClientInput as MealEntryUpdateClientInput exposing (MealEntryUpdateClientInput)
@@ -144,7 +144,7 @@ gotSaveMealEntryResponse model result =
                 model
                     |> mapMealEntryStateById mealEntry.id
                         (mealEntry |> Editing.asView |> always)
-                    |> Lens.modify Page.lenses.mealEntriesToAdd (Dict.remove mealEntry.recipeId)
+                    |> LensUtil.deleteAtId mealEntry.recipeId Page.lenses.mealEntriesToAdd
             )
     , Cmd.none
     )
@@ -193,8 +193,9 @@ gotDeleteMealEntryResponse model mealEntryId result =
     ( result
         |> Either.fromResult
         |> Either.unpack (flip setError model)
-            (Lens.modify Page.lenses.mealEntries (Dict.remove mealEntryId) model
-                |> always
+            (\_ ->
+                model
+                    |> LensUtil.deleteAtId mealEntryId Page.lenses.mealEntries
             )
     , Cmd.none
     )
@@ -245,8 +246,9 @@ gotFetchMealResponse model result =
 selectRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 selectRecipe model recipeId =
     ( model
-        |> Lens.modify Page.lenses.mealEntriesToAdd
-            (Dict.insert recipeId (MealEntryCreationClientInput.default model.mealId recipeId))
+        |> LensUtil.insertAtId recipeId
+            Page.lenses.mealEntriesToAdd
+            (MealEntryCreationClientInput.default model.mealId recipeId)
     , Cmd.none
     )
 
@@ -254,7 +256,7 @@ selectRecipe model recipeId =
 deselectRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 deselectRecipe model recipeId =
     ( model
-        |> Lens.modify Page.lenses.mealEntriesToAdd (Dict.remove recipeId)
+        |> LensUtil.deleteAtId recipeId Page.lenses.mealEntriesToAdd
     , Cmd.none
     )
 
@@ -278,8 +280,8 @@ gotAddMealEntryResponse model result =
         |> Either.unpack (flip setError model)
             (\mealEntry ->
                 model
-                    |> Lens.modify Page.lenses.mealEntries (Dict.insert mealEntry.id (mealEntry |> Editing.asView))
-                    |> Lens.modify Page.lenses.mealEntriesToAdd (Dict.remove mealEntry.recipeId)
+                    |> LensUtil.insertAtId mealEntry.id Page.lenses.mealEntries (mealEntry |> Editing.asView)
+                    |> LensUtil.deleteAtId mealEntry.recipeId Page.lenses.mealEntriesToAdd
             )
     , Cmd.none
     )

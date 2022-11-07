@@ -8,7 +8,7 @@ import Dict
 import Either exposing (Either(..))
 import Maybe.Extra
 import Monocle.Compose as Compose
-import Monocle.Lens as Lens
+import Monocle.Lens
 import Monocle.Optional as Optional
 import Pages.ComplexFoods.ComplexFoodClientInput as ComplexFoodClientInput exposing (ComplexFoodClientInput)
 import Pages.ComplexFoods.Page as Page
@@ -140,8 +140,7 @@ gotCreateComplexFoodResponse model result =
             (\complexFood ->
                 model
                     |> mapComplexFoodStateByRecipeId complexFood.recipeId (complexFood |> Editing.asView |> always)
-                    |> Lens.modify Page.lenses.complexFoodsToCreate
-                        (Dict.remove complexFood.recipeId)
+                    |> LensUtil.deleteAtId complexFood.recipeId Page.lenses.complexFoodsToCreate
             )
     , Cmd.none
     )
@@ -173,7 +172,7 @@ gotSaveComplexFoodResponse model result =
             (\complexFood ->
                 model
                     |> mapComplexFoodStateByRecipeId complexFood.recipeId (always complexFood >> Editing.asView)
-                    |> Lens.modify Page.lenses.complexFoodsToCreate (Dict.remove complexFood.recipeId)
+                    |> LensUtil.deleteAtId complexFood.recipeId Page.lenses.complexFoodsToCreate
             )
     , Cmd.none
     )
@@ -223,7 +222,7 @@ gotDeleteComplexFoodResponse model complexFoodId result =
         |> Either.unpack (flip setError model)
             (always
                 (model
-                    |> Lens.modify Page.lenses.complexFoods (Dict.remove complexFoodId)
+                    |> LensUtil.deleteAtId complexFoodId Page.lenses.complexFoods
                 )
             )
     , Cmd.none
@@ -261,8 +260,9 @@ gotFetchComplexFoodsResponse model result =
 selectRecipe : Page.Model -> Recipe -> ( Page.Model, Cmd Page.Msg )
 selectRecipe model recipe =
     ( model
-        |> Lens.modify Page.lenses.complexFoodsToCreate
-            (Dict.insert recipe.id (ComplexFoodClientInput.default recipe.id))
+        |> LensUtil.insertAtId recipe.id
+            Page.lenses.complexFoodsToCreate
+            (ComplexFoodClientInput.default recipe.id)
     , Cmd.none
     )
 
@@ -270,7 +270,7 @@ selectRecipe model recipe =
 deselectRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 deselectRecipe model recipeId =
     ( model
-        |> Lens.modify Page.lenses.complexFoodsToCreate (Dict.remove recipeId)
+        |> LensUtil.deleteAtId recipeId Page.lenses.complexFoodsToCreate
     , Cmd.none
     )
 

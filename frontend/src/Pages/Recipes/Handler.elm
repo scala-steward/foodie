@@ -7,7 +7,7 @@ import Dict
 import Either exposing (Either(..))
 import Maybe.Extra
 import Monocle.Compose as Compose
-import Monocle.Lens as Lens
+import Monocle.Lens
 import Monocle.Optional
 import Pages.Recipes.Page as Page exposing (RecipeState)
 import Pages.Recipes.Pagination as Pagination exposing (Pagination)
@@ -107,8 +107,9 @@ gotCreateRecipeResponse model dataOrError =
         |> Either.unpack (flip setError model)
             (\recipe ->
                 model
-                    |> Lens.modify Page.lenses.recipes
-                        (Dict.insert recipe.id (Editing.asView recipe))
+                    |> LensUtil.insertAtId recipe.id
+                        Page.lenses.recipes
+                        (recipe |> Editing.asView)
                     |> Page.lenses.recipeToAdd.set Nothing
             )
     , Cmd.none
@@ -197,7 +198,7 @@ gotDeleteRecipeResponse model deletedId dataOrError =
         |> Either.unpack (flip setError model)
             (always
                 (model
-                    |> Lens.modify Page.lenses.recipes (Dict.remove deletedId)
+                    |> LensUtil.deleteAtId deletedId Page.lenses.recipes
                 )
             )
     , Cmd.none

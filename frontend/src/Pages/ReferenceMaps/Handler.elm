@@ -7,7 +7,7 @@ import Dict
 import Either exposing (Either(..))
 import Maybe.Extra
 import Monocle.Compose as Compose
-import Monocle.Lens as Lens
+import Monocle.Lens
 import Monocle.Optional
 import Pages.ReferenceMaps.Page as Page exposing (ReferenceMapState)
 import Pages.ReferenceMaps.Pagination as Pagination exposing (Pagination)
@@ -107,8 +107,9 @@ gotCreateReferenceMapResponse model dataOrError =
         |> Either.unpack (flip setError model)
             (\referenceMap ->
                 model
-                    |> Lens.modify Page.lenses.referenceMaps
-                        (Dict.insert referenceMap.id (referenceMap |> Editing.asView))
+                    |> LensUtil.insertAtId referenceMap.id
+                        Page.lenses.referenceMaps
+                        (referenceMap |> Editing.asView)
                     |> Page.lenses.referenceMapToAdd.set Nothing
             )
     , Cmd.none
@@ -195,11 +196,9 @@ gotDeleteReferenceMapResponse model deletedId dataOrError =
     ( dataOrError
         |> Either.fromResult
         |> Either.unpack (flip setError model)
-            (always
-                (model
-                    |> Lens.modify Page.lenses.referenceMaps
-                        (Dict.remove deletedId)
-                )
+            (\_ ->
+                model
+                    |> LensUtil.deleteAtId deletedId Page.lenses.referenceMaps
             )
     , Cmd.none
     )

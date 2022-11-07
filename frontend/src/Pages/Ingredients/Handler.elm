@@ -14,7 +14,7 @@ import Json.Decode as Decode
 import Json.Encode as Encode
 import Maybe.Extra
 import Monocle.Compose as Compose
-import Monocle.Lens as Lens exposing (Lens)
+import Monocle.Lens exposing (Lens)
 import Monocle.Optional
 import Pages.Ingredients.ComplexIngredientClientInput as ComplexIngredientClientInput exposing (ComplexIngredientClientInput)
 import Pages.Ingredients.FoodGroup as FoodGroup
@@ -262,9 +262,8 @@ gotSaveIngredientResponse model result =
                 model
                     |> mapIngredientStateById ingredient.id
                         (Editing.asView ingredient |> always)
-                    |> Lens.modify
+                    |> LensUtil.deleteAtId ingredient.foodId
                         (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
-                        (Dict.remove ingredient.foodId)
             )
     , Cmd.none
     )
@@ -279,9 +278,8 @@ gotSaveComplexIngredientResponse model result =
                 model
                     |> mapComplexIngredientStateById complexIngredient.complexFoodId
                         (Editing.asView complexIngredient |> always)
-                    |> Lens.modify
+                    |> LensUtil.deleteAtId complexIngredient.complexFoodId
                         (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
-                        (Dict.remove complexIngredient.complexFoodId)
             )
     , Cmd.none
     )
@@ -371,9 +369,8 @@ gotDeleteIngredientResponse model ingredientId result =
         |> Either.fromResult
         |> Either.unpack (flip setError model)
             (model
-                |> Lens.modify
+                |> LensUtil.deleteAtId ingredientId
                     (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients)
-                    (Dict.remove ingredientId)
                 |> always
             )
     , Cmd.none
@@ -386,9 +383,8 @@ gotDeleteComplexIngredientResponse model complexIngredientId result =
         |> Either.fromResult
         |> Either.unpack (flip setError model)
             (model
-                |> Lens.modify
+                |> LensUtil.deleteAtId complexIngredientId
                     (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients)
-                    (Dict.remove complexIngredientId)
                 |> always
             )
     , Cmd.none
@@ -588,8 +584,9 @@ setComplexFoodsSearchString model string =
 selectFood : Page.Model -> Food -> ( Page.Model, Cmd msg )
 selectFood model food =
     ( model
-        |> Lens.modify (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
-            (Dict.insert food.id (IngredientCreationClientInput.default model.recipeId food.id (food.measures |> List.head |> Maybe.Extra.unwrap 0 .id)))
+        |> LensUtil.insertAtId food.id
+            (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
+            (IngredientCreationClientInput.default model.recipeId food.id (food.measures |> List.head |> Maybe.Extra.unwrap 0 .id))
     , Cmd.none
     )
 
@@ -597,8 +594,9 @@ selectFood model food =
 selectComplexFood : Page.Model -> ComplexFood -> ( Page.Model, Cmd msg )
 selectComplexFood model complexFood =
     ( model
-        |> Lens.modify (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
-            (Dict.insert complexFood.recipeId (ComplexIngredientClientInput.fromFood complexFood))
+        |> LensUtil.insertAtId complexFood.recipeId
+            (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
+            (ComplexIngredientClientInput.fromFood complexFood)
     , Cmd.none
     )
 
@@ -606,7 +604,7 @@ selectComplexFood model complexFood =
 deselectFood : Page.Model -> FoodId -> ( Page.Model, Cmd Page.Msg )
 deselectFood model foodId =
     ( model
-        |> Lens.modify (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd) (Dict.remove foodId)
+        |> LensUtil.deleteAtId foodId (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
     , Cmd.none
     )
 
@@ -614,7 +612,7 @@ deselectFood model foodId =
 deselectComplexFood : Page.Model -> ComplexFoodId -> ( Page.Model, Cmd Page.Msg )
 deselectComplexFood model complexFoodId =
     ( model
-        |> Lens.modify (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd) (Dict.remove complexFoodId)
+        |> LensUtil.deleteAtId complexFoodId (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
     , Cmd.none
     )
 
@@ -656,12 +654,11 @@ gotAddFoodResponse model result =
         |> Either.unpack (flip setError model)
             (\ingredient ->
                 model
-                    |> Lens.modify
+                    |> LensUtil.insertAtId ingredient.id
                         (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients)
-                        (Dict.insert ingredient.id (ingredient |> Editing.asView))
-                    |> Lens.modify
+                        (ingredient |> Editing.asView)
+                    |> LensUtil.deleteAtId ingredient.foodId
                         (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
-                        (Dict.remove ingredient.foodId)
             )
     , Cmd.none
     )
@@ -674,12 +671,11 @@ gotAddComplexFoodResponse model result =
         |> Either.unpack (flip setError model)
             (\complexIngredient ->
                 model
-                    |> Lens.modify
+                    |> LensUtil.insertAtId complexIngredient.complexFoodId
                         (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients)
-                        (Dict.insert complexIngredient.complexFoodId (complexIngredient |> Editing.asView))
-                    |> Lens.modify
+                        (complexIngredient |> Editing.asView)
+                    |> LensUtil.deleteAtId complexIngredient.complexFoodId
                         (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
-                        (Dict.remove complexIngredient.complexFoodId)
             )
     , Cmd.none
     )
@@ -688,8 +684,9 @@ gotAddComplexFoodResponse model result =
 updateAddFood : Page.Model -> IngredientCreationClientInput -> ( Page.Model, Cmd Page.Msg )
 updateAddFood model ingredientCreationClientInput =
     ( model
-        |> Lens.modify (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
-            (Dict.insert ingredientCreationClientInput.foodId ingredientCreationClientInput)
+        |> LensUtil.insertAtId ingredientCreationClientInput.foodId
+            (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
+            ingredientCreationClientInput
     , Cmd.none
     )
 
@@ -697,8 +694,9 @@ updateAddFood model ingredientCreationClientInput =
 updateAddComplexFood : Page.Model -> ComplexIngredientClientInput -> ( Page.Model, Cmd Page.Msg )
 updateAddComplexFood model complexIngredientClientInput =
     ( model
-        |> Lens.modify (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
-            (Dict.insert complexIngredientClientInput.complexFoodId complexIngredientClientInput)
+        |> LensUtil.insertAtId complexIngredientClientInput.complexFoodId
+            (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
+            complexIngredientClientInput
     , Cmd.none
     )
 

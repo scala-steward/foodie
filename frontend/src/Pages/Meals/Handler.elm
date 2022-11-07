@@ -7,7 +7,7 @@ import Dict
 import Either exposing (Either(..))
 import Maybe.Extra
 import Monocle.Compose as Compose
-import Monocle.Lens as Lens
+import Monocle.Lens
 import Monocle.Optional
 import Pages.Meals.MealCreationClientInput as MealCreationClientInput exposing (MealCreationClientInput)
 import Pages.Meals.MealUpdateClientInput as MealUpdateClientInput exposing (MealUpdateClientInput)
@@ -108,7 +108,7 @@ gotCreateMealResponse model dataOrError =
         |> Either.unpack (flip setError model)
             (\meal ->
                 model
-                    |> Lens.modify Page.lenses.meals (Dict.insert meal.id (meal |> Editing.asView))
+                    |> LensUtil.insertAtId meal.id Page.lenses.meals (meal |> Editing.asView)
                     |> Page.lenses.mealToAdd.set Nothing
             )
     , Cmd.none
@@ -196,8 +196,7 @@ gotDeleteMealResponse model deletedId dataOrError =
         |> Either.unpack (flip setError model)
             (\_ ->
                 model
-                    |> Lens.modify Page.lenses.meals
-                        (Dict.remove deletedId)
+                    |> LensUtil.deleteAtId deletedId Page.lenses.meals
             )
     , Cmd.none
     )
