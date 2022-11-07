@@ -139,7 +139,7 @@ gotCreateComplexFoodResponse model result =
         |> Either.unpack (flip setError model)
             (\complexFood ->
                 model
-                    |> mapComplexFoodOrUpdateByRecipeId complexFood.recipeId (complexFood |> Editing.asView |> always)
+                    |> mapComplexFoodStateByRecipeId complexFood.recipeId (complexFood |> Editing.asView |> always)
                     |> Lens.modify Page.lenses.complexFoodsToCreate
                         (Dict.remove complexFood.recipeId)
             )
@@ -150,7 +150,7 @@ gotCreateComplexFoodResponse model result =
 updateComplexFood : Page.Model -> ComplexFoodClientInput -> ( Page.Model, Cmd Page.Msg )
 updateComplexFood model complexFoodClientInput =
     ( model
-        |> mapComplexFoodOrUpdateByRecipeId complexFoodClientInput.recipeId
+        |> mapComplexFoodStateByRecipeId complexFoodClientInput.recipeId
             (Editing.lenses.update.set complexFoodClientInput)
     , Cmd.none
     )
@@ -172,7 +172,7 @@ gotSaveComplexFoodResponse model result =
         |> Either.unpack (flip setError model)
             (\complexFood ->
                 model
-                    |> mapComplexFoodOrUpdateByRecipeId complexFood.recipeId (always complexFood >> Editing.asView)
+                    |> mapComplexFoodStateByRecipeId complexFood.recipeId (always complexFood >> Editing.asView)
                     |> Lens.modify Page.lenses.complexFoodsToCreate (Dict.remove complexFood.recipeId)
             )
     , Cmd.none
@@ -182,7 +182,7 @@ gotSaveComplexFoodResponse model result =
 enterEditComplexFood : Page.Model -> ComplexFoodId -> ( Page.Model, Cmd Page.Msg )
 enterEditComplexFood model complexFoodId =
     ( model
-        |> mapComplexFoodOrUpdateByRecipeId complexFoodId
+        |> mapComplexFoodStateByRecipeId complexFoodId
             (Editing.toUpdate ComplexFoodClientInput.from)
     , Cmd.none
     )
@@ -190,14 +190,14 @@ enterEditComplexFood model complexFoodId =
 
 exitEditComplexFood : Page.Model -> ComplexFoodId -> ( Page.Model, Cmd Page.Msg )
 exitEditComplexFood model complexFoodId =
-    ( model |> mapComplexFoodOrUpdateByRecipeId complexFoodId Editing.toView
+    ( model |> mapComplexFoodStateByRecipeId complexFoodId Editing.toView
     , Cmd.none
     )
 
 
 requestDeleteComplexFood : Page.Model -> ComplexFoodId -> ( Page.Model, Cmd Page.Msg )
 requestDeleteComplexFood model complexFoodId =
-    ( model |> mapComplexFoodOrUpdateByRecipeId complexFoodId Editing.toDelete
+    ( model |> mapComplexFoodStateByRecipeId complexFoodId Editing.toDelete
     , Cmd.none
     )
 
@@ -211,7 +211,7 @@ confirmDeleteComplexFood model complexFoodId =
 
 cancelDeleteComplexFood : Page.Model -> ComplexFoodId -> ( Page.Model, Cmd Page.Msg )
 cancelDeleteComplexFood model complexFoodId =
-    ( model |> mapComplexFoodOrUpdateByRecipeId complexFoodId Editing.toView
+    ( model |> mapComplexFoodStateByRecipeId complexFoodId Editing.toView
     , Cmd.none
     )
 
@@ -311,8 +311,8 @@ setPagination model pagination =
     )
 
 
-mapComplexFoodOrUpdateByRecipeId : ComplexFoodId -> (Page.ComplexFoodState -> Page.ComplexFoodState) -> Page.Model -> Page.Model
-mapComplexFoodOrUpdateByRecipeId recipeId =
+mapComplexFoodStateByRecipeId : ComplexFoodId -> (Page.ComplexFoodState -> Page.ComplexFoodState) -> Page.Model -> Page.Model
+mapComplexFoodStateByRecipeId recipeId =
     Page.lenses.complexFoods
         |> Compose.lensWithOptional (LensUtil.dictByKey recipeId)
         |> Optional.modify

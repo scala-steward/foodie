@@ -665,9 +665,9 @@ viewFoodLine foodMap ingredientsToAdd ingredients food =
                                 Nothing ->
                                     ( "Add", addMsg, Style.classes.button.confirm )
 
-                                Just ingredientOrUpdate ->
+                                Just ingredientState ->
                                     ( "Update"
-                                    , ingredientOrUpdate
+                                    , ingredientState
                                         |> .original
                                         |> IngredientUpdateClientInput.from
                                         |> IngredientUpdateClientInput.lenses.amountUnit.set ingredientToAdd.amountUnit
@@ -780,9 +780,9 @@ viewComplexFoodLine recipeMap complexFoodMap complexIngredientsToAdd complexIngr
                                 Nothing ->
                                     ( "Add", addMsg, Style.classes.button.confirm )
 
-                                Just ingredientOrUpdate ->
+                                Just ingredientState ->
                                     ( "Update"
-                                    , ingredientOrUpdate
+                                    , ingredientState
                                         |> .original
                                         |> ComplexIngredientClientInput.from
                                         |> ComplexIngredientClientInput.lenses.factor.set complexIngredientToAdd.factor

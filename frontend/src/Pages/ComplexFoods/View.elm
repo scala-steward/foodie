@@ -287,7 +287,7 @@ onChangeDropdown ps =
         >> ps.mkMsg
 
 
-viewRecipeLine : Page.CreateComplexFoodsMap -> Page.ComplexFoodOrUpdateMap -> Recipe -> Html Page.Msg
+viewRecipeLine : Page.CreateComplexFoodsMap -> Page.ComplexFoodStateMap -> Recipe -> Html Page.Msg
 viewRecipeLine complexFoodsToCreate complexFoods recipe =
     let
         createMsg =
@@ -328,9 +328,9 @@ viewRecipeLine complexFoodsToCreate complexFoods recipe =
                                 Nothing ->
                                     ( "Add", createMsg, Style.classes.button.confirm )
 
-                                Just complexFoodOrUpdate ->
+                                Just complexFoodState ->
                                     ( "Update"
-                                    , complexFoodOrUpdate
+                                    , complexFoodState
                                         |> .original
                                         |> ComplexFoodClientInput.from
                                         |> ComplexFoodClientInput.lenses.amount.set complexFoodToAdd.amount

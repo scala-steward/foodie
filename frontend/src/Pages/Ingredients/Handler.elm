@@ -210,7 +210,7 @@ mapIngredientStateById ingredientId =
         |> LensUtil.updateById ingredientId
 
 
-mapComplexIngredientStateById : ComplexIngredientId -> (Page.ComplexIngredientOrUpdate -> Page.ComplexIngredientOrUpdate) -> Page.Model -> Page.Model
+mapComplexIngredientStateById : ComplexIngredientId -> (Page.ComplexIngredientState -> Page.ComplexIngredientState) -> Page.Model -> Page.Model
 mapComplexIngredientStateById complexIngredientId =
     Page.lenses.complexIngredientsGroup
         |> Compose.lensWithLens FoodGroup.lenses.ingredients

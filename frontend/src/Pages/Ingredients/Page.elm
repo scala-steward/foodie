@@ -40,7 +40,7 @@ type alias PlainIngredientState =
     FoodGroup.IngredientState Ingredient IngredientUpdateClientInput
 
 
-type alias ComplexIngredientOrUpdate =
+type alias ComplexIngredientState =
     FoodGroup.IngredientState ComplexIngredient ComplexIngredientClientInput
 
 
@@ -73,7 +73,7 @@ type alias PlainIngredientStateMap =
 
 
 type alias ComplexIngredientStateMap =
-    Dict ComplexIngredientId ComplexIngredientOrUpdate
+    Dict ComplexIngredientId ComplexIngredientState
 
 
 type FoodsMode

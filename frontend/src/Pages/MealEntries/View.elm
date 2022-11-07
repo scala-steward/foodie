@@ -306,9 +306,9 @@ viewRecipeLine mealEntriesToAdd mealEntries recipe =
                                 Nothing ->
                                     ( "Add", addMsg, Style.classes.button.confirm )
 
-                                Just mealEntryOrUpdate ->
+                                Just mealEntryState ->
                                     ( "Update"
-                                    , mealEntryOrUpdate
+                                    , mealEntryState
                                         |> .original
                                         |> MealEntryUpdateClientInput.from
                                         |> MealEntryUpdateClientInput.lenses.numberOfServings.set mealEntryToAdd.numberOfServings

@@ -18,7 +18,7 @@ import Util.Initialization exposing (Initialization)
 type alias Model =
     { authorizedAccess : AuthorizedAccess
     , recipes : RecipeMap
-    , complexFoods : ComplexFoodOrUpdateMap
+    , complexFoods : ComplexFoodStateMap
     , complexFoodsToCreate : CreateComplexFoodsMap
     , recipesSearchString : String
     , complexFoodsSearchString : String
@@ -31,7 +31,7 @@ type alias ComplexFoodState =
     Editing ComplexFood ComplexFoodClientInput
 
 
-type alias ComplexFoodOrUpdateMap =
+type alias ComplexFoodStateMap =
     Dict ComplexFoodId ComplexFoodState
 
 
@@ -45,7 +45,7 @@ type alias RecipeMap =
 
 lenses :
     { recipes : Lens Model RecipeMap
-    , complexFoods : Lens Model ComplexFoodOrUpdateMap
+    , complexFoods : Lens Model ComplexFoodStateMap
     , complexFoodsToCreate : Lens Model CreateComplexFoodsMap
     , recipesSearchString : Lens Model String
     , complexFoodsSearchString : Lens Model String
