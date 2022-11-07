@@ -2,7 +2,6 @@ module Pages.ComplexFoods.Handler exposing (init, update)
 
 import Api.Auxiliary exposing (ComplexFoodId, RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
-import Api.Types.ComplexFoodUnit as ComplexFoodUnit
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Dict
@@ -18,7 +17,6 @@ import Pages.ComplexFoods.Requests as Requests
 import Pages.ComplexFoods.Status as Status
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.PaginationSettings as PaginationSettings
-import Pages.Util.ValidatedInput as ValidatedInput
 import Util.Editing as Editing
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization as Initialization
@@ -112,8 +110,10 @@ update msg model =
 updateComplexFoodCreation : Page.Model -> ComplexFoodClientInput -> ( Page.Model, Cmd Page.Msg )
 updateComplexFoodCreation model complexFoodClientInput =
     ( model
-        |> Lens.modify Page.lenses.complexFoodsToCreate
-            (Dict.insert complexFoodClientInput.recipeId complexFoodClientInput)
+        |> (Page.lenses.complexFoodsToCreate
+                |> Compose.lensWithOptional (LensUtil.dictByKey complexFoodClientInput.recipeId)
+           ).set
+            complexFoodClientInput
     , Cmd.none
     )
 
@@ -139,8 +139,7 @@ gotCreateComplexFoodResponse model result =
         |> Either.unpack (flip setError model)
             (\complexFood ->
                 model
-                    |> Lens.modify Page.lenses.complexFoods
-                        (Dict.insert complexFood.recipeId (complexFood |> Editing.asView))
+                    |> mapComplexFoodOrUpdateByRecipeId complexFood.recipeId (complexFood |> Editing.asView |> always)
                     |> Lens.modify Page.lenses.complexFoodsToCreate
                         (Dict.remove complexFood.recipeId)
             )
@@ -263,7 +262,7 @@ selectRecipe : Page.Model -> Recipe -> ( Page.Model, Cmd Page.Msg )
 selectRecipe model recipe =
     ( model
         |> Lens.modify Page.lenses.complexFoodsToCreate
-            (Dict.insert recipe.id { recipeId = recipe.id, amount = ValidatedInput.positive, unit = ComplexFoodUnit.G })
+            (Dict.insert recipe.id (ComplexFoodClientInput.default recipe.id))
     , Cmd.none
     )
 

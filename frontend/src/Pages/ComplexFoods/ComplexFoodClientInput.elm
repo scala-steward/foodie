@@ -2,7 +2,7 @@ module Pages.ComplexFoods.ComplexFoodClientInput exposing (..)
 
 import Api.Auxiliary exposing (RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
-import Api.Types.ComplexFoodUnit exposing (ComplexFoodUnit)
+import Api.Types.ComplexFoodUnit as ComplexFoodUnit exposing (ComplexFoodUnit)
 import Monocle.Lens exposing (Lens)
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
 
@@ -11,6 +11,14 @@ type alias ComplexFoodClientInput =
     { recipeId : RecipeId
     , amount : ValidatedInput Float
     , unit : ComplexFoodUnit
+    }
+
+
+default : RecipeId -> ComplexFoodClientInput
+default recipeId =
+    { recipeId = recipeId
+    , amount = ValidatedInput.positive
+    , unit = ComplexFoodUnit.G
     }
 
 
