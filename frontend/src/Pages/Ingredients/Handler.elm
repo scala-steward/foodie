@@ -203,15 +203,15 @@ update msg model =
             setComplexIngredientsSearchString model string
 
 
-mapIngredientOrUpdateById : IngredientId -> (Page.PlainIngredientState -> Page.PlainIngredientState) -> Page.Model -> Page.Model
-mapIngredientOrUpdateById ingredientId =
+mapIngredientStateById : IngredientId -> (Page.PlainIngredientState -> Page.PlainIngredientState) -> Page.Model -> Page.Model
+mapIngredientStateById ingredientId =
     Page.lenses.ingredientsGroup
         |> Compose.lensWithLens FoodGroup.lenses.ingredients
         |> LensUtil.updateById ingredientId
 
 
-mapComplexIngredientOrUpdateById : ComplexIngredientId -> (Page.ComplexIngredientOrUpdate -> Page.ComplexIngredientOrUpdate) -> Page.Model -> Page.Model
-mapComplexIngredientOrUpdateById complexIngredientId =
+mapComplexIngredientStateById : ComplexIngredientId -> (Page.ComplexIngredientOrUpdate -> Page.ComplexIngredientOrUpdate) -> Page.Model -> Page.Model
+mapComplexIngredientStateById complexIngredientId =
     Page.lenses.complexIngredientsGroup
         |> Compose.lensWithLens FoodGroup.lenses.ingredients
         |> LensUtil.updateById complexIngredientId
@@ -220,7 +220,7 @@ mapComplexIngredientOrUpdateById complexIngredientId =
 updateIngredient : Page.Model -> IngredientUpdateClientInput -> ( Page.Model, Cmd msg )
 updateIngredient model ingredientUpdateClientInput =
     ( model
-        |> mapIngredientOrUpdateById ingredientUpdateClientInput.ingredientId
+        |> mapIngredientStateById ingredientUpdateClientInput.ingredientId
             (Editing.lenses.update.set ingredientUpdateClientInput)
     , Cmd.none
     )
@@ -229,7 +229,7 @@ updateIngredient model ingredientUpdateClientInput =
 updateComplexIngredient : Page.Model -> ComplexIngredientClientInput -> ( Page.Model, Cmd msg )
 updateComplexIngredient model complexIngredientClientInput =
     ( model
-        |> mapComplexIngredientOrUpdateById complexIngredientClientInput.complexFoodId
+        |> mapComplexIngredientStateById complexIngredientClientInput.complexFoodId
             (Editing.lenses.update.set complexIngredientClientInput)
     , Cmd.none
     )
@@ -260,7 +260,7 @@ gotSaveIngredientResponse model result =
         |> Either.unpack (flip setError model)
             (\ingredient ->
                 model
-                    |> mapIngredientOrUpdateById ingredient.id
+                    |> mapIngredientStateById ingredient.id
                         (Editing.asView ingredient |> always)
                     |> Lens.modify
                         (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
@@ -277,7 +277,7 @@ gotSaveComplexIngredientResponse model result =
         |> Either.unpack (flip setError model)
             (\complexIngredient ->
                 model
-                    |> mapComplexIngredientOrUpdateById complexIngredient.complexFoodId
+                    |> mapComplexIngredientStateById complexIngredient.complexFoodId
                         (Editing.asView complexIngredient |> always)
                     |> Lens.modify
                         (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
@@ -290,7 +290,7 @@ gotSaveComplexIngredientResponse model result =
 enterEditIngredient : Page.Model -> IngredientId -> ( Page.Model, Cmd Page.Msg )
 enterEditIngredient model ingredientId =
     ( model
-        |> mapIngredientOrUpdateById ingredientId (Editing.toUpdate IngredientUpdateClientInput.from)
+        |> mapIngredientStateById ingredientId (Editing.toUpdate IngredientUpdateClientInput.from)
     , Cmd.none
     )
 
@@ -298,7 +298,7 @@ enterEditIngredient model ingredientId =
 enterEditComplexIngredient : Page.Model -> ComplexIngredientId -> ( Page.Model, Cmd Page.Msg )
 enterEditComplexIngredient model complexIngredientId =
     ( model
-        |> mapComplexIngredientOrUpdateById complexIngredientId (Editing.toUpdate ComplexIngredientClientInput.from)
+        |> mapComplexIngredientStateById complexIngredientId (Editing.toUpdate ComplexIngredientClientInput.from)
     , Cmd.none
     )
 
@@ -306,7 +306,7 @@ enterEditComplexIngredient model complexIngredientId =
 exitEditIngredientAt : Page.Model -> IngredientId -> ( Page.Model, Cmd Page.Msg )
 exitEditIngredientAt model ingredientId =
     ( model
-        |> mapIngredientOrUpdateById ingredientId Editing.toView
+        |> mapIngredientStateById ingredientId Editing.toView
     , Cmd.none
     )
 
@@ -314,7 +314,7 @@ exitEditIngredientAt model ingredientId =
 exitEditComplexIngredientAt : Page.Model -> ComplexIngredientId -> ( Page.Model, Cmd Page.Msg )
 exitEditComplexIngredientAt model complexIngredientId =
     ( model
-        |> mapComplexIngredientOrUpdateById complexIngredientId Editing.toView
+        |> mapComplexIngredientStateById complexIngredientId Editing.toView
     , Cmd.none
     )
 
@@ -322,7 +322,7 @@ exitEditComplexIngredientAt model complexIngredientId =
 requestDeleteIngredient : Page.Model -> IngredientId -> ( Page.Model, Cmd Page.Msg )
 requestDeleteIngredient model ingredientId =
     ( model
-        |> mapIngredientOrUpdateById ingredientId Editing.toDelete
+        |> mapIngredientStateById ingredientId Editing.toDelete
     , Cmd.none
     )
 
@@ -337,7 +337,7 @@ confirmDeleteIngredient model ingredientId =
 cancelDeleteIngredient : Page.Model -> IngredientId -> ( Page.Model, Cmd Page.Msg )
 cancelDeleteIngredient model ingredientId =
     ( model
-        |> mapIngredientOrUpdateById ingredientId Editing.toView
+        |> mapIngredientStateById ingredientId Editing.toView
     , Cmd.none
     )
 
@@ -345,7 +345,7 @@ cancelDeleteIngredient model ingredientId =
 requestDeleteComplexIngredient : Page.Model -> ComplexIngredientId -> ( Page.Model, Cmd Page.Msg )
 requestDeleteComplexIngredient model complexIngredientId =
     ( model
-        |> mapComplexIngredientOrUpdateById complexIngredientId Editing.toDelete
+        |> mapComplexIngredientStateById complexIngredientId Editing.toDelete
     , Cmd.none
     )
 
@@ -360,7 +360,7 @@ confirmDeleteComplexIngredient model complexIngredientId =
 cancelDeleteComplexIngredient : Page.Model -> ComplexIngredientId -> ( Page.Model, Cmd Page.Msg )
 cancelDeleteComplexIngredient model complexIngredientId =
     ( model
-        |> mapComplexIngredientOrUpdateById complexIngredientId Editing.toView
+        |> mapComplexIngredientStateById complexIngredientId Editing.toView
     , Cmd.none
     )
 

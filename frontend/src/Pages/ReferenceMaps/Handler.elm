@@ -118,7 +118,7 @@ gotCreateReferenceMapResponse model dataOrError =
 updateReferenceMap : Page.Model -> ReferenceMapUpdateClientInput -> ( Page.Model, Cmd Page.Msg )
 updateReferenceMap model referenceMapUpdate =
     ( model
-        |> mapReferenceMapOrUpdateById referenceMapUpdate.id
+        |> mapReferenceMapStateById referenceMapUpdate.id
             (Editing.lenses.update.set referenceMapUpdate)
     , Cmd.none
     )
@@ -146,7 +146,7 @@ gotSaveReferenceMapResponse model dataOrError =
         |> Either.unpack (flip setError model)
             (\referenceMap ->
                 model
-                    |> mapReferenceMapOrUpdateById referenceMap.id
+                    |> mapReferenceMapStateById referenceMap.id
                         (referenceMap |> Editing.asView |> always)
             )
     , Cmd.none
@@ -156,7 +156,7 @@ gotSaveReferenceMapResponse model dataOrError =
 enterEditReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
 enterEditReferenceMap model referenceMapId =
     ( model
-        |> mapReferenceMapOrUpdateById referenceMapId
+        |> mapReferenceMapStateById referenceMapId
             (Editing.toUpdate ReferenceMapUpdateClientInput.from)
     , Cmd.none
     )
@@ -164,14 +164,14 @@ enterEditReferenceMap model referenceMapId =
 
 exitEditReferenceMapAt : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
 exitEditReferenceMapAt model referenceMapId =
-    ( model |> mapReferenceMapOrUpdateById referenceMapId Editing.toView
+    ( model |> mapReferenceMapStateById referenceMapId Editing.toView
     , Cmd.none
     )
 
 
 requestDeleteReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
 requestDeleteReferenceMap model referenceMapId =
-    ( model |> mapReferenceMapOrUpdateById referenceMapId Editing.toDelete
+    ( model |> mapReferenceMapStateById referenceMapId Editing.toDelete
     , Cmd.none
     )
 
@@ -185,7 +185,7 @@ confirmDeleteReferenceMap model referenceMapId =
 
 cancelDeleteReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
 cancelDeleteReferenceMap model referenceMapId =
-    ( model |> mapReferenceMapOrUpdateById referenceMapId Editing.toView
+    ( model |> mapReferenceMapStateById referenceMapId Editing.toView
     , Cmd.none
     )
 
@@ -241,8 +241,8 @@ setSearchString model string =
     )
 
 
-mapReferenceMapOrUpdateById : ReferenceMapId -> (Page.ReferenceMapState -> Page.ReferenceMapState) -> Page.Model -> Page.Model
-mapReferenceMapOrUpdateById referenceMapId =
+mapReferenceMapStateById : ReferenceMapId -> (Page.ReferenceMapState -> Page.ReferenceMapState) -> Page.Model -> Page.Model
+mapReferenceMapStateById referenceMapId =
     Page.lenses.referenceMaps
         |> LensUtil.updateById referenceMapId
 
