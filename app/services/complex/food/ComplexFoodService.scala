@@ -116,18 +116,9 @@ object ComplexFoodService {
     override def create(userId: UserId, complexFood: ComplexFood)(implicit
         ec: ExecutionContext
     ): DBIO[ComplexFood] = {
-      val query          = complexFoodQuery(complexFood.recipeId)
       val complexFoodRow = complexFood.transformInto[Tables.ComplexFoodRow]
       ifRecipeExists(userId, complexFood.recipeId) {
-        for {
-          exists <- query.exists.result
-          row <-
-            if (exists)
-              query
-                .update(complexFoodRow)
-                .andThen(query.result.head)
-            else Tables.ComplexFood.returning(Tables.ComplexFood) += complexFoodRow
-        } yield row.transformInto[ComplexFood]
+        (Tables.ComplexFood.returning(Tables.ComplexFood) += complexFoodRow).map(_.transformInto[ComplexFood])
       }
     }
 
