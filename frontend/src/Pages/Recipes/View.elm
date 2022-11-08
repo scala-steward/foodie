@@ -239,8 +239,10 @@ editRecipeLineWith :
 editRecipeLineWith handling editedValue =
     let
         validInput =
-            handling.nameLens.get editedValue
-                |> ValidatedInput.isValid
+            List.all identity
+                [ handling.nameLens.get editedValue |> ValidatedInput.isValid
+                , handling.numberOfServingsLens.get editedValue |> ValidatedInput.isValid
+                ]
 
         validatedSaveAction =
             if validInput then
@@ -301,10 +303,16 @@ editRecipeLineWith handling editedValue =
             ]
         , td [ Style.classes.controls ]
             [ button
-                [ Style.classes.button.confirm
-                , onClick handling.saveMsg
-                , disabled <| not <| validInput
-                ]
+                ([ Style.classes.button.confirm
+                 , disabled <| not <| validInput
+                 ]
+                    ++ (if validInput then
+                            [ onClick handling.saveMsg ]
+
+                        else
+                            []
+                       )
+                )
                 [ text handling.confirmName ]
             ]
         , td [ Style.classes.controls ]
