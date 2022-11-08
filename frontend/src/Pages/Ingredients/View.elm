@@ -767,18 +767,17 @@ viewComplexFoodLine recipeMap complexFoodMap complexIngredientsToAdd complexIngr
                 Just complexIngredientToAdd ->
                     let
                         exists =
-                          DictUtil.existsValue (\complexIngredient -> complexIngredient.original.complexFoodId == complexIngredientToAdd.complexFoodId) complexIngredients
+                            DictUtil.existsValue (\complexIngredient -> complexIngredient.original.complexFoodId == complexIngredientToAdd.complexFoodId) complexIngredients
+
                         validInput =
                             List.all identity
-                             [complexIngredientToAdd.factor |> ValidatedInput.isValid,
-                                exists |> not                             ]
-
+                                [ complexIngredientToAdd.factor |> ValidatedInput.isValid
+                                , exists |> not
+                                ]
 
                         ( confirmName, confirmStyle ) =
                             if exists then
-                                ( "Added"
-                                , Style.classes.button.edit
-                                )
+                                ( "Added", Style.classes.button.edit )
 
                             else
                                 ( "Add", Style.classes.button.confirm )
