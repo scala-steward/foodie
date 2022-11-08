@@ -5,11 +5,13 @@ import Html exposing (Html, button, div, input, label, table, tbody, td, text, t
 import Html.Attributes exposing (disabled, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
+import Maybe.Extra
 import Pages.Recovery.Confirm.Page as Page
 import Pages.Util.Links as Links
 import Pages.Util.PasswordInput as PasswordInput
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
+import Util.MaybeUtil as MaybeUtil
 
 
 view : Page.Model -> Html Page.Msg
@@ -39,11 +41,7 @@ viewResetting model =
             PasswordInput.isValidPassword model.passwordInput
 
         enterAction =
-            if isValidPassword then
-                [ onEnter Page.Confirm ]
-
-            else
-                []
+            MaybeUtil.optional isValidPassword <| onEnter Page.Confirm
     in
     div [ Style.classes.confirm ]
         [ div [] [ label [ Style.classes.info ] [ text "Account recovery" ] ]
@@ -54,16 +52,17 @@ viewResetting model =
                         [ td [] [ label [] [ text "New password" ] ]
                         , td []
                             [ input
-                                ([ onInput
-                                    (flip PasswordInput.lenses.password1.set
-                                        model.passwordInput
-                                        >> Page.SetPasswordInput
-                                    )
-                                 , type_ "password"
-                                 , value <| PasswordInput.lenses.password1.get <| model.passwordInput
-                                 , Style.classes.editable
+                                ([ MaybeUtil.defined <|
+                                    onInput <|
+                                        flip PasswordInput.lenses.password1.set
+                                            model.passwordInput
+                                            >> Page.SetPasswordInput
+                                 , MaybeUtil.defined <| type_ "password"
+                                 , MaybeUtil.defined <| value <| PasswordInput.lenses.password1.get <| model.passwordInput
+                                 , MaybeUtil.defined <| Style.classes.editable
+                                 , enterAction
                                  ]
-                                    ++ enterAction
+                                    |> Maybe.Extra.values
                                 )
                                 []
                             ]
@@ -72,16 +71,17 @@ viewResetting model =
                         [ td [] [ label [] [ text "Password repetition" ] ]
                         , td []
                             [ input
-                                ([ onInput
-                                    (flip PasswordInput.lenses.password2.set
-                                        model.passwordInput
-                                        >> Page.SetPasswordInput
-                                    )
-                                 , type_ "password"
-                                 , value <| PasswordInput.lenses.password2.get <| model.passwordInput
-                                 , Style.classes.editable
+                                ([ MaybeUtil.defined <|
+                                    onInput <|
+                                        flip PasswordInput.lenses.password2.set
+                                            model.passwordInput
+                                            >> Page.SetPasswordInput
+                                 , MaybeUtil.defined <| type_ "password"
+                                 , MaybeUtil.defined <| value <| PasswordInput.lenses.password2.get <| model.passwordInput
+                                 , MaybeUtil.defined <| Style.classes.editable
+                                 , enterAction
                                  ]
-                                    ++ enterAction
+                                    |> Maybe.Extra.values
                                 )
                                 []
                             ]

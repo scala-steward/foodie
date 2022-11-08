@@ -36,6 +36,7 @@ import Pages.Util.ValidatedInput as ValidatedInput
 import Pages.Util.ViewUtil as ViewUtil
 import Paginate exposing (PaginatedList)
 import Util.Editing as Editing
+import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
 
@@ -284,7 +285,7 @@ viewPlain model =
                             , items = Pagination.lenses.foods
                             }
                             model
-                            >> Page.SetComplexIngredientsPagination
+                            >> Page.SetIngredientsPagination
                     , elements = viewFoods
                     }
                 ]
@@ -478,6 +479,9 @@ updateIngredientLine measureMap foodMap ingredient ingredientUpdateClientInput =
 
         cancelMsg =
             Page.ExitEditIngredientAt ingredient.id
+
+        validInput =
+            ingredientUpdateClientInput.amountUnit.factor |> ValidatedInput.isValid
     in
     tr [ Style.classes.editLine ]
         [ td [] [ label [] [ text <| DictUtil.nameOrEmpty foodMap <| ingredient.foodId ] ]
@@ -521,7 +525,13 @@ updateIngredientLine measureMap foodMap ingredient ingredientUpdateClientInput =
                 )
             ]
         , td []
-            [ button [ Style.classes.button.confirm, onClick saveMsg ]
+            [ button
+                ([ MaybeUtil.defined <| Style.classes.button.confirm
+                 , MaybeUtil.defined <| disabled <| not <| validInput
+                 , MaybeUtil.optional validInput <| onClick saveMsg
+                 ]
+                    |> Maybe.Extra.values
+                )
                 [ text "Save" ]
             ]
         , td []
@@ -660,43 +670,33 @@ viewFoodLine foodMap ingredientsToAdd ingredients food =
                         validInput =
                             ingredientToAdd.amountUnit.factor |> ValidatedInput.isValid
 
-                        ( confirmName, confirmMsg, confirmStyle ) =
-                            case DictUtil.firstSuch (\ingredient -> ingredient.original.foodId == ingredientToAdd.foodId) ingredients of
-                                Nothing ->
-                                    ( "Add", addMsg, Style.classes.button.confirm )
+                        ( confirmName, confirmStyle ) =
+                            if DictUtil.existsValue (\ingredient -> ingredient.original.foodId == ingredientToAdd.foodId) ingredients then
+                                ( "Add again", Style.classes.button.edit )
 
-                                Just ingredientState ->
-                                    ( "Update"
-                                    , ingredientState
-                                        |> .original
-                                        |> IngredientUpdateClientInput.from
-                                        |> IngredientUpdateClientInput.lenses.amountUnit.set ingredientToAdd.amountUnit
-                                        |> Page.SaveIngredientEdit
-                                    , Style.classes.button.edit
-                                    )
+                            else
+                                ( "Add"
+                                , Style.classes.button.confirm
+                                )
                     in
                     [ td [ Style.classes.numberCell ]
                         [ input
-                            ([ value ingredientToAdd.amountUnit.factor.text
-                             , onInput
-                                (flip
-                                    (ValidatedInput.lift
-                                        (IngredientCreationClientInput.amountUnit
-                                            |> Compose.lensWithLens AmountUnitClientInput.lenses.factor
-                                        )
-                                    ).set
-                                    ingredientToAdd
-                                    >> Page.UpdateAddFood
-                                )
-                             , Style.classes.numberLabel
-                             , HtmlUtil.onEscape cancelMsg
+                            ([ MaybeUtil.defined <| value ingredientToAdd.amountUnit.factor.text
+                             , MaybeUtil.defined <|
+                                onInput <|
+                                    flip
+                                        (ValidatedInput.lift
+                                            (IngredientCreationClientInput.amountUnit
+                                                |> Compose.lensWithLens AmountUnitClientInput.lenses.factor
+                                            )
+                                        ).set
+                                        ingredientToAdd
+                                        >> Page.UpdateAddFood
+                             , MaybeUtil.defined <| Style.classes.numberLabel
+                             , MaybeUtil.defined <| HtmlUtil.onEscape cancelMsg
+                             , MaybeUtil.optional validInput <| onEnter addMsg
                              ]
-                                ++ (if validInput then
-                                        [ onEnter confirmMsg ]
-
-                                    else
-                                        []
-                                   )
+                                |> Maybe.Extra.values
                             )
                             []
                         ]
@@ -721,7 +721,7 @@ viewFoodLine foodMap ingredientsToAdd ingredients food =
                         [ button
                             [ confirmStyle
                             , disabled <| not <| validInput
-                            , onClick confirmMsg
+                            , onClick addMsg
                             ]
                             [ text confirmName
                             ]
@@ -772,28 +772,26 @@ viewComplexFoodLine recipeMap complexFoodMap complexIngredientsToAdd complexIngr
 
                 Just complexIngredientToAdd ->
                     let
+                        exists =
+                            DictUtil.existsValue (\complexIngredient -> complexIngredient.original.complexFoodId == complexIngredientToAdd.complexFoodId) complexIngredients
+
                         validInput =
-                            complexIngredientToAdd.factor |> ValidatedInput.isValid
+                            List.all identity
+                                [ complexIngredientToAdd.factor |> ValidatedInput.isValid
+                                , exists |> not
+                                ]
 
-                        ( confirmName, confirmMsg, confirmStyle ) =
-                            case DictUtil.firstSuch (\complexIngredient -> complexIngredient.original.complexFoodId == complexIngredientToAdd.complexFoodId) complexIngredients of
-                                Nothing ->
-                                    ( "Add", addMsg, Style.classes.button.confirm )
+                        ( confirmName, confirmStyle ) =
+                            if exists then
+                                ( "Added", Style.classes.button.edit )
 
-                                Just ingredientState ->
-                                    ( "Update"
-                                    , ingredientState
-                                        |> .original
-                                        |> ComplexIngredientClientInput.from
-                                        |> ComplexIngredientClientInput.lenses.factor.set complexIngredientToAdd.factor
-                                        |> Page.SaveComplexIngredientEdit
-                                    , Style.classes.button.edit
-                                    )
+                            else
+                                ( "Add", Style.classes.button.confirm )
                     in
                     [ td [ Style.classes.numberCell ]
-                        [ input
-                            ([ value complexIngredientToAdd.factor.text
-                             , onInput
+                        ([ input
+                            [ value complexIngredientToAdd.factor.text
+                            , onInput
                                 (flip
                                     (ValidatedInput.lift
                                         ComplexIngredientClientInput.lenses.factor
@@ -801,25 +799,23 @@ viewComplexFoodLine recipeMap complexFoodMap complexIngredientsToAdd complexIngr
                                     complexIngredientToAdd
                                     >> Page.UpdateAddComplexFood
                                 )
-                             , Style.classes.numberLabel
-                             , HtmlUtil.onEscape cancelMsg
-                             ]
-                                ++ (if validInput then
-                                        [ onEnter confirmMsg ]
-
-                                    else
-                                        []
-                                   )
-                            )
+                            , Style.classes.numberLabel
+                            , HtmlUtil.onEscape cancelMsg
+                            , onEnter addMsg
+                            ]
                             []
-                        ]
+                         ]
+                            |> List.filter (exists |> not |> always)
+                        )
                     , td [ Style.classes.editable, Style.classes.numberLabel, onClick selectMsg ] [ label [] [ text <| info.amount ] ]
                     , td [ Style.classes.controls ]
                         [ button
-                            [ confirmStyle
-                            , disabled <| not <| validInput
-                            , onClick confirmMsg
-                            ]
+                            ([ MaybeUtil.defined <| confirmStyle
+                             , MaybeUtil.defined <| disabled <| not <| validInput
+                             , MaybeUtil.optional validInput <| onClick addMsg
+                             ]
+                                |> Maybe.Extra.values
+                            )
                             [ text confirmName
                             ]
                         ]

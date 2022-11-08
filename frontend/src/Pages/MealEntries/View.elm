@@ -25,6 +25,7 @@ import Pages.Util.ValidatedInput as ValidatedInput
 import Pages.Util.ViewUtil as ViewUtil
 import Paginate
 import Util.Editing as Editing
+import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
 
@@ -301,51 +302,39 @@ viewRecipeLine mealEntriesToAdd mealEntries recipe =
                         validInput =
                             mealEntryToAdd.numberOfServings |> ValidatedInput.isValid
 
-                        ( confirmName, confirmMsg, confirmStyle ) =
-                            case DictUtil.firstSuch (\mealEntry -> mealEntry.original.recipeId == mealEntryToAdd.recipeId) mealEntries of
-                                Nothing ->
-                                    ( "Add", addMsg, Style.classes.button.confirm )
+                        ( confirmName, confirmStyle ) =
+                            if DictUtil.existsValue (\mealEntry -> mealEntry.original.recipeId == mealEntryToAdd.recipeId) mealEntries then
+                                ( "Add again", Style.classes.button.edit )
 
-                                Just mealEntryState ->
-                                    ( "Update"
-                                    , mealEntryState
-                                        |> .original
-                                        |> MealEntryUpdateClientInput.from
-                                        |> MealEntryUpdateClientInput.lenses.numberOfServings.set mealEntryToAdd.numberOfServings
-                                        |> Page.SaveMealEntryEdit
-                                    , Style.classes.button.edit
-                                    )
+                            else
+                                ( "Add", Style.classes.button.confirm )
                     in
                     [ td [ Style.classes.numberCell ]
                         [ input
-                            ([ value mealEntryToAdd.numberOfServings.text
-                             , onInput
-                                (flip
-                                    (ValidatedInput.lift
-                                        MealEntryCreationClientInput.lenses.numberOfServings
-                                    ).set
-                                    mealEntryToAdd
-                                    >> Page.UpdateAddRecipe
-                                )
-                             , Style.classes.numberLabel
+                            ([ MaybeUtil.defined <| value mealEntryToAdd.numberOfServings.text
+                             , MaybeUtil.defined <|
+                                onInput <|
+                                    flip
+                                        (ValidatedInput.lift
+                                            MealEntryCreationClientInput.lenses.numberOfServings
+                                        ).set
+                                        mealEntryToAdd
+                                        >> Page.UpdateAddRecipe
+                             , MaybeUtil.defined <| Style.classes.numberLabel
+                             , MaybeUtil.optional validInput <| onEnter addMsg
                              ]
-                                ++ (if validInput then
-                                        [ onEnter confirmMsg ]
-
-                                    else
-                                        []
-                                   )
+                                |> Maybe.Extra.values
                             )
                             []
                         ]
                     , td [ Style.classes.controls ]
                         [ button
-                            [ confirmStyle
-                            , disabled <|
-                                not <|
-                                    validInput
-                            , onClick confirmMsg
-                            ]
+                            ([ MaybeUtil.defined <| confirmStyle
+                             , MaybeUtil.defined <| disabled <| not <| validInput
+                             , MaybeUtil.optional validInput <| onClick addMsg
+                             ]
+                                |> Maybe.Extra.values
+                            )
                             [ text confirmName ]
                         ]
                     , td [ Style.classes.controls ] [ button [ Style.classes.button.cancel, onClick (Page.DeselectRecipe recipe.id) ] [ text "Cancel" ] ]

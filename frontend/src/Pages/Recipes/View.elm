@@ -27,6 +27,7 @@ import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
 import Pages.Util.ViewUtil as ViewUtil
 import Paginate
 import Util.Editing as Editing
+import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
 
@@ -239,72 +240,75 @@ editRecipeLineWith :
 editRecipeLineWith handling editedValue =
     let
         validInput =
-            handling.nameLens.get editedValue
-                |> ValidatedInput.isValid
+            List.all identity
+                [ handling.nameLens.get editedValue |> ValidatedInput.isValid
+                , handling.numberOfServingsLens.get editedValue |> ValidatedInput.isValid
+                ]
 
         validatedSaveAction =
-            if validInput then
-                [ onEnter handling.saveMsg ]
-
-            else
-                []
+            MaybeUtil.optional validInput <| onEnter handling.saveMsg
     in
     tr [ Style.classes.editLine ]
         [ td [ Style.classes.editable ]
             [ input
-                ([ value <| .text <| handling.nameLens.get <| editedValue
-                 , onInput
-                    (flip (ValidatedInput.lift handling.nameLens).set editedValue
-                        >> handling.updateMsg
-                    )
-                 , HtmlUtil.onEscape handling.cancelMsg
+                ([ MaybeUtil.defined <| value <| .text <| handling.nameLens.get <| editedValue
+                 , MaybeUtil.defined <|
+                    onInput <|
+                        flip (ValidatedInput.lift handling.nameLens).set editedValue
+                            >> handling.updateMsg
+                 , MaybeUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
+                 , validatedSaveAction
                  ]
-                    ++ validatedSaveAction
+                    |> Maybe.Extra.values
                 )
                 []
             ]
         , td [ Style.classes.editable ]
             [ input
-                ([ value <| Maybe.withDefault "" <| handling.descriptionLens.get <| editedValue
-                 , onInput
-                    (flip
-                        (Just
-                            >> Maybe.Extra.filter (String.isEmpty >> not)
-                            >> handling.descriptionLens.set
-                        )
-                        editedValue
-                        >> handling.updateMsg
-                    )
-                 , HtmlUtil.onEscape handling.cancelMsg
+                ([ MaybeUtil.defined <| value <| Maybe.withDefault "" <| handling.descriptionLens.get <| editedValue
+                 , MaybeUtil.defined <|
+                    onInput <|
+                        flip
+                            (Just
+                                >> Maybe.Extra.filter (String.isEmpty >> not)
+                                >> handling.descriptionLens.set
+                            )
+                            editedValue
+                            >> handling.updateMsg
+                 , MaybeUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
+                 , validatedSaveAction
                  ]
-                    ++ validatedSaveAction
+                    |> Maybe.Extra.values
                 )
                 []
             ]
         , td [ Style.classes.numberCell ]
             [ input
-                ([ value <| .text <| handling.numberOfServingsLens.get <| editedValue
-                 , onInput
-                    (flip
-                        (ValidatedInput.lift
-                            handling.numberOfServingsLens
-                        ).set
-                        editedValue
-                        >> handling.updateMsg
-                    )
-                 , HtmlUtil.onEscape handling.cancelMsg
-                 , Style.classes.numberLabel
+                ([ MaybeUtil.defined <| value <| .text <| handling.numberOfServingsLens.get <| editedValue
+                 , MaybeUtil.defined <|
+                    onInput <|
+                        flip
+                            (ValidatedInput.lift
+                                handling.numberOfServingsLens
+                            ).set
+                            editedValue
+                            >> handling.updateMsg
+                 , MaybeUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
+                 , MaybeUtil.defined <| Style.classes.numberLabel
+                 , validatedSaveAction
                  ]
-                    ++ validatedSaveAction
+                    |> Maybe.Extra.values
                 )
                 []
             ]
         , td [ Style.classes.controls ]
             [ button
-                [ Style.classes.button.confirm
-                , onClick handling.saveMsg
-                , disabled <| not <| validInput
-                ]
+                ([ MaybeUtil.defined <| Style.classes.button.confirm
+                 , MaybeUtil.defined <| disabled <| not <| validInput
+                 , MaybeUtil.optional validInput <| onClick handling.saveMsg
+                 ]
+                    |> Maybe.Extra.values
+                )
                 [ text handling.confirmName ]
             ]
         , td [ Style.classes.controls ]

@@ -279,18 +279,8 @@ object RecipeService {
     ): DBIO[Ingredient] = {
       val ingredient    = IngredientCreation.create(id, ingredientCreation)
       val ingredientRow = (ingredient, ingredientCreation.recipeId).transformInto[Tables.RecipeIngredientRow]
-      val query         = ingredientQuery(id)
       ifRecipeExists(userId, ingredientCreation.recipeId) {
-        for {
-          exists <- query.exists.result
-          row <-
-            if (exists)
-              query
-                .update(ingredientRow)
-                .andThen(query.result.head)
-            else
-              Tables.RecipeIngredient.returning(Tables.RecipeIngredient) += ingredientRow
-        } yield row.transformInto[Ingredient]
+        (Tables.RecipeIngredient.returning(Tables.RecipeIngredient) += ingredientRow).map(_.transformInto[Ingredient])
       }
     }
 

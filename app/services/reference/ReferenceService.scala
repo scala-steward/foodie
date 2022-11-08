@@ -309,18 +309,9 @@ object ReferenceService {
       val referenceEntry = ReferenceEntryCreation.create(referenceEntryCreation)
       val referenceEntryRow =
         (referenceEntry, referenceEntryCreation.referenceMapId).transformInto[Tables.ReferenceEntryRow]
-      val query = referenceEntryQuery(referenceEntryCreation.referenceMapId, referenceEntryCreation.nutrientCode)
       ifReferenceMapExists(userId, referenceEntryCreation.referenceMapId) {
-        for {
-          exists <- query.exists.result
-          row <-
-            if (exists)
-              query
-                .update(referenceEntryRow)
-                .andThen(query.result.head)
-            else
-              Tables.ReferenceEntry.returning(Tables.ReferenceEntry) += referenceEntryRow
-        } yield row.transformInto[ReferenceEntry]
+        (Tables.ReferenceEntry.returning(Tables.ReferenceEntry) += referenceEntryRow)
+          .map(_.transformInto[ReferenceEntry])
       }
     }
 

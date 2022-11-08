@@ -4,10 +4,12 @@ import Html exposing (Html, button, div, input, label, table, tbody, td, text, t
 import Html.Attributes exposing (disabled, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
+import Maybe.Extra
 import Pages.Recovery.Request.Page as Page
 import Pages.Util.Links as Links
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
+import Util.MaybeUtil as MaybeUtil
 
 
 view : Page.Model -> Html Page.Msg
@@ -82,11 +84,7 @@ searchComponents model =
             model.searchString |> String.isEmpty |> not
 
         enterAction =
-            if isValid then
-                [ onEnter Page.Find ]
-
-            else
-                []
+            MaybeUtil.optional isValid <| onEnter Page.Find
     in
     [ div [] [ label [ Style.classes.info ] [ text "Recovery" ] ]
     , table []
@@ -95,11 +93,12 @@ searchComponents model =
                 [ td [] [ label [] [ text "Nickname or email" ] ]
                 , td []
                     [ input
-                        ([ onInput Page.SetSearchString
-                         , Style.classes.editable
-                         , value <| model.searchString
+                        ([ MaybeUtil.defined <| onInput Page.SetSearchString
+                         , MaybeUtil.defined <| Style.classes.editable
+                         , MaybeUtil.defined <| value <| model.searchString
+                         , enterAction
                          ]
-                            ++ enterAction
+                            |> Maybe.Extra.values
                         )
                         []
                     ]

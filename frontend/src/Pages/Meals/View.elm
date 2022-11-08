@@ -31,6 +31,7 @@ import Pages.Util.ViewUtil as ViewUtil
 import Paginate
 import Parser
 import Util.Editing as Editing
+import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
 
@@ -267,12 +268,8 @@ editMealLineWith handling editedValue =
                     editedValue
                 >> handling.updateMsg
 
-        validatedEnterInteraction =
-            if deepDateLens.get editedValue |> Maybe.Extra.isJust then
-                [ onEnter handling.saveMsg ]
-
-            else
-                []
+        validatedSaveAction =
+            MaybeUtil.optional (deepDateLens.get editedValue |> Maybe.Extra.isJust) <| onEnter handling.saveMsg
 
         timeValue =
             date
@@ -291,6 +288,9 @@ editMealLineWith handling editedValue =
 
         name =
             Maybe.withDefault "" <| handling.nameLens.getOption <| editedValue
+
+        validInput =
+            Maybe.Extra.isJust <| date.date
     in
     tr [ Style.classes.editLine ]
         [ td [ Style.classes.editable, Style.classes.date ]
@@ -317,23 +317,26 @@ editMealLineWith handling editedValue =
             ]
         , td [ Style.classes.editable ]
             [ input
-                ([ value <| name
-                 , onInput
-                    (flip handling.nameLens.set editedValue
-                        >> handling.updateMsg
-                    )
-                 , HtmlUtil.onEscape handling.cancelMsg
+                ([ MaybeUtil.defined <| value <| name
+                 , MaybeUtil.defined <|
+                    onInput <|
+                        flip handling.nameLens.set editedValue
+                            >> handling.updateMsg
+                 , MaybeUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
+                 , validatedSaveAction
                  ]
-                    ++ validatedEnterInteraction
+                    |> Maybe.Extra.values
                 )
                 []
             ]
         , td [ Style.classes.controls ]
             [ button
-                [ Style.classes.button.confirm
-                , onClick handling.confirmOnClick
-                , disabled <| Maybe.Extra.isNothing <| date.date
-                ]
+                ([ MaybeUtil.defined <| Style.classes.button.confirm
+                 , MaybeUtil.defined <| disabled <| not <| validInput
+                 , MaybeUtil.optional validInput <| onClick handling.confirmOnClick
+                 ]
+                    |> Maybe.Extra.values
+                )
                 [ text handling.confirmName ]
             ]
         , td [ Style.classes.controls ]

@@ -25,6 +25,7 @@ import Pages.Util.ValidatedInput as ValidatedInput
 import Pages.Util.ViewUtil as ViewUtil
 import Paginate
 import Util.Editing as Editing
+import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
 
@@ -300,23 +301,24 @@ viewNutrientLine nutrientMap referenceEntries referenceEntriesToAdd nutrient =
 
                 Just referenceNutrientToAdd ->
                     let
-                        ( confirmName, confirmMsg, confirmStyle ) =
-                            case Dict.get referenceNutrientToAdd.nutrientCode referenceEntries of
-                                Nothing ->
-                                    ( "Add", addMsg, Style.classes.button.confirm )
+                        exists =
+                            Dict.get referenceNutrientToAdd.nutrientCode referenceEntries |> Maybe.Extra.isJust
 
-                                Just referenceNutrient ->
-                                    ( "Update"
-                                    , referenceNutrient
-                                        |> .original
-                                        |> ReferenceEntryUpdateClientInput.from
-                                        |> ReferenceEntryUpdateClientInput.lenses.amount.set referenceNutrientToAdd.amount
-                                        |> Page.SaveReferenceEntryEdit
-                                    , Style.classes.button.edit
-                                    )
+                        ( confirmName, confirmStyle ) =
+                            if exists then
+                                ( "Added", Style.classes.button.edit )
+
+                            else
+                                ( "Add", Style.classes.button.confirm )
+
+                        validInput =
+                            List.all identity
+                                [ referenceNutrientToAdd.amount |> ValidatedInput.isValid
+                                , exists |> not
+                                ]
                     in
                     [ td [ Style.classes.numberCell ]
-                        [ input
+                        ([ input
                             [ value referenceNutrientToAdd.amount.text
                             , onInput
                                 (flip
@@ -326,19 +328,23 @@ viewNutrientLine nutrientMap referenceEntries referenceEntriesToAdd nutrient =
                                     referenceNutrientToAdd
                                     >> Page.UpdateAddNutrient
                                 )
-                            , onEnter confirmMsg
+                            , onEnter addMsg
                             , HtmlUtil.onEscape cancelMsg
                             , Style.classes.numberLabel
                             ]
                             []
-                        ]
+                         ]
+                            |> List.filter (exists |> not |> always)
+                        )
                     , td [ Style.classes.numberCell ] [ label [] [ text <| .unitName <| nutrientInfo nutrientMap <| referenceNutrientToAdd.nutrientCode ] ]
                     , td [ Style.classes.controls ]
                         [ button
-                            [ confirmStyle
-                            , disabled (referenceNutrientToAdd.amount |> ValidatedInput.isValid |> not)
-                            , onClick confirmMsg
-                            ]
+                            ([ MaybeUtil.defined <| confirmStyle
+                             , MaybeUtil.defined <| disabled <| not <| validInput
+                             , MaybeUtil.optional validInput <| onClick addMsg
+                             ]
+                                |> Maybe.Extra.values
+                            )
                             [ text <| confirmName ]
                         ]
                     , td [ Style.classes.controls ] [ button [ Style.classes.button.cancel, onClick cancelMsg ] [ text "Cancel" ] ]

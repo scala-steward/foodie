@@ -16,6 +16,7 @@ import Pages.Util.Style as Style
 import Paginate exposing (PaginatedList)
 import Url.Builder
 import Util.Initialization exposing (Initialization(..))
+import Util.MaybeUtil as MaybeUtil
 
 
 viewWithErrorHandling :
@@ -47,18 +48,15 @@ viewWithErrorHandling params model html =
                         ]
 
                 redirectBlock =
-                    if explanation.redirectToLogin then
-                        [ td []
-                            [ navigationToPageButton
-                                { page = Login
-                                , mainPageURL = mainPageURL
-                                , currentPage = Nothing
-                                }
-                            ]
+                    [ td []
+                        [ navigationToPageButton
+                            { page = Login
+                            , mainPageURL = mainPageURL
+                            , currentPage = Nothing
+                            }
                         ]
-
-                    else
-                        []
+                    ]
+                        |> List.filter (always explanation.redirectToLogin)
             in
             div [ Style.ids.error ]
                 [ tr []
@@ -85,16 +83,13 @@ viewWithErrorHandling params model html =
                             |> Maybe.Extra.unwrap unknown .nickname
 
                     navigation =
-                        if params.showNavigation then
-                            [ navigationBar
-                                { mainPageURL = mainPageURL
-                                , currentPage = params.currentPage
-                                , nickname = nickname
-                                }
-                            ]
-
-                        else
-                            []
+                        [ navigationBar
+                            { mainPageURL = mainPageURL
+                            , currentPage = params.currentPage
+                            , nickname = nickname
+                            }
+                        ]
+                            |> List.filter (always params.showNavigation)
                 in
                 div []
                     (navigation
@@ -255,32 +250,26 @@ pagerButtons ps =
     let
         pagerButton pageNum isCurrentPage =
             button
-                ([ Style.classes.button.pager
-                 , onClick (ps.msg pageNum)
+                ([ MaybeUtil.defined <| Style.classes.button.pager
+                 , MaybeUtil.defined <| onClick <| ps.msg <| pageNum
+                 , MaybeUtil.optional isCurrentPage <| disabled <| True
+                 , MaybeUtil.optional isCurrentPage <| Style.classes.disabled
                  ]
-                    ++ (if isCurrentPage then
-                            [ disabled True, Style.classes.disabled ]
-
-                        else
-                            []
-                       )
+                    |> Maybe.Extra.values
                 )
                 [ text <| String.fromInt pageNum
                 ]
 
         cells =
-            if Paginate.totalPages ps.elements > 1 then
-                Paginate.elidedPager
-                    { innerWindow = 5
-                    , outerWindow = 1
-                    , pageNumberView = pagerButton
-                    , gapView = button [ Style.classes.ellipsis ] [ text "..." ]
-                    }
-                    ps.elements
-                    |> List.map (\elt -> td [] [ elt ])
-
-            else
-                []
+            Paginate.elidedPager
+                { innerWindow = 5
+                , outerWindow = 1
+                , pageNumberView = pagerButton
+                , gapView = button [ Style.classes.ellipsis ] [ text "..." ]
+                }
+                ps.elements
+                |> List.map (\elt -> td [] [ elt ])
+                |> List.filter (Paginate.totalPages ps.elements > 1 |> always)
     in
     table []
         [ tbody []

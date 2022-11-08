@@ -13,6 +13,7 @@ import Pages.Util.Links as Links
 import Pages.Util.PasswordInput as PasswordInput
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
+import Util.MaybeUtil as MaybeUtil
 
 
 view : Page.Model -> Html Page.Msg
@@ -42,11 +43,7 @@ viewEditing model =
             PasswordInput.isValidPassword model.complementInput.passwordInput
 
         enterAction =
-            if isValid then
-                [ onEnter Page.Request ]
-
-            else
-                []
+            MaybeUtil.optional isValid <| onEnter Page.Request
 
         password1Lens =
             ComplementInput.lenses.passwordInput
@@ -72,17 +69,18 @@ viewEditing model =
                     [ td [] [ label [] [ text "Display name (optional)" ] ]
                     , td []
                         [ input
-                            ([ onInput
-                                (Just
-                                    >> Maybe.Extra.filter (String.isEmpty >> not)
-                                    >> (flip ComplementInput.lenses.displayName.set
-                                            model.complementInput
-                                            >> Page.SetComplementInput
-                                       )
-                                )
-                             , Style.classes.editable
+                            ([ MaybeUtil.defined <|
+                                onInput <|
+                                    Just
+                                        >> Maybe.Extra.filter (String.isEmpty >> not)
+                                        >> (flip ComplementInput.lenses.displayName.set
+                                                model.complementInput
+                                                >> Page.SetComplementInput
+                                           )
+                             , MaybeUtil.defined <| Style.classes.editable
+                             , enterAction
                              ]
-                                ++ enterAction
+                                |> Maybe.Extra.values
                             )
                             []
                         ]
@@ -91,16 +89,17 @@ viewEditing model =
                     [ td [] [ label [] [ text "Password" ] ]
                     , td []
                         [ input
-                            ([ onInput
-                                (flip password1Lens.set
-                                    model.complementInput
-                                    >> Page.SetComplementInput
-                                )
-                             , value <| password1Lens.get <| model.complementInput
-                             , type_ "password"
-                             , Style.classes.editable
+                            ([ MaybeUtil.defined <|
+                                onInput <|
+                                    flip password1Lens.set
+                                        model.complementInput
+                                        >> Page.SetComplementInput
+                             , MaybeUtil.defined <| value <| password1Lens.get <| model.complementInput
+                             , MaybeUtil.defined <| type_ "password"
+                             , MaybeUtil.defined <| Style.classes.editable
+                             , enterAction
                              ]
-                                ++ enterAction
+                                |> Maybe.Extra.values
                             )
                             []
                         ]
@@ -109,16 +108,17 @@ viewEditing model =
                     [ td [] [ label [] [ text "Password repetition" ] ]
                     , td []
                         [ input
-                            ([ onInput
-                                (flip password2Lens.set
-                                    model.complementInput
-                                    >> Page.SetComplementInput
-                                )
-                             , value <| password2Lens.get <| model.complementInput
-                             , type_ "password"
-                             , Style.classes.editable
+                            ([ MaybeUtil.defined <|
+                                onInput <|
+                                    flip password2Lens.set
+                                        model.complementInput
+                                        >> Page.SetComplementInput
+                             , MaybeUtil.defined <| value <| password2Lens.get <| model.complementInput
+                             , MaybeUtil.defined <| type_ "password"
+                             , MaybeUtil.defined <| Style.classes.editable
+                             , enterAction
                              ]
-                                ++ enterAction
+                                |> Maybe.Extra.values
                             )
                             []
                         ]

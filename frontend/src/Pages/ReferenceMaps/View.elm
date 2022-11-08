@@ -11,6 +11,7 @@ import Html.Attributes exposing (colspan, disabled, scope, value)
 import Html.Attributes.Extra exposing (stringProperty)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
+import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
 import Pages.ReferenceMaps.Page as Page
@@ -26,6 +27,7 @@ import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
 import Pages.Util.ViewUtil as ViewUtil
 import Paginate
 import Util.Editing as Editing
+import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
 
@@ -229,32 +231,31 @@ editReferenceMapLineWith handling editedValue =
                 |> ValidatedInput.isValid
 
         validatedSaveAction =
-            if validInput then
-                [ onEnter handling.saveMsg ]
-
-            else
-                []
+            MaybeUtil.optional validInput <| onEnter handling.saveMsg
     in
     tr [ Style.classes.editLine ]
         [ td [ Style.classes.editable ]
             [ input
-                ([ value <| .text <| handling.nameLens.get <| editedValue
-                 , onInput
-                    (flip (ValidatedInput.lift handling.nameLens).set editedValue
-                        >> handling.updateMsg
-                    )
-                 , HtmlUtil.onEscape handling.cancelMsg
+                ([ MaybeUtil.defined <| value <| .text <| handling.nameLens.get <| editedValue
+                 , MaybeUtil.defined <|
+                    onInput <|
+                        flip (ValidatedInput.lift handling.nameLens).set editedValue
+                            >> handling.updateMsg
+                 , MaybeUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
+                 , validatedSaveAction
                  ]
-                    ++ validatedSaveAction
+                    |> Maybe.Extra.values
                 )
                 []
             ]
         , td [ Style.classes.controls ]
             [ button
-                [ Style.classes.button.confirm
-                , onClick handling.saveMsg
-                , disabled <| not <| validInput
-                ]
+                ([ MaybeUtil.defined <| Style.classes.button.confirm
+                 , MaybeUtil.defined <| disabled <| not <| validInput
+                 , MaybeUtil.optional validInput <| onClick handling.saveMsg
+                 ]
+                    |> Maybe.Extra.values
+                )
                 [ text handling.confirmName ]
             ]
         , td [ Style.classes.controls ]
