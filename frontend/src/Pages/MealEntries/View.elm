@@ -301,20 +301,14 @@ viewRecipeLine mealEntriesToAdd mealEntries recipe =
                         validInput =
                             mealEntryToAdd.numberOfServings |> ValidatedInput.isValid
 
-                        ( confirmName, confirmMsg, confirmStyle ) =
-                            case DictUtil.firstSuch (\mealEntry -> mealEntry.original.recipeId == mealEntryToAdd.recipeId) mealEntries of
-                                Nothing ->
-                                    ( "Add", addMsg, Style.classes.button.confirm )
+                        ( confirmName, confirmStyle ) =
+                            if DictUtil.existsValue (\mealEntry -> mealEntry.original.recipeId == mealEntryToAdd.recipeId) mealEntries then
+                                ( "Add again"
+                                , Style.classes.button.edit
+                                )
 
-                                Just mealEntryState ->
-                                    ( "Update"
-                                    , mealEntryState
-                                        |> .original
-                                        |> MealEntryUpdateClientInput.from
-                                        |> MealEntryUpdateClientInput.lenses.numberOfServings.set mealEntryToAdd.numberOfServings
-                                        |> Page.SaveMealEntryEdit
-                                    , Style.classes.button.edit
-                                    )
+                            else
+                                ( "Add", Style.classes.button.confirm )
                     in
                     [ td [ Style.classes.numberCell ]
                         [ input
@@ -330,7 +324,7 @@ viewRecipeLine mealEntriesToAdd mealEntries recipe =
                              , Style.classes.numberLabel
                              ]
                                 ++ (if validInput then
-                                        [ onEnter confirmMsg ]
+                                        [ onEnter addMsg ]
 
                                     else
                                         []
@@ -341,10 +335,8 @@ viewRecipeLine mealEntriesToAdd mealEntries recipe =
                     , td [ Style.classes.controls ]
                         [ button
                             [ confirmStyle
-                            , disabled <|
-                                not <|
-                                    validInput
-                            , onClick confirmMsg
+                            , disabled <| not <| validInput
+                            , onClick addMsg
                             ]
                             [ text confirmName ]
                         ]
