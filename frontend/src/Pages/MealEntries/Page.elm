@@ -6,7 +6,6 @@ import Api.Types.MealEntry exposing (MealEntry)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Dict exposing (Dict)
-import Either exposing (Either)
 import Monocle.Lens exposing (Lens)
 import Pages.MealEntries.MealEntryCreationClientInput exposing (MealEntryCreationClientInput)
 import Pages.MealEntries.MealEntryUpdateClientInput exposing (MealEntryUpdateClientInput)
@@ -23,7 +22,7 @@ type alias Model =
     { authorizedAccess : AuthorizedAccess
     , mealId : MealId
     , mealInfo : Maybe MealInfo
-    , mealEntries : MealEntryOrUpdateMap
+    , mealEntries : MealEntryStateMap
     , recipes : RecipeMap
     , recipesSearchString : String
     , entriesSearchString : String
@@ -33,8 +32,8 @@ type alias Model =
     }
 
 
-type alias MealEntryOrUpdate =
-    Either MealEntry (Editing MealEntry MealEntryUpdateClientInput)
+type alias MealEntryState =
+    Editing MealEntry MealEntryUpdateClientInput
 
 
 type alias RecipeMap =
@@ -45,8 +44,8 @@ type alias AddMealEntriesMap =
     Dict RecipeId MealEntryCreationClientInput
 
 
-type alias MealEntryOrUpdateMap =
-    Dict MealEntryId MealEntryOrUpdate
+type alias MealEntryStateMap =
+    Dict MealEntryId MealEntryState
 
 
 type alias Flags =
@@ -57,7 +56,7 @@ type alias Flags =
 
 lenses :
     { mealInfo : Lens Model (Maybe MealInfo)
-    , mealEntries : Lens Model MealEntryOrUpdateMap
+    , mealEntries : Lens Model MealEntryStateMap
     , mealEntriesToAdd : Lens Model AddMealEntriesMap
     , recipes : Lens Model RecipeMap
     , recipesSearchString : Lens Model String
@@ -88,7 +87,9 @@ type Msg
     | GotSaveMealEntryResponse (Result Error MealEntry)
     | EnterEditMealEntry MealEntryId
     | ExitEditMealEntryAt MealEntryId
-    | DeleteMealEntry MealEntryId
+    | RequestDeleteMealEntry MealEntryId
+    | ConfirmDeleteMealEntry MealEntryId
+    | CancelDeleteMealEntry MealEntryId
     | GotDeleteMealEntryResponse MealEntryId (Result Error ())
     | GotFetchMealEntriesResponse (Result Error (List MealEntry))
     | GotFetchRecipesResponse (Result Error (List Recipe))

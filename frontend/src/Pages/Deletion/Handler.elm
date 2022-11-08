@@ -1,9 +1,9 @@
 module Pages.Deletion.Handler exposing (init, update)
 
-import Either
 import Pages.Deletion.Page as Page
 import Pages.Deletion.Requests as Requests
 import Ports
+import Result.Extra
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization(..))
 
@@ -40,8 +40,7 @@ confirm model =
 gotConfirmResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotConfirmResponse model result =
     result
-        |> Either.fromResult
-        |> Either.unpack (\error -> ( model |> setError error, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( model |> setError error, Cmd.none ))
             (\_ -> ( model |> Page.lenses.mode.set Page.Confirmed, Ports.doDeleteToken () ))
 
 

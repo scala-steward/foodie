@@ -1,10 +1,10 @@
 module Pages.Recovery.Confirm.Handler exposing (init, update)
 
 import Basics.Extra exposing (flip)
-import Either
 import Pages.Recovery.Confirm.Page as Page
 import Pages.Recovery.Confirm.Requests as Requests
 import Pages.Util.PasswordInput as PasswordInput exposing (PasswordInput)
+import Result.Extra
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization as Initialization
 
@@ -56,8 +56,7 @@ confirm model =
 gotConfirmResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotConfirmResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\_ ->
                 model
                     |> Page.lenses.mode.set Page.Confirmed

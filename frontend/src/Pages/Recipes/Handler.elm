@@ -4,18 +4,18 @@ import Api.Auxiliary exposing (JWT, RecipeId)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Dict
-import Either exposing (Either(..))
 import Maybe.Extra
 import Monocle.Compose as Compose
-import Monocle.Lens as Lens
+import Monocle.Lens
 import Monocle.Optional
-import Pages.Recipes.Page as Page exposing (RecipeOrUpdate)
+import Pages.Recipes.Page as Page exposing (RecipeState)
 import Pages.Recipes.Pagination as Pagination exposing (Pagination)
 import Pages.Recipes.RecipeCreationClientInput as RecipeCreationClientInput exposing (RecipeCreationClientInput)
 import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
 import Pages.Recipes.Requests as Requests
 import Pages.Recipes.Status as Status
 import Pages.Util.PaginationSettings as PaginationSettings
+import Result.Extra
 import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization as Initialization exposing (Initialization(..))
@@ -62,8 +62,14 @@ update msg model =
         Page.ExitEditRecipeAt recipeId ->
             exitEditRecipeAt model recipeId
 
-        Page.DeleteRecipe recipeId ->
-            deleteRecipe model recipeId
+        Page.RequestDeleteRecipe recipeId ->
+            requestDeleteRecipe model recipeId
+
+        Page.ConfirmDeleteRecipe recipeId ->
+            confirmDeleteRecipe model recipeId
+
+        Page.CancelDeleteRecipe recipeId ->
+            cancelDeleteRecipe model recipeId
 
         Page.GotDeleteRecipeResponse deletedId dataOrError ->
             gotDeleteRecipeResponse model deletedId dataOrError
@@ -97,12 +103,12 @@ createRecipe model =
 gotCreateRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.Msg )
 gotCreateRecipeResponse model dataOrError =
     ( dataOrError
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\recipe ->
                 model
-                    |> Lens.modify Page.lenses.recipes
-                        (Dict.insert recipe.id (Left recipe))
+                    |> LensUtil.insertAtId recipe.id
+                        Page.lenses.recipes
+                        (recipe |> Editing.asView)
                     |> Page.lenses.recipeToAdd.set Nothing
             )
     , Cmd.none
@@ -112,8 +118,8 @@ gotCreateRecipeResponse model dataOrError =
 updateRecipe : Page.Model -> RecipeUpdateClientInput -> ( Page.Model, Cmd Page.Msg )
 updateRecipe model recipeUpdate =
     ( model
-        |> mapRecipeOrUpdateById recipeUpdate.id
-            (Either.mapRight (Editing.lenses.update.set recipeUpdate))
+        |> mapRecipeStateById recipeUpdate.id
+            (Editing.lenses.update.set recipeUpdate)
     , Cmd.none
     )
 
@@ -124,11 +130,10 @@ saveRecipeEdit model recipeId =
     , model
         |> Page.lenses.recipes.get
         |> Dict.get recipeId
-        |> Maybe.andThen Either.rightToMaybe
+        |> Maybe.andThen Editing.extractUpdate
         |> Maybe.Extra.unwrap
             Cmd.none
-            (.update
-                >> RecipeUpdateClientInput.to
+            (RecipeUpdateClientInput.to
                 >> Requests.saveRecipe model.authorizedAccess
             )
     )
@@ -137,12 +142,11 @@ saveRecipeEdit model recipeId =
 gotSaveRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.Msg )
 gotSaveRecipeResponse model dataOrError =
     ( dataOrError
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\recipe ->
                 model
-                    |> mapRecipeOrUpdateById recipe.id
-                        (Either.andThenRight (always (Left recipe)))
+                    |> mapRecipeStateById recipe.id
+                        (always (Editing.asView recipe))
             )
     , Cmd.none
     )
@@ -151,35 +155,47 @@ gotSaveRecipeResponse model dataOrError =
 enterEditRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 enterEditRecipe model recipeId =
     ( model
-        |> mapRecipeOrUpdateById recipeId
-            (Either.unpack (\recipe -> { original = recipe, update = RecipeUpdateClientInput.from recipe }) identity >> Right)
+        |> mapRecipeStateById recipeId
+            (Editing.toUpdate RecipeUpdateClientInput.from)
     , Cmd.none
     )
 
 
 exitEditRecipeAt : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 exitEditRecipeAt model recipeId =
-    ( model |> mapRecipeOrUpdateById recipeId (Either.andThen (.original >> Left))
+    ( model |> mapRecipeStateById recipeId Editing.toView
     , Cmd.none
     )
 
 
-deleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
-deleteRecipe model recipeId =
+requestDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
+requestDeleteRecipe model recipeId =
+    ( model |> mapRecipeStateById recipeId Editing.toDelete
+    , Cmd.none
+    )
+
+
+confirmDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
+confirmDeleteRecipe model recipeId =
     ( model
     , Requests.deleteRecipe model.authorizedAccess recipeId
+    )
+
+
+cancelDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
+cancelDeleteRecipe model recipeId =
+    ( model |> mapRecipeStateById recipeId Editing.toView
+    , Cmd.none
     )
 
 
 gotDeleteRecipeResponse : Page.Model -> RecipeId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteRecipeResponse model deletedId dataOrError =
     ( dataOrError
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (always
                 (model
-                    |> Lens.modify Page.lenses.recipes
-                        (Dict.remove deletedId)
+                    |> LensUtil.deleteAtId deletedId Page.lenses.recipes
                 )
             )
     , Cmd.none
@@ -189,11 +205,14 @@ gotDeleteRecipeResponse model deletedId dataOrError =
 gotFetchRecipesResponse : Page.Model -> Result Error (List Recipe) -> ( Page.Model, Cmd Page.Msg )
 gotFetchRecipesResponse model dataOrError =
     ( dataOrError
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\recipes ->
                 model
-                    |> Page.lenses.recipes.set (recipes |> List.map (\r -> ( r.id, Left r )) |> Dict.fromList)
+                    |> Page.lenses.recipes.set
+                        (recipes
+                            |> List.map (\r -> ( r.id, r |> Editing.asView ))
+                            |> Dict.fromList
+                        )
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.recipes).set True
             )
     , Cmd.none
@@ -222,8 +241,8 @@ setSearchString model string =
     )
 
 
-mapRecipeOrUpdateById : RecipeId -> (Page.RecipeOrUpdate -> Page.RecipeOrUpdate) -> Page.Model -> Page.Model
-mapRecipeOrUpdateById recipeId =
+mapRecipeStateById : RecipeId -> (Page.RecipeState -> Page.RecipeState) -> Page.Model -> Page.Model
+mapRecipeStateById recipeId =
     Page.lenses.recipes
         |> LensUtil.updateById recipeId
 

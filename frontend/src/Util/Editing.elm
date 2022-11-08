@@ -1,23 +1,75 @@
 module Util.Editing exposing (..)
 
-import Either exposing (Either)
+import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
+import Monocle.Optional exposing (Optional)
+import Util.EditState as EditState exposing (EditState)
 
 
-type alias Editing a b =
-    { original : a
-    , update : b
+type alias Editing original update =
+    { original : original
+    , editState : EditState update
     }
 
 
 lenses :
-    { update : Lens (Editing a b) b
+    { editState : Lens (Editing original update) (EditState update)
+    , update : Optional (Editing original update) update
     }
 lenses =
-    { update = Lens .update (\b a -> { a | update = b })
+    let
+        editState =
+            Lens .editState (\b a -> { a | editState = b })
+    in
+    { editState = editState
+    , update =
+        editState
+            |> Compose.lensWithOptional EditState.lenses.update
     }
 
 
-field : (a -> field) -> Either a (Editing a b) -> field
-field f =
-    Either.unpack f (.original >> f)
+unpack :
+    { onView : original -> a
+    , onUpdate : original -> update -> a
+    , onDelete : original -> a
+    }
+    -> Editing original update
+    -> a
+unpack fs editing =
+    EditState.unpack
+        { onView = fs.onView editing.original
+        , onUpdate = fs.onUpdate editing.original
+        , onDelete = fs.onDelete editing.original
+        }
+        editing.editState
+
+
+toUpdate : (original -> update) -> Editing original update -> Editing original update
+toUpdate to editing =
+    lenses.editState.set
+        (EditState.Update <| to <| editing.original)
+        editing
+
+
+toDelete : Editing original update -> Editing original update
+toDelete =
+    lenses.editState.set EditState.Delete
+
+
+toView : Editing original update -> Editing original update
+toView =
+    lenses.editState.set EditState.View
+
+
+extractUpdate : Editing original update -> Maybe update
+extractUpdate =
+    lenses.editState
+        |> Compose.lensWithOptional EditState.lenses.update
+        |> .getOption
+
+
+asView : element -> Editing element update
+asView element =
+    { original = element
+    , editState = EditState.View
+    }

@@ -6,7 +6,7 @@ import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
 import Dict
 import Either exposing (Either(..))
-import Html exposing (Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, disabled, scope, value)
 import Html.Attributes.Extra exposing (stringProperty)
 import Html.Events exposing (onClick, onInput)
@@ -42,16 +42,18 @@ view model =
         model
     <|
         let
-            viewEditReferenceMap =
-                Either.unpack
-                    (editOrDeleteReferenceMapLine model.authorizedAccess.configuration)
-                    (\e -> e.update |> editReferenceMapLine)
+            viewReferenceMapState =
+                Editing.unpack
+                    { onView = viewReferenceMapLine model.authorizedAccess.configuration
+                    , onUpdate = editReferenceMapLine |> always
+                    , onDelete = deleteReferenceMapLine model.authorizedAccess.configuration
+                    }
 
-            viewEditReferenceMaps =
+            viewReferenceMaps =
                 model.referenceMaps
-                    |> Dict.filter (\_ v -> SearchUtil.search model.searchString (Editing.field .name v))
+                    |> Dict.filter (\_ v -> SearchUtil.search model.searchString v.original.name)
                     |> Dict.values
-                    |> List.sortBy (Editing.field .name >> String.toLower)
+                    |> List.sortBy (.original >> .name >> String.toLower)
                     |> ViewUtil.paginate
                         { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.referenceMaps
                         }
@@ -79,7 +81,7 @@ view model =
                             ]
                         , tbody []
                             (creationLine
-                                ++ (viewEditReferenceMaps |> Paginate.page |> List.map viewEditReferenceMap)
+                                ++ (viewReferenceMaps |> Paginate.page |> List.map viewReferenceMapState)
                             )
                         ]
                    , div [ Style.classes.pagination ]
@@ -91,7 +93,7 @@ view model =
                                     }
                                     model
                                     >> Page.SetPagination
-                            , elements = viewEditReferenceMaps
+                            , elements = viewReferenceMaps
                             }
                         ]
                    ]
@@ -115,29 +117,73 @@ createReferenceMap maybeCreation =
             createReferenceMapLine creation |> Right
 
 
-editOrDeleteReferenceMapLine : Configuration -> ReferenceMap -> Html Page.Msg
-editOrDeleteReferenceMapLine configuration referenceMap =
+viewReferenceMapLine : Configuration -> ReferenceMap -> Html Page.Msg
+viewReferenceMapLine configuration referenceMap =
     let
         editMsg =
-            Page.EnterEditReferenceMap referenceMap.id
+            Page.EnterEditReferenceMap referenceMap.id |> onClick
+    in
+    referenceMapLineWith
+        { controls =
+            [ td [ Style.classes.controls ]
+                [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
+            , td [ Style.classes.controls ]
+                [ button
+                    [ Style.classes.button.delete, onClick (Page.RequestDeleteReferenceMap referenceMap.id) ]
+                    [ text "Delete" ]
+                ]
+            , td [ Style.classes.controls ]
+                [ Links.linkButton
+                    { url = Links.frontendPage configuration <| Addresses.Frontend.referenceEntries.address <| referenceMap.id
+                    , attributes = [ Style.classes.button.editor ]
+                    , children = [ text "Entries" ]
+                    }
+                ]
+            ]
+        , onClick = [ editMsg ]
+        , configuration = configuration
+        }
+        referenceMap
+
+
+deleteReferenceMapLine : Configuration -> ReferenceMap -> Html Page.Msg
+deleteReferenceMapLine configuration referenceMap =
+    referenceMapLineWith
+        { controls =
+            [ td [ Style.classes.controls ]
+                [ button
+                    [ Style.classes.button.delete, onClick (Page.ConfirmDeleteReferenceMap referenceMap.id) ]
+                    [ text "Delete?" ]
+                ]
+            , td [ Style.classes.controls ]
+                [ button
+                    [ Style.classes.button.confirm, onClick (Page.CancelDeleteReferenceMap referenceMap.id) ]
+                    [ text "Cancel" ]
+                ]
+            ]
+        , onClick = []
+        , configuration = configuration
+        }
+        referenceMap
+
+
+referenceMapLineWith :
+    { controls : List (Html Page.Msg)
+    , onClick : List (Attribute Page.Msg)
+    , configuration : Configuration
+    }
+    -> ReferenceMap
+    -> Html Page.Msg
+referenceMapLineWith ps referenceMap =
+    let
+        withOnClick =
+            (++) ps.onClick
     in
     tr [ Style.classes.editing ]
-        [ td [ Style.classes.editable, onClick editMsg ] [ label [] [ text referenceMap.name ] ]
-        , td [ Style.classes.controls ]
-            [ button [ Style.classes.button.edit, onClick editMsg ] [ text "Edit" ] ]
-        , td [ Style.classes.controls ]
-            [ button
-                [ Style.classes.button.delete, onClick (Page.DeleteReferenceMap referenceMap.id) ]
-                [ text "Delete" ]
-            ]
-        , td [ Style.classes.controls ]
-            [ Links.linkButton
-                { url = Links.frontendPage configuration <| Addresses.Frontend.referenceEntries.address <| referenceMap.id
-                , attributes = [ Style.classes.button.editor ]
-                , children = [ text "Entries" ]
-                }
-            ]
-        ]
+        ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text referenceMap.name ] ]
+         ]
+            ++ ps.controls
+        )
 
 
 editReferenceMapLine : ReferenceMapUpdateClientInput -> Html Page.Msg

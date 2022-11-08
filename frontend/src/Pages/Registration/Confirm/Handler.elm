@@ -1,10 +1,10 @@
 module Pages.Registration.Confirm.Handler exposing (init, update)
 
 import Basics.Extra exposing (flip)
-import Either
 import Pages.Registration.Confirm.Page as Page
 import Pages.Registration.Confirm.Requests as Requests
 import Pages.Util.ComplementInput as ComplementInput exposing (ComplementInput)
+import Result.Extra
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization(..))
 
@@ -56,8 +56,7 @@ request model =
 gotResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack
+        |> Result.Extra.unpack
             (HttpUtil.errorToExplanation
                 >> Failure
                 >> flip Page.lenses.initialization.set model

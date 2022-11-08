@@ -3,7 +3,6 @@ module Pages.Meals.Page exposing (..)
 import Api.Auxiliary exposing (JWT, MealId)
 import Api.Types.Meal exposing (Meal)
 import Dict exposing (Dict)
-import Either exposing (Either)
 import Monocle.Lens exposing (Lens)
 import Pages.Meals.MealCreationClientInput exposing (MealCreationClientInput)
 import Pages.Meals.MealUpdateClientInput exposing (MealUpdateClientInput)
@@ -17,7 +16,7 @@ import Util.Initialization exposing (Initialization)
 
 type alias Model =
     { authorizedAccess : AuthorizedAccess
-    , meals : MealOrUpdateMap
+    , meals : MealStateMap
     , mealToAdd : Maybe MealCreationClientInput
     , searchString : String
     , initialization : Initialization Status
@@ -25,16 +24,16 @@ type alias Model =
     }
 
 
-type alias MealOrUpdate =
-    Either Meal (Editing Meal MealUpdateClientInput)
+type alias MealState =
+    Editing Meal MealUpdateClientInput
 
 
-type alias MealOrUpdateMap =
-    Dict MealId MealOrUpdate
+type alias MealStateMap =
+    Dict MealId MealState
 
 
 lenses :
-    { meals : Lens Model MealOrUpdateMap
+    { meals : Lens Model MealStateMap
     , mealToAdd : Lens Model (Maybe MealCreationClientInput)
     , searchString : Lens Model String
     , initialization : Lens Model (Initialization Status)
@@ -63,7 +62,9 @@ type Msg
     | GotSaveMealResponse (Result Error Meal)
     | EnterEditMeal MealId
     | ExitEditMealAt MealId
-    | DeleteMeal MealId
+    | RequestDeleteMeal MealId
+    | ConfirmDeleteMeal MealId
+    | CancelDeleteMeal MealId
     | GotDeleteMealResponse MealId (Result Error ())
     | GotFetchMealsResponse (Result Error (List Meal))
     | SetPagination Pagination

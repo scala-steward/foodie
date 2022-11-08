@@ -4,7 +4,6 @@ import Api.Auxiliary exposing (ComplexFoodId, RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.Recipe exposing (Recipe)
 import Dict exposing (Dict)
-import Either exposing (Either)
 import Maybe.Extra
 import Monocle.Lens exposing (Lens)
 import Pages.ComplexFoods.ComplexFoodClientInput exposing (ComplexFoodClientInput)
@@ -19,7 +18,7 @@ import Util.Initialization exposing (Initialization)
 type alias Model =
     { authorizedAccess : AuthorizedAccess
     , recipes : RecipeMap
-    , complexFoods : ComplexFoodOrUpdateMap
+    , complexFoods : ComplexFoodStateMap
     , complexFoodsToCreate : CreateComplexFoodsMap
     , recipesSearchString : String
     , complexFoodsSearchString : String
@@ -28,12 +27,12 @@ type alias Model =
     }
 
 
-type alias ComplexFoodOrUpdate =
-    Either ComplexFood (Editing ComplexFood ComplexFoodClientInput)
+type alias ComplexFoodState =
+    Editing ComplexFood ComplexFoodClientInput
 
 
-type alias ComplexFoodOrUpdateMap =
-    Dict ComplexFoodId ComplexFoodOrUpdate
+type alias ComplexFoodStateMap =
+    Dict ComplexFoodId ComplexFoodState
 
 
 type alias CreateComplexFoodsMap =
@@ -46,7 +45,7 @@ type alias RecipeMap =
 
 lenses :
     { recipes : Lens Model RecipeMap
-    , complexFoods : Lens Model ComplexFoodOrUpdateMap
+    , complexFoods : Lens Model ComplexFoodStateMap
     , complexFoodsToCreate : Lens Model CreateComplexFoodsMap
     , recipesSearchString : Lens Model String
     , complexFoodsSearchString : Lens Model String
@@ -78,7 +77,9 @@ type Msg
     | GotSaveComplexFoodResponse (Result Error ComplexFood)
     | EnterEditComplexFood ComplexFoodId
     | ExitEditComplexFood ComplexFoodId
-    | DeleteComplexFood ComplexFoodId
+    | RequestDeleteComplexFood ComplexFoodId
+    | ConfirmDeleteComplexFood ComplexFoodId
+    | CancelDeleteComplexFood ComplexFoodId
     | GotDeleteComplexFoodResponse ComplexFoodId (Result Error ())
     | GotFetchRecipesResponse (Result Error (List Recipe))
     | GotFetchComplexFoodsResponse (Result Error (List ComplexFood))

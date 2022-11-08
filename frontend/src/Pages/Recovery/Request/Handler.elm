@@ -3,9 +3,9 @@ module Pages.Recovery.Request.Handler exposing (init, update)
 import Api.Auxiliary exposing (UserId)
 import Api.Types.User exposing (User)
 import Basics.Extra exposing (flip)
-import Either
 import Pages.Recovery.Request.Page as Page
 import Pages.Recovery.Request.Requests as Requests
+import Result.Extra
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization as Initialization
 
@@ -51,8 +51,7 @@ find model =
 gotFindResponse : Page.Model -> Result Error (List User) -> ( Page.Model, Cmd Page.Msg )
 gotFindResponse model result =
     result
-        |> Either.fromResult
-        |> Either.unpack (\error -> ( setError error model, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( setError error model, Cmd.none ))
             (\users ->
                 case users of
                     user :: [] ->
@@ -86,8 +85,7 @@ requestRecovery model userId =
 gotRequestRecoveryResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotRequestRecoveryResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\_ -> model |> Page.lenses.mode.set Page.Requested)
     , Cmd.none
     )

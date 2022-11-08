@@ -5,7 +5,6 @@ import Api.Types.Mode exposing (Mode)
 import Api.Types.User exposing (User)
 import Basics.Extra exposing (flip)
 import Browser.Navigation
-import Either
 import Monocle.Compose as Compose
 import Monocle.Lens as Lens
 import Pages.UserSettings.Page as Page
@@ -16,6 +15,7 @@ import Pages.Util.ComplementInput as ComplementInput exposing (ComplementInput)
 import Pages.Util.Links as Links
 import Pages.Util.PasswordInput as PasswordInput
 import Ports
+import Result.Extra
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization(..))
 import Util.LensUtil as LensUtil
@@ -80,8 +80,7 @@ update msg model =
 gotFetchUserResponse : Page.Model -> Result Error User -> ( Page.Model, Cmd Page.Msg )
 gotFetchUserResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\user ->
                 model
                     |> Page.lenses.user.set user
@@ -104,8 +103,7 @@ updatePassword model =
 gotUpdatePasswordResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotUpdatePasswordResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\_ ->
                 Lens.modify Page.lenses.complementInput
                     (ComplementInput.lenses.passwordInput.set PasswordInput.initial)
@@ -127,8 +125,7 @@ updateSettings model =
 gotUpdateSettingsResponse : Page.Model -> Result Error User -> ( Page.Model, Cmd Page.Msg )
 gotUpdateSettingsResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (flip Page.lenses.user.set model)
     , Cmd.none
     )
@@ -144,8 +141,7 @@ requestDeletion model =
 gotRequestDeletionResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotRequestDeletionResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\_ -> model |> Page.lenses.mode.set Page.RequestedDeletion)
     , Cmd.none
     )
@@ -168,8 +164,7 @@ logout model mode =
 gotLogoutResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotLogoutResponse model result =
     result
-        |> Either.fromResult
-        |> Either.unpack (\error -> ( model |> setError error, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( model |> setError error, Cmd.none ))
             (\_ ->
                 ( model
                 , Cmd.batch

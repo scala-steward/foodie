@@ -7,7 +7,7 @@ import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
 import Dict
 import Either exposing (Either(..))
-import Html exposing (Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, disabled, scope, type_, value)
 import Html.Attributes.Extra exposing (stringProperty)
 import Html.Events exposing (onClick, onInput)
@@ -47,23 +47,25 @@ view model =
         model
     <|
         let
-            viewEditMeal =
-                Either.unpack
-                    (editOrDeleteMealLine model.authorizedAccess.configuration)
-                    (\e -> e.update |> editMealLine)
+            viewMealState =
+                Editing.unpack
+                    { onView = viewMealLine model.authorizedAccess.configuration
+                    , onUpdate = updateMealLine |> always
+                    , onDelete = deleteMealLine model.authorizedAccess.configuration
+                    }
 
             filterOn =
                 SearchUtil.search model.searchString
 
-            viewEditMeals =
+            viewMeals =
                 model.meals
                     |> Dict.filter
                         (\_ v ->
-                            filterOn (Editing.field (.name >> Maybe.withDefault "") v)
-                                || filterOn (Editing.field .date v |> DateUtil.toString)
+                            filterOn (v.original.name |> Maybe.withDefault "")
+                                || filterOn (v.original.date |> DateUtil.toString)
                         )
                     |> Dict.values
-                    |> List.sortBy (Editing.field .date >> DateUtil.toString)
+                    |> List.sortBy (.original >> .date >> DateUtil.toString)
                     |> List.reverse
                     |> ViewUtil.paginate
                         { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.meals }
@@ -95,9 +97,9 @@ view model =
                             ]
                         , tbody []
                             (creationLine
-                                ++ (viewEditMeals
+                                ++ (viewMeals
                                         |> Paginate.page
-                                        |> List.map viewEditMeal
+                                        |> List.map viewMealState
                                    )
                             )
                         ]
@@ -110,7 +112,7 @@ view model =
                                     }
                                     model
                                     >> Page.SetPagination
-                            , elements = viewEditMeals
+                            , elements = viewMeals
                             }
                         ]
                    ]
@@ -134,30 +136,66 @@ createMeal maybeCreation =
             createMealLine creation |> Right
 
 
-editOrDeleteMealLine : Configuration -> Meal -> Html Page.Msg
-editOrDeleteMealLine configuration meal =
+viewMealLine : Configuration -> Meal -> Html Page.Msg
+viewMealLine configuration meal =
     let
         editMsg =
-            Page.EnterEditMeal meal.id
+            Page.EnterEditMeal meal.id |> onClick
+    in
+    mealLineWith
+        { controls =
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
+            , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.RequestDeleteMeal meal.id) ] [ text "Delete" ] ]
+            , td [ Style.classes.controls ]
+                [ Links.linkButton
+                    { url = Links.frontendPage configuration <| Addresses.Frontend.mealEntryEditor.address <| meal.id
+                    , attributes = [ Style.classes.button.editor ]
+                    , children = [ text "Entries" ]
+                    }
+                ]
+            ]
+        , onClick = [ editMsg ]
+        , configuration = configuration
+        }
+        meal
+
+
+deleteMealLine : Configuration -> Meal -> Html Page.Msg
+deleteMealLine configuration meal =
+    mealLineWith
+        { controls =
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteMeal meal.id) ] [ text "Delete?" ] ]
+            , td [ Style.classes.controls ] [ button [ Style.classes.button.confirm, onClick (Page.CancelDeleteMeal meal.id) ] [ text "Cancel" ] ]
+            ]
+        , onClick = []
+        , configuration = configuration
+        }
+        meal
+
+
+mealLineWith :
+    { controls : List (Html Page.Msg)
+    , onClick : List (Attribute Page.Msg)
+    , configuration : Configuration
+    }
+    -> Meal
+    -> Html Page.Msg
+mealLineWith ps meal =
+    let
+        withOnClick =
+            (++) ps.onClick
     in
     tr [ Style.classes.editing ]
-        [ td [ Style.classes.editable, onClick editMsg ] [ label [] [ text <| DateUtil.dateToString <| meal.date.date ] ]
-        , td [ Style.classes.editable, onClick editMsg ] [ label [] [ text <| Maybe.Extra.unwrap "" DateUtil.timeToString <| meal.date.time ] ]
-        , td [ Style.classes.editable, onClick editMsg ] [ label [] [ text <| Maybe.withDefault "" <| meal.name ] ]
-        , td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick editMsg ] [ text "Edit" ] ]
-        , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.DeleteMeal meal.id) ] [ text "Delete" ] ]
-        , td [ Style.classes.controls ]
-            [ Links.linkButton
-                { url = Links.frontendPage configuration <| Addresses.Frontend.mealEntryEditor.address <| meal.id
-                , attributes = [ Style.classes.button.editor ]
-                , children = [ text "Entries" ]
-                }
-            ]
-        ]
+        ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| DateUtil.dateToString <| meal.date.date ] ]
+         , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.Extra.unwrap "" DateUtil.timeToString <| meal.date.time ] ]
+         , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.withDefault "" <| meal.name ] ]
+         ]
+            ++ ps.controls
+        )
 
 
-editMealLine : MealUpdateClientInput -> Html Page.Msg
-editMealLine mealUpdateClientInput =
+updateMealLine : MealUpdateClientInput -> Html Page.Msg
+updateMealLine mealUpdateClientInput =
     editMealLineWith
         { saveMsg = Page.SaveMealEdit mealUpdateClientInput.id
         , dateLens = MealUpdateClientInput.lenses.date

@@ -3,12 +3,12 @@ module Pages.Login.Handler exposing (init, update)
 import Addresses.Frontend
 import Basics.Extra exposing (flip)
 import Browser.Navigation
-import Either
 import Monocle.Compose as Compose
 import Pages.Login.Page as Page
 import Pages.Login.Requests as Requests
 import Pages.Util.Links as Links
 import Ports
+import Result.Extra
 import Util.CredentialsUtil as CredentialsUtil
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization(..))
@@ -75,8 +75,7 @@ login model =
 gotResponse : Page.Model -> Result Error String -> ( Page.Model, Cmd Page.Msg )
 gotResponse model remoteData =
     remoteData
-        |> Either.fromResult
-        |> Either.unpack
+        |> Result.Extra.unpack
             (\error ->
                 ( error
                     |> HttpUtil.errorToExplanation

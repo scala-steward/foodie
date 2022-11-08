@@ -9,12 +9,11 @@ import Api.Types.Measure exposing (Measure, decoderMeasure, encoderMeasure)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Dict exposing (Dict)
-import Either exposing (Either(..))
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Maybe.Extra
 import Monocle.Compose as Compose
-import Monocle.Lens as Lens exposing (Lens)
+import Monocle.Lens exposing (Lens)
 import Monocle.Optional
 import Pages.Ingredients.ComplexIngredientClientInput as ComplexIngredientClientInput exposing (ComplexIngredientClientInput)
 import Pages.Ingredients.FoodGroup as FoodGroup
@@ -28,6 +27,7 @@ import Pages.Ingredients.Status as Status
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.PaginationSettings as PaginationSettings
 import Ports exposing (doFetchFoods, doFetchMeasures, storeFoods, storeMeasures)
+import Result.Extra
 import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization(..))
@@ -100,11 +100,23 @@ update msg model =
         Page.ExitEditComplexIngredientAt complexIngredientId ->
             exitEditComplexIngredientAt model complexIngredientId
 
-        Page.DeleteIngredient ingredientId ->
-            deleteIngredient model ingredientId
+        Page.RequestDeleteIngredient ingredientId ->
+            requestDeleteIngredient model ingredientId
 
-        Page.DeleteComplexIngredient complexIngredientId ->
-            deleteComplexIngredient model complexIngredientId
+        Page.ConfirmDeleteIngredient ingredientId ->
+            confirmDeleteIngredient model ingredientId
+
+        Page.CancelDeleteIngredient ingredientId ->
+            cancelDeleteIngredient model ingredientId
+
+        Page.RequestDeleteComplexIngredient complexIngredientId ->
+            requestDeleteComplexIngredient model complexIngredientId
+
+        Page.ConfirmDeleteComplexIngredient complexIngredientId ->
+            confirmDeleteComplexIngredient model complexIngredientId
+
+        Page.CancelDeleteComplexIngredient complexIngredientId ->
+            cancelDeleteComplexIngredient model complexIngredientId
 
         Page.GotDeleteIngredientResponse ingredientId result ->
             gotDeleteIngredientResponse model ingredientId result
@@ -191,15 +203,15 @@ update msg model =
             setComplexIngredientsSearchString model string
 
 
-mapIngredientOrUpdateById : IngredientId -> (Page.PlainIngredientOrUpdate -> Page.PlainIngredientOrUpdate) -> Page.Model -> Page.Model
-mapIngredientOrUpdateById ingredientId =
+mapIngredientStateById : IngredientId -> (Page.PlainIngredientState -> Page.PlainIngredientState) -> Page.Model -> Page.Model
+mapIngredientStateById ingredientId =
     Page.lenses.ingredientsGroup
         |> Compose.lensWithLens FoodGroup.lenses.ingredients
         |> LensUtil.updateById ingredientId
 
 
-mapComplexIngredientOrUpdateById : ComplexIngredientId -> (Page.ComplexIngredientOrUpdate -> Page.ComplexIngredientOrUpdate) -> Page.Model -> Page.Model
-mapComplexIngredientOrUpdateById complexIngredientId =
+mapComplexIngredientStateById : ComplexIngredientId -> (Page.ComplexIngredientState -> Page.ComplexIngredientState) -> Page.Model -> Page.Model
+mapComplexIngredientStateById complexIngredientId =
     Page.lenses.complexIngredientsGroup
         |> Compose.lensWithLens FoodGroup.lenses.ingredients
         |> LensUtil.updateById complexIngredientId
@@ -208,8 +220,8 @@ mapComplexIngredientOrUpdateById complexIngredientId =
 updateIngredient : Page.Model -> IngredientUpdateClientInput -> ( Page.Model, Cmd msg )
 updateIngredient model ingredientUpdateClientInput =
     ( model
-        |> mapIngredientOrUpdateById ingredientUpdateClientInput.ingredientId
-            (Either.mapRight (Editing.lenses.update.set ingredientUpdateClientInput))
+        |> mapIngredientStateById ingredientUpdateClientInput.ingredientId
+            (Editing.lenses.update.set ingredientUpdateClientInput)
     , Cmd.none
     )
 
@@ -217,8 +229,8 @@ updateIngredient model ingredientUpdateClientInput =
 updateComplexIngredient : Page.Model -> ComplexIngredientClientInput -> ( Page.Model, Cmd msg )
 updateComplexIngredient model complexIngredientClientInput =
     ( model
-        |> mapComplexIngredientOrUpdateById complexIngredientClientInput.complexFoodId
-            (Either.mapRight (Editing.lenses.update.set complexIngredientClientInput))
+        |> mapComplexIngredientStateById complexIngredientClientInput.complexFoodId
+            (Editing.lenses.update.set complexIngredientClientInput)
     , Cmd.none
     )
 
@@ -244,15 +256,13 @@ saveComplexIngredientEdit model complexIngredientClientInput =
 gotSaveIngredientResponse : Page.Model -> Result Error Ingredient -> ( Page.Model, Cmd msg )
 gotSaveIngredientResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\ingredient ->
                 model
-                    |> mapIngredientOrUpdateById ingredient.id
-                        (always (Left ingredient))
-                    |> Lens.modify
+                    |> mapIngredientStateById ingredient.id
+                        (Editing.asView ingredient |> always)
+                    |> LensUtil.deleteAtId ingredient.foodId
                         (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
-                        (Dict.remove ingredient.foodId)
             )
     , Cmd.none
     )
@@ -261,15 +271,13 @@ gotSaveIngredientResponse model result =
 gotSaveComplexIngredientResponse : Page.Model -> Result Error ComplexIngredient -> ( Page.Model, Cmd msg )
 gotSaveComplexIngredientResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\complexIngredient ->
                 model
-                    |> mapComplexIngredientOrUpdateById complexIngredient.complexFoodId
-                        (always (Left complexIngredient))
-                    |> Lens.modify
+                    |> mapComplexIngredientStateById complexIngredient.complexFoodId
+                        (Editing.asView complexIngredient |> always)
+                    |> LensUtil.deleteAtId complexIngredient.complexFoodId
                         (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
-                        (Dict.remove complexIngredient.complexFoodId)
             )
     , Cmd.none
     )
@@ -278,7 +286,7 @@ gotSaveComplexIngredientResponse model result =
 enterEditIngredient : Page.Model -> IngredientId -> ( Page.Model, Cmd Page.Msg )
 enterEditIngredient model ingredientId =
     ( model
-        |> mapIngredientOrUpdateById ingredientId (Either.andThenLeft (\i -> Right { original = i, update = IngredientUpdateClientInput.from i }))
+        |> mapIngredientStateById ingredientId (Editing.toUpdate IngredientUpdateClientInput.from)
     , Cmd.none
     )
 
@@ -286,7 +294,7 @@ enterEditIngredient model ingredientId =
 enterEditComplexIngredient : Page.Model -> ComplexIngredientId -> ( Page.Model, Cmd Page.Msg )
 enterEditComplexIngredient model complexIngredientId =
     ( model
-        |> mapComplexIngredientOrUpdateById complexIngredientId (Either.andThenLeft (\i -> Right { original = i, update = ComplexIngredientClientInput.from i }))
+        |> mapComplexIngredientStateById complexIngredientId (Editing.toUpdate ComplexIngredientClientInput.from)
     , Cmd.none
     )
 
@@ -294,7 +302,7 @@ enterEditComplexIngredient model complexIngredientId =
 exitEditIngredientAt : Page.Model -> IngredientId -> ( Page.Model, Cmd Page.Msg )
 exitEditIngredientAt model ingredientId =
     ( model
-        |> mapIngredientOrUpdateById ingredientId (Either.andThen (.original >> Left))
+        |> mapIngredientStateById ingredientId Editing.toView
     , Cmd.none
     )
 
@@ -302,34 +310,64 @@ exitEditIngredientAt model ingredientId =
 exitEditComplexIngredientAt : Page.Model -> ComplexIngredientId -> ( Page.Model, Cmd Page.Msg )
 exitEditComplexIngredientAt model complexIngredientId =
     ( model
-        |> mapComplexIngredientOrUpdateById complexIngredientId (Either.andThen (.original >> Left))
+        |> mapComplexIngredientStateById complexIngredientId Editing.toView
     , Cmd.none
     )
 
 
-deleteIngredient : Page.Model -> IngredientId -> ( Page.Model, Cmd Page.Msg )
-deleteIngredient model ingredientId =
+requestDeleteIngredient : Page.Model -> IngredientId -> ( Page.Model, Cmd Page.Msg )
+requestDeleteIngredient model ingredientId =
+    ( model
+        |> mapIngredientStateById ingredientId Editing.toDelete
+    , Cmd.none
+    )
+
+
+confirmDeleteIngredient : Page.Model -> IngredientId -> ( Page.Model, Cmd Page.Msg )
+confirmDeleteIngredient model ingredientId =
     ( model
     , Requests.deleteIngredient model.authorizedAccess ingredientId
     )
 
 
-deleteComplexIngredient : Page.Model -> ComplexIngredientId -> ( Page.Model, Cmd Page.Msg )
-deleteComplexIngredient model complexIngredientId =
+cancelDeleteIngredient : Page.Model -> IngredientId -> ( Page.Model, Cmd Page.Msg )
+cancelDeleteIngredient model ingredientId =
+    ( model
+        |> mapIngredientStateById ingredientId Editing.toView
+    , Cmd.none
+    )
+
+
+requestDeleteComplexIngredient : Page.Model -> ComplexIngredientId -> ( Page.Model, Cmd Page.Msg )
+requestDeleteComplexIngredient model complexIngredientId =
+    ( model
+        |> mapComplexIngredientStateById complexIngredientId Editing.toDelete
+    , Cmd.none
+    )
+
+
+confirmDeleteComplexIngredient : Page.Model -> ComplexIngredientId -> ( Page.Model, Cmd Page.Msg )
+confirmDeleteComplexIngredient model complexIngredientId =
     ( model
     , Requests.deleteComplexIngredient model.authorizedAccess model.recipeId complexIngredientId
+    )
+
+
+cancelDeleteComplexIngredient : Page.Model -> ComplexIngredientId -> ( Page.Model, Cmd Page.Msg )
+cancelDeleteComplexIngredient model complexIngredientId =
+    ( model
+        |> mapComplexIngredientStateById complexIngredientId Editing.toView
+    , Cmd.none
     )
 
 
 gotDeleteIngredientResponse : Page.Model -> IngredientId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteIngredientResponse model ingredientId result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (model
-                |> Lens.modify
+                |> LensUtil.deleteAtId ingredientId
                     (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients)
-                    (Dict.remove ingredientId)
                 |> always
             )
     , Cmd.none
@@ -339,12 +377,10 @@ gotDeleteIngredientResponse model ingredientId result =
 gotDeleteComplexIngredientResponse : Page.Model -> ComplexIngredientId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteComplexIngredientResponse model complexIngredientId result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (model
-                |> Lens.modify
+                |> LensUtil.deleteAtId complexIngredientId
                     (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients)
-                    (Dict.remove complexIngredientId)
                 |> always
             )
     , Cmd.none
@@ -354,12 +390,11 @@ gotDeleteComplexIngredientResponse model complexIngredientId result =
 gotFetchIngredientsResponse : Page.Model -> Result Error (List Ingredient) -> ( Page.Model, Cmd Page.Msg )
 gotFetchIngredientsResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\ingredients ->
                 model
                     |> (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients).set
-                        (ingredients |> List.map (\ingredient -> ( ingredient.id, Left ingredient )) |> Dict.fromList)
+                        (ingredients |> List.map (\ingredient -> ( ingredient.id, ingredient |> Editing.asView )) |> Dict.fromList)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.ingredients).set True
             )
     , Cmd.none
@@ -369,12 +404,11 @@ gotFetchIngredientsResponse model result =
 gotFetchComplexIngredientsResponse : Page.Model -> Result Error (List ComplexIngredient) -> ( Page.Model, Cmd Page.Msg )
 gotFetchComplexIngredientsResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\complexIngredients ->
                 model
                     |> (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients).set
-                        (complexIngredients |> List.map (\complexIngredient -> ( complexIngredient.complexFoodId, Left complexIngredient )) |> Dict.fromList)
+                        (complexIngredients |> List.map (\complexIngredient -> ( complexIngredient.complexFoodId, complexIngredient |> Editing.asView )) |> Dict.fromList)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.complexIngredients).set True
             )
     , Cmd.none
@@ -384,8 +418,7 @@ gotFetchComplexIngredientsResponse model result =
 gotFetchFoodsResponse : Page.Model -> Result Error (List Food) -> ( Page.Model, Cmd Page.Msg )
 gotFetchFoodsResponse model result =
     result
-        |> Either.fromResult
-        |> Either.unpack (\error -> ( setError error model, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( setError error model, Cmd.none ))
             (\foods ->
                 ( LensUtil.set
                     foods
@@ -403,8 +436,7 @@ gotFetchFoodsResponse model result =
 gotFetchComplexFoodsResponse : Page.Model -> Result Error (List ComplexFood) -> ( Page.Model, Cmd Page.Msg )
 gotFetchComplexFoodsResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\complexFoods ->
                 model
                     |> LensUtil.set
@@ -420,8 +452,7 @@ gotFetchComplexFoodsResponse model result =
 gotFetchMeasuresResponse : Page.Model -> Result Error (List Measure) -> ( Page.Model, Cmd Page.Msg )
 gotFetchMeasuresResponse model result =
     result
-        |> Either.fromResult
-        |> Either.unpack (\error -> ( setError error model, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( setError error model, Cmd.none ))
             (\measures ->
                 ( LensUtil.set measures .id Page.lenses.measures model
                 , measures
@@ -435,8 +466,7 @@ gotFetchMeasuresResponse model result =
 gotFetchRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.Msg )
 gotFetchRecipeResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\recipe ->
                 model
                     |> Page.lenses.recipeInfo.set (RecipeInfo.from recipe |> Just)
@@ -449,8 +479,7 @@ gotFetchRecipeResponse model result =
 gotFetchRecipesResponse : Page.Model -> Result Error (List Recipe) -> ( Page.Model, Cmd Page.Msg )
 gotFetchRecipesResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\recipes ->
                 model
                     |> Page.lenses.allRecipes.set (recipes |> List.map (\r -> ( r.id, r )) |> Dict.fromList)
@@ -463,8 +492,7 @@ gotFetchRecipesResponse model result =
 updateFoods : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 updateFoods model =
     Decode.decodeString (Decode.list decoderFood)
-        >> Either.fromResult
-        >> Either.unpack (\error -> ( setJsonError error model, Cmd.none ))
+        >> Result.Extra.unpack (\error -> ( setJsonError error model, Cmd.none ))
             (\foods ->
                 ( model
                     |> LensUtil.set
@@ -488,8 +516,7 @@ updateFoods model =
 updateMeasures : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 updateMeasures model =
     Decode.decodeString (Decode.list decoderMeasure)
-        >> Either.fromResult
-        >> Either.unpack (\error -> ( setJsonError error model, Cmd.none ))
+        >> Result.Extra.unpack (\error -> ( setJsonError error model, Cmd.none ))
             (\measures ->
                 ( model
                     |> LensUtil.set measures .id Page.lenses.measures
@@ -544,8 +571,9 @@ setComplexFoodsSearchString model string =
 selectFood : Page.Model -> Food -> ( Page.Model, Cmd msg )
 selectFood model food =
     ( model
-        |> Lens.modify (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
-            (Dict.update food.id (always (IngredientCreationClientInput.default model.recipeId food.id (food.measures |> List.head |> Maybe.Extra.unwrap 0 .id)) >> Just))
+        |> LensUtil.insertAtId food.id
+            (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
+            (IngredientCreationClientInput.default model.recipeId food.id (food.measures |> List.head |> Maybe.Extra.unwrap 0 .id))
     , Cmd.none
     )
 
@@ -553,8 +581,9 @@ selectFood model food =
 selectComplexFood : Page.Model -> ComplexFood -> ( Page.Model, Cmd msg )
 selectComplexFood model complexFood =
     ( model
-        |> Lens.modify (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
-            (Dict.update complexFood.recipeId (always (ComplexIngredientClientInput.fromFood complexFood |> Just)))
+        |> LensUtil.insertAtId complexFood.recipeId
+            (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
+            (ComplexIngredientClientInput.fromFood complexFood)
     , Cmd.none
     )
 
@@ -562,7 +591,7 @@ selectComplexFood model complexFood =
 deselectFood : Page.Model -> FoodId -> ( Page.Model, Cmd Page.Msg )
 deselectFood model foodId =
     ( model
-        |> Lens.modify (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd) (Dict.remove foodId)
+        |> LensUtil.deleteAtId foodId (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
     , Cmd.none
     )
 
@@ -570,7 +599,7 @@ deselectFood model foodId =
 deselectComplexFood : Page.Model -> ComplexFoodId -> ( Page.Model, Cmd Page.Msg )
 deselectComplexFood model complexFoodId =
     ( model
-        |> Lens.modify (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd) (Dict.remove complexFoodId)
+        |> LensUtil.deleteAtId complexFoodId (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
     , Cmd.none
     )
 
@@ -608,16 +637,14 @@ addComplexFood model complexFoodId =
 gotAddFoodResponse : Page.Model -> Result Error Ingredient -> ( Page.Model, Cmd Page.Msg )
 gotAddFoodResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\ingredient ->
                 model
-                    |> Lens.modify
+                    |> LensUtil.insertAtId ingredient.id
                         (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients)
-                        (Dict.update ingredient.id (always ingredient >> Left >> Just))
-                    |> Lens.modify
+                        (ingredient |> Editing.asView)
+                    |> LensUtil.deleteAtId ingredient.foodId
                         (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
-                        (Dict.remove ingredient.foodId)
             )
     , Cmd.none
     )
@@ -626,16 +653,14 @@ gotAddFoodResponse model result =
 gotAddComplexFoodResponse : Page.Model -> Result Error ComplexIngredient -> ( Page.Model, Cmd Page.Msg )
 gotAddComplexFoodResponse model result =
     ( result
-        |> Either.fromResult
-        |> Either.unpack (flip setError model)
+        |> Result.Extra.unpack (flip setError model)
             (\complexIngredient ->
                 model
-                    |> Lens.modify
+                    |> LensUtil.insertAtId complexIngredient.complexFoodId
                         (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients)
-                        (Dict.update complexIngredient.complexFoodId (always complexIngredient >> Left >> Just))
-                    |> Lens.modify
+                        (complexIngredient |> Editing.asView)
+                    |> LensUtil.deleteAtId complexIngredient.complexFoodId
                         (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
-                        (Dict.remove complexIngredient.complexFoodId)
             )
     , Cmd.none
     )
@@ -644,8 +669,9 @@ gotAddComplexFoodResponse model result =
 updateAddFood : Page.Model -> IngredientCreationClientInput -> ( Page.Model, Cmd Page.Msg )
 updateAddFood model ingredientCreationClientInput =
     ( model
-        |> Lens.modify (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
-            (Dict.update ingredientCreationClientInput.foodId (always ingredientCreationClientInput >> Just))
+        |> LensUtil.insertAtId ingredientCreationClientInput.foodId
+            (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
+            ingredientCreationClientInput
     , Cmd.none
     )
 
@@ -653,8 +679,9 @@ updateAddFood model ingredientCreationClientInput =
 updateAddComplexFood : Page.Model -> ComplexIngredientClientInput -> ( Page.Model, Cmd Page.Msg )
 updateAddComplexFood model complexIngredientClientInput =
     ( model
-        |> Lens.modify (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
-            (Dict.update complexIngredientClientInput.complexFoodId (always complexIngredientClientInput >> Just))
+        |> LensUtil.insertAtId complexIngredientClientInput.complexFoodId
+            (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
+            complexIngredientClientInput
     , Cmd.none
     )
 

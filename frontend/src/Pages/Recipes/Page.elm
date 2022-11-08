@@ -3,7 +3,6 @@ module Pages.Recipes.Page exposing (..)
 import Api.Auxiliary exposing (JWT, RecipeId)
 import Api.Types.Recipe exposing (Recipe)
 import Dict exposing (Dict)
-import Either exposing (Either)
 import Monocle.Lens exposing (Lens)
 import Pages.Recipes.Pagination exposing (Pagination)
 import Pages.Recipes.RecipeCreationClientInput exposing (RecipeCreationClientInput)
@@ -17,7 +16,7 @@ import Util.Initialization exposing (Initialization)
 
 type alias Model =
     { authorizedAccess : AuthorizedAccess
-    , recipes : RecipeOrUpdateMap
+    , recipes : RecipeStateMap
     , recipeToAdd : Maybe RecipeCreationClientInput
     , searchString: String
     , initialization : Initialization Status
@@ -25,16 +24,16 @@ type alias Model =
     }
 
 
-type alias RecipeOrUpdate =
-    Either Recipe (Editing Recipe RecipeUpdateClientInput)
+type alias RecipeState =
+    Editing Recipe RecipeUpdateClientInput
 
 
-type alias RecipeOrUpdateMap =
-    Dict RecipeId RecipeOrUpdate
+type alias RecipeStateMap =
+    Dict RecipeId RecipeState
 
 
 lenses :
-    { recipes : Lens Model RecipeOrUpdateMap
+    { recipes : Lens Model RecipeStateMap
     , recipeToAdd : Lens Model (Maybe RecipeCreationClientInput)
     , searchString : Lens Model String
     , initialization : Lens Model (Initialization Status)
@@ -63,7 +62,9 @@ type Msg
     | GotSaveRecipeResponse (Result Error Recipe)
     | EnterEditRecipe RecipeId
     | ExitEditRecipeAt RecipeId
-    | DeleteRecipe RecipeId
+    | RequestDeleteRecipe RecipeId
+    | ConfirmDeleteRecipe RecipeId
+    | CancelDeleteRecipe RecipeId
     | GotDeleteRecipeResponse RecipeId (Result Error ())
     | GotFetchRecipesResponse (Result Error (List Recipe))
     | SetPagination Pagination

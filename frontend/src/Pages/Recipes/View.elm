@@ -6,7 +6,7 @@ import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
 import Dict
 import Either exposing (Either(..))
-import Html exposing (Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, disabled, scope, value)
 import Html.Attributes.Extra exposing (stringProperty)
 import Html.Events exposing (onClick, onInput)
@@ -43,10 +43,12 @@ view model =
         model
     <|
         let
-            viewEditRecipe =
-                Either.unpack
-                    (editOrDeleteRecipeLine model.authorizedAccess.configuration)
-                    (\e -> e.update |> editRecipeLine)
+            viewRecipeState =
+                Editing.unpack
+                    { onView = viewRecipeLine model.authorizedAccess.configuration
+                    , onUpdate = always updateRecipeLine
+                    , onDelete = deleteRecipeLine
+                    }
 
             filterOn =
                 SearchUtil.search model.searchString
@@ -55,11 +57,11 @@ view model =
                 model.recipes
                     |> Dict.filter
                         (\_ v ->
-                            filterOn (Editing.field .name v)
-                                || filterOn (Editing.field .description v |> Maybe.withDefault "")
+                            filterOn v.original.name
+                                || filterOn (v.original.description |> Maybe.withDefault "")
                         )
                     |> Dict.values
-                    |> List.sortBy (Editing.field .name >> String.toLower)
+                    |> List.sortBy (.original >> .name >> String.toLower)
                     |> ViewUtil.paginate
                         { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.recipes
                         }
@@ -91,7 +93,7 @@ view model =
                             ]
                         , tbody []
                             (creationLine
-                                ++ (viewEditRecipes |> Paginate.page |> List.map viewEditRecipe)
+                                ++ (viewEditRecipes |> Paginate.page |> List.map viewRecipeState)
                             )
                         ]
                    , div [ Style.classes.pagination ]
@@ -127,35 +129,73 @@ createRecipe maybeCreation =
             createRecipeLine creation |> Right
 
 
-editOrDeleteRecipeLine : Configuration -> Recipe -> Html Page.Msg
-editOrDeleteRecipeLine configuration recipe =
+viewRecipeLine : Configuration -> Recipe -> Html Page.Msg
+viewRecipeLine configuration recipe =
     let
         editMsg =
-            Page.EnterEditRecipe recipe.id
+            Page.EnterEditRecipe recipe.id |> onClick
+    in
+    recipeLineWith
+        { controls =
+            [ td [ Style.classes.controls ]
+                [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
+            , td [ Style.classes.controls ]
+                [ button
+                    [ Style.classes.button.delete, onClick (Page.RequestDeleteRecipe recipe.id) ]
+                    [ text "Delete" ]
+                ]
+            , td [ Style.classes.controls ]
+                [ Links.linkButton
+                    { url = Links.frontendPage configuration <| Addresses.Frontend.ingredientEditor.address <| recipe.id
+                    , attributes = [ Style.classes.button.editor ]
+                    , children = [ text "Ingredients" ]
+                    }
+                ]
+            ]
+        , onClick = [ editMsg ]
+        }
+        recipe
+
+
+deleteRecipeLine : Recipe -> Html Page.Msg
+deleteRecipeLine recipe =
+    recipeLineWith
+        { controls =
+            [ td [ Style.classes.controls ]
+                [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteRecipe recipe.id) ] [ text "Delete?" ] ]
+            , td [ Style.classes.controls ]
+                [ button
+                    [ Style.classes.button.confirm, onClick (Page.CancelDeleteRecipe recipe.id) ]
+                    [ text "Cancel" ]
+                ]
+            ]
+        , onClick = []
+        }
+        recipe
+
+
+recipeLineWith :
+    { controls : List (Html Page.Msg)
+    , onClick : List (Attribute Page.Msg)
+    }
+    -> Recipe
+    -> Html Page.Msg
+recipeLineWith ps recipe =
+    let
+        withOnClick =
+            (++) ps.onClick
     in
     tr [ Style.classes.editing ]
-        [ td [ Style.classes.editable, onClick editMsg ] [ label [] [ text recipe.name ] ]
-        , td [ Style.classes.editable, onClick editMsg ] [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
-        , td [ Style.classes.editable, Style.classes.numberLabel, onClick editMsg ] [ label [] [ text <| String.fromFloat <| recipe.numberOfServings ] ]
-        , td [ Style.classes.controls ]
-            [ button [ Style.classes.button.edit, onClick editMsg ] [ text "Edit" ] ]
-        , td [ Style.classes.controls ]
-            [ button
-                [ Style.classes.button.delete, onClick (Page.DeleteRecipe recipe.id) ]
-                [ text "Delete" ]
-            ]
-        , td [ Style.classes.controls ]
-            [ Links.linkButton
-                { url = Links.frontendPage configuration <| Addresses.Frontend.ingredientEditor.address <| recipe.id
-                , attributes = [ Style.classes.button.editor ]
-                , children = [ text "Ingredients" ]
-                }
-            ]
-        ]
+        ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text recipe.name ] ]
+         , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
+         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| recipe.numberOfServings ] ]
+         ]
+            ++ ps.controls
+        )
 
 
-editRecipeLine : RecipeUpdateClientInput -> Html Page.Msg
-editRecipeLine recipeUpdateClientInput =
+updateRecipeLine : RecipeUpdateClientInput -> Html Page.Msg
+updateRecipeLine recipeUpdateClientInput =
     editRecipeLineWith
         { saveMsg = Page.SaveRecipeEdit recipeUpdateClientInput.id
         , nameLens = RecipeUpdateClientInput.lenses.name
