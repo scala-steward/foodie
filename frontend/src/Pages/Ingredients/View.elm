@@ -808,10 +808,16 @@ viewComplexFoodLine recipeMap complexFoodMap complexIngredientsToAdd complexIngr
                     , td [ Style.classes.editable, Style.classes.numberLabel, onClick selectMsg ] [ label [] [ text <| info.amount ] ]
                     , td [ Style.classes.controls ]
                         [ button
-                            [ confirmStyle
-                            , disabled <| not <| validInput
-                            , onClick addMsg
-                            ]
+                            ([ confirmStyle
+                             , disabled <| not <| validInput
+                             ]
+                                ++ (if validInput then
+                                        [ onClick addMsg ]
+
+                                    else
+                                        []
+                                   )
+                            )
                             [ text confirmName
                             ]
                         ]
