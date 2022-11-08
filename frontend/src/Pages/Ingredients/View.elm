@@ -660,20 +660,14 @@ viewFoodLine foodMap ingredientsToAdd ingredients food =
                         validInput =
                             ingredientToAdd.amountUnit.factor |> ValidatedInput.isValid
 
-                        ( confirmName, confirmMsg, confirmStyle ) =
-                            case DictUtil.firstSuch (\ingredient -> ingredient.original.foodId == ingredientToAdd.foodId) ingredients of
-                                Nothing ->
-                                    ( "Add", addMsg, Style.classes.button.confirm )
+                        ( confirmName, confirmStyle ) =
+                            if DictUtil.existsValue (\ingredient -> ingredient.original.foodId == ingredientToAdd.foodId) ingredients then
+                                ( "Add again", Style.classes.button.edit )
 
-                                Just ingredientState ->
-                                    ( "Update"
-                                    , ingredientState
-                                        |> .original
-                                        |> IngredientUpdateClientInput.from
-                                        |> IngredientUpdateClientInput.lenses.amountUnit.set ingredientToAdd.amountUnit
-                                        |> Page.SaveIngredientEdit
-                                    , Style.classes.button.edit
-                                    )
+                            else
+                                ( "Add"
+                                , Style.classes.button.confirm
+                                )
                     in
                     [ td [ Style.classes.numberCell ]
                         [ input
@@ -692,7 +686,7 @@ viewFoodLine foodMap ingredientsToAdd ingredients food =
                              , HtmlUtil.onEscape cancelMsg
                              ]
                                 ++ (if validInput then
-                                        [ onEnter confirmMsg ]
+                                        [ onEnter addMsg ]
 
                                     else
                                         []
@@ -721,7 +715,7 @@ viewFoodLine foodMap ingredientsToAdd ingredients food =
                         [ button
                             [ confirmStyle
                             , disabled <| not <| validInput
-                            , onClick confirmMsg
+                            , onClick addMsg
                             ]
                             [ text confirmName
                             ]
@@ -772,23 +766,22 @@ viewComplexFoodLine recipeMap complexFoodMap complexIngredientsToAdd complexIngr
 
                 Just complexIngredientToAdd ->
                     let
+                        exists =
+                          DictUtil.existsValue (\complexIngredient -> complexIngredient.original.complexFoodId == complexIngredientToAdd.complexFoodId) complexIngredients
                         validInput =
-                            complexIngredientToAdd.factor |> ValidatedInput.isValid
+                            List.all identity
+                             [complexIngredientToAdd.factor |> ValidatedInput.isValid,
+                                exists |> not                             ]
 
-                        ( confirmName, confirmMsg, confirmStyle ) =
-                            case DictUtil.firstSuch (\complexIngredient -> complexIngredient.original.complexFoodId == complexIngredientToAdd.complexFoodId) complexIngredients of
-                                Nothing ->
-                                    ( "Add", addMsg, Style.classes.button.confirm )
 
-                                Just ingredientState ->
-                                    ( "Update"
-                                    , ingredientState
-                                        |> .original
-                                        |> ComplexIngredientClientInput.from
-                                        |> ComplexIngredientClientInput.lenses.factor.set complexIngredientToAdd.factor
-                                        |> Page.SaveComplexIngredientEdit
-                                    , Style.classes.button.edit
-                                    )
+                        ( confirmName, confirmStyle ) =
+                            if exists then
+                                ( "Added"
+                                , Style.classes.button.edit
+                                )
+
+                            else
+                                ( "Add", Style.classes.button.confirm )
                     in
                     [ td [ Style.classes.numberCell ]
                         [ input
@@ -805,7 +798,7 @@ viewComplexFoodLine recipeMap complexFoodMap complexIngredientsToAdd complexIngr
                              , HtmlUtil.onEscape cancelMsg
                              ]
                                 ++ (if validInput then
-                                        [ onEnter confirmMsg ]
+                                        [ onEnter addMsg ]
 
                                     else
                                         []
@@ -818,7 +811,7 @@ viewComplexFoodLine recipeMap complexFoodMap complexIngredientsToAdd complexIngr
                         [ button
                             [ confirmStyle
                             , disabled <| not <| validInput
-                            , onClick confirmMsg
+                            , onClick addMsg
                             ]
                             [ text confirmName
                             ]
