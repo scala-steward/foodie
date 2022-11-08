@@ -478,6 +478,9 @@ updateIngredientLine measureMap foodMap ingredient ingredientUpdateClientInput =
 
         cancelMsg =
             Page.ExitEditIngredientAt ingredient.id
+
+        validInput =
+            ingredientUpdateClientInput.amountUnit.factor |> ValidatedInput.isValid
     in
     tr [ Style.classes.editLine ]
         [ td [] [ label [] [ text <| DictUtil.nameOrEmpty foodMap <| ingredient.foodId ] ]
@@ -521,7 +524,17 @@ updateIngredientLine measureMap foodMap ingredient ingredientUpdateClientInput =
                 )
             ]
         , td []
-            [ button [ Style.classes.button.confirm, onClick saveMsg ]
+            [ button
+                ([ Style.classes.button.confirm
+                 , disabled <| not <| validInput
+                 ]
+                    ++ (if validInput then
+                            [ onClick saveMsg ]
+
+                        else
+                            []
+                       )
+                )
                 [ text "Save" ]
             ]
         , td []
