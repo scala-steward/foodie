@@ -2,10 +2,10 @@ package services.meal
 
 import cats.data.OptionT
 import db.generated.Tables
-import errors.{ErrorContext, ServerError}
+import errors.{ ErrorContext, ServerError }
 import io.scalaland.chimney.dsl.TransformerOps
-import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
-import services.{DBError, MealEntryId, MealId, UserId}
+import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
+import services.{ DBError, MealEntryId, MealId, UserId }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
@@ -15,7 +15,7 @@ import utils.TransformerUtils.Implicits._
 
 import java.util.UUID
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 trait MealService {
   def allMeals(userId: UserId, interval: RequestInterval): Future[Seq[Meal]]
@@ -202,18 +202,8 @@ object MealService {
     ): DBIO[MealEntry] = {
       val mealEntry    = MealEntryCreation.create(id, mealEntryCreation)
       val mealEntryRow = (mealEntry, mealEntryCreation.mealId).transformInto[Tables.MealEntryRow]
-      val query        = mealEntryQuery(id)
       ifMealExists(userId, mealEntryCreation.mealId) {
-        for {
-          exists <- query.exists.result
-          row <-
-            if (exists)
-              query
-                .update(mealEntryRow)
-                .andThen(query.result.head)
-            else
-              Tables.MealEntry.returning(Tables.MealEntry) += mealEntryRow
-        } yield row.transformInto[MealEntry]
+        (Tables.MealEntry.returning(Tables.MealEntry) += mealEntryRow).map(_.transformInto[MealEntry])
       }
     }
 
