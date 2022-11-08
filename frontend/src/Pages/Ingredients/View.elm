@@ -783,28 +783,27 @@ viewComplexFoodLine recipeMap complexFoodMap complexIngredientsToAdd complexIngr
                                 ( "Add", Style.classes.button.confirm )
                     in
                     [ td [ Style.classes.numberCell ]
-                        [ input
-                            ([ value complexIngredientToAdd.factor.text
-                             , onInput
-                                (flip
-                                    (ValidatedInput.lift
-                                        ComplexIngredientClientInput.lenses.factor
-                                    ).set
-                                    complexIngredientToAdd
-                                    >> Page.UpdateAddComplexFood
-                                )
-                             , Style.classes.numberLabel
-                             , HtmlUtil.onEscape cancelMsg
-                             ]
-                                ++ (if validInput then
-                                        [ onEnter addMsg ]
+                        (if validInput then
+                            [ input
+                                [ value complexIngredientToAdd.factor.text
+                                , onInput
+                                    (flip
+                                        (ValidatedInput.lift
+                                            ComplexIngredientClientInput.lenses.factor
+                                        ).set
+                                        complexIngredientToAdd
+                                        >> Page.UpdateAddComplexFood
+                                    )
+                                , Style.classes.numberLabel
+                                , HtmlUtil.onEscape cancelMsg
+                                , onEnter addMsg
+                                ]
+                                []
+                            ]
 
-                                    else
-                                        []
-                                   )
-                            )
+                         else
                             []
-                        ]
+                        )
                     , td [ Style.classes.editable, Style.classes.numberLabel, onClick selectMsg ] [ label [] [ text <| info.amount ] ]
                     , td [ Style.classes.controls ]
                         [ button
