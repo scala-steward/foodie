@@ -332,10 +332,16 @@ viewRecipeLine mealEntriesToAdd mealEntries recipe =
                         ]
                     , td [ Style.classes.controls ]
                         [ button
-                            [ confirmStyle
-                            , disabled <| not <| validInput
-                            , onClick addMsg
-                            ]
+                            ([ confirmStyle
+                             , disabled <| not <| validInput
+                             ]
+                                ++ (if validInput then
+                                        [ onClick addMsg ]
+
+                                    else
+                                        []
+                                   )
+                            )
                             [ text confirmName ]
                         ]
                     , td [ Style.classes.controls ] [ button [ Style.classes.button.cancel, onClick (Page.DeselectRecipe recipe.id) ] [ text "Cancel" ] ]
