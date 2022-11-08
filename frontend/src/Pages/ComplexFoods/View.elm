@@ -26,6 +26,7 @@ import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
 import Pages.Util.ViewUtil as ViewUtil
 import Paginate exposing (PaginatedList)
 import Util.Editing as Editing
+import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
 
@@ -338,8 +339,8 @@ viewRecipeLine complexFoodsToCreate complexFoods recipe =
                     in
                     [ td [ Style.classes.numberCell ]
                         ([ input
-                            ([ HtmlUtil.defined <| value complexFoodToAdd.amount.text
-                             , HtmlUtil.defined <|
+                            ([ MaybeUtil.defined <| value complexFoodToAdd.amount.text
+                             , MaybeUtil.defined <|
                                 onInput <|
                                     flip
                                         (ValidatedInput.lift
@@ -347,9 +348,9 @@ viewRecipeLine complexFoodsToCreate complexFoods recipe =
                                         ).set
                                         complexFoodToAdd
                                         >> Page.UpdateComplexFoodCreation
-                             , HtmlUtil.defined <| Style.classes.numberLabel
-                             , HtmlUtil.defined <| HtmlUtil.onEscape cancelMsg
-                             , HtmlUtil.optional validInput <| onEnter createMsg
+                             , MaybeUtil.defined <| Style.classes.numberLabel
+                             , MaybeUtil.defined <| HtmlUtil.onEscape cancelMsg
+                             , MaybeUtil.optional validInput <| onEnter createMsg
                              ]
                                 |> Maybe.Extra.values
                             )
@@ -376,9 +377,9 @@ viewRecipeLine complexFoodsToCreate complexFoods recipe =
                         )
                     , td [ Style.classes.controls ]
                         [ button
-                            ([ HtmlUtil.defined <| confirmStyle
-                             , HtmlUtil.defined <| disabled <| not <| validInput
-                             , HtmlUtil.optional validInput <| onClick createMsg
+                            ([ MaybeUtil.defined <| confirmStyle
+                             , MaybeUtil.defined <| disabled <| not <| validInput
+                             , MaybeUtil.optional validInput <| onClick createMsg
                              ]
                                 |> Maybe.Extra.values
                             )

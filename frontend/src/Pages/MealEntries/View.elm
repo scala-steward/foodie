@@ -25,6 +25,7 @@ import Pages.Util.ValidatedInput as ValidatedInput
 import Pages.Util.ViewUtil as ViewUtil
 import Paginate
 import Util.Editing as Editing
+import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
 
@@ -310,8 +311,8 @@ viewRecipeLine mealEntriesToAdd mealEntries recipe =
                     in
                     [ td [ Style.classes.numberCell ]
                         [ input
-                            ([ HtmlUtil.defined <| value mealEntryToAdd.numberOfServings.text
-                             , HtmlUtil.defined <|
+                            ([ MaybeUtil.defined <| value mealEntryToAdd.numberOfServings.text
+                             , MaybeUtil.defined <|
                                 onInput <|
                                     flip
                                         (ValidatedInput.lift
@@ -319,8 +320,8 @@ viewRecipeLine mealEntriesToAdd mealEntries recipe =
                                         ).set
                                         mealEntryToAdd
                                         >> Page.UpdateAddRecipe
-                             , HtmlUtil.defined <| Style.classes.numberLabel
-                             , HtmlUtil.optional validInput <| onEnter addMsg
+                             , MaybeUtil.defined <| Style.classes.numberLabel
+                             , MaybeUtil.optional validInput <| onEnter addMsg
                              ]
                                 |> Maybe.Extra.values
                             )
@@ -328,9 +329,9 @@ viewRecipeLine mealEntriesToAdd mealEntries recipe =
                         ]
                     , td [ Style.classes.controls ]
                         [ button
-                            ([ HtmlUtil.defined <| confirmStyle
-                             , HtmlUtil.defined <| disabled <| not <| validInput
-                             , HtmlUtil.optional validInput <| onClick addMsg
+                            ([ MaybeUtil.defined <| confirmStyle
+                             , MaybeUtil.defined <| disabled <| not <| validInput
+                             , MaybeUtil.optional validInput <| onClick addMsg
                              ]
                                 |> Maybe.Extra.values
                             )

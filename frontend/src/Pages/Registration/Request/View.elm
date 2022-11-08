@@ -5,6 +5,7 @@ import Html exposing (Html, button, div, input, label, table, tbody, td, text, t
 import Html.Attributes exposing (disabled)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
+import Maybe.Extra
 import Monocle.Lens exposing (Lens)
 import Pages.Registration.Request.Page as Page
 import Pages.Util.Links as Links
@@ -12,6 +13,7 @@ import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput
 import Pages.Util.ViewUtil as ViewUtil
 import Util.LensUtil as LensUtil
+import Util.MaybeUtil as MaybeUtil
 
 
 view : Page.Model -> Html Page.Msg
@@ -41,11 +43,7 @@ viewEditing model =
             ValidatedInput.isValid model.nickname && ValidatedInput.isValid model.email
 
         enterAction =
-            if isValid then
-                [ onEnter Page.Request ]
-
-            else
-                []
+            MaybeUtil.optional isValid <| onEnter Page.Request
     in
     div [ Style.classes.request ]
         [ div [] [ label [ Style.classes.info ] [ text "Registration" ] ]
@@ -55,13 +53,14 @@ viewEditing model =
                     [ td [] [ label [] [ text "Nickname" ] ]
                     , td []
                         [ input
-                            ([ onInput
-                                (flip (ValidatedInput.lift LensUtil.identityLens).set model.nickname
-                                    >> Page.SetNickname
-                                )
-                             , Style.classes.editable
+                            ([ MaybeUtil.defined <|
+                                onInput <|
+                                    flip (ValidatedInput.lift LensUtil.identityLens).set model.nickname
+                                        >> Page.SetNickname
+                             , MaybeUtil.defined <| Style.classes.editable
+                             , enterAction
                              ]
-                                ++ enterAction
+                                |> Maybe.Extra.values
                             )
                             []
                         ]
@@ -70,13 +69,14 @@ viewEditing model =
                     [ td [] [ label [] [ text "Email" ] ]
                     , td []
                         [ input
-                            ([ onInput
-                                (flip (ValidatedInput.lift LensUtil.identityLens).set model.email
-                                    >> Page.SetEmail
-                                )
-                             , Style.classes.editable
+                            ([ MaybeUtil.defined <|
+                                onInput <|
+                                    flip (ValidatedInput.lift LensUtil.identityLens).set model.email
+                                        >> Page.SetEmail
+                             , MaybeUtil.defined <| Style.classes.editable
+                             , enterAction
                              ]
-                                ++ enterAction
+                                |> Maybe.Extra.values
                             )
                             []
                         ]

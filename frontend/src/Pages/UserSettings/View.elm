@@ -14,6 +14,7 @@ import Pages.Util.ComplementInput as ComplementInput
 import Pages.Util.PasswordInput as PasswordInput
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil exposing (Page(..))
+import Util.MaybeUtil as MaybeUtil
 
 
 view : Page.Model -> Html Page.Msg
@@ -43,11 +44,7 @@ viewRegular model =
             PasswordInput.isValidPassword model.complementInput.passwordInput
 
         enterPasswordAction =
-            if isValidPassword then
-                [ onEnter Page.UpdatePassword ]
-
-            else
-                []
+            MaybeUtil.optional isValidPassword <| onEnter Page.UpdatePassword
 
         password1Lens =
             ComplementInput.lenses.passwordInput
@@ -110,16 +107,17 @@ viewRegular model =
                         [ td [] [ label [] [ text "New password" ] ]
                         , td []
                             [ input
-                                ([ onInput
-                                    (flip password1Lens.set
-                                        model.complementInput
-                                        >> Page.SetComplementInput
-                                    )
-                                 , type_ "password"
-                                 , value <| password1Lens.get <| model.complementInput
-                                 , Style.classes.editable
+                                ([ MaybeUtil.defined <|
+                                    onInput <|
+                                        flip password1Lens.set
+                                            model.complementInput
+                                            >> Page.SetComplementInput
+                                 , MaybeUtil.defined <| type_ "password"
+                                 , MaybeUtil.defined <| value <| password1Lens.get <| model.complementInput
+                                 , MaybeUtil.defined <| Style.classes.editable
+                                 , enterPasswordAction
                                  ]
-                                    ++ enterPasswordAction
+                                    |> Maybe.Extra.values
                                 )
                                 []
                             ]
@@ -128,16 +126,17 @@ viewRegular model =
                         [ td [] [ label [] [ text "Password repetition" ] ]
                         , td []
                             [ input
-                                ([ onInput
-                                    (flip password2Lens.set
-                                        model.complementInput
-                                        >> Page.SetComplementInput
-                                    )
-                                 , type_ "password"
-                                 , value <| password2Lens.get <| model.complementInput
-                                 , Style.classes.editable
+                                ([ MaybeUtil.defined <|
+                                    onInput <|
+                                        flip password2Lens.set
+                                            model.complementInput
+                                            >> Page.SetComplementInput
+                                 , MaybeUtil.defined <| type_ "password"
+                                 , MaybeUtil.defined <| value <| password2Lens.get <| model.complementInput
+                                 , MaybeUtil.defined <| Style.classes.editable
+                                 , enterPasswordAction
                                  ]
-                                    ++ enterPasswordAction
+                                    |> Maybe.Extra.values
                                 )
                                 []
                             ]

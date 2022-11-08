@@ -31,6 +31,7 @@ import Pages.Util.ViewUtil as ViewUtil
 import Paginate
 import Parser
 import Util.Editing as Editing
+import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
 
@@ -268,7 +269,7 @@ editMealLineWith handling editedValue =
                 >> handling.updateMsg
 
         validatedSaveAction =
-            HtmlUtil.optional (deepDateLens.get editedValue |> Maybe.Extra.isJust) <| onEnter handling.saveMsg
+            MaybeUtil.optional (deepDateLens.get editedValue |> Maybe.Extra.isJust) <| onEnter handling.saveMsg
 
         timeValue =
             date
@@ -316,12 +317,12 @@ editMealLineWith handling editedValue =
             ]
         , td [ Style.classes.editable ]
             [ input
-                ([ HtmlUtil.defined <| value <| name
-                 , HtmlUtil.defined <|
+                ([ MaybeUtil.defined <| value <| name
+                 , MaybeUtil.defined <|
                     onInput <|
                         flip handling.nameLens.set editedValue
                             >> handling.updateMsg
-                 , HtmlUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
+                 , MaybeUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
                  , validatedSaveAction
                  ]
                     |> Maybe.Extra.values
@@ -330,9 +331,9 @@ editMealLineWith handling editedValue =
             ]
         , td [ Style.classes.controls ]
             [ button
-                ([ HtmlUtil.defined <| Style.classes.button.confirm
-                 , HtmlUtil.defined <| disabled <| not <| validInput
-                 , HtmlUtil.optional validInput <| onClick handling.confirmOnClick
+                ([ MaybeUtil.defined <| Style.classes.button.confirm
+                 , MaybeUtil.defined <| disabled <| not <| validInput
+                 , MaybeUtil.optional validInput <| onClick handling.confirmOnClick
                  ]
                     |> Maybe.Extra.values
                 )

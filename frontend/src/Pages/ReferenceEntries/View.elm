@@ -25,6 +25,7 @@ import Pages.Util.ValidatedInput as ValidatedInput
 import Pages.Util.ViewUtil as ViewUtil
 import Paginate
 import Util.Editing as Editing
+import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
 
@@ -338,9 +339,9 @@ viewNutrientLine nutrientMap referenceEntries referenceEntriesToAdd nutrient =
                     , td [ Style.classes.numberCell ] [ label [] [ text <| .unitName <| nutrientInfo nutrientMap <| referenceNutrientToAdd.nutrientCode ] ]
                     , td [ Style.classes.controls ]
                         [ button
-                            ([ HtmlUtil.defined <| confirmStyle
-                             , HtmlUtil.defined <| disabled <| not <| validInput
-                             , HtmlUtil.optional validInput <| onClick addMsg
+                            ([ MaybeUtil.defined <| confirmStyle
+                             , MaybeUtil.defined <| disabled <| not <| validInput
+                             , MaybeUtil.optional validInput <| onClick addMsg
                              ]
                                 |> Maybe.Extra.values
                             )

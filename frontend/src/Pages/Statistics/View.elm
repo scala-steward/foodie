@@ -83,12 +83,7 @@ view model =
                                     [ text "Compute" ]
                                 ]
                             , td [ Style.classes.controls ]
-                                (if model.fetching then
-                                    [ Links.loadingSymbol ]
-
-                                 else
-                                    []
-                                )
+                                ([ Links.loadingSymbol ] |> List.filter (always model.fetching))
                             ]
                         ]
                     ]

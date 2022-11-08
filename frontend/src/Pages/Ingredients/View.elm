@@ -36,6 +36,7 @@ import Pages.Util.ValidatedInput as ValidatedInput
 import Pages.Util.ViewUtil as ViewUtil
 import Paginate exposing (PaginatedList)
 import Util.Editing as Editing
+import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
 
@@ -284,7 +285,7 @@ viewPlain model =
                             , items = Pagination.lenses.foods
                             }
                             model
-                            >> Page.SetComplexIngredientsPagination
+                            >> Page.SetIngredientsPagination
                     , elements = viewFoods
                     }
                 ]
@@ -525,9 +526,9 @@ updateIngredientLine measureMap foodMap ingredient ingredientUpdateClientInput =
             ]
         , td []
             [ button
-                ([ HtmlUtil.defined <| Style.classes.button.confirm
-                 , HtmlUtil.defined <| disabled <| not <| validInput
-                 , HtmlUtil.optional validInput <| onClick saveMsg
+                ([ MaybeUtil.defined <| Style.classes.button.confirm
+                 , MaybeUtil.defined <| disabled <| not <| validInput
+                 , MaybeUtil.optional validInput <| onClick saveMsg
                  ]
                     |> Maybe.Extra.values
                 )
@@ -680,8 +681,8 @@ viewFoodLine foodMap ingredientsToAdd ingredients food =
                     in
                     [ td [ Style.classes.numberCell ]
                         [ input
-                            ([ HtmlUtil.defined <| value ingredientToAdd.amountUnit.factor.text
-                             , HtmlUtil.defined <|
+                            ([ MaybeUtil.defined <| value ingredientToAdd.amountUnit.factor.text
+                             , MaybeUtil.defined <|
                                 onInput <|
                                     flip
                                         (ValidatedInput.lift
@@ -691,9 +692,9 @@ viewFoodLine foodMap ingredientsToAdd ingredients food =
                                         ).set
                                         ingredientToAdd
                                         >> Page.UpdateAddFood
-                             , HtmlUtil.defined <| Style.classes.numberLabel
-                             , HtmlUtil.defined <| HtmlUtil.onEscape cancelMsg
-                             , HtmlUtil.optional validInput <| onEnter addMsg
+                             , MaybeUtil.defined <| Style.classes.numberLabel
+                             , MaybeUtil.defined <| HtmlUtil.onEscape cancelMsg
+                             , MaybeUtil.optional validInput <| onEnter addMsg
                              ]
                                 |> Maybe.Extra.values
                             )
@@ -788,33 +789,30 @@ viewComplexFoodLine recipeMap complexFoodMap complexIngredientsToAdd complexIngr
                                 ( "Add", Style.classes.button.confirm )
                     in
                     [ td [ Style.classes.numberCell ]
-                        (if exists |> not then
-                            [ input
-                                [ value complexIngredientToAdd.factor.text
-                                , onInput
-                                    (flip
-                                        (ValidatedInput.lift
-                                            ComplexIngredientClientInput.lenses.factor
-                                        ).set
-                                        complexIngredientToAdd
-                                        >> Page.UpdateAddComplexFood
-                                    )
-                                , Style.classes.numberLabel
-                                , HtmlUtil.onEscape cancelMsg
-                                , onEnter addMsg
-                                ]
-                                []
+                        ([ input
+                            [ value complexIngredientToAdd.factor.text
+                            , onInput
+                                (flip
+                                    (ValidatedInput.lift
+                                        ComplexIngredientClientInput.lenses.factor
+                                    ).set
+                                    complexIngredientToAdd
+                                    >> Page.UpdateAddComplexFood
+                                )
+                            , Style.classes.numberLabel
+                            , HtmlUtil.onEscape cancelMsg
+                            , onEnter addMsg
                             ]
-
-                         else
                             []
+                         ]
+                            |> List.filter (exists |> not |> always)
                         )
                     , td [ Style.classes.editable, Style.classes.numberLabel, onClick selectMsg ] [ label [] [ text <| info.amount ] ]
                     , td [ Style.classes.controls ]
                         [ button
-                            ([ HtmlUtil.defined <| confirmStyle
-                             , HtmlUtil.defined <| disabled <| not <| validInput
-                             , HtmlUtil.optional validInput <| onClick addMsg
+                            ([ MaybeUtil.defined <| confirmStyle
+                             , MaybeUtil.defined <| disabled <| not <| validInput
+                             , MaybeUtil.optional validInput <| onClick addMsg
                              ]
                                 |> Maybe.Extra.values
                             )

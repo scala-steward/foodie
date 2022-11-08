@@ -1,4 +1,4 @@
-module Pages.Util.HtmlUtil exposing (defined, onEscape, optional, searchAreaWith)
+module Pages.Util.HtmlUtil exposing (onEscape, searchAreaWith)
 
 import Html exposing (Attribute, Html, button, div, input, label, text)
 import Html.Attributes exposing (disabled, value)
@@ -43,13 +43,3 @@ onEscape =
 mkEscapeEventMsg : msg -> KeyboardEvent -> Maybe msg
 mkEscapeEventMsg msg keyboardEvent =
     Just msg |> Maybe.Extra.filter (always (keyboardEvent.keyCode == Key.Escape))
-
-
-defined : Attribute msg -> Maybe (Attribute msg)
-defined =
-    Just
-
-
-optional : Bool -> Attribute msg -> Maybe (Attribute msg)
-optional isDefined =
-    Just >> Maybe.Extra.filter (always isDefined)

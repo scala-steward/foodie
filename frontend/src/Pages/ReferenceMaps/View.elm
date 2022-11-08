@@ -27,6 +27,7 @@ import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
 import Pages.Util.ViewUtil as ViewUtil
 import Paginate
 import Util.Editing as Editing
+import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
 
@@ -230,17 +231,17 @@ editReferenceMapLineWith handling editedValue =
                 |> ValidatedInput.isValid
 
         validatedSaveAction =
-            HtmlUtil.optional validInput <| onEnter handling.saveMsg
+            MaybeUtil.optional validInput <| onEnter handling.saveMsg
     in
     tr [ Style.classes.editLine ]
         [ td [ Style.classes.editable ]
             [ input
-                ([ HtmlUtil.defined <| value <| .text <| handling.nameLens.get <| editedValue
-                 , HtmlUtil.defined <|
+                ([ MaybeUtil.defined <| value <| .text <| handling.nameLens.get <| editedValue
+                 , MaybeUtil.defined <|
                     onInput <|
                         flip (ValidatedInput.lift handling.nameLens).set editedValue
                             >> handling.updateMsg
-                 , HtmlUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
+                 , MaybeUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
                  , validatedSaveAction
                  ]
                     |> Maybe.Extra.values
@@ -249,9 +250,9 @@ editReferenceMapLineWith handling editedValue =
             ]
         , td [ Style.classes.controls ]
             [ button
-                ([ HtmlUtil.defined <| Style.classes.button.confirm
-                 , HtmlUtil.defined <| disabled <| not <| validInput
-                 , HtmlUtil.optional validInput <| onClick handling.saveMsg
+                ([ MaybeUtil.defined <| Style.classes.button.confirm
+                 , MaybeUtil.defined <| disabled <| not <| validInput
+                 , MaybeUtil.optional validInput <| onClick handling.saveMsg
                  ]
                     |> Maybe.Extra.values
                 )
