@@ -291,6 +291,9 @@ editMealLineWith handling editedValue =
 
         name =
             Maybe.withDefault "" <| handling.nameLens.getOption <| editedValue
+
+        validInput =
+            Maybe.Extra.isJust <| date.date
     in
     tr [ Style.classes.editLine ]
         [ td [ Style.classes.editable, Style.classes.date ]
@@ -330,10 +333,16 @@ editMealLineWith handling editedValue =
             ]
         , td [ Style.classes.controls ]
             [ button
-                [ Style.classes.button.confirm
-                , onClick handling.confirmOnClick
-                , disabled <| Maybe.Extra.isNothing <| date.date
-                ]
+                ([ Style.classes.button.confirm
+                 , disabled <| not <| validInput
+                 ]
+                    ++ (if validInput then
+                            [ onClick handling.confirmOnClick ]
+
+                        else
+                            []
+                       )
+                )
                 [ text handling.confirmName ]
             ]
         , td [ Style.classes.controls ]
