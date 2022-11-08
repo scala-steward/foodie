@@ -796,7 +796,7 @@ viewComplexFoodLine recipeMap complexFoodMap complexIngredientsToAdd complexIngr
                                 ( "Add", Style.classes.button.confirm )
                     in
                     [ td [ Style.classes.numberCell ]
-                        (if validInput then
+                        (if exists |> not then
                             [ input
                                 [ value complexIngredientToAdd.factor.text
                                 , onInput
