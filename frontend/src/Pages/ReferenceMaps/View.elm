@@ -251,10 +251,16 @@ editReferenceMapLineWith handling editedValue =
             ]
         , td [ Style.classes.controls ]
             [ button
-                [ Style.classes.button.confirm
-                , onClick handling.saveMsg
-                , disabled <| not <| validInput
-                ]
+                ([ Style.classes.button.confirm
+                 , disabled <| not <| validInput
+                 ]
+                    ++ (if validInput then
+                            [ onClick handling.saveMsg ]
+
+                        else
+                            []
+                       )
+                )
                 [ text handling.confirmName ]
             ]
         , td [ Style.classes.controls ]
