@@ -267,12 +267,8 @@ editMealLineWith handling editedValue =
                     editedValue
                 >> handling.updateMsg
 
-        validatedEnterInteraction =
-            if deepDateLens.get editedValue |> Maybe.Extra.isJust then
-                [ onEnter handling.saveMsg ]
-
-            else
-                []
+        validatedSaveAction =
+            HtmlUtil.optional (deepDateLens.get editedValue |> Maybe.Extra.isJust) <| onEnter handling.saveMsg
 
         timeValue =
             date
@@ -320,28 +316,25 @@ editMealLineWith handling editedValue =
             ]
         , td [ Style.classes.editable ]
             [ input
-                ([ value <| name
-                 , onInput
-                    (flip handling.nameLens.set editedValue
-                        >> handling.updateMsg
-                    )
-                 , HtmlUtil.onEscape handling.cancelMsg
+                ([ HtmlUtil.defined <| value <| name
+                 , HtmlUtil.defined <|
+                    onInput <|
+                        flip handling.nameLens.set editedValue
+                            >> handling.updateMsg
+                 , HtmlUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
+                 , validatedSaveAction
                  ]
-                    ++ validatedEnterInteraction
+                    |> Maybe.Extra.values
                 )
                 []
             ]
         , td [ Style.classes.controls ]
             [ button
-                ([ Style.classes.button.confirm
-                 , disabled <| not <| validInput
+                ([ HtmlUtil.defined <| Style.classes.button.confirm
+                 , HtmlUtil.defined <| disabled <| not <| validInput
+                 , HtmlUtil.optional validInput <| onClick handling.confirmOnClick
                  ]
-                    ++ (if validInput then
-                            [ onClick handling.confirmOnClick ]
-
-                        else
-                            []
-                       )
+                    |> Maybe.Extra.values
                 )
                 [ text handling.confirmName ]
             ]

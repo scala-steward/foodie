@@ -245,73 +245,68 @@ editRecipeLineWith handling editedValue =
                 ]
 
         validatedSaveAction =
-            if validInput then
-                [ onEnter handling.saveMsg ]
-
-            else
-                []
+            HtmlUtil.optional validInput <| onEnter handling.saveMsg
     in
     tr [ Style.classes.editLine ]
         [ td [ Style.classes.editable ]
             [ input
-                ([ value <| .text <| handling.nameLens.get <| editedValue
-                 , onInput
-                    (flip (ValidatedInput.lift handling.nameLens).set editedValue
-                        >> handling.updateMsg
-                    )
-                 , HtmlUtil.onEscape handling.cancelMsg
+                ([ HtmlUtil.defined <| value <| .text <| handling.nameLens.get <| editedValue
+                 , HtmlUtil.defined <|
+                    onInput <|
+                        flip (ValidatedInput.lift handling.nameLens).set editedValue
+                            >> handling.updateMsg
+                 , HtmlUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
+                 , validatedSaveAction
                  ]
-                    ++ validatedSaveAction
+                    |> Maybe.Extra.values
                 )
                 []
             ]
         , td [ Style.classes.editable ]
             [ input
-                ([ value <| Maybe.withDefault "" <| handling.descriptionLens.get <| editedValue
-                 , onInput
-                    (flip
-                        (Just
-                            >> Maybe.Extra.filter (String.isEmpty >> not)
-                            >> handling.descriptionLens.set
-                        )
-                        editedValue
-                        >> handling.updateMsg
-                    )
-                 , HtmlUtil.onEscape handling.cancelMsg
+                ([ HtmlUtil.defined <| value <| Maybe.withDefault "" <| handling.descriptionLens.get <| editedValue
+                 , HtmlUtil.defined <|
+                    onInput <|
+                        flip
+                            (Just
+                                >> Maybe.Extra.filter (String.isEmpty >> not)
+                                >> handling.descriptionLens.set
+                            )
+                            editedValue
+                            >> handling.updateMsg
+                 , HtmlUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
+                 , validatedSaveAction
                  ]
-                    ++ validatedSaveAction
+                    |> Maybe.Extra.values
                 )
                 []
             ]
         , td [ Style.classes.numberCell ]
             [ input
-                ([ value <| .text <| handling.numberOfServingsLens.get <| editedValue
-                 , onInput
-                    (flip
-                        (ValidatedInput.lift
-                            handling.numberOfServingsLens
-                        ).set
-                        editedValue
-                        >> handling.updateMsg
-                    )
-                 , HtmlUtil.onEscape handling.cancelMsg
-                 , Style.classes.numberLabel
+                ([ HtmlUtil.defined <| value <| .text <| handling.numberOfServingsLens.get <| editedValue
+                 , HtmlUtil.defined <|
+                    onInput <|
+                        flip
+                            (ValidatedInput.lift
+                                handling.numberOfServingsLens
+                            ).set
+                            editedValue
+                            >> handling.updateMsg
+                 , HtmlUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
+                 , HtmlUtil.defined <| Style.classes.numberLabel
+                 , validatedSaveAction
                  ]
-                    ++ validatedSaveAction
+                    |> Maybe.Extra.values
                 )
                 []
             ]
         , td [ Style.classes.controls ]
             [ button
-                ([ Style.classes.button.confirm
-                 , disabled <| not <| validInput
+                ([ HtmlUtil.defined <| Style.classes.button.confirm
+                 , HtmlUtil.defined <| disabled <| not <| validInput
+                 , HtmlUtil.optional validInput <| onClick handling.saveMsg
                  ]
-                    ++ (if validInput then
-                            [ onClick handling.saveMsg ]
-
-                        else
-                            []
-                       )
+                    |> Maybe.Extra.values
                 )
                 [ text handling.confirmName ]
             ]

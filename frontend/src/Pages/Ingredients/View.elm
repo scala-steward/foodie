@@ -525,15 +525,11 @@ updateIngredientLine measureMap foodMap ingredient ingredientUpdateClientInput =
             ]
         , td []
             [ button
-                ([ Style.classes.button.confirm
-                 , disabled <| not <| validInput
+                ([ HtmlUtil.defined <| Style.classes.button.confirm
+                 , HtmlUtil.defined <| disabled <| not <| validInput
+                 , HtmlUtil.optional validInput <| onClick saveMsg
                  ]
-                    ++ (if validInput then
-                            [ onClick saveMsg ]
-
-                        else
-                            []
-                       )
+                    |> Maybe.Extra.values
                 )
                 [ text "Save" ]
             ]
@@ -684,26 +680,22 @@ viewFoodLine foodMap ingredientsToAdd ingredients food =
                     in
                     [ td [ Style.classes.numberCell ]
                         [ input
-                            ([ value ingredientToAdd.amountUnit.factor.text
-                             , onInput
-                                (flip
-                                    (ValidatedInput.lift
-                                        (IngredientCreationClientInput.amountUnit
-                                            |> Compose.lensWithLens AmountUnitClientInput.lenses.factor
-                                        )
-                                    ).set
-                                    ingredientToAdd
-                                    >> Page.UpdateAddFood
-                                )
-                             , Style.classes.numberLabel
-                             , HtmlUtil.onEscape cancelMsg
+                            ([ HtmlUtil.defined <| value ingredientToAdd.amountUnit.factor.text
+                             , HtmlUtil.defined <|
+                                onInput <|
+                                    flip
+                                        (ValidatedInput.lift
+                                            (IngredientCreationClientInput.amountUnit
+                                                |> Compose.lensWithLens AmountUnitClientInput.lenses.factor
+                                            )
+                                        ).set
+                                        ingredientToAdd
+                                        >> Page.UpdateAddFood
+                             , HtmlUtil.defined <| Style.classes.numberLabel
+                             , HtmlUtil.defined <| HtmlUtil.onEscape cancelMsg
+                             , HtmlUtil.optional validInput <| onEnter addMsg
                              ]
-                                ++ (if validInput then
-                                        [ onEnter addMsg ]
-
-                                    else
-                                        []
-                                   )
+                                |> Maybe.Extra.values
                             )
                             []
                         ]
@@ -820,15 +812,11 @@ viewComplexFoodLine recipeMap complexFoodMap complexIngredientsToAdd complexIngr
                     , td [ Style.classes.editable, Style.classes.numberLabel, onClick selectMsg ] [ label [] [ text <| info.amount ] ]
                     , td [ Style.classes.controls ]
                         [ button
-                            ([ confirmStyle
-                             , disabled <| not <| validInput
+                            ([ HtmlUtil.defined <| confirmStyle
+                             , HtmlUtil.defined <| disabled <| not <| validInput
+                             , HtmlUtil.optional validInput <| onClick addMsg
                              ]
-                                ++ (if validInput then
-                                        [ onClick addMsg ]
-
-                                    else
-                                        []
-                                   )
+                                |> Maybe.Extra.values
                             )
                             [ text confirmName
                             ]

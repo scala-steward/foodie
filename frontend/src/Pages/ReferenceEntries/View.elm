@@ -338,15 +338,11 @@ viewNutrientLine nutrientMap referenceEntries referenceEntriesToAdd nutrient =
                     , td [ Style.classes.numberCell ] [ label [] [ text <| .unitName <| nutrientInfo nutrientMap <| referenceNutrientToAdd.nutrientCode ] ]
                     , td [ Style.classes.controls ]
                         [ button
-                            ([ confirmStyle
-                             , disabled <| not <| validInput
+                            ([ HtmlUtil.defined <| confirmStyle
+                             , HtmlUtil.defined <| disabled <| not <| validInput
+                             , HtmlUtil.optional validInput <| onClick addMsg
                              ]
-                                ++ (if validInput then
-                                        [ onClick addMsg ]
-
-                                    else
-                                        []
-                                   )
+                                |> Maybe.Extra.values
                             )
                             [ text <| confirmName ]
                         ]

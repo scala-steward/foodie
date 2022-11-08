@@ -310,37 +310,29 @@ viewRecipeLine mealEntriesToAdd mealEntries recipe =
                     in
                     [ td [ Style.classes.numberCell ]
                         [ input
-                            ([ value mealEntryToAdd.numberOfServings.text
-                             , onInput
-                                (flip
-                                    (ValidatedInput.lift
-                                        MealEntryCreationClientInput.lenses.numberOfServings
-                                    ).set
-                                    mealEntryToAdd
-                                    >> Page.UpdateAddRecipe
-                                )
-                             , Style.classes.numberLabel
+                            ([ HtmlUtil.defined <| value mealEntryToAdd.numberOfServings.text
+                             , HtmlUtil.defined <|
+                                onInput <|
+                                    flip
+                                        (ValidatedInput.lift
+                                            MealEntryCreationClientInput.lenses.numberOfServings
+                                        ).set
+                                        mealEntryToAdd
+                                        >> Page.UpdateAddRecipe
+                             , HtmlUtil.defined <| Style.classes.numberLabel
+                             , HtmlUtil.optional validInput <| onEnter addMsg
                              ]
-                                ++ (if validInput then
-                                        [ onEnter addMsg ]
-
-                                    else
-                                        []
-                                   )
+                                |> Maybe.Extra.values
                             )
                             []
                         ]
                     , td [ Style.classes.controls ]
                         [ button
-                            ([ confirmStyle
-                             , disabled <| not <| validInput
+                            ([ HtmlUtil.defined <| confirmStyle
+                             , HtmlUtil.defined <| disabled <| not <| validInput
+                             , HtmlUtil.optional validInput <| onClick addMsg
                              ]
-                                ++ (if validInput then
-                                        [ onClick addMsg ]
-
-                                    else
-                                        []
-                                   )
+                                |> Maybe.Extra.values
                             )
                             [ text confirmName ]
                         ]

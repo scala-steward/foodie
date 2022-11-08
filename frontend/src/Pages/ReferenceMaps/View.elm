@@ -11,6 +11,7 @@ import Html.Attributes exposing (colspan, disabled, scope, value)
 import Html.Attributes.Extra exposing (stringProperty)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
+import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
 import Pages.ReferenceMaps.Page as Page
@@ -229,37 +230,30 @@ editReferenceMapLineWith handling editedValue =
                 |> ValidatedInput.isValid
 
         validatedSaveAction =
-            if validInput then
-                [ onEnter handling.saveMsg ]
-
-            else
-                []
+            HtmlUtil.optional validInput <| onEnter handling.saveMsg
     in
     tr [ Style.classes.editLine ]
         [ td [ Style.classes.editable ]
             [ input
-                ([ value <| .text <| handling.nameLens.get <| editedValue
-                 , onInput
-                    (flip (ValidatedInput.lift handling.nameLens).set editedValue
-                        >> handling.updateMsg
-                    )
-                 , HtmlUtil.onEscape handling.cancelMsg
+                ([ HtmlUtil.defined <| value <| .text <| handling.nameLens.get <| editedValue
+                 , HtmlUtil.defined <|
+                    onInput <|
+                        flip (ValidatedInput.lift handling.nameLens).set editedValue
+                            >> handling.updateMsg
+                 , HtmlUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
+                 , validatedSaveAction
                  ]
-                    ++ validatedSaveAction
+                    |> Maybe.Extra.values
                 )
                 []
             ]
         , td [ Style.classes.controls ]
             [ button
-                ([ Style.classes.button.confirm
-                 , disabled <| not <| validInput
+                ([ HtmlUtil.defined <| Style.classes.button.confirm
+                 , HtmlUtil.defined <| disabled <| not <| validInput
+                 , HtmlUtil.optional validInput <| onClick handling.saveMsg
                  ]
-                    ++ (if validInput then
-                            [ onClick handling.saveMsg ]
-
-                        else
-                            []
-                       )
+                    |> Maybe.Extra.values
                 )
                 [ text handling.confirmName ]
             ]

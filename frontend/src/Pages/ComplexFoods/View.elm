@@ -338,24 +338,20 @@ viewRecipeLine complexFoodsToCreate complexFoods recipe =
                     in
                     [ td [ Style.classes.numberCell ]
                         ([ input
-                            ([ value complexFoodToAdd.amount.text
-                             , onInput
-                                (flip
-                                    (ValidatedInput.lift
-                                        ComplexFoodClientInput.lenses.amount
-                                    ).set
-                                    complexFoodToAdd
-                                    >> Page.UpdateComplexFoodCreation
-                                )
-                             , Style.classes.numberLabel
-                             , HtmlUtil.onEscape cancelMsg
+                            ([ HtmlUtil.defined <| value complexFoodToAdd.amount.text
+                             , HtmlUtil.defined <|
+                                onInput <|
+                                    flip
+                                        (ValidatedInput.lift
+                                            ComplexFoodClientInput.lenses.amount
+                                        ).set
+                                        complexFoodToAdd
+                                        >> Page.UpdateComplexFoodCreation
+                             , HtmlUtil.defined <| Style.classes.numberLabel
+                             , HtmlUtil.defined <| HtmlUtil.onEscape cancelMsg
+                             , HtmlUtil.optional validInput <| onEnter createMsg
                              ]
-                                ++ (if validInput then
-                                        [ onEnter createMsg ]
-
-                                    else
-                                        []
-                                   )
+                                |> Maybe.Extra.values
                             )
                             []
                          ]
@@ -380,15 +376,11 @@ viewRecipeLine complexFoodsToCreate complexFoods recipe =
                         )
                     , td [ Style.classes.controls ]
                         [ button
-                            ([ confirmStyle
-                             , disabled <| not <| validInput
+                            ([ HtmlUtil.defined <| confirmStyle
+                             , HtmlUtil.defined <| disabled <| not <| validInput
+                             , HtmlUtil.optional validInput <| onClick createMsg
                              ]
-                                ++ (if validInput then
-                                        [ onClick createMsg ]
-
-                                    else
-                                        []
-                                   )
+                                |> Maybe.Extra.values
                             )
                             [ text confirmName
                             ]
