@@ -320,27 +320,24 @@ viewRecipeLine complexFoodsToCreate complexFoods recipe =
 
                 Just complexFoodToAdd ->
                     let
+                        exists =
+                            DictUtil.existsValue (\complexFood -> complexFood.original.recipeId == complexFoodToAdd.recipeId) complexFoods
+
                         validInput =
-                            complexFoodToAdd.amount |> ValidatedInput.isValid
+                            List.all identity
+                                [ complexFoodToAdd.amount |> ValidatedInput.isValid
+                                , exists |> not
+                                ]
 
-                        ( confirmName, confirmMsg, confirmStyle ) =
-                            case DictUtil.firstSuch (\complexFood -> complexFood.original.recipeId == complexFoodToAdd.recipeId) complexFoods of
-                                Nothing ->
-                                    ( "Add", createMsg, Style.classes.button.confirm )
+                        ( confirmName, confirmStyle ) =
+                            if exists then
+                                ( "Added", Style.classes.button.edit )
 
-                                Just complexFoodState ->
-                                    ( "Update"
-                                    , complexFoodState
-                                        |> .original
-                                        |> ComplexFoodClientInput.from
-                                        |> ComplexFoodClientInput.lenses.amount.set complexFoodToAdd.amount
-                                        |> ComplexFoodClientInput.lenses.unit.set complexFoodToAdd.unit
-                                        |> Page.SaveComplexFoodEdit
-                                    , Style.classes.button.edit
-                                    )
+                            else
+                                ( "Add", Style.classes.button.confirm )
                     in
                     [ td [ Style.classes.numberCell ]
-                        [ input
+                        ([ input
                             ([ value complexFoodToAdd.amount.text
                              , onInput
                                 (flip
@@ -354,16 +351,18 @@ viewRecipeLine complexFoodsToCreate complexFoods recipe =
                              , HtmlUtil.onEscape cancelMsg
                              ]
                                 ++ (if validInput then
-                                        [ onEnter confirmMsg ]
+                                        [ onEnter createMsg ]
 
                                     else
                                         []
                                    )
                             )
                             []
-                        ]
+                         ]
+                            |> List.filter (always validInput)
+                        )
                     , td [ Style.classes.numberCell ]
-                        [ dropdown
+                        ([ dropdown
                             { items = units
                             , emptyItem = Nothing
                             , onChange =
@@ -376,13 +375,21 @@ viewRecipeLine complexFoodsToCreate complexFoods recipe =
                             , HtmlUtil.onEscape cancelMsg
                             ]
                             (complexFoodToAdd.unit |> ComplexFoodUnit.toString |> Just)
-                        ]
+                         ]
+                            |> List.filter (exists |> not |> always)
+                        )
                     , td [ Style.classes.controls ]
                         [ button
-                            [ confirmStyle
-                            , disabled <| not <| validInput
-                            , onClick confirmMsg
-                            ]
+                            ([ confirmStyle
+                             , disabled <| not <| validInput
+                             ]
+                                ++ (if validInput then
+                                        [ onClick createMsg ]
+
+                                    else
+                                        []
+                                   )
+                            )
                             [ text confirmName
                             ]
                         ]
