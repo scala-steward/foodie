@@ -112,22 +112,12 @@ object ComplexIngredientService {
     override def create(userId: UserId, complexIngredient: ComplexIngredient)(implicit
         ec: ExecutionContext
     ): DBIO[ComplexIngredient] = {
-      val query = complexIngredientQuery(
-        recipeId = complexIngredient.recipeId,
-        complexFoodId = complexIngredient.complexFoodId
-      )
       val complexIngredientRow = complexIngredient.transformInto[Tables.ComplexIngredientRow]
       ifRecipeExists(userId, complexIngredient.recipeId) {
         for {
           createsCycle <- cycleCheck(complexIngredient.recipeId, complexIngredient.complexFoodId)
           _            <- if (!createsCycle) DBIO.successful(()) else DBIO.failed(DBError.Complex.Ingredient.Cycle)
-          exists       <- query.exists.result
-          row <-
-            if (exists)
-              query
-                .update(complexIngredientRow)
-                .andThen(query.result.head)
-            else Tables.ComplexIngredient.returning(Tables.ComplexIngredient) += complexIngredientRow
+          row          <- Tables.ComplexIngredient.returning(Tables.ComplexIngredient) += complexIngredientRow
         } yield row.transformInto[ComplexIngredient]
       }
     }
