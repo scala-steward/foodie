@@ -303,9 +303,7 @@ viewRecipeLine mealEntriesToAdd mealEntries recipe =
 
                         ( confirmName, confirmStyle ) =
                             if DictUtil.existsValue (\mealEntry -> mealEntry.original.recipeId == mealEntryToAdd.recipeId) mealEntries then
-                                ( "Add again"
-                                , Style.classes.button.edit
-                                )
+                                ( "Add again", Style.classes.button.edit )
 
                             else
                                 ( "Add", Style.classes.button.confirm )
