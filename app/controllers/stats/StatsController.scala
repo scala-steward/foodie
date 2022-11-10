@@ -1,14 +1,11 @@
 package controllers.stats
 
 import action.UserAction
-import controllers.reference.ReferenceEntry
 import io.circe.syntax._
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.libs.circe.Circe
 import play.api.mvc._
-import services.ReferenceMapId
 import services.nutrient.NutrientService
-import services.reference.ReferenceService
 import services.stats.StatsService
 import utils.TransformerUtils.Implicits._
 import utils.date.Date
@@ -22,8 +19,7 @@ class StatsController @Inject() (
     controllerComponents: ControllerComponents,
     userAction: UserAction,
     statsService: StatsService,
-    nutrientService: NutrientService,
-    referenceService: ReferenceService
+    nutrientService: NutrientService
 )(implicit ec: ExecutionContext)
     extends AbstractController(controllerComponents)
     with Circe {
@@ -42,6 +38,33 @@ class StatsController @Inject() (
           _.pipe(_.transformInto[Stats])
             .pipe(_.asJson)
             .pipe(Ok(_))
+        )
+    }
+
+  def ofFood(foodId: Int): Action[AnyContent] =
+    userAction.async {
+      nutrientService
+        .nutrientsOfFood(foodId.transformInto[services.FoodId], None, BigDecimal(1))
+        .map(
+          _.pipe(_.transformInto[PlainStats])
+            .pipe(_.asJson)
+            .pipe(Ok(_))
+        )
+    }
+
+  def ofMeal(mealId: UUID): Action[AnyContent] = ???
+
+  def ofRecipe(recipeId: UUID): Action[AnyContent] =
+    userAction.async { request =>
+      statsService
+        .nutrientsOfRecipe(request.user.id, recipeId.transformInto[services.RecipeId])
+        .map(
+          _.fold(NotFound: Result)(
+            _.pipe(_.nutrientMap)
+              .pipe(_.transformInto[PlainStats])
+              .pipe(_.asJson)
+              .pipe(Ok(_))
+          )
         )
     }
 
