@@ -3,7 +3,7 @@ package controllers.stats
 import io.circe.generic.JsonCodec
 
 @JsonCodec
-case class NutrientInformation(
+case class PlainNutrientInformation(
     base: NutrientInformationBase,
-    amounts: Amounts
+    amount: BigDecimal
 )

@@ -19,10 +19,7 @@ object Stats {
     val nutrients = stats.nutrientMap.map {
       case (nutrient, amount) =>
         NutrientInformation(
-          nutrientCode = nutrient.code,
-          name = nutrient.name,
-          symbol = nutrient.symbol,
-          unit = nutrient.unit.transformInto[NutrientUnit],
+          nutrient.transformInto[NutrientInformationBase],
           amounts = Amounts(
             values = (amount.value, daily(nutrient)).mapN(Values.apply),
             numberOfIngredients = amount.numberOfIngredients.intValue,
