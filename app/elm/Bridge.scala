@@ -9,11 +9,11 @@ import controllers.complex.ComplexFood
 import controllers.meal._
 import controllers.recipe._
 import controllers.reference._
-import controllers.stats.{RequestInterval, _}
+import controllers.stats.{ RequestInterval, _ }
 import controllers.user._
 import security.jwt.LoginContent
 import shapeless.Lazy
-import utils.date.{Date, SimpleDate, Time}
+import utils.date.{ Date, SimpleDate, Time }
 
 import scala.reflect.runtime.universe.TypeTag
 
@@ -111,6 +111,9 @@ object Bridge {
     mkAndWrite[NutrientInformationBase]
     mkAndWrite[Stats]
     mkAndWrite[FoodStats]
+    mkAndWrite[TotalOnlyStats]
+    mkAndWrite[TotalOnlyNutrientInformation]
+    mkAndWrite[TotalOnlyAmount]
     mkAndWrite[ReferenceMap]
     mkAndWrite[ReferenceTree]
     mkAndWrite[ReferenceValue]
