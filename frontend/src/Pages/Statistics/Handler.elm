@@ -108,7 +108,7 @@ gotFetchStatsResponse model result =
             (\stats ->
                 model
                     |> Page.lenses.stats.set
-                        (stats |> Lens.modify StatsLens.nutrients (List.sortBy .name))
+                        (stats |> Lens.modify StatsLens.nutrients (List.sortBy (.base >> .name)))
                     |> Page.lenses.fetching.set False
             )
     , Cmd.none

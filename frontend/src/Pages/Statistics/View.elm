@@ -55,7 +55,7 @@ view model =
         let
             viewNutrients =
                 model.stats.nutrients
-                    |> List.filter (\nutrient -> [ nutrient.name, nutrient.symbol ] |> List.Extra.find (SearchUtil.search model.nutrientsSearchString) |> Maybe.Extra.isJust)
+                    |> List.filter (\nutrient -> [ nutrient.base.name, nutrient.base.symbol ] |> List.Extra.find (SearchUtil.search model.nutrientsSearchString) |> Maybe.Extra.isJust)
         in
         div [ Style.ids.statistics ]
             [ div []
@@ -170,7 +170,7 @@ nutrientInformationLine : Dict NutrientCode Float -> NutrientInformation -> Html
 nutrientInformationLine referenceValues nutrientInformation =
     let
         referenceValue =
-            Dict.get nutrientInformation.nutrientCode referenceValues
+            Dict.get nutrientInformation.base.nutrientCode referenceValues
 
         factor =
             referenceFactor
@@ -215,11 +215,11 @@ nutrientInformationLine referenceValues nutrientInformation =
             Maybe.Extra.unwrap "" (f >> displayFloat >> flip (++) completenessInfo)
     in
     tr [ Style.classes.editLine ]
-        [ td [] [ label [] [ text <| nutrientInformation.name ] ]
+        [ td [] [ label [] [ text <| nutrientInformation.base.name ] ]
         , td [ Style.classes.numberCell ] [ label completenessStyles [ text <| displayValueWith .total <| nutrientInformation.amounts.values ] ]
         , td [ Style.classes.numberCell ] [ label completenessStyles [ text <| displayValueWith .dailyAverage nutrientInformation.amounts.values ] ]
         , td [ Style.classes.numberCell ] [ label [] [ text <| Maybe.Extra.unwrap "" displayFloat <| referenceValue ] ]
-        , td [ Style.classes.numberCell ] [ label [] [ text <| NutrientUnit.toString <| nutrientInformation.unit ] ]
+        , td [ Style.classes.numberCell ] [ label [] [ text <| NutrientUnit.toString <| nutrientInformation.base.unit ] ]
         , td [ Style.classes.numberCell ]
             [ label (factorStyle ++ completenessStyles)
                 [ text <|
