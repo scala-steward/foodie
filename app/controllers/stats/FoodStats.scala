@@ -5,21 +5,21 @@ import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl._
 
 @JsonCodec
-case class PlainStats(
-    nutrients: Seq[PlainNutrientInformation]
+case class FoodStats(
+    nutrients: Seq[FoodNutrientInformation]
 )
 
-object PlainStats {
+object FoodStats {
 
-  implicit val fromDomain: Transformer[services.nutrient.NutrientMap, PlainStats] = { nutrientMap =>
+  implicit val fromDomain: Transformer[services.stats.NutrientAmountMap, FoodStats] = { nutrientMap =>
     val nutrients = nutrientMap.map {
       case (nutrient, amount) =>
-        PlainNutrientInformation(
+        FoodNutrientInformation(
           base = nutrient.transformInto[NutrientInformationBase],
-          amount = amount.amount
+          amount = amount.value
         )
     }.toSeq
-    PlainStats(
+    FoodStats(
       nutrients = nutrients
     )
   }

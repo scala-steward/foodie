@@ -8,9 +8,9 @@ import io.scalaland.chimney.dsl.TransformerOps
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.complex.ingredient.ComplexIngredientService
 import services.meal.{ MealEntry, MealService }
-import services.nutrient.{ AmountEvaluation, Nutrient, NutrientService }
+import services.nutrient.{ AmountEvaluation, Nutrient, NutrientMap, NutrientService }
 import services.recipe.RecipeService
-import services.{ MealId, RecipeId, UserId }
+import services.{ FoodId, MealId, RecipeId, UserId }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
@@ -28,7 +28,8 @@ trait StatsService {
 
   def nutrientsOverTime(userId: UserId, requestInterval: RequestInterval): Future[Stats]
 
-  def nutrientsOfRecipe(userId: UserId, recipeId: RecipeId): Future[Option[RecipeNutrientMap]]
+  def nutrientsOfFood(foodId: FoodId): Future[Option[NutrientAmountMap]]
+  def nutrientsOfRecipe(userId: UserId, recipeId: RecipeId): Future[Option[NutrientAmountMap]]
 
   def nutrientsOfMeal(userId: UserId, mealId: MealId): Future[NutrientAmountMap]
 }
@@ -46,7 +47,10 @@ object StatsService {
     override def nutrientsOverTime(userId: UserId, requestInterval: RequestInterval): Future[Stats] =
       db.run(companion.nutrientsOverTime(userId, requestInterval))
 
-    override def nutrientsOfRecipe(userId: UserId, recipeId: RecipeId): Future[Option[RecipeNutrientMap]] =
+    override def nutrientsOfFood(foodId: FoodId): Future[Option[NutrientAmountMap]] =
+      db.run(companion.nutrientsOfFood(foodId))
+
+    override def nutrientsOfRecipe(userId: UserId, recipeId: RecipeId): Future[Option[NutrientAmountMap]] =
       db.run(companion.nutrientsOfRecipe(userId, recipeId))
 
     override def nutrientsOfMeal(userId: UserId, mealId: MealId): Future[NutrientAmountMap] =
@@ -57,9 +61,11 @@ object StatsService {
   trait Companion {
     def nutrientsOverTime(userId: UserId, requestInterval: RequestInterval)(implicit ec: ExecutionContext): DBIO[Stats]
 
+    def nutrientsOfFood(foodId: FoodId)(implicit ec: ExecutionContext): DBIO[Option[NutrientAmountMap]]
+
     def nutrientsOfRecipe(userId: UserId, recipeId: RecipeId)(implicit
         ec: ExecutionContext
-    ): DBIO[Option[RecipeNutrientMap]]
+    ): DBIO[Option[NutrientAmountMap]]
 
     def nutrientsOfMeal(userId: UserId, mealId: MealId)(implicit ec: ExecutionContext): DBIO[NutrientAmountMap]
   }
@@ -78,7 +84,7 @@ object StatsService {
         mealIds = mealIdsPlain.map(_.transformInto[MealId])
         meals              <- mealIds.traverse(MealService.Live.getMeal(userId, _)).map(_.flatten)
         mealEntries        <- mealIds.flatTraverse(MealService.Live.getMealEntries(userId, _))
-        nutrientsPerRecipe <- nutrientsOfMealEntries(userId, mealEntries.map(_.recipeId))
+        nutrientsPerRecipe <- nutrientsOfRecipeIds(userId, mealEntries.map(_.recipeId))
         allNutrients       <- NutrientService.Live.all
       } yield {
         val nutrientAmountMap =
@@ -90,13 +96,44 @@ object StatsService {
       }
     }
 
+    override def nutrientsOfFood(foodId: FoodId)(implicit
+        ec: ExecutionContext
+    ): DBIO[Option[NutrientAmountMap]] = {
+      val transformer = for {
+        _ <- OptionT(
+          Tables.FoodName
+            .filter(_.foodId === foodId.transformInto[Int])
+            .result
+            .headOption: DBIO[Option[Tables.FoodNameRow]]
+        )
+        nutrientMap  <- OptionT.liftF(NutrientService.Live.nutrientsOfFood(foodId, None, BigDecimal(1)))
+        allNutrients <- OptionT.liftF(NutrientService.Live.all)
+      } yield unifyAndCount(
+        nutrientMap = nutrientMap,
+        totalNumberOfIngredients = 1,
+        allNutrients = allNutrients
+      )
+
+      transformer.value
+    }
+
     override def nutrientsOfRecipe(
         userId: UserId,
         recipeId: RecipeId
     )(implicit
         ec: ExecutionContext
-    ): DBIO[Option[RecipeNutrientMap]] =
-      nutrientsOfRecipeT(userId, recipeId).value
+    ): DBIO[Option[NutrientAmountMap]] = {
+      val transformer = for {
+        allNutrients      <- OptionT.liftF(NutrientService.Live.all)
+        recipeNutrientMap <- nutrientsOfRecipeT(userId, recipeId)
+      } yield unifyAndCount(
+        recipeNutrientMap.nutrientMap,
+        totalNumberOfIngredients = recipeNutrientMap.foodIds.size,
+        allNutrients = allNutrients
+      )
+
+      transformer.value
+    }
 
     override def nutrientsOfMeal(
         userId: UserId,
@@ -106,11 +143,11 @@ object StatsService {
     ): DBIO[NutrientAmountMap] =
       for {
         mealEntries        <- MealService.Live.getMealEntries(userId, mealId)
-        nutrientsPerRecipe <- nutrientsOfMealEntries(userId, mealEntries.map(_.recipeId))
+        nutrientsPerRecipe <- nutrientsOfRecipeIds(userId, mealEntries.map(_.recipeId))
         allNutrients       <- NutrientService.Live.all
       } yield nutrientAmountMapOfMealEntries(mealEntries, nutrientsPerRecipe, allNutrients)
 
-    private def nutrientsOfMealEntries(
+    private def nutrientsOfRecipeIds(
         userId: UserId,
         recipeIds: Seq[RecipeId]
     )(implicit ec: ExecutionContext): DBIO[Map[RecipeId, RecipeNutrientMap]] =
@@ -158,6 +195,18 @@ object StatsService {
       }.qsum
       val totalNumberOfIngredients = nutrientsPerRecipe.values.flatMap(_.foodIds).toSet.size
 
+      unifyAndCount(
+        nutrientMap = nutrientMap,
+        totalNumberOfIngredients = totalNumberOfIngredients,
+        allNutrients = allNutrients
+      )
+    }
+
+    private def unifyAndCount(
+        nutrientMap: NutrientMap,
+        totalNumberOfIngredients: Int,
+        allNutrients: Seq[Nutrient]
+    ): NutrientAmountMap = {
       MapUtil
         .unionWith(
           nutrientMap,

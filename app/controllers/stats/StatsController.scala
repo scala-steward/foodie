@@ -43,16 +43,16 @@ class StatsController @Inject() (
 
   def ofFood(foodId: Int): Action[AnyContent] =
     userAction.async {
-      nutrientService
-        .nutrientsOfFood(foodId.transformInto[services.FoodId], None, BigDecimal(1))
+      statsService
+        .nutrientsOfFood(foodId.transformInto[services.FoodId])
         .map(
-          _.pipe(_.transformInto[PlainStats])
-            .pipe(_.asJson)
-            .pipe(Ok(_))
+          _.fold(NotFound: Result)(
+            _.pipe(_.transformInto[FoodStats])
+              .pipe(_.asJson)
+              .pipe(Ok(_))
+          )
         )
     }
-
-  def ofMeal(mealId: UUID): Action[AnyContent] = ???
 
   def ofRecipe(recipeId: UUID): Action[AnyContent] =
     userAction.async { request =>
@@ -60,11 +60,21 @@ class StatsController @Inject() (
         .nutrientsOfRecipe(request.user.id, recipeId.transformInto[services.RecipeId])
         .map(
           _.fold(NotFound: Result)(
-            _.pipe(_.nutrientMap)
-              .pipe(_.transformInto[PlainStats])
+            _.pipe(_.transformInto[TotalOnlyStats])
               .pipe(_.asJson)
               .pipe(Ok(_))
           )
+        )
+    }
+
+  def ofMeal(mealId: UUID): Action[AnyContent] =
+    userAction.async { request =>
+      statsService
+        .nutrientsOfMeal(request.user.id, mealId.transformInto[services.MealId])
+        .map(
+          _.pipe(_.transformInto[TotalOnlyStats])
+            .pipe(_.asJson)
+            .pipe(Ok(_))
         )
     }
 
