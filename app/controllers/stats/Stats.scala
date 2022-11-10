@@ -16,7 +16,7 @@ object Stats {
 
   implicit val fromDomain: Transformer[services.stats.Stats, Stats] = { stats =>
     val daily = services.stats.Stats.dailyAverage(stats)
-    val nutrients = stats.nutrientMap.map {
+    val nutrients = stats.nutrientAmountMap.map {
       case (nutrient, amount) =>
         NutrientInformation(
           nutrient.transformInto[NutrientInformationBase],
