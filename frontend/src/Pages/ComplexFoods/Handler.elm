@@ -138,7 +138,7 @@ gotCreateComplexFoodResponse model result =
         |> Result.Extra.unpack (flip setError model)
             (\complexFood ->
                 model
-                    |> mapComplexFoodStateByRecipeId complexFood.recipeId (complexFood |> Editing.asView |> always)
+                    |> LensUtil.insertAtId complexFood.recipeId Page.lenses.complexFoods (complexFood |> Editing.asView)
                     |> LensUtil.deleteAtId complexFood.recipeId Page.lenses.complexFoodsToCreate
             )
     , Cmd.none
