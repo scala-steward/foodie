@@ -8,9 +8,9 @@ import io.scalaland.chimney.dsl.TransformerOps
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.complex.ingredient.ComplexIngredientService
 import services.meal.{ MealEntry, MealService }
-import services.nutrient.{ AmountEvaluation, NutrientMap, NutrientService }
-import services.recipe.{ Recipe, RecipeService }
-import services.{ FoodId, MealId, RecipeId, UserId }
+import services.nutrient.{ AmountEvaluation, NutrientService }
+import services.recipe.RecipeService
+import services.{ MealId, RecipeId, UserId }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
@@ -28,6 +28,7 @@ trait StatsService {
 
   def nutrientsOverTime(userId: UserId, requestInterval: RequestInterval): Future[Stats]
 
+  def nutrientsOfRecipe(userId: UserId, recipeId: RecipeId): Future[Option[RecipeNutrientMap]]
 }
 
 object StatsService {
@@ -43,20 +44,21 @@ object StatsService {
     override def nutrientsOverTime(userId: UserId, requestInterval: RequestInterval): Future[Stats] =
       db.run(companion.nutrientsOverTime(userId, requestInterval))
 
+    override def nutrientsOfRecipe(userId: UserId, recipeId: RecipeId): Future[Option[RecipeNutrientMap]] =
+      db.run(companion.nutrientsOfRecipe(userId, recipeId))
+
   }
 
   trait Companion {
     def nutrientsOverTime(userId: UserId, requestInterval: RequestInterval)(implicit ec: ExecutionContext): DBIO[Stats]
 
+    def nutrientsOfRecipe(userId: UserId, recipeId: RecipeId)(implicit
+        ec: ExecutionContext
+    ): DBIO[Option[RecipeNutrientMap]]
+
   }
 
   object Live extends Companion {
-
-    private case class RecipeNutrientMap(
-        recipe: Recipe,
-        nutrientMap: NutrientMap,
-        foodIds: Set[FoodId]
-    )
 
     override def nutrientsOverTime(
         userId: UserId,
@@ -82,7 +84,7 @@ object StatsService {
             .flatMap(mealEntries(_).map(_.recipeId))
             .distinct
             .traverse { recipeId =>
-              nutrientsOfRecipe(userId, recipeId)
+              nutrientsOfRecipeT(userId, recipeId)
                 .map(recipeId -> _)
                 .value
             }
@@ -117,7 +119,15 @@ object StatsService {
       }
     }
 
-    private def nutrientsOfRecipe(
+    override def nutrientsOfRecipe(
+        userId: UserId,
+        recipeId: RecipeId
+    )(implicit
+        ec: ExecutionContext
+    ): DBIO[Option[RecipeNutrientMap]] =
+      nutrientsOfRecipeT(userId, recipeId).value
+
+    private def nutrientsOfRecipeT(
         userId: UserId,
         recipeId: RecipeId
     )(implicit
@@ -131,7 +141,7 @@ object StatsService {
         recipeNutrientMapsOfComplexNutrients <-
           complexIngredients
             .traverse { complexIngredient =>
-              nutrientsOfRecipe(userId, complexIngredient.complexFoodId)
+              nutrientsOfRecipeT(userId, complexIngredient.complexFoodId)
                 .map(recipeNutrientMap =>
                   recipeNutrientMap.copy(nutrientMap = complexIngredient.factor *: recipeNutrientMap.nutrientMap)
                 )
