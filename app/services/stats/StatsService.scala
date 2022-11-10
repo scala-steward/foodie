@@ -8,7 +8,7 @@ import io.scalaland.chimney.dsl.TransformerOps
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.complex.ingredient.ComplexIngredientService
 import services.meal.{ MealEntry, MealService }
-import services.nutrient.{ AmountEvaluation, NutrientService }
+import services.nutrient.{ AmountEvaluation, Nutrient, NutrientService }
 import services.recipe.RecipeService
 import services.{ MealId, RecipeId, UserId }
 import slick.dbio.DBIO
@@ -29,6 +29,8 @@ trait StatsService {
   def nutrientsOverTime(userId: UserId, requestInterval: RequestInterval): Future[Stats]
 
   def nutrientsOfRecipe(userId: UserId, recipeId: RecipeId): Future[Option[RecipeNutrientMap]]
+
+  def nutrientsOfMeal(userId: UserId, mealId: MealId): Future[NutrientAmountMap]
 }
 
 object StatsService {
@@ -47,6 +49,9 @@ object StatsService {
     override def nutrientsOfRecipe(userId: UserId, recipeId: RecipeId): Future[Option[RecipeNutrientMap]] =
       db.run(companion.nutrientsOfRecipe(userId, recipeId))
 
+    override def nutrientsOfMeal(userId: UserId, mealId: MealId): Future[NutrientAmountMap] =
+      db.run(companion.nutrientsOfMeal(userId, mealId))
+
   }
 
   trait Companion {
@@ -56,6 +61,7 @@ object StatsService {
         ec: ExecutionContext
     ): DBIO[Option[RecipeNutrientMap]]
 
+    def nutrientsOfMeal(userId: UserId, mealId: MealId)(implicit ec: ExecutionContext): DBIO[NutrientAmountMap]
   }
 
   object Live extends Companion {
@@ -70,51 +76,16 @@ object StatsService {
       for {
         mealIdsPlain <- Tables.Meal.filter(m => dateFilter(m.consumedOnDate)).map(_.id).result
         mealIds = mealIdsPlain.map(_.transformInto[MealId])
-        meals <- mealIds.traverse(MealService.Live.getMeal(userId, _)).map(_.flatten)
-        mealEntries <-
-          mealIds
-            .traverse(mealId =>
-              MealService.Live
-                .getMealEntries(userId, mealId)
-                .map(mealId -> _): DBIO[(MealId, Seq[MealEntry])]
-            )
-            .map(_.toMap)
-        nutrientsPerRecipe <-
-          mealIds
-            .flatMap(mealEntries(_).map(_.recipeId))
-            .distinct
-            .traverse { recipeId =>
-              nutrientsOfRecipeT(userId, recipeId)
-                .map(recipeId -> _)
-                .value
-            }
-            .map(_.flatten.toMap)
-        allNutrients <- NutrientService.Live.all
+        meals              <- mealIds.traverse(MealService.Live.getMeal(userId, _)).map(_.flatten)
+        mealEntries        <- mealIds.flatTraverse(MealService.Live.getMealEntries(userId, _))
+        nutrientsPerRecipe <- nutrientsOfMealEntries(userId, mealEntries.map(_.recipeId))
+        allNutrients       <- NutrientService.Live.all
       } yield {
-        val nutrientMap = meals
-          .flatMap(m => mealEntries(m.id))
-          .map { me =>
-            val recipeNutrientMap = nutrientsPerRecipe(me.recipeId)
-            (me.numberOfServings / recipeNutrientMap.recipe.numberOfServings) *: recipeNutrientMap.nutrientMap
-          }
-          .qsum
-        val totalNumberOfIngredients = nutrientsPerRecipe.values.flatMap(_.foodIds).toSet.size
+        val nutrientAmountMap =
+          nutrientAmountMapOfMealEntries(mealEntries, nutrientsPerRecipe, allNutrients)
         Stats(
           meals = meals,
-          nutrientMap = MapUtil
-            .unionWith(
-              nutrientMap,
-              allNutrients.map(n => n -> AdditiveMonoid[AmountEvaluation].zero).toMap
-            )((x, _) => x)
-            .view
-            .mapValues(amountEvaluation =>
-              Amount(
-                value = Some(amountEvaluation.amount).filter(_ => amountEvaluation.encounteredFoodIds.nonEmpty),
-                numberOfIngredients = Natural(totalNumberOfIngredients),
-                numberOfDefinedValues = Natural(amountEvaluation.encounteredFoodIds.size)
-              )
-            )
-            .toMap
+          nutrientAmountMap = nutrientAmountMap
         )
       }
     }
@@ -126,6 +97,30 @@ object StatsService {
         ec: ExecutionContext
     ): DBIO[Option[RecipeNutrientMap]] =
       nutrientsOfRecipeT(userId, recipeId).value
+
+    override def nutrientsOfMeal(
+        userId: UserId,
+        mealId: MealId
+    )(implicit
+        ec: ExecutionContext
+    ): DBIO[NutrientAmountMap] =
+      for {
+        mealEntries        <- MealService.Live.getMealEntries(userId, mealId)
+        nutrientsPerRecipe <- nutrientsOfMealEntries(userId, mealEntries.map(_.recipeId))
+        allNutrients       <- NutrientService.Live.all
+      } yield nutrientAmountMapOfMealEntries(mealEntries, nutrientsPerRecipe, allNutrients)
+
+    private def nutrientsOfMealEntries(
+        userId: UserId,
+        recipeIds: Seq[RecipeId]
+    )(implicit ec: ExecutionContext): DBIO[Map[RecipeId, RecipeNutrientMap]] =
+      recipeIds.distinct
+        .traverse { recipeId =>
+          nutrientsOfRecipeT(userId, recipeId)
+            .map(recipeId -> _)
+            .value
+        }
+        .map(_.flatten.toMap)
 
     private def nutrientsOfRecipeT(
         userId: UserId,
@@ -151,6 +146,33 @@ object StatsService {
         nutrientMap = nutrients + recipeNutrientMapsOfComplexNutrients.map(_.nutrientMap).qsum,
         foodIds = ingredients.map(_.foodId).toSet ++ recipeNutrientMapsOfComplexNutrients.flatMap(_.foodIds)
       )
+
+    private def nutrientAmountMapOfMealEntries(
+        mealEntries: Seq[MealEntry],
+        nutrientsPerRecipe: Map[RecipeId, RecipeNutrientMap],
+        allNutrients: Seq[Nutrient]
+    ): NutrientAmountMap = {
+      val nutrientMap = mealEntries.map { mealEntry =>
+        val recipeNutrientMap = nutrientsPerRecipe(mealEntry.recipeId)
+        (mealEntry.numberOfServings / recipeNutrientMap.recipe.numberOfServings) *: recipeNutrientMap.nutrientMap
+      }.qsum
+      val totalNumberOfIngredients = nutrientsPerRecipe.values.flatMap(_.foodIds).toSet.size
+
+      MapUtil
+        .unionWith(
+          nutrientMap,
+          allNutrients.map(n => n -> AdditiveMonoid[AmountEvaluation].zero).toMap
+        )((x, _) => x)
+        .view
+        .mapValues(amountEvaluation =>
+          Amount(
+            value = Some(amountEvaluation.amount).filter(_ => amountEvaluation.encounteredFoodIds.nonEmpty),
+            numberOfIngredients = Natural(totalNumberOfIngredients),
+            numberOfDefinedValues = Natural(amountEvaluation.encounteredFoodIds.size)
+          )
+        )
+        .toMap
+    }
 
   }
 
