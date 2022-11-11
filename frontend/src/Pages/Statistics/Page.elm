@@ -1,6 +1,7 @@
 module Pages.Statistics.Page exposing (..)
 
-import Api.Auxiliary exposing (NutrientCode, ReferenceMapId)
+import Addresses.StatisticsVariant exposing (StatisticsVariant)
+import Api.Auxiliary exposing (FoodId, MealId, NutrientCode, RecipeId, ReferenceMapId)
 import Api.Lenses.RequestIntervalLens as RequestIntervalLens
 import Api.Types.Date exposing (Date)
 import Api.Types.ReferenceMap exposing (ReferenceMap)
@@ -27,6 +28,7 @@ type alias Model =
     , pagination : Pagination
     , nutrientsSearchString : String
     , fetching : Bool
+    , variant : StatisticsVariant
     }
 
 
@@ -41,6 +43,7 @@ lenses :
     , pagination : Lens Model Pagination
     , nutrientsSearchString : Lens Model String
     , fetching : Lens Model Bool
+    , variant : Lens Model StatisticsVariant
     }
 lenses =
     let
@@ -57,11 +60,13 @@ lenses =
     , pagination = Lens .pagination (\b a -> { a | pagination = b })
     , nutrientsSearchString = Lens .nutrientsSearchString (\b a -> { a | nutrientsSearchString = b })
     , fetching = Lens .fetching (\b a -> { a | fetching = b })
+    , variant = Lens .variant (\b a -> { a | variant = b })
     }
 
 
 type alias Flags =
     { authorizedAccess : AuthorizedAccess
+    , variant : StatisticsVariant
     }
 
 
@@ -80,3 +85,4 @@ type Msg
     | SetPagination Pagination
     | SelectReferenceMap (Maybe ReferenceMapId)
     | SetNutrientsSearchString String
+    | SetVariant StatisticsVariant

@@ -17,10 +17,11 @@ module Addresses.Frontend exposing
     , userSettings
     )
 
+import Addresses.StatisticsVariant as StatisticsVariant exposing (StatisticsVariant)
 import Api.Auxiliary exposing (JWT, MealId, RecipeId, ReferenceMapId)
 import Api.Types.UserIdentifier exposing (UserIdentifier)
 import Pages.Util.ParserUtil as ParserUtil exposing (AddressWithParser, with1, with2)
-import Url.Parser as Parser exposing ((</>), Parser, s)
+import Url.Parser as Parser exposing ((</>), (<?>), Parser, s)
 
 
 requestRegistration : AddressWithParser () a a
@@ -57,9 +58,25 @@ meals =
     plain "meals"
 
 
-statistics : AddressWithParser () a a
+statistics : AddressWithParser StatisticsVariant (StatisticsVariant -> c) c
 statistics =
-    plain "statistics"
+    let
+        statisticsWord =
+            "statistics"
+    in
+    { address = StatisticsVariant.toString >> (::) statisticsWord
+    , parser =
+        [ Parser.top |> Parser.map StatisticsVariant.Time
+        , s StatisticsVariant.food </> Parser.top |> Parser.map (StatisticsVariant.Food Nothing)
+        , s StatisticsVariant.food </> Parser.int |> Parser.map (Just >> StatisticsVariant.Food)
+        , s StatisticsVariant.meal </> Parser.top |> Parser.map (StatisticsVariant.Meal Nothing)
+        , s StatisticsVariant.meal </> ParserUtil.uuidParser |> Parser.map (Just >> StatisticsVariant.Meal)
+        , s StatisticsVariant.recipe </> Parser.top |> Parser.map (StatisticsVariant.Recipe Nothing)
+        , s StatisticsVariant.recipe </> ParserUtil.uuidParser |> Parser.map (Just >> StatisticsVariant.Recipe)
+        ]
+            |> List.map (\p -> s statisticsWord </> p)
+            |> Parser.oneOf
+    }
 
 
 referenceMaps : AddressWithParser () a a

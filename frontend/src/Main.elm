@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import Addresses.Frontend
+import Addresses.StatisticsVariant exposing (StatisticsVariant)
 import Api.Auxiliary exposing (JWT, MealId, RecipeId, ReferenceMapId)
 import Api.Types.LoginContent exposing (decoderLoginContent)
 import Api.Types.UserIdentifier exposing (UserIdentifier)
@@ -377,7 +378,7 @@ type Route
     | IngredientRoute RecipeId
     | MealsRoute
     | MealEntriesRoute MealId
-    | StatisticsRoute
+    | StatisticsRoute StatisticsVariant
     | ReferenceMapsRoute
     | ReferenceEntriesRoute ReferenceMapId
     | RequestRegistrationRoute
@@ -460,8 +461,12 @@ followRoute model =
                         }
                         |> stepThrough steps.mealEntries model
 
-                StatisticsRoute ->
-                    Pages.Statistics.Handler.init flags |> stepThrough steps.statistics model
+                StatisticsRoute variant ->
+                    Pages.Statistics.Handler.init
+                        { authorizedAccess = authorizedAccess
+                        , variant = variant
+                        }
+                        |> stepThrough steps.statistics model
 
                 ReferenceMapsRoute ->
                     Pages.ReferenceMaps.Handler.init flags |> stepThrough steps.referenceMaps model

@@ -1,5 +1,6 @@
 module Pages.Statistics.Handler exposing (init, update)
 
+import Addresses.StatisticsVariant exposing (StatisticsVariant)
 import Api.Auxiliary exposing (ReferenceMapId)
 import Api.Lenses.RequestIntervalLens as RequestIntervalLens
 import Api.Lenses.StatsLens as StatsLens
@@ -30,6 +31,7 @@ init flags =
       , pagination = Pagination.initial
       , nutrientsSearchString = ""
       , fetching = False
+      , variant = flags.variant
       }
     , initialFetch flags.authorizedAccess
     )
@@ -73,6 +75,9 @@ update msg model =
 
         Page.SetNutrientsSearchString string ->
             setNutrientsSearchString model string
+
+        Page.SetVariant variant ->
+            setVariant model variant
 
 
 setFromDate : Page.Model -> Maybe Date -> ( Page.Model, Cmd Page.Msg )
@@ -166,6 +171,13 @@ setNutrientsSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 setNutrientsSearchString model string =
     ( model
         |> Page.lenses.nutrientsSearchString.set string
+    , Cmd.none
+    )
+
+setVariant : Page.Model -> StatisticsVariant -> ( Page.Model, Cmd Page.Msg )
+setVariant model variant =
+    ( model
+        |> Page.lenses.variant.set variant
     , Cmd.none
     )
 
