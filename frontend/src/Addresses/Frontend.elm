@@ -13,7 +13,8 @@ module Addresses.Frontend exposing
     , referenceMaps
     , requestRecovery
     , requestRegistration
-    , statisticsFood
+    , statisticsFoodSearch
+    , statisticsFoodSelect
     , statisticsTime
     , userSettings
     )
@@ -61,26 +62,6 @@ meals =
 statisticsTime : AddressWithParser () a a
 statisticsTime =
     plain "statistics"
-
-
-
---let
---    statisticsWord =
---        "statistics"
---in
---{ address = StatisticsVariant.toString >> (::) statisticsWord
---, parser =
---    [ Parser.top |> Parser.map StatisticsVariant.Time
---    , s StatisticsVariant.food </> Parser.top |> Parser.map (StatisticsVariant.Food Nothing)
---    , s StatisticsVariant.food </> Parser.int |> Parser.map (Just >> StatisticsVariant.Food)
---    , s StatisticsVariant.meal </> Parser.top |> Parser.map (StatisticsVariant.Meal Nothing)
---    , s StatisticsVariant.meal </> ParserUtil.uuidParser |> Parser.map (Just >> StatisticsVariant.Meal)
---    , s StatisticsVariant.recipe </> Parser.top |> Parser.map (StatisticsVariant.Recipe Nothing)
---    , s StatisticsVariant.recipe </> ParserUtil.uuidParser |> Parser.map (Just >> StatisticsVariant.Recipe)
---    ]
---        |> List.map (\p -> s statisticsWord </> p)
---        |> Parser.oneOf
---}
 
 
 referenceMaps : AddressWithParser () a a
@@ -148,8 +129,13 @@ confirm step1 =
         }
 
 
-statisticsFood : AddressWithParser Int (FoodId -> b) b
-statisticsFood =
+statisticsFoodSearch : AddressWithParser () a a
+statisticsFoodSearch =
+    plainMultiple "statistics" [ "food" ]
+
+
+statisticsFoodSelect : AddressWithParser Int (FoodId -> b) b
+statisticsFoodSelect =
     with1
         { step1 = "statistics"
         , toString = \foodId -> [ "food", String.fromInt foodId ]
@@ -162,3 +148,15 @@ plain string =
     { address = always [ string ]
     , parser = s string
     }
+
+
+plainMultiple : String -> List String -> AddressWithParser () a a
+plainMultiple string strings =
+    { address = always strings
+    , parser = foldl1 string strings
+    }
+
+
+foldl1 : String -> List String -> Parser a a
+foldl1 string =
+    List.foldl (\str p -> p </> s str) (s string)

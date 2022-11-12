@@ -1,5 +1,6 @@
 module Pages.Statistics.Food.Search.Handler exposing (init, update)
 
+import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.Food exposing (Food, decoderFood, encoderFood)
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -21,6 +22,7 @@ init flags =
       , foodsSearchString = ""
       , initialization = Initialization.Loading Status.initial
       , pagination = Pagination.initial
+      , variant = StatisticsVariant.Food Nothing
       }
     , initialFetch
     )

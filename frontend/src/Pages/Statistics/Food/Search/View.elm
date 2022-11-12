@@ -78,7 +78,7 @@ viewFoodLine configuration food =
             [ label [] [ text food.name ]
             , td [ Style.classes.controls ]
                 [ Links.linkButton
-                    { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsFood.address <| food.id
+                    { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsFoodSelect.address <| food.id
                     , attributes = [ Style.classes.button.editor ]
                     , children = [ text "Nutrients" ]
                     }

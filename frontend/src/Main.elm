@@ -55,7 +55,9 @@ import Pages.Registration.Confirm.View
 import Pages.Registration.Request.Handler
 import Pages.Registration.Request.Page
 import Pages.Registration.Request.View
+import Pages.Statistics.Food.Search.Handler
 import Pages.Statistics.Food.Search.Page
+import Pages.Statistics.Food.Search.View
 import Pages.Statistics.Time.Handler
 import Pages.Statistics.Time.Page
 import Pages.Statistics.Time.View
@@ -147,6 +149,7 @@ type Msg
     | MealsMsg Pages.Meals.Page.Msg
     | MealEntriesMsg Pages.MealEntries.Page.Msg
     | StatisticsTimeMsg Pages.Statistics.Time.Page.Msg
+    | StatisticsFoodSearchMsg Pages.Statistics.Food.Search.Page.Msg
     | ReferenceMapsMsg Pages.ReferenceMaps.Page.Msg
     | ReferenceEntriesMsg Pages.ReferenceEntries.Page.Msg
     | RequestRegistrationMsg Pages.Registration.Request.Page.Msg
@@ -207,6 +210,9 @@ view model =
 
         StatisticsTime statisticsTime ->
             Html.map StatisticsTimeMsg (Pages.Statistics.Time.View.view statisticsTime)
+
+        StatisticsFoodSearch statisticsFoodSearch ->
+            Html.map StatisticsFoodSearchMsg (Pages.Statistics.Food.Search.View.view statisticsFoodSearch)
 
         ReferenceMaps referenceMaps ->
             Html.map ReferenceMapsMsg (Pages.ReferenceMaps.View.view referenceMaps)
@@ -294,7 +300,10 @@ update msg model =
             stepThrough steps.mealEntries model (Pages.MealEntries.Handler.update mealEntryMsg mealEntry)
 
         ( StatisticsTimeMsg statisticsTimeMsg, StatisticsTime statisticsTime ) ->
-            stepThrough steps.statistics model (Pages.Statistics.Time.Handler.update statisticsTimeMsg statisticsTime)
+            stepThrough steps.statisticsTime model (Pages.Statistics.Time.Handler.update statisticsTimeMsg statisticsTime)
+
+        ( StatisticsFoodSearchMsg statisticsFoodSearchMsg, StatisticsFoodSearch statisticsFoodSearch ) ->
+            stepThrough steps.statisticsFoodSearch model (Pages.Statistics.Food.Search.Handler.update statisticsFoodSearchMsg statisticsFoodSearch)
 
         ( ReferenceMapsMsg referenceMapsMsg, ReferenceMaps referenceMaps ) ->
             stepThrough steps.referenceMaps model (Pages.ReferenceMaps.Handler.update referenceMapsMsg referenceMaps)
@@ -340,7 +349,8 @@ steps :
     , ingredients : StepParameters Pages.Ingredients.Page.Model Pages.Ingredients.Page.Msg
     , mealEntries : StepParameters Pages.MealEntries.Page.Model Pages.MealEntries.Page.Msg
     , meals : StepParameters Pages.Meals.Page.Model Pages.Meals.Page.Msg
-    , statistics : StepParameters Pages.Statistics.Time.Page.Model Pages.Statistics.Time.Page.Msg
+    , statisticsTime : StepParameters Pages.Statistics.Time.Page.Model Pages.Statistics.Time.Page.Msg
+    , statisticsFoodSearch : StepParameters Pages.Statistics.Food.Search.Page.Model Pages.Statistics.Food.Search.Page.Msg
     , referenceMaps : StepParameters Pages.ReferenceMaps.Page.Model Pages.ReferenceMaps.Page.Msg
     , referenceEntries : StepParameters Pages.ReferenceEntries.Page.Model Pages.ReferenceEntries.Page.Msg
     , requestRegistration : StepParameters Pages.Registration.Request.Page.Model Pages.Registration.Request.Page.Msg
@@ -358,7 +368,8 @@ steps =
     , ingredients = StepParameters Ingredients IngredientsMsg
     , mealEntries = StepParameters MealEntries MealEntriesMsg
     , meals = StepParameters Meals MealsMsg
-    , statistics = StepParameters StatisticsTime StatisticsTimeMsg
+    , statisticsTime = StepParameters StatisticsTime StatisticsTimeMsg
+    , statisticsFoodSearch = StepParameters StatisticsFoodSearch StatisticsFoodSearchMsg
     , referenceMaps = StepParameters ReferenceMaps ReferenceMapsMsg
     , referenceEntries = StepParameters ReferenceEntries ReferenceEntriesMsg
     , requestRegistration = StepParameters RequestRegistration RequestRegistrationMsg
@@ -384,6 +395,7 @@ type Route
     | MealsRoute
     | MealEntriesRoute MealId
     | StatisticsTimeRoute
+    | StatisticsFoodSearchRoute
     | ReferenceMapsRoute
     | ReferenceEntriesRoute ReferenceMapId
     | RequestRegistrationRoute
@@ -405,6 +417,7 @@ plainRouteParser =
         , route Addresses.Frontend.meals.parser MealsRoute
         , route Addresses.Frontend.mealEntryEditor.parser MealEntriesRoute
         , route Addresses.Frontend.statisticsTime.parser StatisticsTimeRoute
+        , route Addresses.Frontend.statisticsFoodSearch.parser StatisticsFoodSearchRoute
         , route Addresses.Frontend.referenceMaps.parser ReferenceMapsRoute
         , route Addresses.Frontend.referenceEntries.parser ReferenceEntriesRoute
         , route Addresses.Frontend.requestRegistration.parser RequestRegistrationRoute
@@ -471,7 +484,12 @@ followRoute model =
                         { authorizedAccess = authorizedAccess
                         , variant = StatisticsVariant.Time
                         }
-                        |> stepThrough steps.statistics model
+                        |> stepThrough steps.statisticsTime model
+
+                StatisticsFoodSearchRoute ->
+                    Pages.Statistics.Food.Search.Handler.init
+                        flags
+                        |> stepThrough steps.statisticsFoodSearch model
 
                 ReferenceMapsRoute ->
                     Pages.ReferenceMaps.Handler.init flags |> stepThrough steps.referenceMaps model

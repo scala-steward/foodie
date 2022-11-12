@@ -11,6 +11,10 @@ type StatisticsVariant
     | Time
 
 
+
+-- todo: Check use
+
+
 toString : StatisticsVariant -> List String
 toString variant =
     case variant of
