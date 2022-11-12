@@ -43,7 +43,6 @@ lenses :
     , pagination : Lens Model Pagination
     , nutrientsSearchString : Lens Model String
     , fetching : Lens Model Bool
-    , variant : Lens Model StatisticsVariant
     }
 lenses =
     let
@@ -60,13 +59,11 @@ lenses =
     , pagination = Lens .pagination (\b a -> { a | pagination = b })
     , nutrientsSearchString = Lens .nutrientsSearchString (\b a -> { a | nutrientsSearchString = b })
     , fetching = Lens .fetching (\b a -> { a | fetching = b })
-    , variant = Lens .variant (\b a -> { a | variant = b })
     }
 
 
 type alias Flags =
     { authorizedAccess : AuthorizedAccess
-    , variant : StatisticsVariant
     }
 
 
@@ -85,4 +82,3 @@ type Msg
     | SetPagination Pagination
     | SelectReferenceMap (Maybe ReferenceMapId)
     | SetNutrientsSearchString String
-    | SetVariant StatisticsVariant

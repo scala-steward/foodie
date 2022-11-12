@@ -1,7 +1,6 @@
 module Main exposing (main)
 
 import Addresses.Frontend
-import Addresses.StatisticsVariant as StatisticsVariant exposing (StatisticsVariant)
 import Api.Auxiliary exposing (JWT, MealId, RecipeId, ReferenceMapId)
 import Api.Types.LoginContent exposing (decoderLoginContent)
 import Api.Types.UserIdentifier exposing (UserIdentifier)
@@ -481,9 +480,7 @@ followRoute model =
 
                 StatisticsTimeRoute ->
                     Pages.Statistics.Time.Handler.init
-                        { authorizedAccess = authorizedAccess
-                        , variant = StatisticsVariant.Time
-                        }
+                        flags
                         |> stepThrough steps.statisticsTime model
 
                 StatisticsFoodSearchRoute ->
