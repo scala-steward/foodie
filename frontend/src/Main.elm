@@ -55,8 +55,8 @@ import Pages.Registration.Confirm.View
 import Pages.Registration.Request.Handler
 import Pages.Registration.Request.Page
 import Pages.Registration.Request.View
+import Pages.Statistics.Food.Search.Page
 import Pages.Statistics.Time.Handler
-import Pages.Statistics.Time.Page
 import Pages.Statistics.Time.Page
 import Pages.Statistics.Time.View
 import Pages.UserSettings.Handler
@@ -119,6 +119,7 @@ type Page
     | Meals Pages.Meals.Page.Model
     | MealEntries Pages.MealEntries.Page.Model
     | StatisticsTime Pages.Statistics.Time.Page.Model
+    | StatisticsFoodSearch Pages.Statistics.Food.Search.Page.Model
     | ReferenceMaps Pages.ReferenceMaps.Page.Model
     | ReferenceEntries Pages.ReferenceEntries.Page.Model
     | RequestRegistration Pages.Registration.Request.Page.Model
@@ -267,6 +268,9 @@ update msg model =
 
         ( FetchFoods foods, Ingredients ingredients ) ->
             stepThrough steps.ingredients model (Pages.Ingredients.Handler.update (Pages.Ingredients.Page.UpdateFoods foods) ingredients)
+
+        ( FetchFoods foods, StatisticsFoodSearch statisticsFoodSearch ) ->
+            stepThrough steps.statisticsFoodSearch model (Pages.Statistics.Food.Search.Handler.update (Pages.Statistics.Food.Search.Page.UpdateFoods foods) statisticsFoodSearch)
 
         ( FetchMeasures measures, Ingredients ingredients ) ->
             stepThrough steps.ingredients model (Pages.Ingredients.Handler.update (Pages.Ingredients.Page.UpdateMeasures measures) ingredients)
@@ -462,7 +466,7 @@ followRoute model =
                         }
                         |> stepThrough steps.mealEntries model
 
-                StatisticsTimeRoute  ->
+                StatisticsTimeRoute ->
                     Pages.Statistics.Time.Handler.init
                         { authorizedAccess = authorizedAccess
                         , variant = StatisticsVariant.Time

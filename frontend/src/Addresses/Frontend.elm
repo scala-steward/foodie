@@ -13,11 +13,12 @@ module Addresses.Frontend exposing
     , referenceMaps
     , requestRecovery
     , requestRegistration
+    , statisticsFood
     , statisticsTime
     , userSettings
     )
 
-import Api.Auxiliary exposing (JWT, MealId, RecipeId, ReferenceMapId)
+import Api.Auxiliary exposing (FoodId, JWT, MealId, RecipeId, ReferenceMapId)
 import Api.Types.UserIdentifier exposing (UserIdentifier)
 import Pages.Util.ParserUtil as ParserUtil exposing (AddressWithParser, with1, with2)
 import Url.Parser as Parser exposing ((</>), (<?>), Parser, s)
@@ -144,6 +145,15 @@ confirm step1 =
         , toString2 = List.singleton
         , paramParser1 = ParserUtil.nicknameEmailParser.parser |> Parser.map UserIdentifier
         , paramParser2 = Parser.string
+        }
+
+
+statisticsFood : AddressWithParser Int (FoodId -> b) b
+statisticsFood =
+    with1
+        { step1 = "statistics"
+        , toString = \foodId -> [ "food", String.fromInt foodId ]
+        , paramParser = Parser.int
         }
 
 
