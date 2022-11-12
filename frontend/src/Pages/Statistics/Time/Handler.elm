@@ -9,7 +9,9 @@ import Api.Types.ReferenceTree exposing (ReferenceTree)
 import Api.Types.Stats exposing (Stats)
 import Basics.Extra exposing (flip)
 import Dict
+import Monocle.Compose as Compose
 import Monocle.Lens as Lens
+import Pages.Statistics.StatisticsUtil as StatisticsUtil
 import Pages.Statistics.Time.Page as Page
 import Pages.Statistics.Time.Pagination as Pagination exposing (Pagination)
 import Pages.Statistics.Time.Requests as Requests
@@ -25,11 +27,9 @@ init flags =
     ( { authorizedAccess = flags.authorizedAccess
       , requestInterval = RequestIntervalLens.default
       , stats = defaultStats
-      , referenceTrees = Dict.empty
-      , referenceTree = Nothing
+      , statisticsEvaluation = StatisticsUtil.initial
       , initialization = Initialization.Loading Status.initial
       , pagination = Pagination.initial
-      , nutrientsSearchString = ""
       , fetching = False
       , variant = StatisticsVariant.Time
       }
@@ -142,7 +142,10 @@ gotFetchReferenceTreesResponse model result =
                             |> Dict.fromList
                 in
                 model
-                    |> Page.lenses.referenceTrees.set referenceNutrientTrees
+                    |> (Page.lenses.statisticsEvaluation
+                            |> Compose.lensWithLens StatisticsUtil.lenses.referenceTrees
+                       ).set
+                        referenceNutrientTrees
             )
     , Cmd.none
     )
@@ -158,8 +161,12 @@ setPagination model pagination =
 selectReferenceMap : Page.Model -> Maybe ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
 selectReferenceMap model referenceMapId =
     ( referenceMapId
-        |> Maybe.andThen (flip Dict.get model.referenceTrees)
-        |> flip Page.lenses.referenceTree.set model
+        |> Maybe.andThen (flip Dict.get model.statisticsEvaluation.referenceTrees)
+        |> flip
+            (Page.lenses.statisticsEvaluation
+                |> Compose.lensWithLens StatisticsUtil.lenses.referenceTree
+            ).set
+            model
     , Cmd.none
     )
 
@@ -167,7 +174,10 @@ selectReferenceMap model referenceMapId =
 setNutrientsSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 setNutrientsSearchString model string =
     ( model
-        |> Page.lenses.nutrientsSearchString.set string
+        |> (Page.lenses.statisticsEvaluation
+                |> Compose.lensWithLens StatisticsUtil.lenses.nutrientsSearchString
+           ).set
+            string
     , Cmd.none
     )
 

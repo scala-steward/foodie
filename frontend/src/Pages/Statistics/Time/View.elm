@@ -55,7 +55,7 @@ view model =
         let
             viewNutrients =
                 model.stats.nutrients
-                    |> List.filter (\nutrient -> [ nutrient.base.name, nutrient.base.symbol ] |> List.Extra.find (SearchUtil.search model.nutrientsSearchString) |> Maybe.Extra.isJust)
+                    |> List.filter (\nutrient -> [ nutrient.base.name, nutrient.base.symbol ] |> List.Extra.find (SearchUtil.search model.statisticsEvaluation.nutrientsSearchString) |> Maybe.Extra.isJust)
         in
         div [ Style.ids.statistics ]
             [ div []
@@ -92,7 +92,7 @@ view model =
             , div [ Style.classes.info ]
                 [ dropdown
                     { items =
-                        model.referenceTrees
+                        model.statisticsEvaluation.referenceTrees
                             |> Dict.toList
                             |> List.sortBy (Tuple.second >> .map >> .name)
                             |> List.map
@@ -111,13 +111,13 @@ view model =
                     , onChange = Page.SelectReferenceMap
                     }
                     []
-                    (model.referenceTree |> Maybe.map (.map >> .id))
+                    (model.statisticsEvaluation.referenceTree |> Maybe.map (.map >> .id))
                 ]
             , div [ Style.classes.elements ] [ text "Nutrients" ]
             , div [ Style.classes.info, Style.classes.nutrients ]
                 [ HtmlUtil.searchAreaWith
                     { msg = Page.SetNutrientsSearchString
-                    , searchString = model.nutrientsSearchString
+                    , searchString = model.statisticsEvaluation.nutrientsSearchString
                     }
                 , table []
                     [ thead []
@@ -130,7 +130,7 @@ view model =
                             , th [ Style.classes.numberLabel ] [ label [] [ text "Percentage" ] ]
                             ]
                         ]
-                    , tbody [] (List.map (model.referenceTree |> Maybe.Extra.unwrap Dict.empty .values |> nutrientInformationLine) viewNutrients)
+                    , tbody [] (List.map (model.statisticsEvaluation.referenceTree |> Maybe.Extra.unwrap Dict.empty .values |> nutrientInformationLine) viewNutrients)
                     ]
                 ]
             , div [ Style.classes.elements ] [ text "Meals" ]
