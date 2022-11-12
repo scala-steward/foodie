@@ -98,6 +98,7 @@ object Bridge {
     mkAndWrite[Credentials]
     mkAndWrite[AmountUnit]
     mkAndWrite[Food]
+    mkAndWrite[FoodInfo]
     mkAndWrite[Ingredient]
     mkAndWrite[IngredientCreation]
     mkAndWrite[IngredientUpdate]
