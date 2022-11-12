@@ -1,7 +1,6 @@
 module Pages.Overview.View exposing (view)
 
 import Addresses.Frontend
-import Addresses.StatisticsVariant as StatisticsVariant
 import Html exposing (Html, div, text)
 import Pages.Overview.Page as Page
 import Pages.Util.Links as Links
@@ -45,7 +44,7 @@ view model =
                 ]
             , div []
                 [ Links.linkButton
-                    { url = Links.frontendPage model.authorizedAccess.configuration <| Addresses.Frontend.statistics.address <| StatisticsVariant.Time
+                    { url = Links.frontendPage model.authorizedAccess.configuration <| Addresses.Frontend.statisticsTime.address <| ()
                     , attributes = [ Style.classes.button.overview ]
                     , children = [ text "Statistics" ]
                     }

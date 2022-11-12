@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Addresses.Frontend
-import Addresses.StatisticsVariant exposing (StatisticsVariant)
+import Addresses.StatisticsVariant as StatisticsVariant exposing (StatisticsVariant)
 import Api.Auxiliary exposing (JWT, MealId, RecipeId, ReferenceMapId)
 import Api.Types.LoginContent exposing (decoderLoginContent)
 import Api.Types.UserIdentifier exposing (UserIdentifier)
@@ -55,9 +55,10 @@ import Pages.Registration.Confirm.View
 import Pages.Registration.Request.Handler
 import Pages.Registration.Request.Page
 import Pages.Registration.Request.View
-import Pages.Statistics.Handler
-import Pages.Statistics.Page
-import Pages.Statistics.View
+import Pages.Statistics.Time.Handler
+import Pages.Statistics.Time.Page
+import Pages.Statistics.Time.Page
+import Pages.Statistics.Time.View
 import Pages.UserSettings.Handler
 import Pages.UserSettings.Page
 import Pages.UserSettings.View
@@ -117,7 +118,7 @@ type Page
     | Ingredients Pages.Ingredients.Page.Model
     | Meals Pages.Meals.Page.Model
     | MealEntries Pages.MealEntries.Page.Model
-    | Statistics Pages.Statistics.Page.Model
+    | StatisticsTime Pages.Statistics.Time.Page.Model
     | ReferenceMaps Pages.ReferenceMaps.Page.Model
     | ReferenceEntries Pages.ReferenceEntries.Page.Model
     | RequestRegistration Pages.Registration.Request.Page.Model
@@ -144,7 +145,7 @@ type Msg
     | IngredientsMsg Pages.Ingredients.Page.Msg
     | MealsMsg Pages.Meals.Page.Msg
     | MealEntriesMsg Pages.MealEntries.Page.Msg
-    | StatisticsMsg Pages.Statistics.Page.Msg
+    | StatisticsTimeMsg Pages.Statistics.Time.Page.Msg
     | ReferenceMapsMsg Pages.ReferenceMaps.Page.Msg
     | ReferenceEntriesMsg Pages.ReferenceEntries.Page.Msg
     | RequestRegistrationMsg Pages.Registration.Request.Page.Msg
@@ -203,8 +204,8 @@ view model =
         MealEntries mealEntries ->
             Html.map MealEntriesMsg (Pages.MealEntries.View.view mealEntries)
 
-        Statistics statistics ->
-            Html.map StatisticsMsg (Pages.Statistics.View.view statistics)
+        StatisticsTime statisticsTime ->
+            Html.map StatisticsTimeMsg (Pages.Statistics.Time.View.view statisticsTime)
 
         ReferenceMaps referenceMaps ->
             Html.map ReferenceMapsMsg (Pages.ReferenceMaps.View.view referenceMaps)
@@ -288,8 +289,8 @@ update msg model =
         ( MealEntriesMsg mealEntryMsg, MealEntries mealEntry ) ->
             stepThrough steps.mealEntries model (Pages.MealEntries.Handler.update mealEntryMsg mealEntry)
 
-        ( StatisticsMsg statisticsMsg, Statistics statistics ) ->
-            stepThrough steps.statistics model (Pages.Statistics.Handler.update statisticsMsg statistics)
+        ( StatisticsTimeMsg statisticsTimeMsg, StatisticsTime statisticsTime ) ->
+            stepThrough steps.statistics model (Pages.Statistics.Time.Handler.update statisticsTimeMsg statisticsTime)
 
         ( ReferenceMapsMsg referenceMapsMsg, ReferenceMaps referenceMaps ) ->
             stepThrough steps.referenceMaps model (Pages.ReferenceMaps.Handler.update referenceMapsMsg referenceMaps)
@@ -335,7 +336,7 @@ steps :
     , ingredients : StepParameters Pages.Ingredients.Page.Model Pages.Ingredients.Page.Msg
     , mealEntries : StepParameters Pages.MealEntries.Page.Model Pages.MealEntries.Page.Msg
     , meals : StepParameters Pages.Meals.Page.Model Pages.Meals.Page.Msg
-    , statistics : StepParameters Pages.Statistics.Page.Model Pages.Statistics.Page.Msg
+    , statistics : StepParameters Pages.Statistics.Time.Page.Model Pages.Statistics.Time.Page.Msg
     , referenceMaps : StepParameters Pages.ReferenceMaps.Page.Model Pages.ReferenceMaps.Page.Msg
     , referenceEntries : StepParameters Pages.ReferenceEntries.Page.Model Pages.ReferenceEntries.Page.Msg
     , requestRegistration : StepParameters Pages.Registration.Request.Page.Model Pages.Registration.Request.Page.Msg
@@ -353,7 +354,7 @@ steps =
     , ingredients = StepParameters Ingredients IngredientsMsg
     , mealEntries = StepParameters MealEntries MealEntriesMsg
     , meals = StepParameters Meals MealsMsg
-    , statistics = StepParameters Statistics StatisticsMsg
+    , statistics = StepParameters StatisticsTime StatisticsTimeMsg
     , referenceMaps = StepParameters ReferenceMaps ReferenceMapsMsg
     , referenceEntries = StepParameters ReferenceEntries ReferenceEntriesMsg
     , requestRegistration = StepParameters RequestRegistration RequestRegistrationMsg
@@ -378,7 +379,7 @@ type Route
     | IngredientRoute RecipeId
     | MealsRoute
     | MealEntriesRoute MealId
-    | StatisticsRoute StatisticsVariant
+    | StatisticsTimeRoute
     | ReferenceMapsRoute
     | ReferenceEntriesRoute ReferenceMapId
     | RequestRegistrationRoute
@@ -399,7 +400,7 @@ plainRouteParser =
         , route Addresses.Frontend.ingredientEditor.parser IngredientRoute
         , route Addresses.Frontend.meals.parser MealsRoute
         , route Addresses.Frontend.mealEntryEditor.parser MealEntriesRoute
-        , route Addresses.Frontend.statistics.parser StatisticsRoute
+        , route Addresses.Frontend.statisticsTime.parser StatisticsTimeRoute
         , route Addresses.Frontend.referenceMaps.parser ReferenceMapsRoute
         , route Addresses.Frontend.referenceEntries.parser ReferenceEntriesRoute
         , route Addresses.Frontend.requestRegistration.parser RequestRegistrationRoute
@@ -461,10 +462,10 @@ followRoute model =
                         }
                         |> stepThrough steps.mealEntries model
 
-                StatisticsRoute variant ->
-                    Pages.Statistics.Handler.init
+                StatisticsTimeRoute  ->
+                    Pages.Statistics.Time.Handler.init
                         { authorizedAccess = authorizedAccess
-                        , variant = variant
+                        , variant = StatisticsVariant.Time
                         }
                         |> stepThrough steps.statistics model
 
