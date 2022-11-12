@@ -3,6 +3,7 @@ GET    /assets/*file                                     controllers.Assets.vers
 
 GET    /recipes/measures                                 controllers.recipe.RecipeController.getMeasures
 GET    /recipes/foods                                    controllers.recipe.RecipeController.getFoods
+GET    /recipes/foods/:foodId                            controllers.recipe.RecipeController.getFood(foodId: Int)
 GET    /recipes                                          controllers.recipe.RecipeController.getRecipes
 GET    /recipes/:id                                      controllers.recipe.RecipeController.get(id: java.util.UUID)
 POST   /recipes                                          controllers.recipe.RecipeController.create

@@ -9,7 +9,7 @@ import play.api.libs.circe.Circe
 import play.api.mvc._
 import services.complex.ingredient.ComplexIngredientService
 import services.recipe.RecipeService
-import services.{ DBError, IngredientId, RecipeId }
+import services.{ DBError, FoodId, IngredientId, RecipeId }
 import utils.TransformerUtils.Implicits._
 
 import java.util.UUID
@@ -41,6 +41,20 @@ class RecipeController @Inject() (
     userAction.async {
       recipeService.allFoods.map(
         _.map(_.transformInto[Food])
+          .pipe(_.asJson)
+          .pipe(Ok(_))
+      )
+    }
+
+  def getFood(foodId: Int): Action[AnyContent] =
+    userAction.async {
+      OptionT(
+        recipeService
+          .getFoodInfo(foodId.transformInto[FoodId])
+      ).fold(
+        NotFound: Result
+      )(
+        _.pipe(_.transformInto[FoodInfo])
           .pipe(_.asJson)
           .pipe(Ok(_))
       )

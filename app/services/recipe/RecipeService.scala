@@ -6,7 +6,7 @@ import db.generated.Tables
 import errors.{ ErrorContext, ServerError }
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
-import services.{ DBError, IngredientId, RecipeId, UserId }
+import services.{ DBError, FoodId, IngredientId, RecipeId, UserId }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
@@ -21,6 +21,8 @@ import scala.concurrent.{ ExecutionContext, Future }
 
 trait RecipeService {
   def allFoods: Future[Seq[Food]]
+
+  def getFoodInfo(foodId: FoodId): Future[Option[FoodInfo]]
   def allMeasures: Future[Seq[Measure]]
 
   def allRecipes(userId: UserId): Future[Seq[Recipe]]
@@ -39,6 +41,8 @@ object RecipeService {
 
   trait Companion {
     def allFoods(implicit ec: ExecutionContext): DBIO[Seq[Food]]
+
+    def getFoodInfo(foodId: FoodId)(implicit ec: ExecutionContext): DBIO[Option[FoodInfo]]
     def allMeasures(implicit ec: ExecutionContext): DBIO[Seq[Measure]]
 
     def allRecipes(userId: UserId)(implicit ec: ExecutionContext): DBIO[Seq[Recipe]]
@@ -104,6 +108,8 @@ object RecipeService {
       with HasDatabaseConfigProvider[PostgresProfile] {
 
     override def allFoods: Future[Seq[Food]] = db.run(companion.allFoods)
+
+    override def getFoodInfo(foodId: FoodId): Future[Option[FoodInfo]] = db.run(companion.getFoodInfo(foodId))
 
     override def allMeasures: Future[Seq[Measure]] = db.run(companion.allMeasures)
 
@@ -193,6 +199,13 @@ object RecipeService {
             ): DBIO[(Tables.FoodNameRow, List[Tables.MeasureNameRow])]
         }
       } yield withMeasure.map(_.transformInto[Food])
+
+    override def getFoodInfo(foodId: FoodId)(implicit ec: ExecutionContext): DBIO[Option[FoodInfo]] =
+      Tables.FoodName
+        .filter(_.foodId === foodId.transformInto[Int])
+        .result
+        .headOption
+        .map(_.map(_.transformInto[FoodInfo]))
 
     override def allMeasures(implicit ec: ExecutionContext): DBIO[Seq[Measure]] =
       Tables.MeasureName.result
