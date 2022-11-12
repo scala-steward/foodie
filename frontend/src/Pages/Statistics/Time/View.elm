@@ -1,4 +1,4 @@
-module Pages.Statistics.View exposing (view)
+module Pages.Statistics.Time.View exposing (view)
 
 import Api.Auxiliary exposing (NutrientCode)
 import Api.Types.Date exposing (Date)
@@ -17,8 +17,8 @@ import List.Extra
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
-import Pages.Statistics.Page as Page
-import Pages.Statistics.Pagination as Pagination
+import Pages.Statistics.Time.Page as Page
+import Pages.Statistics.Time.Pagination as Pagination
 import Pages.Util.DateUtil as DateUtil
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Links as Links

@@ -1,4 +1,4 @@
-module Pages.Statistics.Handler exposing (init, update)
+module Pages.Statistics.Time.Handler exposing (init, update)
 
 import Addresses.StatisticsVariant exposing (StatisticsVariant)
 import Api.Auxiliary exposing (ReferenceMapId)
@@ -10,10 +10,10 @@ import Api.Types.Stats exposing (Stats)
 import Basics.Extra exposing (flip)
 import Dict
 import Monocle.Lens as Lens
-import Pages.Statistics.Page as Page
-import Pages.Statistics.Pagination as Pagination exposing (Pagination)
-import Pages.Statistics.Requests as Requests
-import Pages.Statistics.Status as Status
+import Pages.Statistics.Time.Page as Page
+import Pages.Statistics.Time.Pagination as Pagination exposing (Pagination)
+import Pages.Statistics.Time.Requests as Requests
+import Pages.Statistics.Time.Status as Status
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Result.Extra
 import Util.HttpUtil as HttpUtil exposing (Error)

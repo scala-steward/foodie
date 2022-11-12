@@ -1,4 +1,4 @@
-module Pages.Statistics.Page exposing (..)
+module Pages.Statistics.Time.Page exposing (..)
 
 import Addresses.StatisticsVariant exposing (StatisticsVariant)
 import Api.Auxiliary exposing (FoodId, MealId, NutrientCode, RecipeId, ReferenceMapId)
@@ -11,8 +11,8 @@ import Api.Types.Stats exposing (Stats)
 import Dict exposing (Dict)
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
-import Pages.Statistics.Pagination exposing (Pagination)
-import Pages.Statistics.Status exposing (Status)
+import Pages.Statistics.Time.Pagination exposing (Pagination)
+import Pages.Statistics.Time.Status exposing (Status)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Util.HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization)
