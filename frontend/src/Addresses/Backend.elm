@@ -117,6 +117,7 @@ stats :
         }
         -> ResourcePattern
     , food : FoodId -> ResourcePattern
+    , recipe : RecipeId -> ResourcePattern
     , nutrients : ResourcePattern
     }
 stats =
@@ -126,6 +127,7 @@ stats =
     in
     { all = \interval -> getQ (base []) (Maybe.Extra.values [ interval.from, interval.to ])
     , food = \foodId -> get <| base <| [ StatisticsVariant.food, foodId |> String.fromInt ]
+    , recipe = \recipeId -> get <| base <| [ StatisticsVariant.recipe, recipeId ]
     , nutrients = get <| base <| [ "nutrients" ]
     }
 

@@ -15,12 +15,15 @@ module Addresses.Frontend exposing
     , requestRegistration
     , statisticsFoodSearch
     , statisticsFoodSelect
+    , statisticsRecipeSearch
+    , statisticsRecipeSelect
     , statisticsTime
     , userSettings
     )
 
 import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Auxiliary exposing (FoodId, JWT, MealId, RecipeId, ReferenceMapId)
+import Api.Types.UUID exposing (UUID)
 import Api.Types.UserIdentifier exposing (UserIdentifier)
 import Pages.Util.ParserUtil as ParserUtil exposing (AddressWithParser, with1, with1Multiple, with2)
 import Url.Parser as Parser exposing ((</>), (<?>), Parser, s)
@@ -63,6 +66,34 @@ meals =
 statisticsTime : AddressWithParser () a a
 statisticsTime =
     plain "statistics"
+
+
+statisticsFoodSearch : AddressWithParser () a a
+statisticsFoodSearch =
+    plainMultiple "statistics" [ StatisticsVariant.food ]
+
+
+statisticsFoodSelect : AddressWithParser Int (FoodId -> b) b
+statisticsFoodSelect =
+    with1Multiple
+        { steps = [ "statistics", StatisticsVariant.food ]
+        , toString = String.fromInt >> List.singleton
+        , paramParser = Parser.int
+        }
+
+
+statisticsRecipeSearch : AddressWithParser () a a
+statisticsRecipeSearch =
+    plainMultiple "statistics" [ StatisticsVariant.recipe ]
+
+
+statisticsRecipeSelect : AddressWithParser UUID (RecipeId -> b) b
+statisticsRecipeSelect =
+    with1Multiple
+        { steps = [ "statistics", StatisticsVariant.recipe ]
+        , toString = List.singleton
+        , paramParser = Parser.string
+        }
 
 
 referenceMaps : AddressWithParser () a a
@@ -130,20 +161,6 @@ confirm step1 =
         }
 
 
-statisticsFoodSearch : AddressWithParser () a a
-statisticsFoodSearch =
-    plainMultiple "statistics" [ StatisticsVariant.food ]
-
-
-statisticsFoodSelect : AddressWithParser Int (FoodId -> b) b
-statisticsFoodSelect =
-    with1Multiple
-        { steps = ["statistics", StatisticsVariant.food ]
-        , toString = String.fromInt >> List.singleton
-        , paramParser = Parser.int
-        }
-
-
 plain : String -> AddressWithParser () a a
 plain string =
     { address = always [ string ]
@@ -156,6 +173,3 @@ plainMultiple string strings =
     { address = always strings
     , parser = ParserUtil.foldl1 string strings
     }
-
-
-
