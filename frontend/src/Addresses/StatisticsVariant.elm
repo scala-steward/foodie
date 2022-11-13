@@ -1,34 +1,16 @@
 module Addresses.StatisticsVariant exposing (..)
 
-import Api.Auxiliary exposing (FoodId, MealId, RecipeId)
-import Maybe.Extra
 
-
-type StatisticsVariant
-    = Food (Maybe FoodId)
-    | Recipe (Maybe RecipeId)
-    | Meal (Maybe MealId)
+type Page
+    = Food Parameter
+    | Recipe Parameter
+    | Meal Parameter
     | Time
 
 
-
--- todo: Check use
-
-
-toString : StatisticsVariant -> List String
-toString variant =
-    case variant of
-        Food maybeFoodId ->
-            food :: (maybeFoodId |> Maybe.map String.fromInt |> Maybe.Extra.toList)
-
-        Recipe maybeRecipeId ->
-            recipe :: (maybeRecipeId |> Maybe.Extra.toList)
-
-        Meal maybeMealId ->
-            meal :: (maybeMealId |> Maybe.Extra.toList)
-
-        Time ->
-            []
+type Parameter
+    = None
+    | Some
 
 
 food : String
@@ -44,3 +26,35 @@ recipe =
 meal : String
 meal =
     "meal"
+
+
+addressSuffix : Page -> String
+addressSuffix page =
+    case page of
+        Food _ ->
+            food
+
+        Recipe _ ->
+            recipe
+
+        Meal _ ->
+            meal
+
+        Time ->
+            ""
+
+
+nameOfPage : Page -> String
+nameOfPage page =
+    case page of
+        Food _ ->
+            "Food"
+
+        Recipe _ ->
+            "Recipe"
+
+        Meal _ ->
+            "Meal"
+
+        Time ->
+            "Over time"
