@@ -115,6 +115,7 @@ stats :
         , to : Maybe QueryParameter
         }
         -> ResourcePattern
+    , food : FoodId -> ResourcePattern
     , nutrients : ResourcePattern
     }
 stats =
@@ -123,6 +124,7 @@ stats =
             (::) "stats"
     in
     { all = \interval -> getQ (base []) (Maybe.Extra.values [ interval.from, interval.to ])
+    , food = \foodId -> get <| base <| [ "food", foodId |> String.fromInt ]
     , nutrients = get <| base <| [ "nutrients" ]
     }
 
