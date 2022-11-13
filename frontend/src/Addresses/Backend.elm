@@ -126,7 +126,7 @@ stats =
             (::) "stats"
     in
     { all = \interval -> getQ (base []) (Maybe.Extra.values [ interval.from, interval.to ])
-    , food = \foodId -> get <| base <| [ StatisticsVariant.food, foodId |> String.fromInt ]
+    , food = \foodId -> get <| base <| [ StatisticsVariant.foodBackend, foodId |> String.fromInt ]
     , recipe = \recipeId -> get <| base <| [ StatisticsVariant.recipe, recipeId ]
     , nutrients = get <| base <| [ "nutrients" ]
     }

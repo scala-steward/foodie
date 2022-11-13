@@ -15,9 +15,14 @@ type Parameter
     | Some
 
 
-food : String
-food =
+foodBackend : String
+foodBackend =
     "food"
+
+
+foodFrontend : String
+foodFrontend =
+    "ingredient"
 
 
 recipe : String
@@ -36,7 +41,7 @@ addressSuffix page =
         suffix =
             case page of
                 Food _ ->
-                    food
+                    foodFrontend
 
                 Recipe _ ->
                     recipe
@@ -53,8 +58,12 @@ addressSuffix page =
 nameOfPage : Page -> String
 nameOfPage page =
     case page of
+        {- From a user perspective there is no need to differentiate between
+           'food' and 'ingredient', hence we only use 'ingredient'.
+           Internally, an ingredient is a link between a recipe and a food.
+        -}
         Food _ ->
-            "Food"
+            "Ingredient"
 
         Recipe _ ->
             "Recipe"

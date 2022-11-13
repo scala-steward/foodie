@@ -70,13 +70,13 @@ statisticsTime =
 
 statisticsFoodSearch : AddressWithParser () a a
 statisticsFoodSearch =
-    plainMultiple "statistics" [ StatisticsVariant.food ]
+    plainMultiple "statistics" [ StatisticsVariant.foodFrontend ]
 
 
 statisticsFoodSelect : AddressWithParser Int (FoodId -> b) b
 statisticsFoodSelect =
     with1Multiple
-        { steps = [ "statistics", StatisticsVariant.food ]
+        { steps = [ "statistics", StatisticsVariant.foodFrontend ]
         , toString = String.fromInt >> List.singleton
         , paramParser = Parser.int
         }

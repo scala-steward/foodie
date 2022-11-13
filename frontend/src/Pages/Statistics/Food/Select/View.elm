@@ -80,7 +80,7 @@ view model =
                         { msg = Page.SetNutrientsSearchString
                         , searchString = model.statisticsEvaluation.nutrientsSearchString
                         }
-                    , table []
+                    , table [ Style.classes.elementsWithControlsTable ]
                         [ thead []
                             [ tr [ Style.classes.tableHeader ]
                                 [ th [] [ label [] [ text "Name" ] ]
