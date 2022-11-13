@@ -17,6 +17,7 @@ classes :
         , editor : Attribute msg
         , logout : Attribute msg
         , navigation : Attribute msg
+        , nutrients : Attribute msg
         , overview : Attribute msg
         , pager : Attribute msg
         , select : Attribute msg
@@ -69,6 +70,7 @@ classes =
         , editor = class "editorButton"
         , logout = class "logoutButton"
         , navigation = class "navigationButton"
+        , nutrients = class "nutrientsButton"
         , overview = class "overviewButton"
         , pager = class "pagerButton"
         , select = class "selectButton"

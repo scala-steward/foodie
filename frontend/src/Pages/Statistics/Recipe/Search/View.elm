@@ -99,7 +99,7 @@ viewRecipeLine configuration recipe =
         , td [ Style.classes.controls ]
             [ Links.linkButton
                 { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsRecipeSelect.address <| recipe.id
-                , attributes = [ Style.classes.button.editor ]
+                , attributes = [ Style.classes.button.nutrients ]
                 , children = [ text "Nutrients" ]
                 }
             ]
