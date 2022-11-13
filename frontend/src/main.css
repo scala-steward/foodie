@@ -212,17 +212,25 @@ th {
     width: 20%;
 }
 
-#statistics .nutrients th:first-child {
+#statistics .nutrients th:first-child,
+.partialStatistics .nutrients th:first-child {
     width: 30%
 }
 
+#statistics .nutrients th:nth-child(2),
 #statistics .nutrients th:nth-child(3),
 #statistics .nutrients th:nth-child(4) {
     width: 15%;
 }
 
-#statistics .nutrients th:nth-child(5) {
+#statistics .nutrients th:nth-child(5),
+.partialStatistics .nutrients th:nth-child(4) {
     width: 5%;
+}
+
+.partialStatistics .nutrients th:nth-child(2),
+.partialStatistics .nutrients th:nth-child(3) {
+    width: 25%;
 }
 
 #statistics .meals th:first-child {
