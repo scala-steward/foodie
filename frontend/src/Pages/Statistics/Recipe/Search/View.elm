@@ -5,8 +5,7 @@ import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.Recipe exposing (Recipe)
 import Configuration exposing (Configuration)
 import Html exposing (Html, col, colgroup, div, label, table, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (colspan, scope)
-import Html.Attributes.Extra exposing (stringProperty)
+import Html.Attributes exposing (scope)
 import Monocle.Compose as Compose
 import Pages.Statistics.Recipe.Search.Page as Page
 import Pages.Statistics.Recipe.Search.Pagination as Pagination
@@ -59,12 +58,14 @@ view model =
                     , table [ Style.classes.choiceTable ]
                         [ colgroup []
                             [ col [] []
-                            , col [ stringProperty "span" "2" ] []
+                            , col [] []
+                            , col [] []
                             ]
                         , thead []
                             [ tr [ Style.classes.tableHeader ]
                                 [ th [ scope "col" ] [ label [] [ text "Name" ] ]
-                                , th [ colspan 2, scope "colgroup", Style.classes.controlsGroup ] []
+                                , th [ scope "col" ] [ label [] [ text "Description" ] ]
+                                , th [ Style.classes.controlsGroup ] []
                                 ]
                             ]
                         , tbody []
@@ -93,13 +94,14 @@ viewRecipeLine : Configuration -> Recipe -> Html Page.Msg
 viewRecipeLine configuration recipe =
     tr [ Style.classes.editing ]
         [ td [ Style.classes.editable ]
-            [ label [] [ text recipe.name ]
-            , td [ Style.classes.controls ]
-                [ Links.linkButton
-                    { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsRecipeSelect.address <| recipe.id
-                    , attributes = [ Style.classes.button.editor ]
-                    , children = [ text "Nutrients" ]
-                    }
-                ]
+            [ label [] [ text recipe.name ] ]
+        , td [ Style.classes.editable ]
+            [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
+        , td [ Style.classes.controls ]
+            [ Links.linkButton
+                { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsRecipeSelect.address <| recipe.id
+                , attributes = [ Style.classes.button.editor ]
+                , children = [ text "Nutrients" ]
+                }
             ]
         ]
