@@ -82,9 +82,9 @@ navigationBar ps =
 
 navigationPages : List StatisticsVariant.Page
 navigationPages =
-    [ StatisticsVariant.Food StatisticsVariant.None
-    , StatisticsVariant.Recipe StatisticsVariant.None
-    , StatisticsVariant.Meal StatisticsVariant.None
+    [ StatisticsVariant.Food
+    , StatisticsVariant.Recipe
+    , StatisticsVariant.Meal
     , StatisticsVariant.Time
     ]
 

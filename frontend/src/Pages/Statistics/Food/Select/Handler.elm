@@ -27,7 +27,7 @@ init flags =
       , foodStats = { nutrients = [] }
       , statisticsEvaluation = StatisticsEvaluation.initial
       , initialization = Initialization.Loading Status.initial
-      , variant = StatisticsVariant.Food StatisticsVariant.None
+      , variant = StatisticsVariant.Food
       }
     , initialFetch flags
     )

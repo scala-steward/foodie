@@ -22,7 +22,7 @@ init flags =
       , foodsSearchString = ""
       , initialization = Initialization.Loading Status.initial
       , pagination = Pagination.initial
-      , variant = StatisticsVariant.Food StatisticsVariant.None
+      , variant = StatisticsVariant.Food
       }
     , initialFetch
     )

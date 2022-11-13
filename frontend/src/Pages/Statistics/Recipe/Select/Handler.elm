@@ -29,7 +29,7 @@ init flags =
       , recipeStats = { nutrients = [] }
       , statisticsEvaluation = StatisticsEvaluation.initial
       , initialization = Initialization.Loading Status.initial
-      , variant = StatisticsVariant.Recipe StatisticsVariant.None
+      , variant = StatisticsVariant.Recipe
       }
     , initialFetch flags
     )

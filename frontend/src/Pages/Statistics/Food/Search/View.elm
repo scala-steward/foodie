@@ -33,7 +33,7 @@ view model =
     <|
         StatisticsView.withNavigationBar
             { mainPageURL = model.authorizedAccess.configuration.mainPageURL
-            , currentPage = Just <| StatisticsVariant.Food StatisticsVariant.None
+            , currentPage = Just StatisticsVariant.Food
             }
         <|
             let

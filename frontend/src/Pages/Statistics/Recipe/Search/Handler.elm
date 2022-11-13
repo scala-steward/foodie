@@ -22,7 +22,7 @@ init flags =
       , recipesSearchString = ""
       , initialization = Initialization.Loading Status.initial
       , pagination = Pagination.initial
-      , variant = StatisticsVariant.Recipe StatisticsVariant.None
+      , variant = StatisticsVariant.Recipe
       }
     , initialFetch flags.authorizedAccess
     )

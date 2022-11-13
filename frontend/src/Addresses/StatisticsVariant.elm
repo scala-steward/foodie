@@ -4,15 +4,10 @@ import Url.Builder
 
 
 type Page
-    = Food Parameter
-    | Recipe Parameter
-    | Meal Parameter
+    = Food
+    | Recipe
+    | Meal
     | Time
-
-
-type Parameter
-    = None
-    | Some
 
 
 foodBackend : String
@@ -40,13 +35,13 @@ addressSuffix page =
     let
         suffix =
             case page of
-                Food _ ->
+                Food ->
                     foodFrontend
 
-                Recipe _ ->
+                Recipe ->
                     recipe
 
-                Meal _ ->
+                Meal ->
                     meal
 
                 Time ->
@@ -62,13 +57,13 @@ nameOfPage page =
            'food' and 'ingredient', hence we only use 'ingredient'.
            Internally, an ingredient is a link between a recipe and a food.
         -}
-        Food _ ->
+        Food ->
             "Ingredient"
 
-        Recipe _ ->
+        Recipe ->
             "Recipe"
 
-        Meal _ ->
+        Meal ->
             "Meal"
 
         Time ->
