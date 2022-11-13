@@ -8,7 +8,6 @@ import Api.Types.NutrientInformation exposing (NutrientInformation)
 import Api.Types.NutrientUnit as NutrientUnit exposing (NutrientUnit)
 import Basics.Extra exposing (flip)
 import Dict exposing (Dict)
-import Dropdown exposing (dropdown)
 import Html exposing (Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, scope, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -95,28 +94,12 @@ view model =
                     ]
                 , div [ Style.classes.elements ] [ text "Reference map" ]
                 , div [ Style.classes.info ]
-                    [ dropdown
-                        { items =
-                            model.statisticsEvaluation.referenceTrees
-                                |> Dict.toList
-                                |> List.sortBy (Tuple.second >> .map >> .name)
-                                |> List.map
-                                    (\( referenceMapId, referenceTree ) ->
-                                        { value = referenceMapId
-                                        , text = referenceTree.map.name
-                                        , enabled = True
-                                        }
-                                    )
-                        , emptyItem =
-                            Just
-                                { value = ""
-                                , text = ""
-                                , enabled = True
-                                }
+                    [ StatisticsView.referenceMapDropdownWith
+                        { referenceTrees = .statisticsEvaluation >> .referenceTrees
+                        , referenceTree = .statisticsEvaluation >> .referenceTree
                         , onChange = Page.SelectReferenceMap
                         }
-                        []
-                        (model.statisticsEvaluation.referenceTree |> Maybe.map (.map >> .id))
+                        model
                     ]
                 , div [ Style.classes.elements ] [ text "Nutrients" ]
                 , div [ Style.classes.info, Style.classes.nutrients ]
@@ -125,16 +108,7 @@ view model =
                         , searchString = model.statisticsEvaluation.nutrientsSearchString
                         }
                     , table [ Style.classes.elementsWithControlsTable ]
-                        [ thead []
-                            [ tr [ Style.classes.tableHeader ]
-                                [ th [] [ label [] [ text "Name" ] ]
-                                , th [ Style.classes.numberLabel ] [ label [] [ text "Total" ] ]
-                                , th [ Style.classes.numberLabel ] [ label [] [ text "Daily average" ] ]
-                                , th [ Style.classes.numberLabel ] [ label [] [ text "Reference daily average" ] ]
-                                , th [ Style.classes.numberLabel ] [ label [] [ text "Unit" ] ]
-                                , th [ Style.classes.numberLabel ] [ label [] [ text "Percentage" ] ]
-                                ]
-                            ]
+                        [ StatisticsView.nutrientTableHeader { withDailyAverage = True }
                         , tbody [] (List.map (model.statisticsEvaluation.referenceTree |> Maybe.Extra.unwrap Dict.empty .values |> nutrientInformationLine) viewNutrients)
                         ]
                     ]

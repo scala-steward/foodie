@@ -1,10 +1,20 @@
 module Pages.Statistics.StatisticsView exposing (..)
 
 import Addresses.StatisticsVariant as StatisticsVariant
+import Api.Auxiliary exposing (NutrientCode, ReferenceMapId)
+import Api.Types.FoodNutrientInformation exposing (FoodNutrientInformation)
+import Api.Types.NutrientInformationBase exposing (NutrientInformationBase)
+import Api.Types.NutrientUnit as NutrientUnit
+import Api.Types.ReferenceMap exposing (ReferenceMap)
+import Api.Types.TotalOnlyNutrientInformation exposing (TotalOnlyNutrientInformation)
+import Basics.Extra exposing (flip)
+import Dict exposing (Dict)
+import Dropdown exposing (dropdown)
 import FormatNumber
 import FormatNumber.Locales
-import Html exposing (Attribute, Html, div)
+import Html exposing (Attribute, Html, div, label, td, text, th, thead, tr)
 import Maybe.Extra
+import Pages.Statistics.StatisticsUtil exposing (ReferenceNutrientTree)
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
 
@@ -100,3 +110,112 @@ withNavigationBar ps html =
         [ navigationBar ps
         , html
         ]
+
+
+nutrientInformationLineWith :
+    { amountOf : information -> Maybe Float
+    , nutrientBase : information -> NutrientInformationBase
+    }
+    -> Dict NutrientCode Float
+    -> information
+    -> Html msg
+nutrientInformationLineWith ps referenceValues information =
+    let
+        referenceValue =
+            Dict.get (ps.nutrientBase information).nutrientCode referenceValues
+
+        factor =
+            referenceFactor
+                { actualValue = ps.amountOf information
+                , referenceValue = referenceValue
+                }
+
+        displayValue =
+            Maybe.Extra.unwrap "" displayFloat
+    in
+    tr [ Style.classes.editLine ]
+        [ td [] [ label [] [ text <| .name <| ps.nutrientBase <| information ] ]
+        , td [ Style.classes.numberCell ] [ label [] [ text <| displayValue <| ps.amountOf <| information ] ]
+        , td [ Style.classes.numberCell ] [ label [] [ text <| displayValue <| referenceValue ] ]
+        , td [ Style.classes.numberCell ] [ label [] [ text <| NutrientUnit.toString <| .unit <| ps.nutrientBase <| information ] ]
+        , td [ Style.classes.numberCell ]
+            [ label (factorStyle factor)
+                [ text <|
+                    Maybe.Extra.unwrap "" (displayFloat >> flip (++) "%") <|
+                        factor
+                ]
+            ]
+        ]
+
+
+totalOnlyNutrientInformationLine : Dict NutrientCode Float -> TotalOnlyNutrientInformation -> Html msg
+totalOnlyNutrientInformationLine =
+    nutrientInformationLineWith
+        { amountOf = .amount >> .value
+        , nutrientBase = .base
+        }
+
+
+foodNutrientInformationLine : Dict NutrientCode Float -> FoodNutrientInformation -> Html msg
+foodNutrientInformationLine =
+    nutrientInformationLineWith
+        { amountOf = .amount
+        , nutrientBase = .base
+        }
+
+
+nutrientTableHeader : { withDailyAverage : Bool } -> Html msg
+nutrientTableHeader ps =
+    let
+        dailyAverageColumn =
+            if ps.withDailyAverage then
+                [ th [ Style.classes.numberLabel ] [ label [] [ text "Daily average" ] ] ]
+
+            else
+                []
+    in
+    thead []
+        [ tr [ Style.classes.tableHeader ]
+            ([ th [] [ label [] [ text "Name" ] ]
+             , th [ Style.classes.numberLabel ] [ label [] [ text "Total" ] ]
+             ]
+                ++ dailyAverageColumn
+                ++ [ th [ Style.classes.numberLabel ] [ label [] [ text "Reference daily average" ] ]
+                   , th [ Style.classes.numberLabel ] [ label [] [ text "Unit" ] ]
+                   , th [ Style.classes.numberLabel ] [ label [] [ text "Percentage" ] ]
+                   ]
+            )
+        ]
+
+
+referenceMapDropdownWith :
+    { referenceTrees : model -> Dict ReferenceMapId ReferenceNutrientTree
+    , referenceTree : model -> Maybe ReferenceNutrientTree
+    , onChange : Maybe ReferenceMapId -> msg
+    }
+    -> model
+    -> Html msg
+referenceMapDropdownWith ps model =
+    dropdown
+        { items =
+            model
+                |> ps.referenceTrees
+                |> Dict.toList
+                |> List.sortBy (Tuple.second >> .map >> .name)
+                |> List.map
+                    (\( referenceMapId, referenceTree ) ->
+                        { value = referenceMapId
+                        , text = referenceTree.map.name
+                        , enabled = True
+                        }
+                    )
+        , emptyItem =
+            Just
+                { value = ""
+                , text = ""
+                , enabled = True
+                }
+        , onChange = ps.onChange
+        }
+        []
+        (model |> ps.referenceTree |> Maybe.map (.map >> .id))

@@ -1,12 +1,8 @@
 module Pages.Statistics.Meal.Select.View exposing (view)
 
-import Api.Auxiliary exposing (NutrientCode)
-import Api.Types.NutrientUnit as NutrientUnit
 import Api.Types.TotalOnlyNutrientInformation exposing (TotalOnlyNutrientInformation)
-import Basics.Extra exposing (flip)
 import Dict exposing (Dict)
-import Dropdown exposing (dropdown)
-import Html exposing (Html, div, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Html, div, label, table, tbody, td, text, tr)
 import List.Extra
 import Maybe.Extra
 import Pages.Statistics.Meal.Select.Page as Page
@@ -56,28 +52,12 @@ view model =
                     ]
                 , div [ Style.classes.elements ] [ text "Reference map" ]
                 , div [ Style.classes.info ]
-                    [ dropdown
-                        { items =
-                            model.statisticsEvaluation.referenceTrees
-                                |> Dict.toList
-                                |> List.sortBy (Tuple.second >> .map >> .name)
-                                |> List.map
-                                    (\( referenceMapId, referenceTree ) ->
-                                        { value = referenceMapId
-                                        , text = referenceTree.map.name
-                                        , enabled = True
-                                        }
-                                    )
-                        , emptyItem =
-                            Just
-                                { value = ""
-                                , text = ""
-                                , enabled = True
-                                }
+                    [ StatisticsView.referenceMapDropdownWith
+                        { referenceTrees = .statisticsEvaluation >> .referenceTrees
+                        , referenceTree = .statisticsEvaluation >> .referenceTree
                         , onChange = Page.SelectReferenceMap
                         }
-                        []
-                        (model.statisticsEvaluation.referenceTree |> Maybe.map (.map >> .id))
+                        model
                     ]
                 , div [ Style.classes.elements ] [ text "Nutrients in the meal" ]
                 , div [ Style.classes.info, Style.classes.nutrients ]
@@ -86,49 +66,15 @@ view model =
                         , searchString = model.statisticsEvaluation.nutrientsSearchString
                         }
                     , table [ Style.classes.elementsWithControlsTable ]
-                        [ thead []
-                            [ tr [ Style.classes.tableHeader ]
-                                [ th [] [ label [] [ text "Name" ] ]
-                                , th [ Style.classes.numberLabel ] [ label [] [ text "Total" ] ]
-                                , th [ Style.classes.numberLabel ] [ label [] [ text "Reference daily average" ] ]
-                                , th [ Style.classes.numberLabel ] [ label [] [ text "Unit" ] ]
-                                , th [ Style.classes.numberLabel ] [ label [] [ text "Percentage" ] ]
-                                ]
-                            ]
-                        , tbody [] (List.map (model.statisticsEvaluation.referenceTree |> Maybe.Extra.unwrap Dict.empty .values |> nutrientInformationLine) viewNutrients)
+                        [ StatisticsView.nutrientTableHeader { withDailyAverage = False }
+                        , tbody []
+                            (List.map
+                                (model.statisticsEvaluation.referenceTree
+                                    |> Maybe.Extra.unwrap Dict.empty .values
+                                    |> StatisticsView.totalOnlyNutrientInformationLine
+                                )
+                                viewNutrients
+                            )
                         ]
                     ]
                 ]
-
-
-nutrientInformationLine : Dict NutrientCode Float -> TotalOnlyNutrientInformation -> Html Page.Msg
-nutrientInformationLine referenceValues mealNutrientInformation =
-    let
-        referenceValue =
-            Dict.get mealNutrientInformation.base.nutrientCode referenceValues
-
-        factor =
-            StatisticsView.referenceFactor
-                { actualValue = mealNutrientInformation.amount.value
-                , referenceValue = referenceValue
-                }
-
-        factorStyle =
-            factor |> StatisticsView.factorStyle
-
-        displayValue =
-            Maybe.Extra.unwrap "" StatisticsView.displayFloat
-    in
-    tr [ Style.classes.editLine ]
-        [ td [] [ label [] [ text <| mealNutrientInformation.base.name ] ]
-        , td [ Style.classes.numberCell ] [ label [] [ text <| displayValue <| .value <| mealNutrientInformation.amount ] ]
-        , td [ Style.classes.numberCell ] [ label [] [ text <| displayValue <| referenceValue ] ]
-        , td [ Style.classes.numberCell ] [ label [] [ text <| NutrientUnit.toString <| mealNutrientInformation.base.unit ] ]
-        , td [ Style.classes.numberCell ]
-            [ label factorStyle
-                [ text <|
-                    Maybe.Extra.unwrap "" (StatisticsView.displayFloat >> flip (++) "%") <|
-                        factor
-                ]
-            ]
-        ]
