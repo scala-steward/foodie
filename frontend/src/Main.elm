@@ -60,6 +60,12 @@ import Pages.Statistics.Food.Search.View
 import Pages.Statistics.Food.Select.Handler
 import Pages.Statistics.Food.Select.Page
 import Pages.Statistics.Food.Select.View
+import Pages.Statistics.Meal.Search.Handler
+import Pages.Statistics.Meal.Search.Page
+import Pages.Statistics.Meal.Search.View
+import Pages.Statistics.Meal.Select.Handler
+import Pages.Statistics.Meal.Select.Page
+import Pages.Statistics.Meal.Select.View
 import Pages.Statistics.Recipe.Search.Handler
 import Pages.Statistics.Recipe.Search.Page
 import Pages.Statistics.Recipe.Search.View
@@ -133,6 +139,8 @@ type Page
     | StatisticsFoodSelect Pages.Statistics.Food.Select.Page.Model
     | StatisticsRecipeSearch Pages.Statistics.Recipe.Search.Page.Model
     | StatisticsRecipeSelect Pages.Statistics.Recipe.Select.Page.Model
+    | StatisticsMealSearch Pages.Statistics.Meal.Search.Page.Model
+    | StatisticsMealSelect Pages.Statistics.Meal.Select.Page.Model
     | ReferenceMaps Pages.ReferenceMaps.Page.Model
     | ReferenceEntries Pages.ReferenceEntries.Page.Model
     | RequestRegistration Pages.Registration.Request.Page.Model
@@ -164,6 +172,8 @@ type Msg
     | StatisticsFoodSelectMsg Pages.Statistics.Food.Select.Page.Msg
     | StatisticsRecipeSearchMsg Pages.Statistics.Recipe.Search.Page.Msg
     | StatisticsRecipeSelectMsg Pages.Statistics.Recipe.Select.Page.Msg
+    | StatisticsMealSearchMsg Pages.Statistics.Meal.Search.Page.Msg
+    | StatisticsMealSelectMsg Pages.Statistics.Meal.Select.Page.Msg
     | ReferenceMapsMsg Pages.ReferenceMaps.Page.Msg
     | ReferenceEntriesMsg Pages.ReferenceEntries.Page.Msg
     | RequestRegistrationMsg Pages.Registration.Request.Page.Msg
@@ -236,6 +246,12 @@ view model =
 
         StatisticsRecipeSelect statisticsRecipeSelect ->
             Html.map StatisticsRecipeSelectMsg (Pages.Statistics.Recipe.Select.View.view statisticsRecipeSelect)
+
+        StatisticsMealSearch statisticsMealSearch ->
+            Html.map StatisticsMealSearchMsg (Pages.Statistics.Meal.Search.View.view statisticsMealSearch)
+
+        StatisticsMealSelect statisticsMealSelect ->
+            Html.map StatisticsMealSelectMsg (Pages.Statistics.Meal.Select.View.view statisticsMealSelect)
 
         ReferenceMaps referenceMaps ->
             Html.map ReferenceMapsMsg (Pages.ReferenceMaps.View.view referenceMaps)
@@ -337,6 +353,12 @@ update msg model =
         ( StatisticsRecipeSelectMsg statisticsRecipeSelectMsg, StatisticsRecipeSelect statisticsRecipeSelect ) ->
             stepThrough steps.statisticsRecipeSelect model (Pages.Statistics.Recipe.Select.Handler.update statisticsRecipeSelectMsg statisticsRecipeSelect)
 
+        ( StatisticsMealSearchMsg statisticsMealSearchMsg, StatisticsMealSearch statisticsMealSearch ) ->
+            stepThrough steps.statisticsMealSearch model (Pages.Statistics.Meal.Search.Handler.update statisticsMealSearchMsg statisticsMealSearch)
+
+        ( StatisticsMealSelectMsg statisticsMealSelectMsg, StatisticsMealSelect statisticsMealSelect ) ->
+            stepThrough steps.statisticsMealSelect model (Pages.Statistics.Meal.Select.Handler.update statisticsMealSelectMsg statisticsMealSelect)
+
         ( ReferenceMapsMsg referenceMapsMsg, ReferenceMaps referenceMaps ) ->
             stepThrough steps.referenceMaps model (Pages.ReferenceMaps.Handler.update referenceMapsMsg referenceMaps)
 
@@ -386,6 +408,8 @@ steps :
     , statisticsFoodSelect : StepParameters Pages.Statistics.Food.Select.Page.Model Pages.Statistics.Food.Select.Page.Msg
     , statisticsRecipeSearch : StepParameters Pages.Statistics.Recipe.Search.Page.Model Pages.Statistics.Recipe.Search.Page.Msg
     , statisticsRecipeSelect : StepParameters Pages.Statistics.Recipe.Select.Page.Model Pages.Statistics.Recipe.Select.Page.Msg
+    , statisticsMealSearch : StepParameters Pages.Statistics.Meal.Search.Page.Model Pages.Statistics.Meal.Search.Page.Msg
+    , statisticsMealSelect : StepParameters Pages.Statistics.Meal.Select.Page.Model Pages.Statistics.Meal.Select.Page.Msg
     , referenceMaps : StepParameters Pages.ReferenceMaps.Page.Model Pages.ReferenceMaps.Page.Msg
     , referenceEntries : StepParameters Pages.ReferenceEntries.Page.Model Pages.ReferenceEntries.Page.Msg
     , requestRegistration : StepParameters Pages.Registration.Request.Page.Model Pages.Registration.Request.Page.Msg
@@ -408,6 +432,8 @@ steps =
     , statisticsFoodSelect = StepParameters StatisticsFoodSelect StatisticsFoodSelectMsg
     , statisticsRecipeSearch = StepParameters StatisticsRecipeSearch StatisticsRecipeSearchMsg
     , statisticsRecipeSelect = StepParameters StatisticsRecipeSelect StatisticsRecipeSelectMsg
+    , statisticsMealSearch = StepParameters StatisticsMealSearch StatisticsMealSearchMsg
+    , statisticsMealSelect = StepParameters StatisticsMealSelect StatisticsMealSelectMsg
     , referenceMaps = StepParameters ReferenceMaps ReferenceMapsMsg
     , referenceEntries = StepParameters ReferenceEntries ReferenceEntriesMsg
     , requestRegistration = StepParameters RequestRegistration RequestRegistrationMsg
@@ -437,6 +463,8 @@ type Route
     | StatisticsFoodSelectRoute FoodId
     | StatisticsRecipeSearchRoute
     | StatisticsRecipeSelectRoute RecipeId
+    | StatisticsMealSearchRoute
+    | StatisticsMealSelectRoute MealId
     | ReferenceMapsRoute
     | ReferenceEntriesRoute ReferenceMapId
     | RequestRegistrationRoute
@@ -462,6 +490,8 @@ plainRouteParser =
         , route Addresses.Frontend.statisticsFoodSelect.parser StatisticsFoodSelectRoute
         , route Addresses.Frontend.statisticsRecipeSearch.parser StatisticsRecipeSearchRoute
         , route Addresses.Frontend.statisticsRecipeSelect.parser StatisticsRecipeSelectRoute
+        , route Addresses.Frontend.statisticsMealSearch.parser StatisticsMealSearchRoute
+        , route Addresses.Frontend.statisticsMealSelect.parser StatisticsMealSelectRoute
         , route Addresses.Frontend.referenceMaps.parser ReferenceMapsRoute
         , route Addresses.Frontend.referenceEntries.parser ReferenceEntriesRoute
         , route Addresses.Frontend.requestRegistration.parser RequestRegistrationRoute
@@ -551,6 +581,18 @@ followRoute model =
                         , recipeId = recipeId
                         }
                         |> stepThrough steps.statisticsRecipeSelect model
+
+                StatisticsMealSearchRoute ->
+                    Pages.Statistics.Meal.Search.Handler.init
+                        flags
+                        |> stepThrough steps.statisticsMealSearch model
+
+                StatisticsMealSelectRoute mealId ->
+                    Pages.Statistics.Meal.Select.Handler.init
+                        { authorizedAccess = authorizedAccess
+                        , mealId = mealId
+                        }
+                        |> stepThrough steps.statisticsMealSelect model
 
                 ReferenceMapsRoute ->
                     Pages.ReferenceMaps.Handler.init flags |> stepThrough steps.referenceMaps model
