@@ -15,6 +15,8 @@ module Addresses.Frontend exposing
     , requestRegistration
     , statisticsFoodSearch
     , statisticsFoodSelect
+    , statisticsMealSearch
+    , statisticsMealSelect
     , statisticsRecipeSearch
     , statisticsRecipeSelect
     , statisticsTime
@@ -91,6 +93,20 @@ statisticsRecipeSelect : AddressWithParser UUID (RecipeId -> b) b
 statisticsRecipeSelect =
     with1Multiple
         { steps = [ "statistics", StatisticsVariant.recipe ]
+        , toString = List.singleton
+        , paramParser = Parser.string
+        }
+
+
+statisticsMealSearch : AddressWithParser () a a
+statisticsMealSearch =
+    plainMultiple "statistics" [ StatisticsVariant.meal ]
+
+
+statisticsMealSelect : AddressWithParser UUID (MealId -> b) b
+statisticsMealSelect =
+    with1Multiple
+        { steps = [ "statistics", StatisticsVariant.meal ]
         , toString = List.singleton
         , paramParser = Parser.string
         }
