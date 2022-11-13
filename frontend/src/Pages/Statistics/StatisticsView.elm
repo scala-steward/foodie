@@ -6,7 +6,6 @@ import Api.Types.FoodNutrientInformation exposing (FoodNutrientInformation)
 import Api.Types.NutrientInformationBase exposing (NutrientInformationBase)
 import Api.Types.NutrientUnit as NutrientUnit
 import Api.Types.ReferenceMap exposing (ReferenceMap)
-import Api.Types.TotalOnlyNutrientInformation exposing (TotalOnlyNutrientInformation)
 import Basics.Extra exposing (flip)
 import Dict exposing (Dict)
 import Dropdown exposing (dropdown)
@@ -151,12 +150,7 @@ nutrientInformationLineWith ps referenceValues information =
         ]
 
 
-totalOnlyNutrientInformationLine : Dict NutrientCode Float -> TotalOnlyNutrientInformation -> Html msg
-totalOnlyNutrientInformationLine =
-    nutrientInformationLineWith
-        { amountOf = .amount >> .value
-        , nutrientBase = .base
-        }
+
 
 
 foodNutrientInformationLine : Dict NutrientCode Float -> FoodNutrientInformation -> Html msg
@@ -235,7 +229,6 @@ statisticsTable :
     , referenceTree : model -> Maybe ReferenceNutrientTree
     , withDailyAverage : Bool
     , tableLabel : String
-    , displayInfoLine : Dict NutrientCode Float -> information -> Html msg
     }
     -> model
     -> List (Html msg)
@@ -258,7 +251,7 @@ statisticsTable ps model =
         , table [ Style.classes.elementsWithControlsTable ]
             [ nutrientTableHeader { withDailyAverage = ps.withDailyAverage }
             , tbody []
-                (List.map (model |> ps.referenceTree |> Maybe.Extra.unwrap Dict.empty .values |> ps.displayInfoLine)
+                (List.map (model |> ps.referenceTree |> Maybe.Extra.unwrap Dict.empty .values |> nutrientInformationLineWith { amountOf = ps.amountOf, nutrientBase = ps.nutrientBase })
                     (model
                         |> ps.infoListOf
                         |> List.filter
