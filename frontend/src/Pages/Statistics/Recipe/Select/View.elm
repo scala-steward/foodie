@@ -24,7 +24,7 @@ view model =
             , currentPage = Nothing
             }
         <|
-            div [ Style.ids.statistics ]
+            div [ Style.classes.partialStatistics ]
                 (div []
                     [ table [ Style.classes.info ]
                         [ tr []

@@ -237,15 +237,15 @@ th {
     width: 35%;
 }
 
-#statistics .low {
+.low {
     color: #fa8128; /* tangerine */
 }
 
-#statistics .exact {
+.exact {
     color: black;
 }
 
-#statistics .high {
+.high {
     color: #0492c2; /* cerulean */
 }
 

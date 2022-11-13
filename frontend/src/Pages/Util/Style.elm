@@ -34,7 +34,7 @@ classes :
     , editing : Attribute msg
     , editLine : Attribute msg
     , elements : Attribute msg
-    , elementsWithControlsTable: Attribute msg
+    , elementsWithControlsTable : Attribute msg
     , ellipsis : Attribute msg
     , incomplete : Attribute msg
     , info : Attribute msg
@@ -44,6 +44,7 @@ classes :
     , numberLabel : Attribute msg
     , nutrients : Attribute msg
     , pagination : Attribute msg
+    , partialStatistics : Attribute msg
     , rating :
         { low : Attribute msg
         , exact : Attribute msg
@@ -97,6 +98,7 @@ classes =
     , numberLabel = class "numberLabel"
     , nutrients = class "nutrients"
     , pagination = class "pagination"
+    , partialStatistics = class "partialStatistics"
     , rating =
         { low = class "low"
         , exact = class "exact"
