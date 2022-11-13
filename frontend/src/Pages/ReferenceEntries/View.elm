@@ -88,7 +88,7 @@ view model =
                     { msg = Page.SetReferenceEntriesSearchString
                     , searchString = model.referenceEntriesSearchString
                     }
-                , table []
+                , table [ Style.classes.elementsWithControlsTable ]
                     [ colgroup []
                         [ col [] []
                         , col [] []
@@ -128,7 +128,7 @@ view model =
                         { msg = Page.SetNutrientsSearchString
                         , searchString = model.nutrientsSearchString
                         }
-                    , table [ Style.classes.choiceTable ]
+                    , table [ Style.classes.elementsWithControlsTable ]
                         [ colgroup []
                             [ col [] []
                             , col [] []

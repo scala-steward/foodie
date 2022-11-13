@@ -54,7 +54,7 @@ view model =
                         { msg = Page.SetSearchString
                         , searchString = model.recipesSearchString
                         }
-                    , table [ Style.classes.choiceTable ]
+                    , table [ Style.classes.elementsWithControlsTable ]
                         [ colgroup []
                             [ col [] []
                             , col [] []
@@ -62,8 +62,8 @@ view model =
                             ]
                         , thead []
                             [ tr [ Style.classes.tableHeader ]
-                                [ th [ ] [ label [] [ text "Name" ] ]
-                                , th [ ] [ label [] [ text "Description" ] ]
+                                [ th [] [ label [] [ text "Name" ] ]
+                                , th [] [ label [] [ text "Description" ] ]
                                 , th [ Style.classes.controlsGroup ] []
                                 ]
                             ]

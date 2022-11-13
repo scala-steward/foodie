@@ -33,6 +33,7 @@ classes :
     , editing : Attribute msg
     , editLine : Attribute msg
     , elements : Attribute msg
+    , elementsWithControlsTable: Attribute msg
     , ellipsis : Attribute msg
     , incomplete : Attribute msg
     , info : Attribute msg
@@ -84,6 +85,7 @@ classes =
     , editing = class "editing"
     , editLine = class "editLine"
     , elements = class "elements"
+    , elementsWithControlsTable = class "elementsWithControlsTable"
     , ellipsis = class "ellipsis"
     , incomplete = class "incomplete"
     , info = class "info"

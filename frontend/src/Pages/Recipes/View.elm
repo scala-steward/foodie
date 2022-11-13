@@ -77,7 +77,7 @@ view model =
                         { msg = Page.SetSearchString
                         , searchString = model.searchString
                         }
-                   , table []
+                   , table [ Style.classes.elementsWithControlsTable ]
                         [ colgroup []
                             [ col [] []
                             , col [] []

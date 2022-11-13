@@ -89,7 +89,7 @@ view model =
                     { msg = Page.SetComplexFoodsSearchString
                     , searchString = model.complexFoodsSearchString
                     }
-                , table []
+                , table [ Style.classes.elementsWithControlsTable ]
                     [ colgroup []
                         [ col [] []
                         , col [] []
@@ -129,7 +129,7 @@ view model =
                         { msg = Page.SetRecipesSearchString
                         , searchString = model.recipesSearchString
                         }
-                    , table [ Style.classes.choiceTable ]
+                    , table [ Style.classes.elementsWithControlsTable ]
                         [ colgroup []
                             [ col [] []
                             , col [] []

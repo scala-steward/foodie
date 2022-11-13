@@ -130,7 +130,7 @@ view model =
                     { msg = Page.SetIngredientsSearchString
                     , searchString = model.ingredientsSearchString
                     }
-                , table []
+                , table [ Style.classes.elementsWithControlsTable ]
                     [ colgroup []
                         [ col [] []
                         , col [] []
@@ -170,7 +170,7 @@ view model =
                     { msg = Page.SetComplexIngredientsSearchString
                     , searchString = model.complexIngredientsSearchString
                     }
-                , table []
+                , table [ Style.classes.elementsWithControlsTable ]
                     [ colgroup []
                         [ col [] []
                         , col [] []
@@ -256,7 +256,7 @@ viewPlain model =
                 { msg = Page.SetFoodsSearchString
                 , searchString = model.ingredientsGroup.foodsSearchString
                 }
-            , table [ Style.classes.choiceTable ]
+            , table [ Style.classes.elementsWithControlsTable ]
                 [ colgroup []
                     [ col [] []
                     , col [] []
@@ -323,7 +323,7 @@ viewComplex model =
                 { msg = Page.SetComplexFoodsSearchString
                 , searchString = model.complexIngredientsGroup.foodsSearchString
                 }
-            , table [ Style.classes.choiceTable ]
+            , table [ Style.classes.elementsWithControlsTable ]
                 [ colgroup []
                     [ col [] []
                     , col [] []

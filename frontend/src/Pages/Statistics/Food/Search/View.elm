@@ -54,7 +54,7 @@ view model =
                         { msg = Page.SetSearchString
                         , searchString = model.foodsSearchString
                         }
-                    , table [ Style.classes.choiceTable ]
+                    , table [ Style.classes.elementsWithControlsTable ]
                         [ colgroup []
                             [ col [] []
                             , col [] []

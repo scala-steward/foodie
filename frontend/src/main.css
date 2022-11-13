@@ -42,20 +42,23 @@ body, button, input {
     background-color: rgb(85, 225, 60);
 }
 
-#addRecipeView table,
-#addMealView table,
-#addReferenceMapView table,
-#ingredientEditor table:not(.info),
-#mealEntryEditor table:not(.info),
-#referenceEntryEditor table,
-#statistics table,
 #navigation table,
-#complexFoodEditor table {
+.elementsWithControlsTable {
     border-spacing: 0;
     width: 100%;
     table-layout: fixed;
     border-collapse: collapse;
     position: relative;
+}
+
+.elementsWithControlsTable thead th {
+    font-size: larger;
+    font-weight: lighter;
+    font-style: italic;
+}
+
+.elementsWithControlsTable thead th:not(.numberLabel) {
+    text-align: left;
 }
 
 .searchArea {
@@ -78,30 +81,6 @@ body, button, input {
 .searchArea label,
 .searchArea input {
     font-size: larger;
-}
-
-#addRecipeView thead th,
-#addMealView thead th,
-#addReferenceMapView thead th,
-#ingredientEditor thead th,
-#mealEntryEditor thead th,
-#referenceEntryEditor thead th,
-#statistics thead th,
-#complexFoodEditor thead th {
-    font-size: larger;
-    font-weight: lighter;
-    font-style: italic;
-}
-
-#addRecipeView thead th:not(.numberLabel),
-#addMealView thead th:not(.numberLabel),
-#addReferenceMapView thead th:not(.numberLabel),
-#ingredientEditor thead th:not(.numberLabel),
-#mealEntryEditor thead th:not(.numberLabel),
-#referenceEntryEditor thead th:not(.numberLabel),
-#statistics thead th:not(.numberLabel),
-#complexFoodEditor thead th:not(.numberLabel) {
-    text-align: left;
 }
 
 

@@ -64,7 +64,7 @@ view model =
             in
             div [ Style.ids.statistics ]
                 [ div []
-                    [ table [ Style.classes.intervalSelection ]
+                    [ table [ Style.classes.intervalSelection, Style.classes.elementsWithControlsTable ]
                         [ colgroup []
                             [ col [] []
                             , col [] []
@@ -124,7 +124,7 @@ view model =
                         { msg = Page.SetNutrientsSearchString
                         , searchString = model.statisticsEvaluation.nutrientsSearchString
                         }
-                    , table []
+                    , table [ Style.classes.elementsWithControlsTable ]
                         [ thead []
                             [ tr [ Style.classes.tableHeader ]
                                 [ th [] [ label [] [ text "Name" ] ]
@@ -140,7 +140,7 @@ view model =
                     ]
                 , div [ Style.classes.elements ] [ text "Meals" ]
                 , div [ Style.classes.info, Style.classes.meals ]
-                    [ table []
+                    [ table [ Style.classes.elementsWithControlsTable ]
                         [ thead []
                             [ tr []
                                 [ th [] [ label [] [ text "Date" ] ]
