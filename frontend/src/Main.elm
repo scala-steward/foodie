@@ -60,6 +60,12 @@ import Pages.Statistics.Food.Search.View
 import Pages.Statistics.Food.Select.Handler
 import Pages.Statistics.Food.Select.Page
 import Pages.Statistics.Food.Select.View
+import Pages.Statistics.Recipe.Search.Handler
+import Pages.Statistics.Recipe.Search.Page
+import Pages.Statistics.Recipe.Search.View
+import Pages.Statistics.Recipe.Select.Handler
+import Pages.Statistics.Recipe.Select.Page
+import Pages.Statistics.Recipe.Select.View
 import Pages.Statistics.Time.Handler
 import Pages.Statistics.Time.Page
 import Pages.Statistics.Time.View
@@ -125,6 +131,8 @@ type Page
     | StatisticsTime Pages.Statistics.Time.Page.Model
     | StatisticsFoodSearch Pages.Statistics.Food.Search.Page.Model
     | StatisticsFoodSelect Pages.Statistics.Food.Select.Page.Model
+    | StatisticsRecipeSearch Pages.Statistics.Recipe.Search.Page.Model
+    | StatisticsRecipeSelect Pages.Statistics.Recipe.Select.Page.Model
     | ReferenceMaps Pages.ReferenceMaps.Page.Model
     | ReferenceEntries Pages.ReferenceEntries.Page.Model
     | RequestRegistration Pages.Registration.Request.Page.Model
@@ -154,6 +162,8 @@ type Msg
     | StatisticsTimeMsg Pages.Statistics.Time.Page.Msg
     | StatisticsFoodSearchMsg Pages.Statistics.Food.Search.Page.Msg
     | StatisticsFoodSelectMsg Pages.Statistics.Food.Select.Page.Msg
+    | StatisticsRecipeSearchMsg Pages.Statistics.Recipe.Search.Page.Msg
+    | StatisticsRecipeSelectMsg Pages.Statistics.Recipe.Select.Page.Msg
     | ReferenceMapsMsg Pages.ReferenceMaps.Page.Msg
     | ReferenceEntriesMsg Pages.ReferenceEntries.Page.Msg
     | RequestRegistrationMsg Pages.Registration.Request.Page.Msg
@@ -220,6 +230,12 @@ view model =
 
         StatisticsFoodSelect statisticsFoodSelect ->
             Html.map StatisticsFoodSelectMsg (Pages.Statistics.Food.Select.View.view statisticsFoodSelect)
+
+        StatisticsRecipeSearch statisticsRecipeSearch ->
+            Html.map StatisticsRecipeSearchMsg (Pages.Statistics.Recipe.Search.View.view statisticsRecipeSearch)
+
+        StatisticsRecipeSelect statisticsRecipeSelect ->
+            Html.map StatisticsRecipeSelectMsg (Pages.Statistics.Recipe.Select.View.view statisticsRecipeSelect)
 
         ReferenceMaps referenceMaps ->
             Html.map ReferenceMapsMsg (Pages.ReferenceMaps.View.view referenceMaps)
@@ -315,6 +331,12 @@ update msg model =
         ( StatisticsFoodSelectMsg statisticsFoodSelectMsg, StatisticsFoodSelect statisticsFoodSelect ) ->
             stepThrough steps.statisticsFoodSelect model (Pages.Statistics.Food.Select.Handler.update statisticsFoodSelectMsg statisticsFoodSelect)
 
+        ( StatisticsRecipeSearchMsg statisticsRecipeSearchMsg, StatisticsRecipeSearch statisticsRecipeSearch ) ->
+            stepThrough steps.statisticsRecipeSearch model (Pages.Statistics.Recipe.Search.Handler.update statisticsRecipeSearchMsg statisticsRecipeSearch)
+
+        ( StatisticsRecipeSelectMsg statisticsRecipeSelectMsg, StatisticsRecipeSelect statisticsRecipeSelect ) ->
+            stepThrough steps.statisticsRecipeSelect model (Pages.Statistics.Recipe.Select.Handler.update statisticsRecipeSelectMsg statisticsRecipeSelect)
+
         ( ReferenceMapsMsg referenceMapsMsg, ReferenceMaps referenceMaps ) ->
             stepThrough steps.referenceMaps model (Pages.ReferenceMaps.Handler.update referenceMapsMsg referenceMaps)
 
@@ -362,6 +384,8 @@ steps :
     , statisticsTime : StepParameters Pages.Statistics.Time.Page.Model Pages.Statistics.Time.Page.Msg
     , statisticsFoodSearch : StepParameters Pages.Statistics.Food.Search.Page.Model Pages.Statistics.Food.Search.Page.Msg
     , statisticsFoodSelect : StepParameters Pages.Statistics.Food.Select.Page.Model Pages.Statistics.Food.Select.Page.Msg
+    , statisticsRecipeSearch : StepParameters Pages.Statistics.Recipe.Search.Page.Model Pages.Statistics.Recipe.Search.Page.Msg
+    , statisticsRecipeSelect : StepParameters Pages.Statistics.Recipe.Select.Page.Model Pages.Statistics.Recipe.Select.Page.Msg
     , referenceMaps : StepParameters Pages.ReferenceMaps.Page.Model Pages.ReferenceMaps.Page.Msg
     , referenceEntries : StepParameters Pages.ReferenceEntries.Page.Model Pages.ReferenceEntries.Page.Msg
     , requestRegistration : StepParameters Pages.Registration.Request.Page.Model Pages.Registration.Request.Page.Msg
@@ -382,6 +406,8 @@ steps =
     , statisticsTime = StepParameters StatisticsTime StatisticsTimeMsg
     , statisticsFoodSearch = StepParameters StatisticsFoodSearch StatisticsFoodSearchMsg
     , statisticsFoodSelect = StepParameters StatisticsFoodSelect StatisticsFoodSelectMsg
+    , statisticsRecipeSearch = StepParameters StatisticsRecipeSearch StatisticsRecipeSearchMsg
+    , statisticsRecipeSelect = StepParameters StatisticsRecipeSelect StatisticsRecipeSelectMsg
     , referenceMaps = StepParameters ReferenceMaps ReferenceMapsMsg
     , referenceEntries = StepParameters ReferenceEntries ReferenceEntriesMsg
     , requestRegistration = StepParameters RequestRegistration RequestRegistrationMsg
@@ -409,6 +435,8 @@ type Route
     | StatisticsTimeRoute
     | StatisticsFoodSearchRoute
     | StatisticsFoodSelectRoute FoodId
+    | StatisticsRecipeSearchRoute
+    | StatisticsRecipeSelectRoute RecipeId
     | ReferenceMapsRoute
     | ReferenceEntriesRoute ReferenceMapId
     | RequestRegistrationRoute
@@ -432,6 +460,8 @@ plainRouteParser =
         , route Addresses.Frontend.statisticsTime.parser StatisticsTimeRoute
         , route Addresses.Frontend.statisticsFoodSearch.parser StatisticsFoodSearchRoute
         , route Addresses.Frontend.statisticsFoodSelect.parser StatisticsFoodSelectRoute
+        , route Addresses.Frontend.statisticsRecipeSearch.parser StatisticsRecipeSearchRoute
+        , route Addresses.Frontend.statisticsRecipeSelect.parser StatisticsRecipeSelectRoute
         , route Addresses.Frontend.referenceMaps.parser ReferenceMapsRoute
         , route Addresses.Frontend.referenceEntries.parser ReferenceEntriesRoute
         , route Addresses.Frontend.requestRegistration.parser RequestRegistrationRoute
@@ -509,6 +539,18 @@ followRoute model =
                         , foodId = foodId
                         }
                         |> stepThrough steps.statisticsFoodSelect model
+
+                StatisticsRecipeSearchRoute ->
+                    Pages.Statistics.Recipe.Search.Handler.init
+                        flags
+                        |> stepThrough steps.statisticsRecipeSearch model
+
+                StatisticsRecipeSelectRoute recipeId ->
+                    Pages.Statistics.Recipe.Select.Handler.init
+                        { authorizedAccess = authorizedAccess
+                        , recipeId = recipeId
+                        }
+                        |> stepThrough steps.statisticsRecipeSelect model
 
                 ReferenceMapsRoute ->
                     Pages.ReferenceMaps.Handler.init flags |> stepThrough steps.referenceMaps model
