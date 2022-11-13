@@ -39,10 +39,11 @@ view model =
                         , searchStringOf = .statisticsEvaluation >> .nutrientsSearchString
                         , infoListOf = .foodStats >> .nutrients
                         , amountOf = .amount
+                        , dailyAmountOf = Nothing
+                        , completenessFraction = Nothing
                         , nutrientBase = .base
                         , referenceTrees = .statisticsEvaluation >> .referenceTrees
                         , referenceTree = .statisticsEvaluation >> .referenceTree
-                        , withDailyAverage = False
                         , tableLabel = "Nutrients per 100g"
                         }
                         model

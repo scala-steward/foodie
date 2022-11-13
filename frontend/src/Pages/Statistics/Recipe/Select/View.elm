@@ -43,10 +43,15 @@ view model =
                         , searchStringOf = .statisticsEvaluation >> .nutrientsSearchString
                         , infoListOf = .recipeStats >> .nutrients
                         , amountOf = .amount >> .value
+                        , dailyAmountOf = Nothing
+                        , completenessFraction =
+                            Just
+                                { definedValues = .amount >> .numberOfDefinedValues
+                                , totalValues = .amount >> .numberOfIngredients
+                                }
                         , nutrientBase = .base
                         , referenceTrees = .statisticsEvaluation >> .referenceTrees
                         , referenceTree = .statisticsEvaluation >> .referenceTree
-                        , withDailyAverage = False
                         , tableLabel = "Nutrients per serving"
                         }
                         model

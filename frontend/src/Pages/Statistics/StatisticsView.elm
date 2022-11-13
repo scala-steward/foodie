@@ -2,7 +2,6 @@ module Pages.Statistics.StatisticsView exposing (..)
 
 import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Auxiliary exposing (NutrientCode, ReferenceMapId)
-import Api.Types.FoodNutrientInformation exposing (FoodNutrientInformation)
 import Api.Types.NutrientInformationBase exposing (NutrientInformationBase)
 import Api.Types.NutrientUnit as NutrientUnit
 import Api.Types.ReferenceMap exposing (ReferenceMap)
@@ -114,8 +113,16 @@ withNavigationBar ps html =
         ]
 
 
+type alias CompletenessFraction information =
+    { definedValues : information -> Int
+    , totalValues : information -> Int
+    }
+
+
 nutrientInformationLineWith :
     { amountOf : information -> Maybe Float
+    , dailyAmountOf : Maybe (information -> Maybe Float)
+    , completenessFraction : Maybe (CompletenessFraction information)
     , nutrientBase : information -> NutrientInformationBase
     }
     -> Dict NutrientCode Float
@@ -132,33 +139,59 @@ nutrientInformationLineWith ps referenceValues information =
                 , referenceValue = referenceValue
                 }
 
+        amount =
+            information |> ps.amountOf
+
+        ( completenessInfo, completenessStyles ) =
+            ps.completenessFraction
+                |> Maybe.Extra.unwrap ( "", [] )
+                    (\completenessFraction ->
+                        let
+                            defined =
+                                information |> completenessFraction.definedValues
+
+                            total =
+                                information |> completenessFraction.totalValues
+                        in
+                        if defined == total then
+                            ( "", [] )
+
+                        else
+                            ( quotientInfo
+                                { defined = defined
+                                , total = total
+                                , value = amount
+                                }
+                            , [ Style.classes.incomplete ]
+                            )
+                    )
+
         displayValue =
-            Maybe.Extra.unwrap "" displayFloat
+            Maybe.Extra.unwrap "" displayFloat >> flip (++) completenessInfo
+
+        dailyAverage =
+            ps.dailyAmountOf
+                |> Maybe.Extra.unwrap []
+                    (\daily ->
+                        [ td [ Style.classes.numberCell ] [ label completenessStyles [ text <| displayValue <| daily <| information ] ] ]
+                    )
     in
     tr [ Style.classes.editLine ]
-        [ td [] [ label [] [ text <| .name <| ps.nutrientBase <| information ] ]
-        , td [ Style.classes.numberCell ] [ label [] [ text <| displayValue <| ps.amountOf <| information ] ]
-        , td [ Style.classes.numberCell ] [ label [] [ text <| displayValue <| referenceValue ] ]
-        , td [ Style.classes.numberCell ] [ label [] [ text <| NutrientUnit.toString <| .unit <| ps.nutrientBase <| information ] ]
-        , td [ Style.classes.numberCell ]
-            [ label (factorStyle factor)
-                [ text <|
-                    Maybe.Extra.unwrap "" (displayFloat >> flip (++) "%") <|
-                        factor
-                ]
-            ]
-        ]
-
-
-
-
-
-foodNutrientInformationLine : Dict NutrientCode Float -> FoodNutrientInformation -> Html msg
-foodNutrientInformationLine =
-    nutrientInformationLineWith
-        { amountOf = .amount
-        , nutrientBase = .base
-        }
+        ([ td [] [ label [] [ text <| .name <| ps.nutrientBase <| information ] ]
+         , td [ Style.classes.numberCell ] [ label completenessStyles [ text <| displayValue <| ps.amountOf <| information ] ]
+         ]
+            ++ dailyAverage
+            ++ [ td [ Style.classes.numberCell ] [ label [] [ text <| Maybe.Extra.unwrap "" displayFloat <| referenceValue ] ]
+               , td [ Style.classes.numberCell ] [ label [] [ text <| NutrientUnit.toString <| .unit <| ps.nutrientBase <| information ] ]
+               , td [ Style.classes.numberCell ]
+                    [ label (factorStyle factor ++ completenessStyles)
+                        [ text <|
+                            Maybe.Extra.unwrap "" (displayFloat >> flip (++) "%") <|
+                                factor
+                        ]
+                    ]
+               ]
+        )
 
 
 nutrientTableHeader : { withDailyAverage : Bool } -> Html msg
@@ -224,10 +257,11 @@ statisticsTable :
     , searchStringOf : model -> String
     , infoListOf : model -> List information
     , amountOf : information -> Maybe Float
+    , dailyAmountOf : Maybe (information -> Maybe Float)
+    , completenessFraction : Maybe (CompletenessFraction information)
     , nutrientBase : information -> NutrientInformationBase
     , referenceTrees : model -> Dict ReferenceMapId ReferenceNutrientTree
     , referenceTree : model -> Maybe ReferenceNutrientTree
-    , withDailyAverage : Bool
     , tableLabel : String
     }
     -> model
@@ -249,9 +283,19 @@ statisticsTable ps model =
             , searchString = ps.searchStringOf model
             }
         , table [ Style.classes.elementsWithControlsTable ]
-            [ nutrientTableHeader { withDailyAverage = ps.withDailyAverage }
+            [ nutrientTableHeader { withDailyAverage = ps.dailyAmountOf |> Maybe.Extra.isJust }
             , tbody []
-                (List.map (model |> ps.referenceTree |> Maybe.Extra.unwrap Dict.empty .values |> nutrientInformationLineWith { amountOf = ps.amountOf, nutrientBase = ps.nutrientBase })
+                (List.map
+                    (model
+                        |> ps.referenceTree
+                        |> Maybe.Extra.unwrap Dict.empty .values
+                        |> nutrientInformationLineWith
+                            { amountOf = ps.amountOf
+                            , dailyAmountOf = ps.dailyAmountOf
+                            , completenessFraction = ps.completenessFraction
+                            , nutrientBase = ps.nutrientBase
+                            }
+                    )
                     (model
                         |> ps.infoListOf
                         |> List.filter
