@@ -1,4 +1,4 @@
-module Pages.Util.ViewUtil exposing (Page(..), pagerButtons, paginate, viewWithErrorHandling)
+module Pages.Util.ViewUtil exposing (Page(..), navigationBarWith, navigationToPageButtonWith, pagerButtons, paginate, viewWithErrorHandling)
 
 import Api.Auxiliary exposing (JWT)
 import Api.Types.LoginContent exposing (decoderLoginContent)
@@ -189,6 +189,24 @@ navigationToPageButton :
     }
     -> Html msg
 navigationToPageButton ps =
+    navigationToPageButtonWith
+        { page = ps.page
+        , nameOf = nameOf
+        , addressSuffix = addressSuffix
+        , mainPageURL = ps.mainPageURL
+        , currentPage = ps.currentPage
+        }
+
+
+navigationToPageButtonWith :
+    { page : page
+    , nameOf : page -> String
+    , addressSuffix : page -> String
+    , mainPageURL : String
+    , currentPage : Maybe page
+    }
+    -> Html msg
+navigationToPageButtonWith ps =
     let
         isDisabled =
             Maybe.Extra.unwrap False (\current -> current == ps.page) ps.currentPage
@@ -199,17 +217,17 @@ navigationToPageButton ps =
             , Style.classes.disabled
             , disabled True
             ]
-            [ text <| nameOf <| ps.page ]
+            [ text <| ps.nameOf <| ps.page ]
 
     else
         Links.linkButton
             { url =
                 navigationLink
                     { mainPageURL = ps.mainPageURL
-                    , page = addressSuffix ps.page
+                    , page = ps.addressSuffix ps.page
                     }
             , attributes = [ Style.classes.button.navigation ]
-            , children = [ text <| nameOf <| ps.page ]
+            , children = [ text <| ps.nameOf <| ps.page ]
             }
 
 
@@ -220,19 +238,33 @@ navigationBar :
     }
     -> Html msg
 navigationBar ps =
+    navigationBarWith
+        { navigationPages = navigationPages ps.nickname
+        , pageToButton =
+            \page ->
+                navigationToPageButton
+                    { page = page
+                    , mainPageURL = ps.mainPageURL
+                    , currentPage = ps.currentPage
+                    }
+        }
+
+
+navigationBarWith :
+    { navigationPages : List page
+    , pageToButton : page -> Html msg
+    }
+    -> Html msg
+navigationBarWith ps =
     div [ Style.ids.navigation ]
         [ table []
             [ thead []
                 [ tr []
-                    (navigationPages ps.nickname
+                    (ps.navigationPages
                         |> List.map
                             (\page ->
                                 th []
-                                    [ navigationToPageButton
-                                        { page = page
-                                        , mainPageURL = ps.mainPageURL
-                                        , currentPage = ps.currentPage
-                                        }
+                                    [ ps.pageToButton page
                                     ]
                             )
                     )
