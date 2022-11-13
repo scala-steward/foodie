@@ -5,8 +5,6 @@ import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.Food exposing (Food)
 import Configuration exposing (Configuration)
 import Html exposing (Html, col, colgroup, div, label, table, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (colspan, scope)
-import Html.Attributes.Extra exposing (stringProperty)
 import Monocle.Compose as Compose
 import Pages.Statistics.Food.Search.Page as Page
 import Pages.Statistics.Food.Search.Pagination as Pagination
@@ -59,12 +57,12 @@ view model =
                     , table [ Style.classes.choiceTable ]
                         [ colgroup []
                             [ col [] []
-                            , col [ stringProperty "span" "2" ] []
+                            , col [] []
                             ]
                         , thead []
                             [ tr [ Style.classes.tableHeader ]
-                                [ th [ scope "col" ] [ label [] [ text "Name" ] ]
-                                , th [ colspan 2, scope "colgroup", Style.classes.controlsGroup ] []
+                                [ th [] [ label [] [ text "Name" ] ]
+                                , th [ Style.classes.controlsGroup ] []
                                 ]
                             ]
                         , tbody []
@@ -93,13 +91,12 @@ viewFoodLine : Configuration -> Food -> Html Page.Msg
 viewFoodLine configuration food =
     tr [ Style.classes.editing ]
         [ td [ Style.classes.editable ]
-            [ label [] [ text food.name ]
-            , td [ Style.classes.controls ]
-                [ Links.linkButton
-                    { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsFoodSelect.address <| food.id
-                    , attributes = [ Style.classes.button.editor ]
-                    , children = [ text "Nutrients" ]
-                    }
-                ]
+            [ label [] [ text food.name ] ]
+        , td [ Style.classes.controls ]
+            [ Links.linkButton
+                { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsFoodSelect.address <| food.id
+                , attributes = [ Style.classes.button.editor ]
+                , children = [ text "Nutrients" ]
+                }
             ]
         ]
