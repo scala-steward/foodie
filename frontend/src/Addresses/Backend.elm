@@ -1,6 +1,6 @@
 module Addresses.Backend exposing (..)
 
-import Api.Auxiliary exposing (ComplexFoodId, IngredientId, MealEntryId, MealId, NutrientCode, RecipeId, ReferenceMapId)
+import Api.Auxiliary exposing (ComplexFoodId, FoodId, IngredientId, MealEntryId, MealId, NutrientCode, RecipeId, ReferenceMapId)
 import Maybe.Extra
 import Url.Builder exposing (QueryParameter)
 import Util.HttpUtil as HttpUtil exposing (ResourcePattern)
@@ -9,6 +9,7 @@ import Util.HttpUtil as HttpUtil exposing (ResourcePattern)
 recipes :
     { measures : ResourcePattern
     , foods : ResourcePattern
+    , food : FoodId -> ResourcePattern
     , all : ResourcePattern
     , single : RecipeId -> ResourcePattern
     , create : ResourcePattern
@@ -35,6 +36,9 @@ recipes =
         ingredientsWord =
             "ingredients"
 
+        foodsWord =
+            "foods"
+
         ingredients =
             (::) ingredientsWord >> base
 
@@ -45,7 +49,8 @@ recipes =
             (::) complexIngredientsWord >> (::) recipeId >> base
     in
     { measures = get <| base <| [ "measures" ]
-    , foods = get <| base <| [ "foods" ]
+    , foods = get <| base <| [ foodsWord ]
+    , food = \foodId -> get <| base <| [ foodsWord, foodId |> String.fromInt ]
     , all = get <| base <| []
     , single = \recipeId -> get <| base <| [ recipeId ]
     , create = post <| base []

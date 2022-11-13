@@ -1,0 +1,24 @@
+module Pages.Statistics.Food.Select.Requests exposing (fetchFoodInfo, fetchReferenceTrees)
+
+import Addresses.Backend
+import Api.Types.FoodInfo exposing (decoderFoodInfo)
+import Http
+import Pages.Statistics.Food.Select.Page as Page
+import Pages.Statistics.StatisticsRequests as StatisticsRequests
+import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Util.HttpUtil as HttpUtil
+
+
+fetchReferenceTrees : AuthorizedAccess -> Cmd Page.Msg
+fetchReferenceTrees =
+    StatisticsRequests.fetchReferenceTreesWith Page.GotFetchReferenceTreesResponse
+
+
+fetchFoodInfo : Page.Flags -> Cmd Page.Msg
+fetchFoodInfo flags =
+    HttpUtil.runPatternWithJwt
+        flags.authorizedAccess
+        (Addresses.Backend.recipes.food flags.foodId)
+        { body = Http.emptyBody
+        , expect = HttpUtil.expectJson Page.GotFetchFoodInfoResponse decoderFoodInfo
+        }

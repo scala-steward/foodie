@@ -8,9 +8,8 @@ import Api.Types.Date exposing (Date)
 import Api.Types.ReferenceTree exposing (ReferenceTree)
 import Api.Types.Stats exposing (Stats)
 import Basics.Extra exposing (flip)
-import Dict
-import Monocle.Compose as Compose
 import Monocle.Lens as Lens
+import Pages.Statistics.StatisticsRequests as StatisticsRequests
 import Pages.Statistics.StatisticsUtil as StatisticsUtil
 import Pages.Statistics.Time.Page as Page
 import Pages.Statistics.Time.Pagination as Pagination exposing (Pagination)
@@ -118,37 +117,11 @@ gotFetchStatsResponse model result =
 
 
 gotFetchReferenceTreesResponse : Page.Model -> Result Error (List ReferenceTree) -> ( Page.Model, Cmd Page.Msg )
-gotFetchReferenceTreesResponse model result =
-    ( result
-        |> Result.Extra.unpack (flip setError model)
-            (\referenceTrees ->
-                let
-                    referenceNutrientTrees =
-                        referenceTrees
-                            |> List.map
-                                (\referenceTree ->
-                                    ( referenceTree.referenceMap.id
-                                    , { map = referenceTree.referenceMap
-                                      , values =
-                                            referenceTree.nutrients
-                                                |> List.map
-                                                    (\referenceValue ->
-                                                        ( referenceValue.nutrientCode, referenceValue.referenceAmount )
-                                                    )
-                                                |> Dict.fromList
-                                      }
-                                    )
-                                )
-                            |> Dict.fromList
-                in
-                model
-                    |> (Page.lenses.statisticsEvaluation
-                            |> Compose.lensWithLens StatisticsUtil.lenses.referenceTrees
-                       ).set
-                        referenceNutrientTrees
-            )
-    , Cmd.none
-    )
+gotFetchReferenceTreesResponse =
+    StatisticsRequests.gotFetchReferenceTreesResponseWith
+        { setError = setError
+        , statisticsEvaluationLens = Page.lenses.statisticsEvaluation
+        }
 
 
 setPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.Msg )
@@ -159,27 +132,17 @@ setPagination model pagination =
 
 
 selectReferenceMap : Page.Model -> Maybe ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
-selectReferenceMap model referenceMapId =
-    ( referenceMapId
-        |> Maybe.andThen (flip Dict.get model.statisticsEvaluation.referenceTrees)
-        |> flip
-            (Page.lenses.statisticsEvaluation
-                |> Compose.lensWithLens StatisticsUtil.lenses.referenceTree
-            ).set
-            model
-    , Cmd.none
-    )
+selectReferenceMap =
+    StatisticsRequests.selectReferenceMapWith
+        { statisticsEvaluationLens = Page.lenses.statisticsEvaluation
+        }
 
 
 setNutrientsSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
-setNutrientsSearchString model string =
-    ( model
-        |> (Page.lenses.statisticsEvaluation
-                |> Compose.lensWithLens StatisticsUtil.lenses.nutrientsSearchString
-           ).set
-            string
-    , Cmd.none
-    )
+setNutrientsSearchString =
+    StatisticsRequests.setNutrientsSearchStringWith
+        { statisticsEvaluationLens = Page.lenses.statisticsEvaluation
+        }
 
 
 setError : Error -> Page.Model -> Page.Model
