@@ -103,19 +103,7 @@ nutrientInformationLine referenceValues foodNutrientInformation =
                 }
 
         factorStyle =
-            Maybe.Extra.unwrap []
-                (\percent ->
-                    [ if percent > 100 then
-                        Style.classes.rating.high
-
-                      else if percent == 100 then
-                        Style.classes.rating.exact
-
-                      else
-                        Style.classes.rating.low
-                    ]
-                )
-                factor
+            factor |> StatisticsView.factorStyle
 
         displayValue =
             Maybe.Extra.unwrap "" StatisticsView.displayFloat
