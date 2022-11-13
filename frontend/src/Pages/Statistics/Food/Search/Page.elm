@@ -1,6 +1,6 @@
 module Pages.Statistics.Food.Search.Page exposing (..)
 
-import Addresses.StatisticsVariant exposing (StatisticsVariant)
+import Addresses.StatisticsVariant exposing (Page)
 import Api.Types.Food exposing (Food)
 import Monocle.Lens exposing (Lens)
 import Pages.Statistics.Food.Search.Pagination exposing (Pagination)
@@ -16,7 +16,7 @@ type alias Model =
     , foodsSearchString : String
     , initialization : Initialization Status
     , pagination : Pagination
-    , variant : StatisticsVariant
+    , variant : Page
     }
 
 

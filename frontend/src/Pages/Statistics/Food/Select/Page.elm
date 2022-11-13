@@ -1,6 +1,6 @@
 module Pages.Statistics.Food.Select.Page exposing (..)
 
-import Addresses.StatisticsVariant exposing (StatisticsVariant)
+import Addresses.StatisticsVariant exposing (Page)
 import Api.Auxiliary exposing (FoodId, ReferenceMapId)
 import Api.Types.FoodInfo exposing (FoodInfo)
 import Api.Types.FoodStats exposing (FoodStats)
@@ -19,7 +19,7 @@ type alias Model =
     , foodStats : FoodStats
     , statisticsEvaluation : StatisticsEvaluation
     , initialization : Initialization Status
-    , variant : StatisticsVariant
+    , variant : Page
     }
 
 

@@ -1,5 +1,6 @@
 module Pages.Statistics.Time.View exposing (view)
 
+import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Auxiliary exposing (NutrientCode)
 import Api.Types.Date exposing (Date)
 import Api.Types.Meal exposing (Meal)
@@ -51,118 +52,123 @@ view model =
         }
         model
     <|
-        let
-            viewNutrients =
-                model.stats.nutrients
-                    |> List.filter (\nutrient -> [ nutrient.base.name, nutrient.base.symbol ] |> List.Extra.find (SearchUtil.search model.statisticsEvaluation.nutrientsSearchString) |> Maybe.Extra.isJust)
-        in
-        div [ Style.ids.statistics ]
-            [ div []
-                [ table [ Style.classes.intervalSelection ]
-                    [ colgroup []
-                        [ col [] []
-                        , col [] []
-                        , col [] []
-                        , col [] []
-                        ]
-                    , thead []
-                        [ tr [ Style.classes.tableHeader ]
-                            [ th [ scope "col" ] [ label [] [ text "From" ] ]
-                            , th [ scope "col" ] [ label [] [ text "To" ] ]
-                            , th [ colspan 2, scope "col", Style.classes.controlsGroup ] []
+        StatisticsView.withNavigationBar
+            { mainPageURL = model.authorizedAccess.configuration.mainPageURL
+            , currentPage = Just StatisticsVariant.Time
+            }
+        <|
+            let
+                viewNutrients =
+                    model.stats.nutrients
+                        |> List.filter (\nutrient -> [ nutrient.base.name, nutrient.base.symbol ] |> List.Extra.find (SearchUtil.search model.statisticsEvaluation.nutrientsSearchString) |> Maybe.Extra.isJust)
+            in
+            div [ Style.ids.statistics ]
+                [ div []
+                    [ table [ Style.classes.intervalSelection ]
+                        [ colgroup []
+                            [ col [] []
+                            , col [] []
+                            , col [] []
+                            , col [] []
                             ]
-                        ]
-                    , tbody []
-                        [ tr []
-                            [ td [ Style.classes.editable, Style.classes.date ] [ dateInput model Page.SetFromDate Page.lenses.from ]
-                            , td [ Style.classes.editable, Style.classes.date ] [ dateInput model Page.SetToDate Page.lenses.to ]
-                            , td [ Style.classes.controls ]
-                                [ button
-                                    [ Style.classes.button.select, onClick Page.FetchStats ]
-                                    [ text "Compute" ]
+                        , thead []
+                            [ tr [ Style.classes.tableHeader ]
+                                [ th [ scope "col" ] [ label [] [ text "From" ] ]
+                                , th [ scope "col" ] [ label [] [ text "To" ] ]
+                                , th [ colspan 2, scope "col", Style.classes.controlsGroup ] []
                                 ]
-                            , td [ Style.classes.controls ]
-                                ([ Links.loadingSymbol ] |> List.filter (always model.fetching))
+                            ]
+                        , tbody []
+                            [ tr []
+                                [ td [ Style.classes.editable, Style.classes.date ] [ dateInput model Page.SetFromDate Page.lenses.from ]
+                                , td [ Style.classes.editable, Style.classes.date ] [ dateInput model Page.SetToDate Page.lenses.to ]
+                                , td [ Style.classes.controls ]
+                                    [ button
+                                        [ Style.classes.button.select, onClick Page.FetchStats ]
+                                        [ text "Compute" ]
+                                    ]
+                                , td [ Style.classes.controls ]
+                                    ([ Links.loadingSymbol ] |> List.filter (always model.fetching))
+                                ]
                             ]
                         ]
                     ]
-                ]
-            , div [ Style.classes.elements ] [ text "Reference map" ]
-            , div [ Style.classes.info ]
-                [ dropdown
-                    { items =
-                        model.statisticsEvaluation.referenceTrees
-                            |> Dict.toList
-                            |> List.sortBy (Tuple.second >> .map >> .name)
-                            |> List.map
-                                (\( referenceMapId, referenceTree ) ->
-                                    { value = referenceMapId
-                                    , text = referenceTree.map.name
-                                    , enabled = True
-                                    }
-                                )
-                    , emptyItem =
-                        Just
-                            { value = ""
-                            , text = ""
-                            , enabled = True
-                            }
-                    , onChange = Page.SelectReferenceMap
-                    }
-                    []
-                    (model.statisticsEvaluation.referenceTree |> Maybe.map (.map >> .id))
-                ]
-            , div [ Style.classes.elements ] [ text "Nutrients" ]
-            , div [ Style.classes.info, Style.classes.nutrients ]
-                [ HtmlUtil.searchAreaWith
-                    { msg = Page.SetNutrientsSearchString
-                    , searchString = model.statisticsEvaluation.nutrientsSearchString
-                    }
-                , table []
-                    [ thead []
-                        [ tr [ Style.classes.tableHeader ]
-                            [ th [] [ label [] [ text "Name" ] ]
-                            , th [ Style.classes.numberLabel ] [ label [] [ text "Total" ] ]
-                            , th [ Style.classes.numberLabel ] [ label [] [ text "Daily average" ] ]
-                            , th [ Style.classes.numberLabel ] [ label [] [ text "Reference daily average" ] ]
-                            , th [ Style.classes.numberLabel ] [ label [] [ text "Unit" ] ]
-                            , th [ Style.classes.numberLabel ] [ label [] [ text "Percentage" ] ]
-                            ]
-                        ]
-                    , tbody [] (List.map (model.statisticsEvaluation.referenceTree |> Maybe.Extra.unwrap Dict.empty .values |> nutrientInformationLine) viewNutrients)
-                    ]
-                ]
-            , div [ Style.classes.elements ] [ text "Meals" ]
-            , div [ Style.classes.info, Style.classes.meals ]
-                [ table []
-                    [ thead []
-                        [ tr []
-                            [ th [] [ label [] [ text "Date" ] ]
-                            , th [] [ label [] [ text "Time" ] ]
-                            , th [] [ label [] [ text "Name" ] ]
-                            , th [] [ label [] [ text "Description" ] ]
-                            ]
-                        ]
-                    , tbody []
-                        (viewMeals
-                            |> Paginate.page
-                            |> List.map mealLine
-                        )
-                    ]
-                , div [ Style.classes.pagination ]
-                    [ ViewUtil.pagerButtons
-                        { msg =
-                            PaginationSettings.updateCurrentPage
-                                { pagination = Page.lenses.pagination
-                                , items = Pagination.lenses.meals
+                , div [ Style.classes.elements ] [ text "Reference map" ]
+                , div [ Style.classes.info ]
+                    [ dropdown
+                        { items =
+                            model.statisticsEvaluation.referenceTrees
+                                |> Dict.toList
+                                |> List.sortBy (Tuple.second >> .map >> .name)
+                                |> List.map
+                                    (\( referenceMapId, referenceTree ) ->
+                                        { value = referenceMapId
+                                        , text = referenceTree.map.name
+                                        , enabled = True
+                                        }
+                                    )
+                        , emptyItem =
+                            Just
+                                { value = ""
+                                , text = ""
+                                , enabled = True
                                 }
-                                model
-                                >> Page.SetPagination
-                        , elements = viewMeals
+                        , onChange = Page.SelectReferenceMap
                         }
+                        []
+                        (model.statisticsEvaluation.referenceTree |> Maybe.map (.map >> .id))
+                    ]
+                , div [ Style.classes.elements ] [ text "Nutrients" ]
+                , div [ Style.classes.info, Style.classes.nutrients ]
+                    [ HtmlUtil.searchAreaWith
+                        { msg = Page.SetNutrientsSearchString
+                        , searchString = model.statisticsEvaluation.nutrientsSearchString
+                        }
+                    , table []
+                        [ thead []
+                            [ tr [ Style.classes.tableHeader ]
+                                [ th [] [ label [] [ text "Name" ] ]
+                                , th [ Style.classes.numberLabel ] [ label [] [ text "Total" ] ]
+                                , th [ Style.classes.numberLabel ] [ label [] [ text "Daily average" ] ]
+                                , th [ Style.classes.numberLabel ] [ label [] [ text "Reference daily average" ] ]
+                                , th [ Style.classes.numberLabel ] [ label [] [ text "Unit" ] ]
+                                , th [ Style.classes.numberLabel ] [ label [] [ text "Percentage" ] ]
+                                ]
+                            ]
+                        , tbody [] (List.map (model.statisticsEvaluation.referenceTree |> Maybe.Extra.unwrap Dict.empty .values |> nutrientInformationLine) viewNutrients)
+                        ]
+                    ]
+                , div [ Style.classes.elements ] [ text "Meals" ]
+                , div [ Style.classes.info, Style.classes.meals ]
+                    [ table []
+                        [ thead []
+                            [ tr []
+                                [ th [] [ label [] [ text "Date" ] ]
+                                , th [] [ label [] [ text "Time" ] ]
+                                , th [] [ label [] [ text "Name" ] ]
+                                , th [] [ label [] [ text "Description" ] ]
+                                ]
+                            ]
+                        , tbody []
+                            (viewMeals
+                                |> Paginate.page
+                                |> List.map mealLine
+                            )
+                        ]
+                    , div [ Style.classes.pagination ]
+                        [ ViewUtil.pagerButtons
+                            { msg =
+                                PaginationSettings.updateCurrentPage
+                                    { pagination = Page.lenses.pagination
+                                    , items = Pagination.lenses.meals
+                                    }
+                                    model
+                                    >> Page.SetPagination
+                            , elements = viewMeals
+                            }
+                        ]
                     ]
                 ]
-            ]
 
 
 nutrientInformationLine : Dict NutrientCode Float -> NutrientInformation -> Html Page.Msg

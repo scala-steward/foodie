@@ -29,66 +29,71 @@ view model =
         }
         model
     <|
-        let
-            viewNutrients =
-                model.foodStats.nutrients
-                    |> List.filter (\nutrient -> [ nutrient.base.name, nutrient.base.symbol ] |> List.Extra.find (SearchUtil.search model.statisticsEvaluation.nutrientsSearchString) |> Maybe.Extra.isJust)
-                    |> List.sortBy (.base >> .name)
-        in
-        div [ Style.ids.statistics ]
-            [ div []
-                [ table [ Style.classes.info ]
-                    [ tr []
-                        [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Food" ] ]
-                        , td [] [ label [] [ text <| .name <| model.foodInfo ] ]
-                        ]
-                    ]
-                ]
-            , div [ Style.classes.elements ] [ text "Reference map" ]
-            , div [ Style.classes.info ]
-                [ dropdown
-                    { items =
-                        model.statisticsEvaluation.referenceTrees
-                            |> Dict.toList
-                            |> List.sortBy (Tuple.second >> .map >> .name)
-                            |> List.map
-                                (\( referenceMapId, referenceTree ) ->
-                                    { value = referenceMapId
-                                    , text = referenceTree.map.name
-                                    , enabled = True
-                                    }
-                                )
-                    , emptyItem =
-                        Just
-                            { value = ""
-                            , text = ""
-                            , enabled = True
-                            }
-                    , onChange = Page.SelectReferenceMap
-                    }
-                    []
-                    (model.statisticsEvaluation.referenceTree |> Maybe.map (.map >> .id))
-                ]
-            , div [ Style.classes.elements ] [ text "Nutrients per 100g" ]
-            , div [ Style.classes.info, Style.classes.nutrients ]
-                [ HtmlUtil.searchAreaWith
-                    { msg = Page.SetNutrientsSearchString
-                    , searchString = model.statisticsEvaluation.nutrientsSearchString
-                    }
-                , table []
-                    [ thead []
-                        [ tr [ Style.classes.tableHeader ]
-                            [ th [] [ label [] [ text "Name" ] ]
-                            , th [ Style.classes.numberLabel ] [ label [] [ text "Total" ] ]
-                            , th [ Style.classes.numberLabel ] [ label [] [ text "Reference daily average" ] ]
-                            , th [ Style.classes.numberLabel ] [ label [] [ text "Unit" ] ]
-                            , th [ Style.classes.numberLabel ] [ label [] [ text "Percentage" ] ]
+        StatisticsView.withNavigationBar
+            { mainPageURL = model.authorizedAccess.configuration.mainPageURL
+            , currentPage = Nothing
+            }
+        <|
+            let
+                viewNutrients =
+                    model.foodStats.nutrients
+                        |> List.filter (\nutrient -> [ nutrient.base.name, nutrient.base.symbol ] |> List.Extra.find (SearchUtil.search model.statisticsEvaluation.nutrientsSearchString) |> Maybe.Extra.isJust)
+                        |> List.sortBy (.base >> .name)
+            in
+            div [ Style.ids.statistics ]
+                [ div []
+                    [ table [ Style.classes.info ]
+                        [ tr []
+                            [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Food" ] ]
+                            , td [] [ label [] [ text <| .name <| model.foodInfo ] ]
                             ]
                         ]
-                    , tbody [] (List.map (model.statisticsEvaluation.referenceTree |> Maybe.Extra.unwrap Dict.empty .values |> nutrientInformationLine) viewNutrients)
+                    ]
+                , div [ Style.classes.elements ] [ text "Reference map" ]
+                , div [ Style.classes.info ]
+                    [ dropdown
+                        { items =
+                            model.statisticsEvaluation.referenceTrees
+                                |> Dict.toList
+                                |> List.sortBy (Tuple.second >> .map >> .name)
+                                |> List.map
+                                    (\( referenceMapId, referenceTree ) ->
+                                        { value = referenceMapId
+                                        , text = referenceTree.map.name
+                                        , enabled = True
+                                        }
+                                    )
+                        , emptyItem =
+                            Just
+                                { value = ""
+                                , text = ""
+                                , enabled = True
+                                }
+                        , onChange = Page.SelectReferenceMap
+                        }
+                        []
+                        (model.statisticsEvaluation.referenceTree |> Maybe.map (.map >> .id))
+                    ]
+                , div [ Style.classes.elements ] [ text "Nutrients per 100g" ]
+                , div [ Style.classes.info, Style.classes.nutrients ]
+                    [ HtmlUtil.searchAreaWith
+                        { msg = Page.SetNutrientsSearchString
+                        , searchString = model.statisticsEvaluation.nutrientsSearchString
+                        }
+                    , table []
+                        [ thead []
+                            [ tr [ Style.classes.tableHeader ]
+                                [ th [] [ label [] [ text "Name" ] ]
+                                , th [ Style.classes.numberLabel ] [ label [] [ text "Total" ] ]
+                                , th [ Style.classes.numberLabel ] [ label [] [ text "Reference daily average" ] ]
+                                , th [ Style.classes.numberLabel ] [ label [] [ text "Unit" ] ]
+                                , th [ Style.classes.numberLabel ] [ label [] [ text "Percentage" ] ]
+                                ]
+                            ]
+                        , tbody [] (List.map (model.statisticsEvaluation.referenceTree |> Maybe.Extra.unwrap Dict.empty .values |> nutrientInformationLine) viewNutrients)
+                        ]
                     ]
                 ]
-            ]
 
 
 nutrientInformationLine : Dict NutrientCode Float -> FoodNutrientInformation -> Html Page.Msg
