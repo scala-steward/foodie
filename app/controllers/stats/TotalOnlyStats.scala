@@ -17,7 +17,7 @@ object TotalOnlyStats {
         TotalOnlyNutrientInformation(
           nutrient.transformInto[NutrientInformationBase],
           amount = TotalOnlyAmount(
-            values = amount.value,
+            value = amount.value,
             numberOfIngredients = amount.numberOfIngredients.intValue,
             numberOfDefinedValues = amount.numberOfDefinedValues.intValue
           )
