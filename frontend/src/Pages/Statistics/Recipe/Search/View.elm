@@ -5,7 +5,6 @@ import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.Recipe exposing (Recipe)
 import Configuration exposing (Configuration)
 import Html exposing (Html, col, colgroup, div, label, table, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (scope)
 import Monocle.Compose as Compose
 import Pages.Statistics.Recipe.Search.Page as Page
 import Pages.Statistics.Recipe.Search.Pagination as Pagination
@@ -63,8 +62,8 @@ view model =
                             ]
                         , thead []
                             [ tr [ Style.classes.tableHeader ]
-                                [ th [ scope "col" ] [ label [] [ text "Name" ] ]
-                                , th [ scope "col" ] [ label [] [ text "Description" ] ]
+                                [ th [ ] [ label [] [ text "Name" ] ]
+                                , th [ ] [ label [] [ text "Description" ] ]
                                 , th [ Style.classes.controlsGroup ] []
                                 ]
                             ]
