@@ -62,13 +62,8 @@ fetchRecipe authorizedAccess recipeId =
 
 
 fetchRecipes : AuthorizedAccess -> Cmd Page.Msg
-fetchRecipes authorizedAccess =
-    HttpUtil.runPatternWithJwt
-        authorizedAccess
-        Addresses.Backend.recipes.all
-        { body = Http.emptyBody
-        , expect = HttpUtil.expectJson Page.GotFetchRecipesResponse (Decode.list decoderRecipe)
-        }
+fetchRecipes =
+    Pages.Util.Requests.fetchRecipesWith Page.GotFetchRecipesResponse
 
 
 fetchFoods : AuthorizedAccess -> Cmd Page.Msg
