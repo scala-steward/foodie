@@ -24,7 +24,7 @@ view model =
         , initialization = .initialization
         , configuration = .authorizedAccess >> .configuration
         , jwt = .authorizedAccess >> .jwt >> Just
-        , currentPage = Just ViewUtil.Statistics
+        , currentPage = Nothing --todo: Decide on correct navigation
         , showNavigation = True
         }
         model
@@ -33,6 +33,7 @@ view model =
             viewNutrients =
                 model.foodStats.nutrients
                     |> List.filter (\nutrient -> [ nutrient.base.name, nutrient.base.symbol ] |> List.Extra.find (SearchUtil.search model.statisticsEvaluation.nutrientsSearchString) |> Maybe.Extra.isJust)
+                    |> List.sortBy (.base >> .name)
         in
         div [ Style.ids.statistics ]
             [ div []

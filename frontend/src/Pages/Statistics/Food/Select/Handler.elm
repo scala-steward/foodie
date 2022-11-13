@@ -37,6 +37,7 @@ initialFetch : Page.Flags -> Cmd Page.Msg
 initialFetch flags =
     Cmd.batch
         [ Requests.fetchFoodInfo flags
+        , Requests.fetchStats flags
         , Requests.fetchReferenceTrees flags.authorizedAccess
         ]
 
