@@ -21,7 +21,7 @@ module Addresses.Frontend exposing
 
 import Api.Auxiliary exposing (FoodId, JWT, MealId, RecipeId, ReferenceMapId)
 import Api.Types.UserIdentifier exposing (UserIdentifier)
-import Pages.Util.ParserUtil as ParserUtil exposing (AddressWithParser, with1, with2)
+import Pages.Util.ParserUtil as ParserUtil exposing (AddressWithParser, with1, with1Multiple, with2)
 import Url.Parser as Parser exposing ((</>), (<?>), Parser, s)
 
 
@@ -136,9 +136,9 @@ statisticsFoodSearch =
 
 statisticsFoodSelect : AddressWithParser Int (FoodId -> b) b
 statisticsFoodSelect =
-    with1
-        { step1 = "statistics"
-        , toString = \foodId -> [ "food", String.fromInt foodId ]
+    with1Multiple
+        { steps = ["statistics", "food" ]
+        , toString = String.fromInt >> List.singleton
         , paramParser = Parser.int
         }
 
@@ -153,10 +153,8 @@ plain string =
 plainMultiple : String -> List String -> AddressWithParser () a a
 plainMultiple string strings =
     { address = always strings
-    , parser = foldl1 string strings
+    , parser = ParserUtil.foldl1 string strings
     }
 
 
-foldl1 : String -> List String -> Parser a a
-foldl1 string =
-    List.foldl (\str p -> p </> s str) (s string)
+

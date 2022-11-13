@@ -1,4 +1,4 @@
-module Pages.Util.ParserUtil exposing (AddressWithParser, nicknameEmailParser, uuidParser, with1, with2)
+module Pages.Util.ParserUtil exposing (AddressWithParser, foldl1, nicknameEmailParser, uuidParser, with1, with1Multiple, with2)
 
 import Api.Types.UUID exposing (UUID)
 import List.Extra
@@ -37,6 +37,24 @@ with1 :
 with1 ps =
     { address = \param -> ps.step1 :: ps.toString param
     , parser = s ps.step1 </> ps.paramParser
+    }
+
+
+with1Multiple :
+    { steps : List String
+    , toString : param -> List String
+    , paramParser : Parser a b
+    }
+    -> AddressWithParser param a b
+with1Multiple ps =
+    { address = \param -> ps.steps ++ ps.toString param
+    , parser =
+        case ps.steps of
+            [] ->
+                ps.paramParser
+
+            step :: steps ->
+                foldl1 step steps </> ps.paramParser
     }
 
 
@@ -105,3 +123,8 @@ splitAt sep xs =
                     List.Extra.break ((==) sep) l
             in
             start :: splitAt sep (List.drop 1 end)
+
+
+foldl1 : String -> List String -> Parser a a
+foldl1 string =
+    List.foldl (\str p -> p </> s str) (s string)
