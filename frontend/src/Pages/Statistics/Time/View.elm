@@ -8,8 +8,6 @@ import Api.Types.NutrientUnit as NutrientUnit exposing (NutrientUnit)
 import Basics.Extra exposing (flip)
 import Dict exposing (Dict)
 import Dropdown exposing (dropdown)
-import FormatNumber
-import FormatNumber.Locales
 import Html exposing (Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, scope, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -17,6 +15,7 @@ import List.Extra
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
+import Pages.Statistics.StatisticsView as StatisticsView
 import Pages.Statistics.Time.Page as Page
 import Pages.Statistics.Time.Pagination as Pagination
 import Pages.Util.DateUtil as DateUtil
@@ -173,33 +172,13 @@ nutrientInformationLine referenceValues nutrientInformation =
             Dict.get nutrientInformation.base.nutrientCode referenceValues
 
         factor =
-            referenceFactor
+            StatisticsView.referenceFactor
                 { actualValue = nutrientInformation.amounts.values |> Maybe.map .dailyAverage
                 , referenceValue = referenceValue
                 }
 
         factorStyle =
-            Maybe.Extra.unwrap []
-                (\percent ->
-                    [ if percent > 100 then
-                        Style.classes.rating.high
-
-                      else if percent == 100 then
-                        Style.classes.rating.exact
-
-                      else
-                        Style.classes.rating.low
-                    ]
-                )
-                factor
-
-        quotientInfo =
-            [ nutrientInformation.amounts.numberOfDefinedValues, nutrientInformation.amounts.numberOfIngredients ]
-                |> List.map String.fromInt
-                |> String.join "/"
-                |> Just
-                |> Maybe.Extra.filter (\_ -> nutrientInformation.amounts.values |> Maybe.Extra.isJust)
-                |> Maybe.Extra.unwrap "" (\v -> [ " ", "(", v, ")" ] |> String.join "")
+            factor |> StatisticsView.factorStyle
 
         isComplete =
             nutrientInformation.amounts.numberOfDefinedValues == nutrientInformation.amounts.numberOfIngredients
@@ -209,21 +188,27 @@ nutrientInformationLine referenceValues nutrientInformation =
                 ( "", [] )
 
             else
-                ( quotientInfo, [ Style.classes.incomplete ] )
+                ( StatisticsView.quotientInfo
+                    { defined = nutrientInformation.amounts.numberOfDefinedValues
+                    , total = nutrientInformation.amounts.numberOfIngredients
+                    , value = nutrientInformation.amounts.values
+                    }
+                , [ Style.classes.incomplete ]
+                )
 
         displayValueWith f =
-            Maybe.Extra.unwrap "" (f >> displayFloat >> flip (++) completenessInfo)
+            Maybe.Extra.unwrap "" (f >> StatisticsView.displayFloat >> flip (++) completenessInfo)
     in
     tr [ Style.classes.editLine ]
         [ td [] [ label [] [ text <| nutrientInformation.base.name ] ]
         , td [ Style.classes.numberCell ] [ label completenessStyles [ text <| displayValueWith .total <| nutrientInformation.amounts.values ] ]
         , td [ Style.classes.numberCell ] [ label completenessStyles [ text <| displayValueWith .dailyAverage nutrientInformation.amounts.values ] ]
-        , td [ Style.classes.numberCell ] [ label [] [ text <| Maybe.Extra.unwrap "" displayFloat <| referenceValue ] ]
+        , td [ Style.classes.numberCell ] [ label [] [ text <| Maybe.Extra.unwrap "" StatisticsView.displayFloat <| referenceValue ] ]
         , td [ Style.classes.numberCell ] [ label [] [ text <| NutrientUnit.toString <| nutrientInformation.base.unit ] ]
         , td [ Style.classes.numberCell ]
             [ label (factorStyle ++ completenessStyles)
                 [ text <|
-                    Maybe.Extra.unwrap "" (displayFloat >> flip (++) "%" >> flip (++) completenessInfo) <|
+                    Maybe.Extra.unwrap "" (StatisticsView.displayFloat >> flip (++) "%" >> flip (++) completenessInfo) <|
                         factor
                 ]
             ]
@@ -252,22 +237,3 @@ dateInput model mkCmd lens =
         , Style.classes.date
         ]
         []
-
-
-displayFloat : Float -> String
-displayFloat =
-    FormatNumber.format FormatNumber.Locales.frenchLocale
-
-
-referenceFactor :
-    { actualValue : Maybe Float
-    , referenceValue : Maybe Float
-    }
-    -> Maybe Float
-referenceFactor vs =
-    vs.referenceValue
-        |> Maybe.Extra.filter (\x -> x > 0)
-        |> Maybe.andThen
-            (\r ->
-                vs.actualValue |> Maybe.map (\a -> 100 * (a / r))
-            )
