@@ -12,11 +12,14 @@ import Dict exposing (Dict)
 import Dropdown exposing (dropdown)
 import FormatNumber
 import FormatNumber.Locales
-import Html exposing (Attribute, Html, div, label, td, text, th, thead, tr)
+import Html exposing (Attribute, Html, div, label, table, tbody, td, text, th, thead, tr)
+import List.Extra
 import Maybe.Extra
 import Pages.Statistics.StatisticsUtil exposing (ReferenceNutrientTree)
+import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
+import Util.SearchUtil as SearchUtil
 
 
 displayFloat : Float -> String
@@ -219,3 +222,53 @@ referenceMapDropdownWith ps model =
         }
         []
         (model |> ps.referenceTree |> Maybe.map (.map >> .id))
+
+
+statisticsTable :
+    { onReferenceMapSelection : Maybe ReferenceMapId -> msg
+    , onSearchStringChange : String -> msg
+    , searchStringOf : model -> String
+    , infoListOf : model -> List information
+    , amountOf : information -> Maybe Float
+    , nutrientBase : information -> NutrientInformationBase
+    , referenceTrees : model -> Dict ReferenceMapId ReferenceNutrientTree
+    , referenceTree : model -> Maybe ReferenceNutrientTree
+    , withDailyAverage : Bool
+    , tableLabel : String
+    , displayInfoLine : Dict NutrientCode Float -> information -> Html msg
+    }
+    -> model
+    -> List (Html msg)
+statisticsTable ps model =
+    [ div [ Style.classes.elements ] [ text "Reference map" ]
+    , div [ Style.classes.info ]
+        [ referenceMapDropdownWith
+            { referenceTrees = ps.referenceTrees
+            , referenceTree = ps.referenceTree
+            , onChange = ps.onReferenceMapSelection
+            }
+            model
+        ]
+    , div [ Style.classes.elements ] [ text <| ps.tableLabel ]
+    , div [ Style.classes.info, Style.classes.nutrients ]
+        [ HtmlUtil.searchAreaWith
+            { msg = ps.onSearchStringChange
+            , searchString = ps.searchStringOf model
+            }
+        , table [ Style.classes.elementsWithControlsTable ]
+            [ nutrientTableHeader { withDailyAverage = ps.withDailyAverage }
+            , tbody []
+                (List.map (model |> ps.referenceTree |> Maybe.Extra.unwrap Dict.empty .values |> ps.displayInfoLine)
+                    (model
+                        |> ps.infoListOf
+                        |> List.filter
+                            (\information ->
+                                [ information |> ps.nutrientBase |> .name, information |> ps.nutrientBase |> .symbol ]
+                                    |> List.Extra.find (model |> ps.searchStringOf |> SearchUtil.search)
+                                    |> Maybe.Extra.isJust
+                            )
+                    )
+                )
+            ]
+        ]
+    ]

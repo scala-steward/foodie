@@ -34,7 +34,6 @@ view model =
                 viewNutrients =
                     model.recipeStats.nutrients
                         |> List.filter (\nutrient -> [ nutrient.base.name, nutrient.base.symbol ] |> List.Extra.find (SearchUtil.search model.statisticsEvaluation.nutrientsSearchString) |> Maybe.Extra.isJust)
-                        |> List.sortBy (.base >> .name)
             in
             div [ Style.ids.statistics ]
                 [ div []

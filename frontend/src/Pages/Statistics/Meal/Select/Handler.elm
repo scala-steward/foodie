@@ -6,9 +6,11 @@ import Api.Types.Meal exposing (Meal)
 import Api.Types.ReferenceTree exposing (ReferenceTree)
 import Api.Types.TotalOnlyStats exposing (TotalOnlyStats)
 import Basics.Extra exposing (flip)
+import Monocle.Compose as Compose
 import Pages.Statistics.Meal.Select.Page as Page
 import Pages.Statistics.Meal.Select.Requests as Requests
 import Pages.Statistics.Meal.Select.Status as Status
+import Pages.Statistics.StatisticsLenses as StatisticsLenses
 import Pages.Statistics.StatisticsRequests as StatisticsRequests
 import Pages.Statistics.StatisticsUtil as StatisticsEvaluation
 import Result.Extra
@@ -64,7 +66,7 @@ gotFetchStatsResponse model result =
         |> Result.Extra.unpack (flip setError model)
             (\mealStats ->
                 model
-                    |> Page.lenses.mealStats.set mealStats
+                    |> (Page.lenses.mealStats |> Compose.lensWithLens StatisticsLenses.totalOnlyStatsNutrients).set (mealStats |> .nutrients |> List.sortBy (.base >> .name))
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.mealStats).set True
             )
     , Cmd.none
