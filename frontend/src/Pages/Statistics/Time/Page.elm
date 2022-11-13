@@ -1,6 +1,6 @@
 module Pages.Statistics.Time.Page exposing (..)
 
-import Addresses.StatisticsVariant exposing (StatisticsVariant)
+import Addresses.StatisticsVariant exposing (Page)
 import Api.Auxiliary exposing (FoodId, MealId, NutrientCode, RecipeId, ReferenceMapId)
 import Api.Lenses.RequestIntervalLens as RequestIntervalLens
 import Api.Types.Date exposing (Date)
@@ -25,7 +25,7 @@ type alias Model =
     , initialization : Initialization Status
     , pagination : Pagination
     , fetching : Bool
-    , variant : StatisticsVariant
+    , variant : Page
     }
 
 
