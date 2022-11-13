@@ -1,5 +1,7 @@
 module Addresses.StatisticsVariant exposing (..)
 
+import Url.Builder
+
 
 type Page
     = Food Parameter
@@ -30,18 +32,22 @@ meal =
 
 addressSuffix : Page -> String
 addressSuffix page =
-    case page of
-        Food _ ->
-            food
+    let
+        suffix =
+            case page of
+                Food _ ->
+                    food
 
-        Recipe _ ->
-            recipe
+                Recipe _ ->
+                    recipe
 
-        Meal _ ->
-            meal
+                Meal _ ->
+                    meal
 
-        Time ->
-            ""
+                Time ->
+                    ""
+    in
+    Url.Builder.relative [ "statistics", suffix ] []
 
 
 nameOfPage : Page -> String

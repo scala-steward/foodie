@@ -1,10 +1,12 @@
 module Pages.Statistics.StatisticsView exposing (..)
 
+import Addresses.StatisticsVariant as StatisticsVariant
 import FormatNumber
 import FormatNumber.Locales
-import Html exposing (Attribute)
+import Html exposing (Attribute, Html, div)
 import Maybe.Extra
 import Pages.Util.Style as Style
+import Pages.Util.ViewUtil as ViewUtil
 
 
 displayFloat : Float -> String
@@ -56,3 +58,45 @@ factorStyle factor =
             ]
         )
         factor
+
+
+navigationBar :
+    { mainPageURL : String
+    , currentPage : Maybe StatisticsVariant.Page
+    }
+    -> Html msg
+navigationBar ps =
+    ViewUtil.navigationBarWith
+        { navigationPages = navigationPages
+        , pageToButton =
+            \page ->
+                ViewUtil.navigationToPageButtonWith
+                    { page = page
+                    , nameOf = StatisticsVariant.nameOfPage
+                    , addressSuffix = StatisticsVariant.addressSuffix
+                    , mainPageURL = ps.mainPageURL
+                    , currentPage = ps.currentPage
+                    }
+        }
+
+
+navigationPages : List StatisticsVariant.Page
+navigationPages =
+    [ StatisticsVariant.Food StatisticsVariant.None
+    , StatisticsVariant.Recipe StatisticsVariant.None
+    , StatisticsVariant.Meal StatisticsVariant.None
+    , StatisticsVariant.Time
+    ]
+
+
+withNavigationBar :
+    { mainPageURL : String
+    , currentPage : Maybe StatisticsVariant.Page
+    }
+    -> Html msg
+    -> Html msg
+withNavigationBar ps html =
+    div []
+        [ navigationBar ps
+        , html
+        ]
