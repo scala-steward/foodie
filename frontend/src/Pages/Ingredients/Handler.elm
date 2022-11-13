@@ -39,7 +39,7 @@ initialFetch authorizedAccess recipeId =
     Cmd.batch
         [ Requests.fetchIngredients authorizedAccess recipeId
         , Requests.fetchComplexIngredients authorizedAccess recipeId
-        , Requests.fetchRecipe authorizedAccess recipeId
+        , Requests.fetchRecipe { authorizedAccess = authorizedAccess, recipeId = recipeId }
         , doFetchFoods ()
         , Requests.fetchComplexFoods authorizedAccess
         , Requests.fetchRecipes authorizedAccess

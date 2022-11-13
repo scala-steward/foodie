@@ -22,7 +22,6 @@ import Api.Types.Ingredient exposing (Ingredient, decoderIngredient)
 import Api.Types.IngredientCreation exposing (IngredientCreation, encoderIngredientCreation)
 import Api.Types.IngredientUpdate exposing (IngredientUpdate, encoderIngredientUpdate)
 import Api.Types.Measure exposing (Measure, decoderMeasure)
-import Api.Types.Recipe exposing (Recipe, decoderRecipe)
 import Http
 import Json.Decode as Decode
 import Pages.Ingredients.Page as Page
@@ -51,14 +50,9 @@ fetchComplexIngredients flags recipeId =
         }
 
 
-fetchRecipe : AuthorizedAccess -> RecipeId -> Cmd Page.Msg
-fetchRecipe authorizedAccess recipeId =
-    HttpUtil.runPatternWithJwt
-        authorizedAccess
-        (Addresses.Backend.recipes.single recipeId)
-        { body = Http.emptyBody
-        , expect = HttpUtil.expectJson Page.GotFetchRecipeResponse decoderRecipe
-        }
+fetchRecipe : Page.Flags -> Cmd Page.Msg
+fetchRecipe =
+    Pages.Util.Requests.fetchRecipeWith Page.GotFetchRecipeResponse
 
 
 fetchRecipes : AuthorizedAccess -> Cmd Page.Msg

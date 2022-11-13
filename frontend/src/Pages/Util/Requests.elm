@@ -1,6 +1,7 @@
 module Pages.Util.Requests exposing (..)
 
 import Addresses.Backend
+import Api.Auxiliary exposing (RecipeId)
 import Api.Types.Food exposing (Food, decoderFood)
 import Api.Types.Recipe exposing (Recipe, decoderRecipe)
 import Http
@@ -26,4 +27,17 @@ fetchRecipesWith mkMsg authorizedAccess =
         Addresses.Backend.recipes.all
         { body = Http.emptyBody
         , expect = HttpUtil.expectJson mkMsg (Decode.list decoderRecipe)
+        }
+
+
+fetchRecipeWith :
+    (Result Error Recipe -> msg)
+    -> { authorizedAccess : AuthorizedAccess, recipeId : RecipeId }
+    -> Cmd msg
+fetchRecipeWith mkMsg flags =
+    HttpUtil.runPatternWithJwt
+        flags.authorizedAccess
+        (Addresses.Backend.recipes.single flags.recipeId)
+        { body = Http.emptyBody
+        , expect = HttpUtil.expectJson mkMsg decoderRecipe
         }
