@@ -6,6 +6,7 @@ import Api.Types.ReferenceEntry exposing (ReferenceEntry)
 import Api.Types.ReferenceMap exposing (ReferenceMap)
 import Basics.Extra exposing (flip)
 import Dict
+import Dict.Extra
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Monocle.Compose as Compose
@@ -207,7 +208,7 @@ gotFetchReferenceEntriesResponse model result =
         |> Result.Extra.unpack (flip setError model)
             (\referenceEntries ->
                 model
-                    |> Page.lenses.referenceEntries.set (referenceEntries |> List.map (\r -> ( r.nutrientCode, r |> Editing.asView )) |> Dict.fromList)
+                    |> Page.lenses.referenceEntries.set (referenceEntries |> List.map Editing.asView |> Dict.Extra.fromListBy (.original >> .nutrientCode))
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.referenceEntries).set True
             )
     , Cmd.none

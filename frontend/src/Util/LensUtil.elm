@@ -2,6 +2,7 @@ module Util.LensUtil exposing (..)
 
 import Basics.Extra exposing (flip)
 import Dict exposing (Dict)
+import Dict.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens as Lens exposing (Lens)
 import Monocle.Optional as Optional exposing (Optional)
@@ -18,8 +19,7 @@ dictByKey k =
 set : List a -> (a -> comparable) -> Lens model (Dict comparable a) -> model -> model
 set xs idOf lens md =
     xs
-        |> List.map (\m -> ( idOf m, m ))
-        |> Dict.fromList
+        |> Dict.Extra.fromListBy idOf
         |> flip lens.set md
 
 

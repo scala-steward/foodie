@@ -9,6 +9,7 @@ import Api.Types.Measure exposing (Measure, decoderMeasure, encoderMeasure)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Dict exposing (Dict)
+import Dict.Extra
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Maybe.Extra
@@ -394,7 +395,7 @@ gotFetchIngredientsResponse model result =
             (\ingredients ->
                 model
                     |> (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients).set
-                        (ingredients |> List.map (\ingredient -> ( ingredient.id, ingredient |> Editing.asView )) |> Dict.fromList)
+                        (ingredients |> List.map Editing.asView |> Dict.Extra.fromListBy (.original >> .id))
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.ingredients).set True
             )
     , Cmd.none
@@ -408,7 +409,7 @@ gotFetchComplexIngredientsResponse model result =
             (\complexIngredients ->
                 model
                     |> (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients).set
-                        (complexIngredients |> List.map (\complexIngredient -> ( complexIngredient.complexFoodId, complexIngredient |> Editing.asView )) |> Dict.fromList)
+                        (complexIngredients |> List.map Editing.asView |> Dict.Extra.fromListBy (.original >> .complexFoodId))
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.complexIngredients).set True
             )
     , Cmd.none
@@ -482,7 +483,7 @@ gotFetchRecipesResponse model result =
         |> Result.Extra.unpack (flip setError model)
             (\recipes ->
                 model
-                    |> Page.lenses.allRecipes.set (recipes |> List.map (\r -> ( r.id, r )) |> Dict.fromList)
+                    |> Page.lenses.allRecipes.set (recipes |> Dict.Extra.fromListBy .id)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.allRecipes).set True
             )
     , Cmd.none
