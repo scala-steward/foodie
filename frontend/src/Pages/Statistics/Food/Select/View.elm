@@ -24,7 +24,7 @@ view model =
         , initialization = .initialization
         , configuration = .authorizedAccess >> .configuration
         , jwt = .authorizedAccess >> .jwt >> Just
-        , currentPage = Nothing --todo: Decide on correct navigation
+        , currentPage = Nothing
         , showNavigation = True
         }
         model
