@@ -75,7 +75,7 @@ view model =
                         []
                         (model.statisticsEvaluation.referenceTree |> Maybe.map (.map >> .id))
                     ]
-                , div [ Style.classes.elements ] [ text "Nutrients per 100g" ]
+                , div [ Style.classes.elements ] [ text "Nutrients per serving" ]
                 , div [ Style.classes.info, Style.classes.nutrients ]
                     [ HtmlUtil.searchAreaWith
                         { msg = Page.SetNutrientsSearchString
