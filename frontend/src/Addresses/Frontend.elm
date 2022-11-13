@@ -19,6 +19,7 @@ module Addresses.Frontend exposing
     , userSettings
     )
 
+import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Auxiliary exposing (FoodId, JWT, MealId, RecipeId, ReferenceMapId)
 import Api.Types.UserIdentifier exposing (UserIdentifier)
 import Pages.Util.ParserUtil as ParserUtil exposing (AddressWithParser, with1, with1Multiple, with2)
@@ -131,13 +132,13 @@ confirm step1 =
 
 statisticsFoodSearch : AddressWithParser () a a
 statisticsFoodSearch =
-    plainMultiple "statistics" [ "food" ]
+    plainMultiple "statistics" [ StatisticsVariant.food ]
 
 
 statisticsFoodSelect : AddressWithParser Int (FoodId -> b) b
 statisticsFoodSelect =
     with1Multiple
-        { steps = ["statistics", "food" ]
+        { steps = ["statistics", StatisticsVariant.food ]
         , toString = String.fromInt >> List.singleton
         , paramParser = Parser.int
         }

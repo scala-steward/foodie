@@ -1,5 +1,6 @@
 module Addresses.Backend exposing (..)
 
+import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Auxiliary exposing (ComplexFoodId, FoodId, IngredientId, MealEntryId, MealId, NutrientCode, RecipeId, ReferenceMapId)
 import Maybe.Extra
 import Url.Builder exposing (QueryParameter)
@@ -124,7 +125,7 @@ stats =
             (::) "stats"
     in
     { all = \interval -> getQ (base []) (Maybe.Extra.values [ interval.from, interval.to ])
-    , food = \foodId -> get <| base <| [ "food", foodId |> String.fromInt ]
+    , food = \foodId -> get <| base <| [ StatisticsVariant.food, foodId |> String.fromInt ]
     , nutrients = get <| base <| [ "nutrients" ]
     }
 
