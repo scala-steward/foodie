@@ -9,7 +9,6 @@ module Pages.MealEntries.Requests exposing
 
 import Addresses.Backend
 import Api.Auxiliary exposing (JWT, MealEntryId, MealId, RecipeId)
-import Api.Types.Meal exposing (decoderMeal)
 import Api.Types.MealEntry exposing (MealEntry, decoderMealEntry)
 import Api.Types.MealEntryCreation exposing (MealEntryCreation, encoderMealEntryCreation)
 import Api.Types.MealEntryUpdate exposing (MealEntryUpdate, encoderMealEntryUpdate)
@@ -21,14 +20,9 @@ import Pages.Util.Requests
 import Util.HttpUtil as HttpUtil
 
 
-fetchMeal : AuthorizedAccess -> MealId -> Cmd Page.Msg
-fetchMeal authorizedAccess mealId =
-    HttpUtil.runPatternWithJwt
-        authorizedAccess
-        (Addresses.Backend.meals.single mealId)
-        { body = Http.emptyBody
-        , expect = HttpUtil.expectJson Page.GotFetchMealResponse decoderMeal
-        }
+fetchMeal : Page.Flags -> Cmd Page.Msg
+fetchMeal =
+    Pages.Util.Requests.fetchMealWith Page.GotFetchMealResponse
 
 
 fetchMealEntries : AuthorizedAccess -> MealId -> Cmd Page.Msg

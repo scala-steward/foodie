@@ -47,7 +47,7 @@ init flags =
 initialFetch : AuthorizedAccess -> MealId -> Cmd Page.Msg
 initialFetch authorizedAccess mealId =
     Cmd.batch
-        [ Requests.fetchMeal authorizedAccess mealId
+        [ Requests.fetchMeal { authorizedAccess = authorizedAccess, mealId = mealId }
         , Requests.fetchRecipes authorizedAccess
         , Requests.fetchMealEntries authorizedAccess mealId
         ]
