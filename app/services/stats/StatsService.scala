@@ -164,25 +164,38 @@ object StatsService {
         recipeId: RecipeId
     )(implicit
         ec: ExecutionContext
-    ): OptionT[DBIO, RecipeNutrientMap] =
+    ): OptionT[DBIO, RecipeNutrientMap] = {
+      case class NutrientsAndFoods(
+          nutrientMap: NutrientMap,
+          foodIds: Set[FoodId]
+      )
+      def descend(recipeId: RecipeId): OptionT[DBIO, NutrientsAndFoods] =
+        for {
+          ingredients        <- OptionT.liftF(RecipeService.Live.getIngredients(userId, recipeId))
+          complexIngredients <- OptionT.liftF(ComplexIngredientService.Live.all(userId, recipeId))
+          nutrients          <- OptionT.liftF(NutrientService.Live.nutrientsOfIngredients(ingredients))
+          recipeNutrientMapsOfComplexNutrients <-
+            complexIngredients
+              .traverse { complexIngredient =>
+                descend(complexIngredient.complexFoodId)
+                  .map(recipeNutrientMap =>
+                    recipeNutrientMap.copy(nutrientMap = complexIngredient.factor *: recipeNutrientMap.nutrientMap)
+                  )
+              }
+        } yield NutrientsAndFoods(
+          nutrientMap = nutrients + recipeNutrientMapsOfComplexNutrients.map(_.nutrientMap).qsum,
+          foodIds = ingredients.map(_.foodId).toSet ++ recipeNutrientMapsOfComplexNutrients.flatMap(_.foodIds)
+        )
+
       for {
-        recipe             <- OptionT(RecipeService.Live.getRecipe(userId, recipeId))
-        ingredients        <- OptionT.liftF(RecipeService.Live.getIngredients(userId, recipeId))
-        complexIngredients <- OptionT.liftF(ComplexIngredientService.Live.all(userId, recipeId))
-        nutrients          <- OptionT.liftF(NutrientService.Live.nutrientsOfIngredients(ingredients))
-        recipeNutrientMapsOfComplexNutrients <-
-          complexIngredients
-            .traverse { complexIngredient =>
-              nutrientsOfRecipeT(userId, complexIngredient.complexFoodId)
-                .map(recipeNutrientMap =>
-                  recipeNutrientMap.copy(nutrientMap = complexIngredient.factor *: recipeNutrientMap.nutrientMap)
-                )
-            }
+        recipe            <- OptionT(RecipeService.Live.getRecipe(userId, recipeId))
+        nutrientsAndFoods <- descend(recipeId)
       } yield RecipeNutrientMap(
         recipe = recipe,
-        nutrientMap = nutrients + recipeNutrientMapsOfComplexNutrients.map(_.nutrientMap).qsum,
-        foodIds = ingredients.map(_.foodId).toSet ++ recipeNutrientMapsOfComplexNutrients.flatMap(_.foodIds)
+        nutrientMap = recipe.numberOfServings.reciprocal *: nutrientsAndFoods.nutrientMap,
+        foodIds = nutrientsAndFoods.foodIds
       )
+    }
 
     private def nutrientAmountMapOfMealEntries(
         mealEntries: Seq[MealEntry],
