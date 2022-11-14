@@ -167,20 +167,28 @@ th {
     width: 10%;
 }
 
-/*todo: Group column sizes by page*/
-#addMealView th:nth-child(3),
-#addReferenceMapView th:first-child,
-#mealEntryEditor th:first-child,
-#mealEntryEditor th:nth-child(2),
-#referenceEntryEditor th:first-child {
+#addMealView th:first-child,
+#addMealView th:nth-child(2):not(input) {
+    width: 15%;
+}
+
+#addMealView th:nth-child(3) {
     width: 30%;
 }
 
-#ingredientEditor th:first-child {
-    width: 30%
+#addReferenceMapView th:first-child {
+    width: 30%;
 }
 
-#addReferenceMapView th:nth-child(2),
+#addReferenceMapView th:nth-child(2) {
+    width: 10%;
+}
+
+#mealEntryEditor th:first-child,
+#mealEntryEditor th:nth-child(2) {
+    width: 30%;
+}
+
 #mealEntryEditor th:nth-child(3) {
     width: 10%;
 }
@@ -197,9 +205,8 @@ th {
     width: 5%
 }
 
-#addMealView th:first-child,
-#addMealView th:nth-child(2):not(input) {
-    width: 15%;
+#ingredientEditor th:first-child {
+    width: 30%
 }
 
 #ingredientEditor th:nth-child(2) {
