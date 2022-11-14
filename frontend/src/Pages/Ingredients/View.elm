@@ -1,5 +1,6 @@
 module Pages.Ingredients.View exposing (view)
 
+import Addresses.Frontend
 import Api.Auxiliary exposing (ComplexFoodId, FoodId, IngredientId, JWT, MeasureId, RecipeId)
 import Api.Types.AmountUnit exposing (AmountUnit)
 import Api.Types.ComplexFood exposing (ComplexFood)
@@ -9,6 +10,7 @@ import Api.Types.Food exposing (Food)
 import Api.Types.Ingredient exposing (Ingredient)
 import Api.Types.Measure exposing (Measure)
 import Basics.Extra exposing (flip)
+import Configuration exposing (Configuration)
 import Dict exposing (Dict)
 import Dropdown exposing (Item, dropdown)
 import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
@@ -30,6 +32,7 @@ import Pages.Ingredients.RecipeInfo exposing (RecipeInfo)
 import Pages.Ingredients.Status as Status
 import Pages.Util.DictUtil as DictUtil
 import Pages.Util.HtmlUtil as HtmlUtil
+import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput
@@ -274,7 +277,7 @@ viewPlain model =
                 , tbody []
                     (viewFoods
                         |> Paginate.page
-                        |> List.map (viewFoodLine model.ingredientsGroup.foods model.ingredientsGroup.foodsToAdd model.ingredientsGroup.ingredients)
+                        |> List.map (viewFoodLine model.authorizedAccess.configuration model.ingredientsGroup.foods model.ingredientsGroup.foodsToAdd model.ingredientsGroup.ingredients)
                     )
                 ]
             , div [ Style.classes.pagination ]
@@ -634,8 +637,8 @@ complexFoodInfo complexFoodId recipeMap complexFoodMap =
     }
 
 
-viewFoodLine : Page.FoodMap -> Page.AddFoodsMap -> Page.PlainIngredientStateMap -> Food -> Html Page.Msg
-viewFoodLine foodMap ingredientsToAdd ingredients food =
+viewFoodLine : Configuration -> Page.FoodMap -> Page.AddFoodsMap -> Page.PlainIngredientStateMap -> Food -> Html Page.Msg
+viewFoodLine configuration foodMap ingredientsToAdd ingredients food =
     let
         addMsg =
             Page.AddFood food.id
@@ -661,8 +664,14 @@ viewFoodLine foodMap ingredientsToAdd ingredients food =
                 Nothing ->
                     [ td [ Style.classes.editable, Style.classes.numberCell ] []
                     , td [ Style.classes.editable, Style.classes.numberCell ] []
-                    , td [ Style.classes.controls ] []
                     , td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick selectMsg ] [ text "Select" ] ]
+                    , td [ Style.classes.controls ]
+                        [ Links.linkButton
+                            { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsFoodSelect.address <| food.id
+                            , attributes = [ Style.classes.button.nutrients ]
+                            , children = [ text "Nutrients" ]
+                            }
+                        ]
                     ]
 
                 Just ingredientToAdd ->

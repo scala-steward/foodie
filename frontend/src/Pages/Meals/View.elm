@@ -154,6 +154,13 @@ viewMealLine configuration meal =
                     , children = [ text "Entries" ]
                     }
                 ]
+            , td [ Style.classes.controls ]
+                [ Links.linkButton
+                    { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsMealSelect.address <| meal.id
+                    , attributes = [ Style.classes.button.nutrients ]
+                    , children = [ text "Nutrients" ]
+                    }
+                ]
             ]
         , onClick = [ editMsg ]
         , configuration = configuration
