@@ -126,7 +126,12 @@ ids :
     , navigation : Attribute msg
     , overviewMain : Attribute msg
     , referenceEntryEditor : Attribute msg
-    , statistics : Attribute msg
+    , statistics :
+        { food : Attribute msg
+        , meal : Attribute msg
+        , recipe : Attribute msg
+        , time : Attribute msg
+        }
     }
 ids =
     { add = id "add"
@@ -140,5 +145,10 @@ ids =
     , navigation = id "navigation"
     , overviewMain = id "overviewMain"
     , referenceEntryEditor = id "referenceEntryEditor"
-    , statistics = id "statistics"
+    , statistics =
+        { food = id "statisticsFood"
+        , meal = id "statisticsTime"
+        , recipe = id "statisticsRecipe"
+        , time = id "statistics"
+        }
     }

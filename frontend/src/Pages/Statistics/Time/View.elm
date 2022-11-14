@@ -48,7 +48,7 @@ view model =
             , currentPage = Just StatisticsVariant.Time
             }
         <|
-            div [ Style.ids.statistics ]
+            div [ Style.ids.statistics.time ]
                 (div []
                     [ table [ Style.classes.intervalSelection, Style.classes.elementsWithControlsTable ]
                         [ colgroup []

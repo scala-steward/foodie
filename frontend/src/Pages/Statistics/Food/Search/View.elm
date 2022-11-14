@@ -48,8 +48,8 @@ view model =
                             }
                             model
             in
-            div [ Style.classes.addView ]
-                [ div [ Style.classes.addElement ]
+            div [ Style.ids.statistics.food ]
+                [ div []
                     [ HtmlUtil.searchAreaWith
                         { msg = Page.SetSearchString
                         , searchString = model.foodsSearchString
