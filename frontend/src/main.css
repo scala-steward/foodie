@@ -259,6 +259,26 @@ th {
     width: 35%;
 }
 
+#statisticsFood th:first-child {
+    width: 75%;
+}
+
+#statisticsMeal th:first-child,
+#statisticsMeal th:nth-child(2) {
+    width: 15%;
+}
+
+#statisticsMeal th:nth-child(3) {
+    width: 45%;
+}
+
+#statisticsRecipe th:first-child {
+    width: 40%;
+}
+#statisticsRecipe th:nth-child(2) {
+    width: 35%;
+}
+
 .low {
     color: #fa8128; /* tangerine */
 }
