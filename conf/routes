@@ -46,6 +46,7 @@ DELETE /reference-maps/:mapId/entries/:nutrientCode      controllers.reference.R
 
 GET    /stats                                            controllers.stats.StatsController.get(from: Option[String], to: Option[String])
 GET    /stats/food/:foodId                               controllers.stats.StatsController.ofFood(foodId: Int)
+GET    /stats/complex-food/:recipeId                     controllers.stats.StatsController.ofComplexFood(recipeId: java.util.UUID)
 GET    /stats/recipe/:recipeId                           controllers.stats.StatsController.ofRecipe(recipeId: java.util.UUID)
 GET    /stats/meal/:mealId                               controllers.stats.StatsController.ofMeal(mealId: java.util.UUID)
 GET    /stats/nutrients                                  controllers.stats.StatsController.allNutrients

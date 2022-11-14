@@ -54,6 +54,19 @@ class StatsController @Inject() (
         )
     }
 
+  def ofComplexFood(recipeId: UUID): Action[AnyContent] =
+    userAction.async { request =>
+      statsService
+        .nutrientsOfComplexFood(request.user.id, recipeId.transformInto[services.ComplexFoodId])
+        .map(
+          _.fold(NotFound: Result)(
+            _.pipe(_.transformInto[ComplexFoodStats])
+              .pipe(_.asJson)
+              .pipe(Ok(_))
+          )
+        )
+    }
+
   def ofRecipe(recipeId: UUID): Action[AnyContent] =
     userAction.async { request =>
       statsService

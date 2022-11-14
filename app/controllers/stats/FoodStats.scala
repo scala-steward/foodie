@@ -12,13 +12,7 @@ case class FoodStats(
 object FoodStats {
 
   implicit val fromDomain: Transformer[services.stats.NutrientAmountMap, FoodStats] = { nutrientMap =>
-    val nutrients = nutrientMap.map {
-      case (nutrient, amount) =>
-        FoodNutrientInformation(
-          base = nutrient.transformInto[NutrientInformationBase],
-          amount = amount.value
-        )
-    }.toSeq
+    val nutrients = nutrientMap.map(_.transformInto[FoodNutrientInformation]).toSeq
     FoodStats(
       nutrients = nutrients
     )
