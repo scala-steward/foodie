@@ -87,7 +87,6 @@ body, button, input {
     font-size: larger;
 }
 
-
 .editButton,
 .editorButton,
 .deleteButton,
@@ -95,7 +94,8 @@ body, button, input {
 .cancelButton,
 .selectButton,
 .logoutButton,
-.alternativeButton {
+.alternativeButton,
+.nutrientsButton {
     color: rgb(250, 250, 250);
     border: none;
     text-align: center;
@@ -105,7 +105,8 @@ body, button, input {
     display: inline-block;
     margin: auto;
     vertical-align: center;
-    padding: 5px;
+    padding-top: 5px;
+    padding-bottom: 5px;
     border: 0;
     height: 100%;
     width: 100%;
@@ -154,8 +155,19 @@ th {
     background: white;
 }
 
+#addRecipeView th:first-child {
+    width: 25%;
+}
+
+#addRecipeView th:nth-child(2) {
+    width: 20%;
+}
+
+#addRecipeView th:nth-child(3) {
+    width: 10%;
+}
+
 /*todo: Group column sizes by page*/
-#addRecipeView th:first-child,
 #addMealView th:nth-child(3),
 #addReferenceMapView th:first-child,
 #mealEntryEditor th:first-child,
@@ -164,15 +176,10 @@ th {
     width: 30%;
 }
 
-#addRecipeView th:nth-child(2) {
-    width: 25%;
-}
-
 #ingredientEditor th:first-child {
     width: 30%
 }
 
-#addRecipeView th:nth-child(3),
 #addReferenceMapView th:nth-child(2),
 #mealEntryEditor th:nth-child(3) {
     width: 10%;
@@ -416,8 +423,7 @@ th {
 }
 
 .navigationButton,
-.pagerButton,
-.nutrientsButton {
+.pagerButton {
     color: rgb(250, 250, 250);
     text-align: center;
     border-radius: 5px;
