@@ -147,7 +147,7 @@ ids =
     , referenceEntryEditor = id "referenceEntryEditor"
     , statistics =
         { food = id "statisticsFood"
-        , meal = id "statisticsTime"
+        , meal = id "statisticsMeal"
         , recipe = id "statisticsRecipe"
         , time = id "statistics"
         }
