@@ -116,6 +116,7 @@ stats :
         , to : Maybe QueryParameter
         }
         -> ResourcePattern
+    , complexFood : ComplexFoodId -> ResourcePattern
     , food : FoodId -> ResourcePattern
     , recipe : RecipeId -> ResourcePattern
     , meal : MealId -> ResourcePattern
@@ -127,7 +128,8 @@ stats =
             (::) "stats"
     in
     { all = \interval -> getQ (base []) (Maybe.Extra.values [ interval.from, interval.to ])
-    , food = \foodId -> get <| base <| [ StatisticsVariant.foodBackend, foodId |> String.fromInt ]
+    , complexFood = \complexFoodId -> get <| base <| [ StatisticsVariant.complexFood, complexFoodId ]
+    , food = \foodId -> get <| base <| [ StatisticsVariant.food, foodId |> String.fromInt ]
     , recipe = \recipeId -> get <| base <| [ StatisticsVariant.recipe, recipeId ]
     , meal = \mealId -> get <| base <| [ StatisticsVariant.meal, mealId ]
     , nutrients = get <| base <| [ "nutrients" ]
@@ -240,6 +242,7 @@ references =
 
 complexFoods :
     { all : ResourcePattern
+    , single : ComplexFoodId -> ResourcePattern
     , create : ResourcePattern
     , update : ResourcePattern
     , delete : ComplexFoodId -> ResourcePattern
@@ -250,6 +253,7 @@ complexFoods =
             (::) "complex-foods"
     in
     { all = get <| base <| []
+    , single = \complexFoodId -> get <| base <| [ complexFoodId ]
     , create = post <| base []
     , update = patch <| base []
     , delete = \complexFoodId -> delete <| base <| [ complexFoodId ]

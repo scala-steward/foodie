@@ -13,6 +13,8 @@ module Addresses.Frontend exposing
     , referenceMaps
     , requestRecovery
     , requestRegistration
+    , statisticsComplexFoodSearch
+    , statisticsComplexFoodSelect
     , statisticsFoodSearch
     , statisticsFoodSelect
     , statisticsMealSearch
@@ -24,7 +26,7 @@ module Addresses.Frontend exposing
     )
 
 import Addresses.StatisticsVariant as StatisticsVariant
-import Api.Auxiliary exposing (FoodId, JWT, MealId, RecipeId, ReferenceMapId)
+import Api.Auxiliary exposing (ComplexFoodId, FoodId, JWT, MealId, RecipeId, ReferenceMapId)
 import Api.Types.UUID exposing (UUID)
 import Api.Types.UserIdentifier exposing (UserIdentifier)
 import Pages.Util.ParserUtil as ParserUtil exposing (AddressWithParser, with1, with1Multiple, with2)
@@ -72,15 +74,29 @@ statisticsTime =
 
 statisticsFoodSearch : AddressWithParser () a a
 statisticsFoodSearch =
-    plainMultiple "statistics" [ StatisticsVariant.foodFrontend ]
+    plainMultiple "statistics" [ StatisticsVariant.food ]
 
 
 statisticsFoodSelect : AddressWithParser Int (FoodId -> b) b
 statisticsFoodSelect =
     with1Multiple
-        { steps = [ "statistics", StatisticsVariant.foodFrontend ]
+        { steps = [ "statistics", StatisticsVariant.food ]
         , toString = String.fromInt >> List.singleton
         , paramParser = Parser.int
+        }
+
+
+statisticsComplexFoodSearch : AddressWithParser () a a
+statisticsComplexFoodSearch =
+    plainMultiple "statistics" [ StatisticsVariant.complexFood ]
+
+
+statisticsComplexFoodSelect : AddressWithParser UUID (ComplexFoodId -> b) b
+statisticsComplexFoodSelect =
+    with1Multiple
+        { steps = [ "statistics", StatisticsVariant.complexFood ]
+        , toString = List.singleton
+        , paramParser = ParserUtil.uuidParser
         }
 
 

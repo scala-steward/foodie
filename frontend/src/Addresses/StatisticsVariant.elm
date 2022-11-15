@@ -5,19 +5,20 @@ import Url.Builder
 
 type Page
     = Food
+    | ComplexFood
     | Recipe
     | Meal
     | Time
 
 
-foodBackend : String
-foodBackend =
+food : String
+food =
     "food"
 
 
-foodFrontend : String
-foodFrontend =
-    "ingredient"
+complexFood : String
+complexFood =
+    "complex-food"
 
 
 recipe : String
@@ -36,7 +37,10 @@ addressSuffix page =
         suffix =
             case page of
                 Food ->
-                    foodFrontend
+                    food
+
+                ComplexFood ->
+                    complexFood
 
                 Recipe ->
                     recipe
@@ -53,12 +57,11 @@ addressSuffix page =
 nameOfPage : Page -> String
 nameOfPage page =
     case page of
-        {- From a user perspective there is no need to differentiate between
-           'food' and 'ingredient', hence we only use 'ingredient'.
-           Internally, an ingredient is a link between a recipe and a food.
-        -}
         Food ->
-            "Ingredient"
+            "Food"
+
+        ComplexFood ->
+            "Complex food"
 
         Recipe ->
             "Recipe"
