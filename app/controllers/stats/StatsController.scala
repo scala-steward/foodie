@@ -60,7 +60,7 @@ class StatsController @Inject() (
         .nutrientsOfComplexFood(request.user.id, recipeId.transformInto[services.ComplexFoodId])
         .map(
           _.fold(NotFound: Result)(
-            _.pipe(_.transformInto[ComplexFoodStats])
+            _.pipe(_.transformInto[TotalOnlyStats])
               .pipe(_.asJson)
               .pipe(Ok(_))
           )

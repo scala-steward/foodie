@@ -30,7 +30,7 @@ trait StatsService {
   def nutrientsOverTime(userId: UserId, requestInterval: RequestInterval): Future[Stats]
 
   def nutrientsOfFood(foodId: FoodId): Future[Option[NutrientAmountMap]]
-  def nutrientsOfComplexFood(userId: UserId, complexFoodId: ComplexFoodId): Future[Option[ComplexFoodStats]]
+  def nutrientsOfComplexFood(userId: UserId, complexFoodId: ComplexFoodId): Future[Option[NutrientAmountMap]]
   def nutrientsOfRecipe(userId: UserId, recipeId: RecipeId): Future[Option[NutrientAmountMap]]
 
   def nutrientsOfMeal(userId: UserId, mealId: MealId): Future[NutrientAmountMap]
@@ -55,7 +55,7 @@ object StatsService {
     override def nutrientsOfComplexFood(
         userId: UserId,
         complexFoodId: ComplexFoodId
-    ): Future[Option[ComplexFoodStats]] =
+    ): Future[Option[NutrientAmountMap]] =
       db.run(companion.nutrientsOfComplexFood(userId, complexFoodId))
 
     override def nutrientsOfRecipe(userId: UserId, recipeId: RecipeId): Future[Option[NutrientAmountMap]] =
@@ -73,7 +73,7 @@ object StatsService {
 
     def nutrientsOfComplexFood(userId: UserId, complexFoodId: ComplexFoodId)(implicit
         ec: ExecutionContext
-    ): DBIO[Option[ComplexFoodStats]]
+    ): DBIO[Option[NutrientAmountMap]]
 
     def nutrientsOfRecipe(userId: UserId, recipeId: RecipeId)(implicit
         ec: ExecutionContext
@@ -131,14 +131,11 @@ object StatsService {
 
     override def nutrientsOfComplexFood(userId: UserId, complexFoodId: ComplexFoodId)(implicit
         ec: ExecutionContext
-    ): DBIO[Option[ComplexFoodStats]] = {
+    ): DBIO[Option[NutrientAmountMap]] = {
       val transformer = for {
         complexFood <- OptionT(ComplexFoodService.Live.get(userId, complexFoodId))
         recipeStats <- OptionT(nutrientsOfRecipeWith(userId, complexFoodId, ScaleMode.Unit(complexFood.amount)))
-      } yield ComplexFoodStats(
-        nutrientAmountMap = recipeStats,
-        unit = complexFood.unit
-      )
+      } yield recipeStats
 
       transformer.value
     }
