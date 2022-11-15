@@ -112,6 +112,7 @@ object Bridge {
     mkAndWrite[NutrientInformationBase]
     mkAndWrite[Stats]
     mkAndWrite[FoodStats]
+    mkAndWrite[ComplexFoodStats]
     mkAndWrite[TotalOnlyStats]
     mkAndWrite[TotalOnlyNutrientInformation]
     mkAndWrite[TotalOnlyAmount]
