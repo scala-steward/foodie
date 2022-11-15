@@ -344,7 +344,7 @@ viewComplex model =
                 , tbody []
                     (viewComplexFoods
                         |> Paginate.page
-                        |> List.map (viewComplexFoodLine model.allRecipes model.complexIngredientsGroup.foods model.complexIngredientsGroup.foodsToAdd model.complexIngredientsGroup.ingredients)
+                        |> List.map (viewComplexFoodLine model.authorizedAccess.configuration model.allRecipes model.complexIngredientsGroup.foods model.complexIngredientsGroup.foodsToAdd model.complexIngredientsGroup.ingredients)
                     )
                 ]
             , div [ Style.classes.pagination ]
@@ -745,8 +745,8 @@ viewFoodLine configuration foodMap ingredientsToAdd ingredients food =
         )
 
 
-viewComplexFoodLine : Page.RecipeMap -> Page.ComplexFoodMap -> Page.AddComplexFoodsMap -> Page.ComplexIngredientStateMap -> ComplexFood -> Html Page.Msg
-viewComplexFoodLine recipeMap complexFoodMap complexIngredientsToAdd complexIngredients complexFood =
+viewComplexFoodLine : Configuration -> Page.RecipeMap -> Page.ComplexFoodMap -> Page.AddComplexFoodsMap -> Page.ComplexIngredientStateMap -> ComplexFood -> Html Page.Msg
+viewComplexFoodLine configuration recipeMap complexFoodMap complexIngredientsToAdd complexIngredients complexFood =
     let
         addMsg =
             Page.AddComplexFood complexFood.recipeId
@@ -775,8 +775,14 @@ viewComplexFoodLine recipeMap complexFoodMap complexIngredientsToAdd complexIngr
                 Nothing ->
                     [ td [ Style.classes.editable, Style.classes.numberCell ] []
                     , td [ Style.classes.editable, Style.classes.numberCell ] []
-                    , td [ Style.classes.controls ] []
                     , td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick selectMsg ] [ text "Select" ] ]
+                    , td [ Style.classes.controls ]
+                        [ Links.linkButton
+                            { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsComplexFoodSelect.address <| complexFood.recipeId
+                            , attributes = [ Style.classes.button.nutrients ]
+                            , children = [ text "Nutrients" ]
+                            }
+                        ]
                     ]
 
                 Just complexIngredientToAdd ->
