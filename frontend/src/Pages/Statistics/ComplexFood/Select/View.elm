@@ -45,7 +45,11 @@ view model =
                         , infoListOf = .foodStats >> .nutrients
                         , amountOf = .amount >> .value
                         , dailyAmountOf = Nothing
-                        , completenessFraction = Nothing
+                        , completenessFraction =
+                            Just
+                                { definedValues = .amount >> .numberOfDefinedValues
+                                , totalValues = .amount >> .numberOfIngredients
+                                }
                         , nutrientBase = .base
                         , referenceTrees = .statisticsEvaluation >> .referenceTrees
                         , referenceTree = .statisticsEvaluation >> .referenceTree
