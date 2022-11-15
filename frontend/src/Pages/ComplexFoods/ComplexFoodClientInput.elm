@@ -2,6 +2,7 @@ module Pages.ComplexFoods.ComplexFoodClientInput exposing (..)
 
 import Api.Auxiliary exposing (RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
+import Api.Types.ComplexFoodIncoming exposing (ComplexFoodIncoming)
 import Api.Types.ComplexFoodUnit as ComplexFoodUnit exposing (ComplexFoodUnit)
 import Monocle.Lens exposing (Lens)
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
@@ -33,7 +34,7 @@ from complexFood =
     }
 
 
-to : ComplexFoodClientInput -> ComplexFood
+to : ComplexFoodClientInput -> ComplexFoodIncoming
 to input =
     { recipeId = input.recipeId
     , amount = input.amount.value
