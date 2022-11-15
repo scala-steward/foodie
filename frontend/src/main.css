@@ -263,6 +263,10 @@ th {
     width: 75%;
 }
 
+#statisticsComplexFood th:first-child {
+    width: 75%;
+}
+
 #statisticsMeal th:first-child,
 #statisticsMeal th:nth-child(2) {
     width: 15%;
