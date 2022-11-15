@@ -5,7 +5,7 @@ import db.generated.Tables
 import errors.{ ErrorContext, ServerError }
 import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
-import services.recipe.RecipeService
+import services.recipe.{ Recipe, RecipeService }
 import services.{ DBError, RecipeId, UserId }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
@@ -101,24 +101,36 @@ object ComplexFoodService {
 
     override def all(userId: UserId)(implicit ec: ExecutionContext): DBIO[Seq[ComplexFood]] =
       for {
-        recipeIds <- Tables.Recipe.filter(_.userId === userId.transformInto[UUID]).map(_.id).result
-        complex   <- Tables.ComplexFood.filter(_.recipeId.inSetBind(recipeIds)).result
-      } yield complex.map(_.transformInto[ComplexFood])
+        recipes <- RecipeService.Live.allRecipes(userId)
+        complex <- Tables.ComplexFood.filter(_.recipeId.inSetBind(recipes.map(_.id))).result
+      } yield {
+        val recipeMap = recipes.map(r => r.id.transformInto[UUID] -> r).toMap
+        complex.map { complexFood =>
+          (complexFood, recipeMap(complexFood.recipeId)).transformInto[ComplexFood]
+        }
+      }
 
-    override def get(userId: UserId, recipeId: RecipeId)(implicit ec: ExecutionContext): DBIO[Option[ComplexFood]] =
-      for {
-        exists <- RecipeService.Live.getRecipe(userId, recipeId).map(_.isDefined)
-        result <-
-          if (exists) Tables.ComplexFood.filter(_.recipeId === recipeId.transformInto[UUID]).result.headOption
-          else DBIO.successful(None)
-      } yield result.map(_.transformInto[ComplexFood])
+    override def get(userId: UserId, recipeId: RecipeId)(implicit ec: ExecutionContext): DBIO[Option[ComplexFood]] = {
+      val transformer = for {
+        recipe <- OptionT(RecipeService.Live.getRecipe(userId, recipeId))
+        complexFoodRow <- OptionT(
+          Tables.ComplexFood
+            .filter(_.recipeId === recipeId.transformInto[UUID])
+            .result
+            .headOption: DBIO[Option[Tables.ComplexFoodRow]]
+        )
+      } yield (complexFoodRow, recipe).transformInto[ComplexFood]
+
+      transformer.value
+    }
 
     override def create(userId: UserId, complexFood: ComplexFood)(implicit
         ec: ExecutionContext
     ): DBIO[ComplexFood] = {
       val complexFoodRow = complexFood.transformInto[Tables.ComplexFoodRow]
-      ifRecipeExists(userId, complexFood.recipeId) {
-        (Tables.ComplexFood.returning(Tables.ComplexFood) += complexFoodRow).map(_.transformInto[ComplexFood])
+      ifRecipeExists(userId, complexFood.recipeId) { recipe =>
+        (Tables.ComplexFood.returning(Tables.ComplexFood) += complexFoodRow)
+          .map(complexFood => (complexFood, recipe).transformInto[ComplexFood])
       }
     }
 
@@ -143,11 +155,10 @@ object ComplexFoodService {
     private def ifRecipeExists[A](
         userId: UserId,
         recipeId: RecipeId
-    )(action: => DBIO[A])(implicit ec: ExecutionContext): DBIO[A] =
+    )(action: Recipe => DBIO[A])(implicit ec: ExecutionContext): DBIO[A] =
       RecipeService.Live
         .getRecipe(userId, recipeId)
-        .map(_.isDefined)
-        .flatMap(exists => if (exists) action else DBIO.failed(DBError.Complex.Food.RecipeNotFound))
+        .flatMap(maybeRecipe => maybeRecipe.fold(DBIO.failed(DBError.Complex.Food.RecipeNotFound): DBIO[A])(action))
 
     private def complexFoodQuery(
         recipeId: RecipeId

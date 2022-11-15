@@ -10,6 +10,8 @@ import java.util.UUID
 case class ComplexFood(
     recipeId: UUID,
     amount: BigDecimal,
+    name: String,
+    description: Option[String],
     unit: ComplexFoodUnit
 )
 
