@@ -36,6 +36,19 @@ class ComplexFoodController @Inject() (
         )
     }
 
+  def get(recipeId: UUID): Action[AnyContent] =
+    userAction.async { request =>
+      complexFoodService
+        .get(request.user.id, recipeId.transformInto[RecipeId])
+        .map(
+          _.fold(NotFound: Result)(
+            _.transformInto[ComplexFood]
+              .pipe(_.asJson)
+              .pipe(Ok(_))
+          )
+        )
+    }
+
   def create: Action[ComplexFoodIncoming] =
     userAction.async(circe.tolerantJson[ComplexFoodIncoming]) { request =>
       EitherT(
