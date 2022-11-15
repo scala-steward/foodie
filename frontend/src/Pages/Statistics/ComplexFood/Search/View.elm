@@ -1,14 +1,14 @@
-module Pages.Statistics.Recipe.Search.View exposing (view)
+module Pages.Statistics.ComplexFood.Search.View exposing (view)
 
 import Addresses.Frontend
 import Addresses.StatisticsVariant as StatisticsVariant
-import Api.Types.Recipe exposing (Recipe)
+import Api.Types.ComplexFood exposing (ComplexFood)
 import Configuration exposing (Configuration)
 import Html exposing (Html, col, colgroup, div, label, table, tbody, td, text, th, thead, tr)
 import Monocle.Compose as Compose
-import Pages.Statistics.Recipe.Search.Page as Page
-import Pages.Statistics.Recipe.Search.Pagination as Pagination
-import Pages.Statistics.Recipe.Search.Status as Status
+import Pages.Statistics.ComplexFood.Search.Page as Page
+import Pages.Statistics.ComplexFood.Search.Pagination as Pagination
+import Pages.Statistics.ComplexFood.Search.Status as Status
 import Pages.Statistics.StatisticsView as StatisticsView
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Links as Links
@@ -33,15 +33,15 @@ view model =
     <|
         StatisticsView.withNavigationBar
             { mainPageURL = model.authorizedAccess.configuration.mainPageURL
-            , currentPage = Just StatisticsVariant.Recipe
+            , currentPage = Just StatisticsVariant.ComplexFood
             }
         <|
             let
                 filterOn =
-                    SearchUtil.search model.recipesSearchString
+                    SearchUtil.search model.complexFoodsSearchString
 
-                viewRecipes =
-                    model.recipes
+                viewComplexFoods =
+                    model.complexFoods
                         |> List.filter
                             (\v ->
                                 filterOn v.name
@@ -51,33 +51,31 @@ view model =
                         |> ViewUtil.paginate
                             { pagination =
                                 Page.lenses.pagination
-                                    |> Compose.lensWithLens Pagination.lenses.recipes
+                                    |> Compose.lensWithLens Pagination.lenses.complexFoods
                             }
                             model
             in
-            div [ Style.ids.statistics.recipe ]
+            div [ Style.ids.statistics.complexFood ]
                 [ div []
                     [ HtmlUtil.searchAreaWith
                         { msg = Page.SetSearchString
-                        , searchString = model.recipesSearchString
+                        , searchString = model.complexFoodsSearchString
                         }
                     , table [ Style.classes.elementsWithControlsTable ]
                         [ colgroup []
                             [ col [] []
                             , col [] []
-                            , col [] []
                             ]
                         , thead []
                             [ tr [ Style.classes.tableHeader ]
                                 [ th [] [ label [] [ text "Name" ] ]
-                                , th [] [ label [] [ text "Description" ] ]
                                 , th [ Style.classes.controlsGroup ] []
                                 ]
                             ]
                         , tbody []
-                            (viewRecipes
+                            (viewComplexFoods
                                 |> Paginate.page
-                                |> List.map (viewRecipeLine model.authorizedAccess.configuration)
+                                |> List.map (viewComplexFoodLine model.authorizedAccess.configuration)
                             )
                         ]
                     , div [ Style.classes.pagination ]
@@ -85,27 +83,25 @@ view model =
                             { msg =
                                 PaginationSettings.updateCurrentPage
                                     { pagination = Page.lenses.pagination
-                                    , items = Pagination.lenses.recipes
+                                    , items = Pagination.lenses.complexFoods
                                     }
                                     model
-                                    >> Page.SetRecipesPagination
-                            , elements = viewRecipes
+                                    >> Page.SetComplexFoodsPagination
+                            , elements = viewComplexFoods
                             }
                         ]
                     ]
                 ]
 
 
-viewRecipeLine : Configuration -> Recipe -> Html Page.Msg
-viewRecipeLine configuration recipe =
+viewComplexFoodLine : Configuration -> ComplexFood -> Html Page.Msg
+viewComplexFoodLine configuration complexFood =
     tr [ Style.classes.editing ]
         [ td [ Style.classes.editable ]
-            [ label [] [ text recipe.name ] ]
-        , td [ Style.classes.editable ]
-            [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
+            [ label [] [ text complexFood.name ] ]
         , td [ Style.classes.controls ]
             [ Links.linkButton
-                { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsRecipeSelect.address <| recipe.id
+                { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsComplexFoodSelect.address <| complexFood.recipeId
                 , attributes = [ Style.classes.button.nutrients ]
                 , children = [ text "Nutrients" ]
                 }

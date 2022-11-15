@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Addresses.Frontend
-import Api.Auxiliary exposing (FoodId, JWT, MealId, RecipeId, ReferenceMapId)
+import Api.Auxiliary exposing (ComplexFoodId, FoodId, JWT, MealId, RecipeId, ReferenceMapId)
 import Api.Types.LoginContent exposing (decoderLoginContent)
 import Api.Types.UserIdentifier exposing (UserIdentifier)
 import Basics.Extra exposing (flip)
@@ -54,6 +54,12 @@ import Pages.Registration.Confirm.View
 import Pages.Registration.Request.Handler
 import Pages.Registration.Request.Page
 import Pages.Registration.Request.View
+import Pages.Statistics.ComplexFood.Search.Handler
+import Pages.Statistics.ComplexFood.Search.Page
+import Pages.Statistics.ComplexFood.Search.View
+import Pages.Statistics.ComplexFood.Select.Handler
+import Pages.Statistics.ComplexFood.Select.Page
+import Pages.Statistics.ComplexFood.Select.View
 import Pages.Statistics.Food.Search.Handler
 import Pages.Statistics.Food.Search.Page
 import Pages.Statistics.Food.Search.View
@@ -137,6 +143,8 @@ type Page
     | StatisticsTime Pages.Statistics.Time.Page.Model
     | StatisticsFoodSearch Pages.Statistics.Food.Search.Page.Model
     | StatisticsFoodSelect Pages.Statistics.Food.Select.Page.Model
+    | StatisticsComplexFoodSearch Pages.Statistics.ComplexFood.Search.Page.Model
+    | StatisticsComplexFoodSelect Pages.Statistics.ComplexFood.Select.Page.Model
     | StatisticsRecipeSearch Pages.Statistics.Recipe.Search.Page.Model
     | StatisticsRecipeSelect Pages.Statistics.Recipe.Select.Page.Model
     | StatisticsMealSearch Pages.Statistics.Meal.Search.Page.Model
@@ -170,6 +178,8 @@ type Msg
     | StatisticsTimeMsg Pages.Statistics.Time.Page.Msg
     | StatisticsFoodSearchMsg Pages.Statistics.Food.Search.Page.Msg
     | StatisticsFoodSelectMsg Pages.Statistics.Food.Select.Page.Msg
+    | StatisticsComplexFoodSearchMsg Pages.Statistics.ComplexFood.Search.Page.Msg
+    | StatisticsComplexFoodSelectMsg Pages.Statistics.ComplexFood.Select.Page.Msg
     | StatisticsRecipeSearchMsg Pages.Statistics.Recipe.Search.Page.Msg
     | StatisticsRecipeSelectMsg Pages.Statistics.Recipe.Select.Page.Msg
     | StatisticsMealSearchMsg Pages.Statistics.Meal.Search.Page.Msg
@@ -240,6 +250,12 @@ view model =
 
         StatisticsFoodSelect statisticsFoodSelect ->
             Html.map StatisticsFoodSelectMsg (Pages.Statistics.Food.Select.View.view statisticsFoodSelect)
+
+        StatisticsComplexFoodSearch statisticsComplexFoodSearch ->
+            Html.map StatisticsComplexFoodSearchMsg (Pages.Statistics.ComplexFood.Search.View.view statisticsComplexFoodSearch)
+
+        StatisticsComplexFoodSelect statisticsComplexFoodSelect ->
+            Html.map StatisticsComplexFoodSelectMsg (Pages.Statistics.ComplexFood.Select.View.view statisticsComplexFoodSelect)
 
         StatisticsRecipeSearch statisticsRecipeSearch ->
             Html.map StatisticsRecipeSearchMsg (Pages.Statistics.Recipe.Search.View.view statisticsRecipeSearch)
@@ -347,6 +363,12 @@ update msg model =
         ( StatisticsFoodSelectMsg statisticsFoodSelectMsg, StatisticsFoodSelect statisticsFoodSelect ) ->
             stepThrough steps.statisticsFoodSelect model (Pages.Statistics.Food.Select.Handler.update statisticsFoodSelectMsg statisticsFoodSelect)
 
+        ( StatisticsComplexFoodSearchMsg statisticsComplexFoodSearchMsg, StatisticsComplexFoodSearch statisticsComplexFoodSearch ) ->
+            stepThrough steps.statisticsComplexFoodSearch model (Pages.Statistics.ComplexFood.Search.Handler.update statisticsComplexFoodSearchMsg statisticsComplexFoodSearch)
+
+        ( StatisticsComplexFoodSelectMsg statisticsComplexFoodSelectMsg, StatisticsComplexFoodSelect statisticsComplexFoodSelect ) ->
+            stepThrough steps.statisticsComplexFoodSelect model (Pages.Statistics.ComplexFood.Select.Handler.update statisticsComplexFoodSelectMsg statisticsComplexFoodSelect)
+
         ( StatisticsRecipeSearchMsg statisticsRecipeSearchMsg, StatisticsRecipeSearch statisticsRecipeSearch ) ->
             stepThrough steps.statisticsRecipeSearch model (Pages.Statistics.Recipe.Search.Handler.update statisticsRecipeSearchMsg statisticsRecipeSearch)
 
@@ -406,6 +428,8 @@ steps :
     , statisticsTime : StepParameters Pages.Statistics.Time.Page.Model Pages.Statistics.Time.Page.Msg
     , statisticsFoodSearch : StepParameters Pages.Statistics.Food.Search.Page.Model Pages.Statistics.Food.Search.Page.Msg
     , statisticsFoodSelect : StepParameters Pages.Statistics.Food.Select.Page.Model Pages.Statistics.Food.Select.Page.Msg
+    , statisticsComplexFoodSearch : StepParameters Pages.Statistics.ComplexFood.Search.Page.Model Pages.Statistics.ComplexFood.Search.Page.Msg
+    , statisticsComplexFoodSelect : StepParameters Pages.Statistics.ComplexFood.Select.Page.Model Pages.Statistics.ComplexFood.Select.Page.Msg
     , statisticsRecipeSearch : StepParameters Pages.Statistics.Recipe.Search.Page.Model Pages.Statistics.Recipe.Search.Page.Msg
     , statisticsRecipeSelect : StepParameters Pages.Statistics.Recipe.Select.Page.Model Pages.Statistics.Recipe.Select.Page.Msg
     , statisticsMealSearch : StepParameters Pages.Statistics.Meal.Search.Page.Model Pages.Statistics.Meal.Search.Page.Msg
@@ -430,6 +454,8 @@ steps =
     , statisticsTime = StepParameters StatisticsTime StatisticsTimeMsg
     , statisticsFoodSearch = StepParameters StatisticsFoodSearch StatisticsFoodSearchMsg
     , statisticsFoodSelect = StepParameters StatisticsFoodSelect StatisticsFoodSelectMsg
+    , statisticsComplexFoodSearch = StepParameters StatisticsComplexFoodSearch StatisticsComplexFoodSearchMsg
+    , statisticsComplexFoodSelect = StepParameters StatisticsComplexFoodSelect StatisticsComplexFoodSelectMsg
     , statisticsRecipeSearch = StepParameters StatisticsRecipeSearch StatisticsRecipeSearchMsg
     , statisticsRecipeSelect = StepParameters StatisticsRecipeSelect StatisticsRecipeSelectMsg
     , statisticsMealSearch = StepParameters StatisticsMealSearch StatisticsMealSearchMsg
@@ -461,6 +487,8 @@ type Route
     | StatisticsTimeRoute
     | StatisticsFoodSearchRoute
     | StatisticsFoodSelectRoute FoodId
+    | StatisticsComplexFoodSearchRoute
+    | StatisticsComplexFoodSelectRoute ComplexFoodId
     | StatisticsRecipeSearchRoute
     | StatisticsRecipeSelectRoute RecipeId
     | StatisticsMealSearchRoute
@@ -488,6 +516,8 @@ plainRouteParser =
         , route Addresses.Frontend.statisticsTime.parser StatisticsTimeRoute
         , route Addresses.Frontend.statisticsFoodSearch.parser StatisticsFoodSearchRoute
         , route Addresses.Frontend.statisticsFoodSelect.parser StatisticsFoodSelectRoute
+        , route Addresses.Frontend.statisticsComplexFoodSearch.parser StatisticsComplexFoodSearchRoute
+        , route Addresses.Frontend.statisticsComplexFoodSelect.parser StatisticsComplexFoodSelectRoute
         , route Addresses.Frontend.statisticsRecipeSearch.parser StatisticsRecipeSearchRoute
         , route Addresses.Frontend.statisticsRecipeSelect.parser StatisticsRecipeSelectRoute
         , route Addresses.Frontend.statisticsMealSearch.parser StatisticsMealSearchRoute
@@ -569,6 +599,18 @@ followRoute model =
                         , foodId = foodId
                         }
                         |> stepThrough steps.statisticsFoodSelect model
+
+                StatisticsComplexFoodSearchRoute ->
+                    Pages.Statistics.ComplexFood.Search.Handler.init
+                        flags
+                        |> stepThrough steps.statisticsComplexFoodSearch model
+
+                StatisticsComplexFoodSelectRoute complexFoodId ->
+                    Pages.Statistics.ComplexFood.Select.Handler.init
+                        { authorizedAccess = authorizedAccess
+                        , complexFoodId = complexFoodId
+                        }
+                        |> stepThrough steps.statisticsComplexFoodSelect model
 
                 StatisticsRecipeSearchRoute ->
                     Pages.Statistics.Recipe.Search.Handler.init

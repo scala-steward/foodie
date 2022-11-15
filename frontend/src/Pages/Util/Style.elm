@@ -128,6 +128,7 @@ ids :
     , referenceEntryEditor : Attribute msg
     , statistics :
         { food : Attribute msg
+        , complexFood : Attribute msg
         , meal : Attribute msg
         , recipe : Attribute msg
         , time : Attribute msg
@@ -147,6 +148,7 @@ ids =
     , referenceEntryEditor = id "referenceEntryEditor"
     , statistics =
         { food = id "statisticsFood"
+        , complexFood = id "statisticsComplexFood"
         , meal = id "statisticsMeal"
         , recipe = id "statisticsRecipe"
         , time = id "statistics"
