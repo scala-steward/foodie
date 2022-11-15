@@ -25,12 +25,12 @@ trait ComplexFoodService {
 
   def create(
       userId: UserId,
-      complexFood: ComplexFood
+      complexFood: ComplexFoodIncoming
   ): Future[ServerError.Or[ComplexFood]]
 
   def update(
       userId: UserId,
-      complexFood: ComplexFood
+      complexFood: ComplexFoodIncoming
   ): Future[ServerError.Or[ComplexFood]]
 
   def delete(userId: UserId, recipeId: RecipeId): Future[Boolean]
@@ -46,12 +46,12 @@ object ComplexFoodService {
 
     def create(
         userId: UserId,
-        complexFood: ComplexFood
+        complexFood: ComplexFoodIncoming
     )(implicit ec: ExecutionContext): DBIO[ComplexFood]
 
     def update(
         userId: UserId,
-        complexFood: ComplexFood
+        complexFood: ComplexFoodIncoming
     )(implicit ec: ExecutionContext): DBIO[ComplexFood]
 
     def delete(userId: UserId, recipeId: RecipeId)(implicit ec: ExecutionContext): DBIO[Boolean]
@@ -72,7 +72,7 @@ object ComplexFoodService {
 
     override def create(
         userId: UserId,
-        complexFood: ComplexFood
+        complexFood: ComplexFoodIncoming
     ): Future[ServerError.Or[ComplexFood]] =
       db.run(companion.create(userId, complexFood))
         .map(Right(_))
@@ -83,7 +83,7 @@ object ComplexFoodService {
 
     override def update(
         userId: UserId,
-        complexFood: ComplexFood
+        complexFood: ComplexFoodIncoming
     ): Future[ServerError.Or[ComplexFood]] =
       db.run(companion.update(userId, complexFood))
         .map(Right(_))
@@ -124,7 +124,7 @@ object ComplexFoodService {
       transformer.value
     }
 
-    override def create(userId: UserId, complexFood: ComplexFood)(implicit
+    override def create(userId: UserId, complexFood: ComplexFoodIncoming)(implicit
         ec: ExecutionContext
     ): DBIO[ComplexFood] = {
       val complexFoodRow = complexFood.transformInto[Tables.ComplexFoodRow]
@@ -134,7 +134,7 @@ object ComplexFoodService {
       }
     }
 
-    override def update(userId: UserId, complexFood: ComplexFood)(implicit
+    override def update(userId: UserId, complexFood: ComplexFoodIncoming)(implicit
         ec: ExecutionContext
     ): DBIO[ComplexFood] = {
       val findAction =

@@ -7,8 +7,6 @@ import services.RecipeId
 import services.recipe.Recipe
 import utils.TransformerUtils.Implicits._
 
-import java.util.UUID
-
 case class ComplexFood(
     recipeId: RecipeId,
     name: String,
@@ -29,12 +27,5 @@ object ComplexFood {
         unit = ComplexFoodUnit.withName(food.unit)
       )
   }
-
-  implicit val toDB: Transformer[ComplexFood, Tables.ComplexFoodRow] = complexFood =>
-    Tables.ComplexFoodRow(
-      recipeId = complexFood.recipeId.transformInto[UUID],
-      amount = complexFood.amount,
-      unit = complexFood.unit.entryName
-    )
 
 }

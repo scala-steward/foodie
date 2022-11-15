@@ -5,7 +5,7 @@ import bridges.core.Type.Ref
 import bridges.core._
 import bridges.core.syntax._
 import bridges.elm._
-import controllers.complex.ComplexFood
+import controllers.complex.{ ComplexFood, ComplexFoodIncoming }
 import controllers.meal._
 import controllers.recipe._
 import controllers.reference._
@@ -135,6 +135,7 @@ object Bridge {
     mkAndWrite[RecoveryRequest]
     mkAndWrite[ComplexIngredient]
     mkAndWrite[ComplexFood]
+    mkAndWrite[ComplexFoodIncoming]
     mkAndWrite[Values]
   }
 
