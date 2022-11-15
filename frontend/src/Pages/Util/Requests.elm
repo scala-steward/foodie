@@ -2,6 +2,7 @@ module Pages.Util.Requests exposing (..)
 
 import Addresses.Backend
 import Api.Auxiliary exposing (MealId, RecipeId)
+import Api.Types.ComplexFood exposing (ComplexFood, decoderComplexFood)
 import Api.Types.Food exposing (Food, decoderFood)
 import Api.Types.Meal exposing (Meal, decoderMeal)
 import Api.Types.Recipe exposing (Recipe, decoderRecipe)
@@ -20,6 +21,14 @@ fetchFoodsWith mkMsg authorizedAccess =
         , expect = HttpUtil.expectJson mkMsg (Decode.list decoderFood)
         }
 
+fetchComplexFoodsWith : (Result Error (List ComplexFood) -> msg) -> AuthorizedAccess -> Cmd msg
+fetchComplexFoodsWith mkMsg authorizedAccess =
+    HttpUtil.runPatternWithJwt
+        authorizedAccess
+        Addresses.Backend.complexFoods.all
+        { body = Http.emptyBody
+        , expect = HttpUtil.expectJson mkMsg (Decode.list decoderComplexFood)
+        }
 
 fetchRecipesWith : (Result Error (List Recipe) -> msg) -> AuthorizedAccess -> Cmd msg
 fetchRecipesWith mkMsg authorizedAccess =

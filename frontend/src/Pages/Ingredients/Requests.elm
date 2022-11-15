@@ -16,7 +16,6 @@ module Pages.Ingredients.Requests exposing
 
 import Addresses.Backend
 import Api.Auxiliary exposing (ComplexIngredientId, FoodId, IngredientId, JWT, MeasureId, RecipeId)
-import Api.Types.ComplexFood exposing (decoderComplexFood)
 import Api.Types.ComplexIngredient exposing (ComplexIngredient, decoderComplexIngredient, encoderComplexIngredient)
 import Api.Types.Ingredient exposing (Ingredient, decoderIngredient)
 import Api.Types.IngredientCreation exposing (IngredientCreation, encoderIngredientCreation)
@@ -66,13 +65,8 @@ fetchFoods =
 
 
 fetchComplexFoods : AuthorizedAccess -> Cmd Page.Msg
-fetchComplexFoods flags =
-    HttpUtil.runPatternWithJwt
-        flags
-        Addresses.Backend.complexFoods.all
-        { body = Http.emptyBody
-        , expect = HttpUtil.expectJson Page.GotFetchComplexFoodsResponse (Decode.list decoderComplexFood)
-        }
+fetchComplexFoods =
+    Pages.Util.Requests.fetchComplexFoodsWith Page.GotFetchComplexFoodsResponse
 
 
 fetchMeasures : AuthorizedAccess -> Cmd Page.Msg
