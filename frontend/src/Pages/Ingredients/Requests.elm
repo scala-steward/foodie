@@ -9,7 +9,6 @@ module Pages.Ingredients.Requests exposing
     , fetchIngredients
     , fetchMeasures
     , fetchRecipe
-    , fetchRecipes
     , saveComplexIngredient
     , saveIngredient
     )
@@ -52,11 +51,6 @@ fetchComplexIngredients flags recipeId =
 fetchRecipe : Page.Flags -> Cmd Page.Msg
 fetchRecipe =
     Pages.Util.Requests.fetchRecipeWith Page.GotFetchRecipeResponse
-
-
-fetchRecipes : AuthorizedAccess -> Cmd Page.Msg
-fetchRecipes =
-    Pages.Util.Requests.fetchRecipesWith Page.GotFetchRecipesResponse
 
 
 fetchFoods : AuthorizedAccess -> Cmd Page.Msg
