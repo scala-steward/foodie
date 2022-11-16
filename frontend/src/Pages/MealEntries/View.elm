@@ -100,7 +100,7 @@ view model =
                     { msg = Page.SetEntriesSearchString
                     , searchString = model.entriesSearchString
                     }
-                , table []
+                , table [ Style.classes.elementsWithControlsTable ]
                     [ colgroup []
                         [ col [] []
                         , col [] []
@@ -140,7 +140,7 @@ view model =
                         { msg = Page.SetRecipesSearchString
                         , searchString = model.recipesSearchString
                         }
-                    , table [ Style.classes.choiceTable ]
+                    , table [ Style.classes.elementsWithControlsTable ]
                         [ colgroup []
                             [ col [] []
                             , col [] []

@@ -5,10 +5,10 @@ import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.ComplexIngredient exposing (ComplexIngredient)
 import Api.Types.Food exposing (Food, decoderFood, encoderFood)
 import Api.Types.Ingredient exposing (Ingredient)
-import Api.Types.Measure exposing (Measure, decoderMeasure, encoderMeasure)
+import Api.Types.Measure exposing (Measure)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
-import Dict exposing (Dict)
+import Dict.Extra
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Maybe.Extra
@@ -26,7 +26,7 @@ import Pages.Ingredients.Requests as Requests
 import Pages.Ingredients.Status as Status
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.PaginationSettings as PaginationSettings
-import Ports exposing (doFetchFoods, doFetchMeasures, storeFoods, storeMeasures)
+import Ports exposing (doFetchFoods, storeFoods)
 import Result.Extra
 import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil as HttpUtil exposing (Error)
@@ -39,11 +39,9 @@ initialFetch authorizedAccess recipeId =
     Cmd.batch
         [ Requests.fetchIngredients authorizedAccess recipeId
         , Requests.fetchComplexIngredients authorizedAccess recipeId
-        , Requests.fetchRecipe authorizedAccess recipeId
+        , Requests.fetchRecipe { authorizedAccess = authorizedAccess, recipeId = recipeId }
         , doFetchFoods ()
         , Requests.fetchComplexFoods authorizedAccess
-        , Requests.fetchRecipes authorizedAccess
-        , doFetchMeasures ()
         ]
 
 
@@ -53,9 +51,7 @@ init flags =
       , recipeId = flags.recipeId
       , ingredientsGroup = FoodGroup.initial
       , complexIngredientsGroup = FoodGroup.initial
-      , measures = Dict.empty
       , recipeInfo = Nothing
-      , allRecipes = Dict.empty
       , initialization = Loading Status.initial
       , foodsMode = Page.Plain
       , ingredientsSearchString = ""
@@ -136,20 +132,11 @@ update msg model =
         Page.GotFetchComplexFoodsResponse result ->
             gotFetchComplexFoodsResponse model result
 
-        Page.GotFetchMeasuresResponse result ->
-            gotFetchMeasuresResponse model result
-
         Page.GotFetchRecipeResponse result ->
             gotFetchRecipeResponse model result
 
-        Page.GotFetchRecipesResponse result ->
-            gotFetchRecipesResponse model result
-
         Page.UpdateFoods string ->
             updateFoods model string
-
-        Page.UpdateMeasures string ->
-            updateMeasures model string
 
         Page.SetFoodsSearchString string ->
             setFoodsSearchString model string
@@ -394,7 +381,7 @@ gotFetchIngredientsResponse model result =
             (\ingredients ->
                 model
                     |> (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients).set
-                        (ingredients |> List.map (\ingredient -> ( ingredient.id, ingredient |> Editing.asView )) |> Dict.fromList)
+                        (ingredients |> List.map Editing.asView |> Dict.Extra.fromListBy (.original >> .id))
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.ingredients).set True
             )
     , Cmd.none
@@ -408,7 +395,7 @@ gotFetchComplexIngredientsResponse model result =
             (\complexIngredients ->
                 model
                     |> (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients).set
-                        (complexIngredients |> List.map (\complexIngredient -> ( complexIngredient.complexFoodId, complexIngredient |> Editing.asView )) |> Dict.fromList)
+                        (complexIngredients |> List.map Editing.asView |> Dict.Extra.fromListBy (.original >> .complexFoodId))
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.complexIngredients).set True
             )
     , Cmd.none
@@ -449,20 +436,6 @@ gotFetchComplexFoodsResponse model result =
     )
 
 
-gotFetchMeasuresResponse : Page.Model -> Result Error (List Measure) -> ( Page.Model, Cmd Page.Msg )
-gotFetchMeasuresResponse model result =
-    result
-        |> Result.Extra.unpack (\error -> ( setError error model, Cmd.none ))
-            (\measures ->
-                ( LensUtil.set measures .id Page.lenses.measures model
-                , measures
-                    |> Encode.list encoderMeasure
-                    |> Encode.encode 0
-                    |> storeMeasures
-                )
-            )
-
-
 gotFetchRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.Msg )
 gotFetchRecipeResponse model result =
     ( result
@@ -471,19 +444,6 @@ gotFetchRecipeResponse model result =
                 model
                     |> Page.lenses.recipeInfo.set (RecipeInfo.from recipe |> Just)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.recipe).set True
-            )
-    , Cmd.none
-    )
-
-
-gotFetchRecipesResponse : Page.Model -> Result Error (List Recipe) -> ( Page.Model, Cmd Page.Msg )
-gotFetchRecipesResponse model result =
-    ( result
-        |> Result.Extra.unpack (flip setError model)
-            (\recipes ->
-                model
-                    |> Page.lenses.allRecipes.set (recipes |> List.map (\r -> ( r.id, r )) |> Dict.fromList)
-                    |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.allRecipes).set True
             )
     , Cmd.none
     )
@@ -506,27 +466,6 @@ updateFoods model =
                         )
                 , if List.isEmpty foods then
                     Requests.fetchFoods model.authorizedAccess
-
-                  else
-                    Cmd.none
-                )
-            )
-
-
-updateMeasures : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
-updateMeasures model =
-    Decode.decodeString (Decode.list decoderMeasure)
-        >> Result.Extra.unpack (\error -> ( setJsonError error model, Cmd.none ))
-            (\measures ->
-                ( model
-                    |> LensUtil.set measures .id Page.lenses.measures
-                    |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.measures).set
-                        (measures
-                            |> List.isEmpty
-                            |> not
-                        )
-                , if List.isEmpty measures then
-                    Requests.fetchMeasures model.authorizedAccess
 
                   else
                     Cmd.none

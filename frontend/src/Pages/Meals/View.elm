@@ -81,7 +81,7 @@ view model =
                         { msg = Page.SetSearchString
                         , searchString = model.searchString
                         }
-                   , table []
+                   , table [ Style.classes.elementsWithControlsTable ]
                         [ colgroup []
                             [ col [] []
                             , col [] []
@@ -152,6 +152,13 @@ viewMealLine configuration meal =
                     { url = Links.frontendPage configuration <| Addresses.Frontend.mealEntryEditor.address <| meal.id
                     , attributes = [ Style.classes.button.editor ]
                     , children = [ text "Entries" ]
+                    }
+                ]
+            , td [ Style.classes.controls ]
+                [ Links.linkButton
+                    { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsMealSelect.address <| meal.id
+                    , attributes = [ Style.classes.button.nutrients ]
+                    , children = [ text "Nutrients" ]
                     }
                 ]
             ]

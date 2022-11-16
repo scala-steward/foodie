@@ -27,14 +27,6 @@ trait NutrientService {
       factor: BigDecimal
   ): Future[NutrientMap]
 
-  def nutrientsOfIngredient(
-      ingredient: Ingredient
-  ): Future[NutrientMap]
-
-  def nutrientsOfIngredients(
-      ingredients: Seq[Ingredient]
-  ): Future[NutrientMap]
-
   def all: Future[Seq[Nutrient]]
 }
 
@@ -77,12 +69,6 @@ object NutrientService {
         factor: BigDecimal
     ): Future[NutrientMap] =
       db.run(companion.nutrientsOfFood(foodId, measureId, factor))
-
-    override def nutrientsOfIngredient(ingredient: Ingredient): Future[NutrientMap] =
-      db.run(companion.nutrientsOfIngredient(ingredient))
-
-    override def nutrientsOfIngredients(ingredients: Seq[Ingredient]): Future[NutrientMap] =
-      db.run(companion.nutrientsOfIngredients(ingredients))
 
     override def all: Future[Seq[Nutrient]] =
       db.run(companion.all)

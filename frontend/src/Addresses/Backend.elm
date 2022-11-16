@@ -1,6 +1,7 @@
 module Addresses.Backend exposing (..)
 
-import Api.Auxiliary exposing (ComplexFoodId, IngredientId, MealEntryId, MealId, NutrientCode, RecipeId, ReferenceMapId)
+import Addresses.StatisticsVariant as StatisticsVariant
+import Api.Auxiliary exposing (ComplexFoodId, FoodId, IngredientId, MealEntryId, MealId, NutrientCode, RecipeId, ReferenceMapId)
 import Maybe.Extra
 import Url.Builder exposing (QueryParameter)
 import Util.HttpUtil as HttpUtil exposing (ResourcePattern)
@@ -9,6 +10,7 @@ import Util.HttpUtil as HttpUtil exposing (ResourcePattern)
 recipes :
     { measures : ResourcePattern
     , foods : ResourcePattern
+    , food : FoodId -> ResourcePattern
     , all : ResourcePattern
     , single : RecipeId -> ResourcePattern
     , create : ResourcePattern
@@ -35,6 +37,9 @@ recipes =
         ingredientsWord =
             "ingredients"
 
+        foodsWord =
+            "foods"
+
         ingredients =
             (::) ingredientsWord >> base
 
@@ -45,7 +50,8 @@ recipes =
             (::) complexIngredientsWord >> (::) recipeId >> base
     in
     { measures = get <| base <| [ "measures" ]
-    , foods = get <| base <| [ "foods" ]
+    , foods = get <| base <| [ foodsWord ]
+    , food = \foodId -> get <| base <| [ foodsWord, foodId |> String.fromInt ]
     , all = get <| base <| []
     , single = \recipeId -> get <| base <| [ recipeId ]
     , create = post <| base []
@@ -110,6 +116,10 @@ stats :
         , to : Maybe QueryParameter
         }
         -> ResourcePattern
+    , complexFood : ComplexFoodId -> ResourcePattern
+    , food : FoodId -> ResourcePattern
+    , recipe : RecipeId -> ResourcePattern
+    , meal : MealId -> ResourcePattern
     , nutrients : ResourcePattern
     }
 stats =
@@ -118,6 +128,10 @@ stats =
             (::) "stats"
     in
     { all = \interval -> getQ (base []) (Maybe.Extra.values [ interval.from, interval.to ])
+    , complexFood = \complexFoodId -> get <| base <| [ StatisticsVariant.complexFood, complexFoodId ]
+    , food = \foodId -> get <| base <| [ StatisticsVariant.food, foodId |> String.fromInt ]
+    , recipe = \recipeId -> get <| base <| [ StatisticsVariant.recipe, recipeId ]
+    , meal = \mealId -> get <| base <| [ StatisticsVariant.meal, mealId ]
     , nutrients = get <| base <| [ "nutrients" ]
     }
 
@@ -228,6 +242,7 @@ references =
 
 complexFoods :
     { all : ResourcePattern
+    , single : ComplexFoodId -> ResourcePattern
     , create : ResourcePattern
     , update : ResourcePattern
     , delete : ComplexFoodId -> ResourcePattern
@@ -238,6 +253,7 @@ complexFoods =
             (::) "complex-foods"
     in
     { all = get <| base <| []
+    , single = \complexFoodId -> get <| base <| [ complexFoodId ]
     , create = post <| base []
     , update = patch <| base []
     , delete = \complexFoodId -> delete <| base <| [ complexFoodId ]

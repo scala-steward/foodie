@@ -7,27 +7,22 @@ module Pages.Ingredients.Requests exposing
     , fetchComplexIngredients
     , fetchFoods
     , fetchIngredients
-    , fetchMeasures
     , fetchRecipe
-    , fetchRecipes
     , saveComplexIngredient
     , saveIngredient
     )
 
 import Addresses.Backend
 import Api.Auxiliary exposing (ComplexIngredientId, FoodId, IngredientId, JWT, MeasureId, RecipeId)
-import Api.Types.ComplexFood exposing (decoderComplexFood)
 import Api.Types.ComplexIngredient exposing (ComplexIngredient, decoderComplexIngredient, encoderComplexIngredient)
-import Api.Types.Food exposing (Food, decoderFood)
 import Api.Types.Ingredient exposing (Ingredient, decoderIngredient)
 import Api.Types.IngredientCreation exposing (IngredientCreation, encoderIngredientCreation)
 import Api.Types.IngredientUpdate exposing (IngredientUpdate, encoderIngredientUpdate)
-import Api.Types.Measure exposing (Measure, decoderMeasure)
-import Api.Types.Recipe exposing (Recipe, decoderRecipe)
 import Http
 import Json.Decode as Decode
 import Pages.Ingredients.Page as Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.Requests
 import Util.HttpUtil as HttpUtil exposing (Error)
 
 
@@ -51,54 +46,19 @@ fetchComplexIngredients flags recipeId =
         }
 
 
-fetchRecipe : AuthorizedAccess -> RecipeId -> Cmd Page.Msg
-fetchRecipe authorizedAccess recipeId =
-    HttpUtil.runPatternWithJwt
-        authorizedAccess
-        (Addresses.Backend.recipes.single recipeId)
-        { body = Http.emptyBody
-        , expect = HttpUtil.expectJson Page.GotFetchRecipeResponse decoderRecipe
-        }
-
-
-fetchRecipes : AuthorizedAccess -> Cmd Page.Msg
-fetchRecipes authorizedAccess =
-    HttpUtil.runPatternWithJwt
-        authorizedAccess
-        Addresses.Backend.recipes.all
-        { body = Http.emptyBody
-        , expect = HttpUtil.expectJson Page.GotFetchRecipesResponse (Decode.list decoderRecipe)
-        }
+fetchRecipe : Page.Flags -> Cmd Page.Msg
+fetchRecipe =
+    Pages.Util.Requests.fetchRecipeWith Page.GotFetchRecipeResponse
 
 
 fetchFoods : AuthorizedAccess -> Cmd Page.Msg
-fetchFoods flags =
-    HttpUtil.runPatternWithJwt
-        flags
-        Addresses.Backend.recipes.foods
-        { body = Http.emptyBody
-        , expect = HttpUtil.expectJson Page.GotFetchFoodsResponse (Decode.list decoderFood)
-        }
+fetchFoods =
+    Pages.Util.Requests.fetchFoodsWith Page.GotFetchFoodsResponse
 
 
 fetchComplexFoods : AuthorizedAccess -> Cmd Page.Msg
-fetchComplexFoods flags =
-    HttpUtil.runPatternWithJwt
-        flags
-        Addresses.Backend.complexFoods.all
-        { body = Http.emptyBody
-        , expect = HttpUtil.expectJson Page.GotFetchComplexFoodsResponse (Decode.list decoderComplexFood)
-        }
-
-
-fetchMeasures : AuthorizedAccess -> Cmd Page.Msg
-fetchMeasures flags =
-    HttpUtil.runPatternWithJwt
-        flags
-        Addresses.Backend.recipes.measures
-        { body = Http.emptyBody
-        , expect = HttpUtil.expectJson Page.GotFetchMeasuresResponse (Decode.list decoderMeasure)
-        }
+fetchComplexFoods =
+    Pages.Util.Requests.fetchComplexFoodsWith Page.GotFetchComplexFoodsResponse
 
 
 addFood :

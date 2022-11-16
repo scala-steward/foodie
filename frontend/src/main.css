@@ -24,6 +24,10 @@ body, button, input {
     background-color: rgb(100, 149, 237);
 }
 
+.nutrientsButton:hover {
+    background-color: rgb(170, 102, 204);
+}
+
 .addButton {
     background-color: rgb(50, 180, 50);
     color: rgb(250, 250, 250);
@@ -42,20 +46,23 @@ body, button, input {
     background-color: rgb(85, 225, 60);
 }
 
-#addRecipeView table,
-#addMealView table,
-#addReferenceMapView table,
-#ingredientEditor table:not(.info),
-#mealEntryEditor table:not(.info),
-#referenceEntryEditor table,
-#statistics table,
 #navigation table,
-#complexFoodEditor table {
+.elementsWithControlsTable {
     border-spacing: 0;
     width: 100%;
     table-layout: fixed;
     border-collapse: collapse;
     position: relative;
+}
+
+.elementsWithControlsTable thead th {
+    font-size: larger;
+    font-weight: lighter;
+    font-style: italic;
+}
+
+.elementsWithControlsTable thead th:not(.numberLabel) {
+    text-align: left;
 }
 
 .searchArea {
@@ -80,31 +87,6 @@ body, button, input {
     font-size: larger;
 }
 
-#addRecipeView thead th,
-#addMealView thead th,
-#addReferenceMapView thead th,
-#ingredientEditor thead th,
-#mealEntryEditor thead th,
-#referenceEntryEditor thead th,
-#statistics thead th,
-#complexFoodEditor thead th {
-    font-size: larger;
-    font-weight: lighter;
-    font-style: italic;
-}
-
-#addRecipeView thead th:not(.numberLabel),
-#addMealView thead th:not(.numberLabel),
-#addReferenceMapView thead th:not(.numberLabel),
-#ingredientEditor thead th:not(.numberLabel),
-#mealEntryEditor thead th:not(.numberLabel),
-#referenceEntryEditor thead th:not(.numberLabel),
-#statistics thead th:not(.numberLabel),
-#complexFoodEditor thead th:not(.numberLabel) {
-    text-align: left;
-}
-
-
 .editButton,
 .editorButton,
 .deleteButton,
@@ -112,7 +94,8 @@ body, button, input {
 .cancelButton,
 .selectButton,
 .logoutButton,
-.alternativeButton {
+.alternativeButton,
+.nutrientsButton {
     color: rgb(250, 250, 250);
     border: none;
     text-align: center;
@@ -122,7 +105,8 @@ body, button, input {
     display: inline-block;
     margin: auto;
     vertical-align: center;
-    padding: 5px;
+    padding-top: 5px;
+    padding-bottom: 5px;
     border: 0;
     height: 100%;
     width: 100%;
@@ -171,26 +155,40 @@ th {
     background: white;
 }
 
-/*todo: Group column sizes by page*/
-#addRecipeView th:first-child,
-#addMealView th:nth-child(3),
-#addReferenceMapView th:first-child,
-#mealEntryEditor th:first-child,
-#mealEntryEditor th:nth-child(2),
-#referenceEntryEditor th:first-child {
-    width: 30%;
-}
-
-#addRecipeView th:nth-child(2) {
+#addRecipeView th:first-child {
     width: 25%;
 }
 
-#ingredientEditor th:first-child {
-    width: 30%
+#addRecipeView th:nth-child(2) {
+    width: 20%;
 }
 
-#addRecipeView th:nth-child(3),
-#addReferenceMapView th:nth-child(2),
+#addRecipeView th:nth-child(3) {
+    width: 10%;
+}
+
+#addMealView th:first-child,
+#addMealView th:nth-child(2):not(input) {
+    width: 15%;
+}
+
+#addMealView th:nth-child(3) {
+    width: 30%;
+}
+
+#addReferenceMapView th:first-child {
+    width: 30%;
+}
+
+#addReferenceMapView th:nth-child(2) {
+    width: 10%;
+}
+
+#mealEntryEditor th:first-child,
+#mealEntryEditor th:nth-child(2) {
+    width: 30%;
+}
+
 #mealEntryEditor th:nth-child(3) {
     width: 10%;
 }
@@ -207,9 +205,8 @@ th {
     width: 5%
 }
 
-#addMealView th:first-child,
-#addMealView th:nth-child(2):not(input) {
-    width: 15%;
+#ingredientEditor th:first-child {
+    width: 30%
 }
 
 #ingredientEditor th:nth-child(2) {
@@ -229,17 +226,25 @@ th {
     width: 20%;
 }
 
-#statistics .nutrients th:first-child {
+#statistics .nutrients th:first-child,
+.partialStatistics .nutrients th:first-child {
     width: 30%
 }
 
+#statistics .nutrients th:nth-child(2),
 #statistics .nutrients th:nth-child(3),
 #statistics .nutrients th:nth-child(4) {
     width: 15%;
 }
 
-#statistics .nutrients th:nth-child(5) {
+#statistics .nutrients th:nth-child(5),
+.partialStatistics .nutrients th:nth-child(4) {
     width: 5%;
+}
+
+.partialStatistics .nutrients th:nth-child(2),
+.partialStatistics .nutrients th:nth-child(3) {
+    width: 25%;
 }
 
 #statistics .meals th:first-child {
@@ -254,15 +259,39 @@ th {
     width: 35%;
 }
 
-#statistics .low {
+#statisticsFood th:first-child {
+    width: 75%;
+}
+
+#statisticsComplexFood th:first-child {
+    width: 75%;
+}
+
+#statisticsMeal th:first-child,
+#statisticsMeal th:nth-child(2) {
+    width: 15%;
+}
+
+#statisticsMeal th:nth-child(3) {
+    width: 45%;
+}
+
+#statisticsRecipe th:first-child {
+    width: 40%;
+}
+#statisticsRecipe th:nth-child(2) {
+    width: 35%;
+}
+
+.low {
     color: #fa8128; /* tangerine */
 }
 
-#statistics .exact {
+.exact {
     color: black;
 }
 
-#statistics .high {
+.high {
     color: #0492c2; /* cerulean */
 }
 
@@ -427,7 +456,6 @@ th {
 .navigationButton,
 .pagerButton {
     color: rgb(250, 250, 250);
-    background-color: rgb(66, 100, 160);
     text-align: center;
     border-radius: 5px;
     text-decoration: none;
@@ -439,6 +467,15 @@ th {
     width: 100%;
     margin-bottom: 15px;
     border: none;
+}
+
+.navigationButton,
+.pagerButton {
+    background-color: rgb(66, 100, 160);
+}
+
+.nutrientsButton {
+    background-color: rgb(153, 51, 204);
 }
 
 .ellipsis {

@@ -1,5 +1,6 @@
-module Pages.Statistics.Handler exposing (init, update)
+module Pages.Statistics.Time.Handler exposing (init, update)
 
+import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Auxiliary exposing (ReferenceMapId)
 import Api.Lenses.RequestIntervalLens as RequestIntervalLens
 import Api.Lenses.StatsLens as StatsLens
@@ -7,12 +8,13 @@ import Api.Types.Date exposing (Date)
 import Api.Types.ReferenceTree exposing (ReferenceTree)
 import Api.Types.Stats exposing (Stats)
 import Basics.Extra exposing (flip)
-import Dict
 import Monocle.Lens as Lens
-import Pages.Statistics.Page as Page
-import Pages.Statistics.Pagination as Pagination exposing (Pagination)
-import Pages.Statistics.Requests as Requests
-import Pages.Statistics.Status as Status
+import Pages.Statistics.StatisticsRequests as StatisticsRequests
+import Pages.Statistics.StatisticsUtil as StatisticsUtil
+import Pages.Statistics.Time.Page as Page
+import Pages.Statistics.Time.Pagination as Pagination exposing (Pagination)
+import Pages.Statistics.Time.Requests as Requests
+import Pages.Statistics.Time.Status as Status
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Result.Extra
 import Util.HttpUtil as HttpUtil exposing (Error)
@@ -24,12 +26,11 @@ init flags =
     ( { authorizedAccess = flags.authorizedAccess
       , requestInterval = RequestIntervalLens.default
       , stats = defaultStats
-      , referenceTrees = Dict.empty
-      , referenceTree = Nothing
+      , statisticsEvaluation = StatisticsUtil.initial
       , initialization = Initialization.Loading Status.initial
       , pagination = Pagination.initial
-      , nutrientsSearchString = ""
       , fetching = False
+      , variant = StatisticsVariant.Time
       }
     , initialFetch flags.authorizedAccess
     )
@@ -108,7 +109,7 @@ gotFetchStatsResponse model result =
             (\stats ->
                 model
                     |> Page.lenses.stats.set
-                        (stats |> Lens.modify StatsLens.nutrients (List.sortBy .name))
+                        (stats |> Lens.modify StatsLens.nutrients (List.sortBy (.base >> .name)))
                     |> Page.lenses.fetching.set False
             )
     , Cmd.none
@@ -116,34 +117,11 @@ gotFetchStatsResponse model result =
 
 
 gotFetchReferenceTreesResponse : Page.Model -> Result Error (List ReferenceTree) -> ( Page.Model, Cmd Page.Msg )
-gotFetchReferenceTreesResponse model result =
-    ( result
-        |> Result.Extra.unpack (flip setError model)
-            (\referenceTrees ->
-                let
-                    referenceNutrientTrees =
-                        referenceTrees
-                            |> List.map
-                                (\referenceTree ->
-                                    ( referenceTree.referenceMap.id
-                                    , { map = referenceTree.referenceMap
-                                      , values =
-                                            referenceTree.nutrients
-                                                |> List.map
-                                                    (\referenceValue ->
-                                                        ( referenceValue.nutrientCode, referenceValue.referenceAmount )
-                                                    )
-                                                |> Dict.fromList
-                                      }
-                                    )
-                                )
-                            |> Dict.fromList
-                in
-                model
-                    |> Page.lenses.referenceTrees.set referenceNutrientTrees
-            )
-    , Cmd.none
-    )
+gotFetchReferenceTreesResponse =
+    StatisticsRequests.gotFetchReferenceTreesResponseWith
+        { setError = setError
+        , statisticsEvaluationLens = Page.lenses.statisticsEvaluation
+        }
 
 
 setPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.Msg )
@@ -154,20 +132,17 @@ setPagination model pagination =
 
 
 selectReferenceMap : Page.Model -> Maybe ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
-selectReferenceMap model referenceMapId =
-    ( referenceMapId
-        |> Maybe.andThen (flip Dict.get model.referenceTrees)
-        |> flip Page.lenses.referenceTree.set model
-    , Cmd.none
-    )
+selectReferenceMap =
+    StatisticsRequests.selectReferenceMapWith
+        { statisticsEvaluationLens = Page.lenses.statisticsEvaluation
+        }
 
 
 setNutrientsSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
-setNutrientsSearchString model string =
-    ( model
-        |> Page.lenses.nutrientsSearchString.set string
-    , Cmd.none
-    )
+setNutrientsSearchString =
+    StatisticsRequests.setNutrientsSearchStringWith
+        { statisticsEvaluationLens = Page.lenses.statisticsEvaluation
+        }
 
 
 setError : Error -> Page.Model -> Page.Model

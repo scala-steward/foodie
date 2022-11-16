@@ -6,20 +6,15 @@ import Api.Types.Meal exposing (Meal, decoderMeal)
 import Api.Types.MealCreation exposing (MealCreation, encoderMealCreation)
 import Api.Types.MealUpdate exposing (MealUpdate, encoderMealUpdate)
 import Http
-import Json.Decode as Decode
 import Pages.Meals.Page as Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.Requests
 import Util.HttpUtil as HttpUtil
 
 
 fetchMeals : AuthorizedAccess -> Cmd Page.Msg
-fetchMeals authorizedAccess =
-    HttpUtil.runPatternWithJwt
-        authorizedAccess
-        Addresses.Backend.meals.all
-        { body = Http.emptyBody
-        , expect = HttpUtil.expectJson Page.GotFetchMealsResponse (Decode.list decoderMeal)
-        }
+fetchMeals =
+    Pages.Util.Requests.fetchMealsWith Page.GotFetchMealsResponse
 
 
 createMeal : AuthorizedAccess -> MealCreation -> Cmd Page.Msg

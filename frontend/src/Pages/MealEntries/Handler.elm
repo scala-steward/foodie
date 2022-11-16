@@ -6,6 +6,7 @@ import Api.Types.MealEntry exposing (MealEntry)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Dict
+import Dict.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens
 import Monocle.Optional as Optional
@@ -47,7 +48,7 @@ init flags =
 initialFetch : AuthorizedAccess -> MealId -> Cmd Page.Msg
 initialFetch authorizedAccess mealId =
     Cmd.batch
-        [ Requests.fetchMeal authorizedAccess mealId
+        [ Requests.fetchMeal { authorizedAccess = authorizedAccess, mealId = mealId }
         , Requests.fetchRecipes authorizedAccess
         , Requests.fetchMealEntries authorizedAccess mealId
         ]
@@ -205,7 +206,7 @@ gotFetchMealEntriesResponse model result =
         |> Result.Extra.unpack (flip setError model)
             (\mealEntries ->
                 model
-                    |> Page.lenses.mealEntries.set (mealEntries |> List.map (\mealEntry -> ( mealEntry.id, mealEntry |> Editing.asView )) |> Dict.fromList)
+                    |> Page.lenses.mealEntries.set (mealEntries |> List.map Editing.asView |> Dict.Extra.fromListBy (.original >> .id))
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.mealEntries).set True
             )
     , Cmd.none
@@ -218,7 +219,7 @@ gotFetchRecipesResponse model result =
         |> Result.Extra.unpack (flip setError model)
             (\recipes ->
                 model
-                    |> Page.lenses.recipes.set (recipes |> List.map (\r -> ( r.id, r )) |> Dict.fromList)
+                    |> Page.lenses.recipes.set (recipes |> Dict.Extra.fromListBy .id)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.recipes).set True
             )
     , Cmd.none

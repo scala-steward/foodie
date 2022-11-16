@@ -1,14 +1,11 @@
 package controllers.stats
 
 import action.UserAction
-import controllers.reference.ReferenceEntry
 import io.circe.syntax._
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.libs.circe.Circe
 import play.api.mvc._
-import services.ReferenceMapId
 import services.nutrient.NutrientService
-import services.reference.ReferenceService
 import services.stats.StatsService
 import utils.TransformerUtils.Implicits._
 import utils.date.Date
@@ -22,8 +19,7 @@ class StatsController @Inject() (
     controllerComponents: ControllerComponents,
     userAction: UserAction,
     statsService: StatsService,
-    nutrientService: NutrientService,
-    referenceService: ReferenceService
+    nutrientService: NutrientService
 )(implicit ec: ExecutionContext)
     extends AbstractController(controllerComponents)
     with Circe {
@@ -40,6 +36,56 @@ class StatsController @Inject() (
         )
         .map(
           _.pipe(_.transformInto[Stats])
+            .pipe(_.asJson)
+            .pipe(Ok(_))
+        )
+    }
+
+  def ofFood(foodId: Int): Action[AnyContent] =
+    userAction.async {
+      statsService
+        .nutrientsOfFood(foodId.transformInto[services.FoodId])
+        .map(
+          _.fold(NotFound: Result)(
+            _.pipe(_.transformInto[FoodStats])
+              .pipe(_.asJson)
+              .pipe(Ok(_))
+          )
+        )
+    }
+
+  def ofComplexFood(recipeId: UUID): Action[AnyContent] =
+    userAction.async { request =>
+      statsService
+        .nutrientsOfComplexFood(request.user.id, recipeId.transformInto[services.ComplexFoodId])
+        .map(
+          _.fold(NotFound: Result)(
+            _.pipe(_.transformInto[TotalOnlyStats])
+              .pipe(_.asJson)
+              .pipe(Ok(_))
+          )
+        )
+    }
+
+  def ofRecipe(recipeId: UUID): Action[AnyContent] =
+    userAction.async { request =>
+      statsService
+        .nutrientsOfRecipe(request.user.id, recipeId.transformInto[services.RecipeId])
+        .map(
+          _.fold(NotFound: Result)(
+            _.pipe(_.transformInto[TotalOnlyStats])
+              .pipe(_.asJson)
+              .pipe(Ok(_))
+          )
+        )
+    }
+
+  def ofMeal(mealId: UUID): Action[AnyContent] =
+    userAction.async { request =>
+      statsService
+        .nutrientsOfMeal(request.user.id, mealId.transformInto[services.MealId])
+        .map(
+          _.pipe(_.transformInto[TotalOnlyStats])
             .pipe(_.asJson)
             .pipe(Ok(_))
         )

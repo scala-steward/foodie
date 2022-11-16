@@ -36,11 +36,24 @@ class ComplexFoodController @Inject() (
         )
     }
 
-  def create: Action[ComplexFood] =
-    userAction.async(circe.tolerantJson[ComplexFood]) { request =>
+  def get(recipeId: UUID): Action[AnyContent] =
+    userAction.async { request =>
+      complexFoodService
+        .get(request.user.id, recipeId.transformInto[RecipeId])
+        .map(
+          _.fold(NotFound: Result)(
+            _.transformInto[ComplexFood]
+              .pipe(_.asJson)
+              .pipe(Ok(_))
+          )
+        )
+    }
+
+  def create: Action[ComplexFoodIncoming] =
+    userAction.async(circe.tolerantJson[ComplexFoodIncoming]) { request =>
       EitherT(
         complexFoodService
-          .create(request.user.id, request.body.transformInto[services.complex.food.ComplexFood])
+          .create(request.user.id, request.body.transformInto[services.complex.food.ComplexFoodIncoming])
       )
         .fold(
           controllers.badRequest,
@@ -51,11 +64,11 @@ class ComplexFoodController @Inject() (
         .recover(errorHandler)
     }
 
-  def update: Action[ComplexFood] =
-    userAction.async(circe.tolerantJson[ComplexFood]) { request =>
+  def update: Action[ComplexFoodIncoming] =
+    userAction.async(circe.tolerantJson[ComplexFoodIncoming]) { request =>
       EitherT(
         complexFoodService
-          .update(request.user.id, request.body.transformInto[services.complex.food.ComplexFood])
+          .update(request.user.id, request.body.transformInto[services.complex.food.ComplexFoodIncoming])
       )
         .fold(
           controllers.badRequest,

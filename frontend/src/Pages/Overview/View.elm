@@ -44,7 +44,7 @@ view model =
                 ]
             , div []
                 [ Links.linkButton
-                    { url = Links.frontendPage model.authorizedAccess.configuration <| Addresses.Frontend.statistics.address <| ()
+                    { url = Links.frontendPage model.authorizedAccess.configuration <| Addresses.Frontend.statisticsTime.address <| ()
                     , attributes = [ Style.classes.button.overview ]
                     , children = [ text "Statistics" ]
                     }

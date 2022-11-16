@@ -13,14 +13,24 @@ module Addresses.Frontend exposing
     , referenceMaps
     , requestRecovery
     , requestRegistration
-    , statistics
+    , statisticsComplexFoodSearch
+    , statisticsComplexFoodSelect
+    , statisticsFoodSearch
+    , statisticsFoodSelect
+    , statisticsMealSearch
+    , statisticsMealSelect
+    , statisticsRecipeSearch
+    , statisticsRecipeSelect
+    , statisticsTime
     , userSettings
     )
 
-import Api.Auxiliary exposing (JWT, MealId, RecipeId, ReferenceMapId)
+import Addresses.StatisticsVariant as StatisticsVariant
+import Api.Auxiliary exposing (ComplexFoodId, FoodId, JWT, MealId, RecipeId, ReferenceMapId)
+import Api.Types.UUID exposing (UUID)
 import Api.Types.UserIdentifier exposing (UserIdentifier)
-import Pages.Util.ParserUtil as ParserUtil exposing (AddressWithParser, with1, with2)
-import Url.Parser as Parser exposing ((</>), Parser, s)
+import Pages.Util.ParserUtil as ParserUtil exposing (AddressWithParser, with1, with1Multiple, with2)
+import Url.Parser as Parser exposing ((</>), (<?>), Parser, s)
 
 
 requestRegistration : AddressWithParser () a a
@@ -57,9 +67,65 @@ meals =
     plain "meals"
 
 
-statistics : AddressWithParser () a a
-statistics =
+statisticsTime : AddressWithParser () a a
+statisticsTime =
     plain "statistics"
+
+
+statisticsFoodSearch : AddressWithParser () a a
+statisticsFoodSearch =
+    plainMultiple "statistics" [ StatisticsVariant.food ]
+
+
+statisticsFoodSelect : AddressWithParser Int (FoodId -> b) b
+statisticsFoodSelect =
+    with1Multiple
+        { steps = [ "statistics", StatisticsVariant.food ]
+        , toString = String.fromInt >> List.singleton
+        , paramParser = Parser.int
+        }
+
+
+statisticsComplexFoodSearch : AddressWithParser () a a
+statisticsComplexFoodSearch =
+    plainMultiple "statistics" [ StatisticsVariant.complexFood ]
+
+
+statisticsComplexFoodSelect : AddressWithParser UUID (ComplexFoodId -> b) b
+statisticsComplexFoodSelect =
+    with1Multiple
+        { steps = [ "statistics", StatisticsVariant.complexFood ]
+        , toString = List.singleton
+        , paramParser = ParserUtil.uuidParser
+        }
+
+
+statisticsRecipeSearch : AddressWithParser () a a
+statisticsRecipeSearch =
+    plainMultiple "statistics" [ StatisticsVariant.recipe ]
+
+
+statisticsRecipeSelect : AddressWithParser UUID (RecipeId -> b) b
+statisticsRecipeSelect =
+    with1Multiple
+        { steps = [ "statistics", StatisticsVariant.recipe ]
+        , toString = List.singleton
+        , paramParser = Parser.string
+        }
+
+
+statisticsMealSearch : AddressWithParser () a a
+statisticsMealSearch =
+    plainMultiple "statistics" [ StatisticsVariant.meal ]
+
+
+statisticsMealSelect : AddressWithParser UUID (MealId -> b) b
+statisticsMealSelect =
+    with1Multiple
+        { steps = [ "statistics", StatisticsVariant.meal ]
+        , toString = List.singleton
+        , paramParser = Parser.string
+        }
 
 
 referenceMaps : AddressWithParser () a a
@@ -131,4 +197,11 @@ plain : String -> AddressWithParser () a a
 plain string =
     { address = always [ string ]
     , parser = s string
+    }
+
+
+plainMultiple : String -> List String -> AddressWithParser () a a
+plainMultiple string strings =
+    { address = always strings
+    , parser = ParserUtil.foldl1 string strings
     }

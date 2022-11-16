@@ -4,9 +4,6 @@ import io.circe.generic.JsonCodec
 
 @JsonCodec
 case class NutrientInformation(
-    nutrientCode: Int,
-    name: String,
-    symbol: String,
-    unit: NutrientUnit,
+    base: NutrientInformationBase,
     amounts: Amounts
 )

@@ -5,6 +5,7 @@ import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Dict
+import Dict.Extra
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens
@@ -232,7 +233,7 @@ gotFetchRecipesResponse model result =
         |> Result.Extra.unpack (flip setError model)
             (\recipes ->
                 model
-                    |> Page.lenses.recipes.set (recipes |> List.map (\r -> ( r.id, r )) |> Dict.fromList)
+                    |> Page.lenses.recipes.set (recipes |> Dict.Extra.fromListBy .id)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.recipes).set True
             )
     , Cmd.none
@@ -245,7 +246,7 @@ gotFetchComplexFoodsResponse model result =
         |> Result.Extra.unpack (flip setError model)
             (\complexFoods ->
                 model
-                    |> Page.lenses.complexFoods.set (complexFoods |> List.map (\r -> ( r.recipeId, r |> Editing.asView )) |> Dict.fromList)
+                    |> Page.lenses.complexFoods.set (complexFoods |> List.map Editing.asView |> Dict.Extra.fromListBy (.original >> .recipeId))
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.complexFoods).set True
             )
     , Cmd.none

@@ -77,19 +77,19 @@ view model =
                         { msg = Page.SetSearchString
                         , searchString = model.searchString
                         }
-                   , table []
+                   , table [ Style.classes.elementsWithControlsTable ]
                         [ colgroup []
                             [ col [] []
                             , col [] []
                             , col [] []
-                            , col [ stringProperty "span" "3" ] []
+                            , col [ stringProperty "span" "4" ] []
                             ]
                         , thead []
                             [ tr [ Style.classes.tableHeader ]
                                 [ th [ scope "col" ] [ label [] [ text "Name" ] ]
                                 , th [ scope "col" ] [ label [] [ text "Description" ] ]
                                 , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Servings" ] ]
-                                , th [ colspan 3, scope "colgroup", Style.classes.controlsGroup ] []
+                                , th [ colspan 4, scope "colgroup", Style.classes.controlsGroup ] []
                                 ]
                             ]
                         , tbody []
@@ -150,6 +150,13 @@ viewRecipeLine configuration recipe =
                     { url = Links.frontendPage configuration <| Addresses.Frontend.ingredientEditor.address <| recipe.id
                     , attributes = [ Style.classes.button.editor ]
                     , children = [ text "Ingredients" ]
+                    }
+                ]
+            , td [ Style.classes.controls ]
+                [ Links.linkButton
+                    { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsRecipeSelect.address <| recipe.id
+                    , attributes = [ Style.classes.button.nutrients ]
+                    , children = [ text "Nutrients" ]
                     }
                 ]
             ]
@@ -315,5 +322,6 @@ editRecipeLineWith handling editedValue =
             [ button [ Style.classes.button.cancel, onClick handling.cancelMsg ]
                 [ text handling.cancelName ]
             ]
+        , td [] []
         , td [] []
         ]

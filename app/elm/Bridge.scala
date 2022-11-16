@@ -5,11 +5,11 @@ import bridges.core.Type.Ref
 import bridges.core._
 import bridges.core.syntax._
 import bridges.elm._
-import controllers.complex.ComplexFood
+import controllers.complex.{ ComplexFood, ComplexFoodIncoming }
 import controllers.meal._
 import controllers.recipe._
 import controllers.reference._
-import controllers.stats.{ Amounts, Nutrient, NutrientInformation, Stats, Values }
+import controllers.stats.{ RequestInterval, _ }
 import controllers.user._
 import security.jwt.LoginContent
 import shapeless.Lazy
@@ -98,6 +98,7 @@ object Bridge {
     mkAndWrite[Credentials]
     mkAndWrite[AmountUnit]
     mkAndWrite[Food]
+    mkAndWrite[FoodInfo]
     mkAndWrite[Ingredient]
     mkAndWrite[IngredientCreation]
     mkAndWrite[IngredientUpdate]
@@ -107,7 +108,13 @@ object Bridge {
     mkAndWrite[RecipeUpdate]
     mkAndWrite[Amounts]
     mkAndWrite[NutrientInformation]
+    mkAndWrite[FoodNutrientInformation]
+    mkAndWrite[NutrientInformationBase]
     mkAndWrite[Stats]
+    mkAndWrite[FoodStats]
+    mkAndWrite[TotalOnlyStats]
+    mkAndWrite[TotalOnlyNutrientInformation]
+    mkAndWrite[TotalOnlyAmount]
     mkAndWrite[ReferenceMap]
     mkAndWrite[ReferenceTree]
     mkAndWrite[ReferenceValue]
@@ -127,6 +134,7 @@ object Bridge {
     mkAndWrite[RecoveryRequest]
     mkAndWrite[ComplexIngredient]
     mkAndWrite[ComplexFood]
+    mkAndWrite[ComplexFoodIncoming]
     mkAndWrite[Values]
   }
 

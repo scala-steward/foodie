@@ -10,15 +10,14 @@ import java.util.UUID
 case class ComplexFood(
     recipeId: UUID,
     amount: BigDecimal,
+    name: String,
+    description: Option[String],
     unit: ComplexFoodUnit
 )
 
 object ComplexFood {
 
-  implicit val toInternal: Transformer[ComplexFood, services.complex.food.ComplexFood] =
-    Transformer
-      .define[ComplexFood, services.complex.food.ComplexFood]
-      .buildTransformer
+
 
   implicit val fromInternal: Transformer[services.complex.food.ComplexFood, ComplexFood] =
     Transformer

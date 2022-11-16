@@ -3,6 +3,7 @@ GET    /assets/*file                                     controllers.Assets.vers
 
 GET    /recipes/measures                                 controllers.recipe.RecipeController.getMeasures
 GET    /recipes/foods                                    controllers.recipe.RecipeController.getFoods
+GET    /recipes/foods/:foodId                            controllers.recipe.RecipeController.getFood(foodId: Int)
 GET    /recipes                                          controllers.recipe.RecipeController.getRecipes
 GET    /recipes/:id                                      controllers.recipe.RecipeController.get(id: java.util.UUID)
 POST   /recipes                                          controllers.recipe.RecipeController.create
@@ -18,6 +19,7 @@ PATCH  /recipes/:recipeId/complex-ingredients            controllers.recipe.Reci
 DELETE /recipes/:recipeId/complex-ingredients/:id        controllers.recipe.RecipeController.removeComplexIngredient(recipeId: java.util.UUID, id: java.util.UUID)
 
 GET    /complex-foods                                    controllers.complex.ComplexFoodController.all
+GET    /complex-foods/:recipeId                          controllers.complex.ComplexFoodController.get(recipeId: java.util.UUID)
 POST   /complex-foods                                    controllers.complex.ComplexFoodController.create
 PATCH  /complex-foods                                    controllers.complex.ComplexFoodController.update
 DELETE /complex-foods/:recipeId                          controllers.complex.ComplexFoodController.delete(recipeId: java.util.UUID)
@@ -44,6 +46,10 @@ PATCH  /reference-maps/entries                           controllers.reference.R
 DELETE /reference-maps/:mapId/entries/:nutrientCode      controllers.reference.ReferenceController.deleteReferenceEntry(mapId: java.util.UUID, nutrientCode: Int)
 
 GET    /stats                                            controllers.stats.StatsController.get(from: Option[String], to: Option[String])
+GET    /stats/food/:foodId                               controllers.stats.StatsController.ofFood(foodId: Int)
+GET    /stats/complex-food/:recipeId                     controllers.stats.StatsController.ofComplexFood(recipeId: java.util.UUID)
+GET    /stats/recipe/:recipeId                           controllers.stats.StatsController.ofRecipe(recipeId: java.util.UUID)
+GET    /stats/meal/:mealId                               controllers.stats.StatsController.ofMeal(mealId: java.util.UUID)
 GET    /stats/nutrients                                  controllers.stats.StatsController.allNutrients
 
 GET    /                                                 controllers.home.HomeController.home

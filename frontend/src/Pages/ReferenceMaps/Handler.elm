@@ -4,6 +4,7 @@ import Api.Auxiliary exposing (JWT, ReferenceMapId)
 import Api.Types.ReferenceMap exposing (ReferenceMap)
 import Basics.Extra exposing (flip)
 import Dict
+import Dict.Extra
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens
@@ -207,7 +208,7 @@ gotFetchReferenceMapsResponse model dataOrError =
         |> Result.Extra.unpack (flip setError model)
             (\referenceMaps ->
                 model
-                    |> Page.lenses.referenceMaps.set (referenceMaps |> List.map (\r -> ( r.id, r |> Editing.asView )) |> Dict.fromList)
+                    |> Page.lenses.referenceMaps.set (referenceMaps |> List.map Editing.asView |> Dict.Extra.fromListBy (.original >> .id))
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.referenceMaps).set True
             )
     , Cmd.none

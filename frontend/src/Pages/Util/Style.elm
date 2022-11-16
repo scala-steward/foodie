@@ -17,6 +17,7 @@ classes :
         , editor : Attribute msg
         , logout : Attribute msg
         , navigation : Attribute msg
+        , nutrients : Attribute msg
         , overview : Attribute msg
         , pager : Attribute msg
         , select : Attribute msg
@@ -33,6 +34,7 @@ classes :
     , editing : Attribute msg
     , editLine : Attribute msg
     , elements : Attribute msg
+    , elementsWithControlsTable : Attribute msg
     , ellipsis : Attribute msg
     , incomplete : Attribute msg
     , info : Attribute msg
@@ -42,6 +44,7 @@ classes :
     , numberLabel : Attribute msg
     , nutrients : Attribute msg
     , pagination : Attribute msg
+    , partialStatistics : Attribute msg
     , rating :
         { low : Attribute msg
         , exact : Attribute msg
@@ -68,6 +71,7 @@ classes =
         , editor = class "editorButton"
         , logout = class "logoutButton"
         , navigation = class "navigationButton"
+        , nutrients = class "nutrientsButton"
         , overview = class "overviewButton"
         , pager = class "pagerButton"
         , select = class "selectButton"
@@ -84,6 +88,7 @@ classes =
     , editing = class "editing"
     , editLine = class "editLine"
     , elements = class "elements"
+    , elementsWithControlsTable = class "elementsWithControlsTable"
     , ellipsis = class "ellipsis"
     , incomplete = class "incomplete"
     , info = class "info"
@@ -93,6 +98,7 @@ classes =
     , numberLabel = class "numberLabel"
     , nutrients = class "nutrients"
     , pagination = class "pagination"
+    , partialStatistics = class "partialStatistics"
     , rating =
         { low = class "low"
         , exact = class "exact"
@@ -120,7 +126,13 @@ ids :
     , navigation : Attribute msg
     , overviewMain : Attribute msg
     , referenceEntryEditor : Attribute msg
-    , statistics : Attribute msg
+    , statistics :
+        { food : Attribute msg
+        , complexFood : Attribute msg
+        , meal : Attribute msg
+        , recipe : Attribute msg
+        , time : Attribute msg
+        }
     }
 ids =
     { add = id "add"
@@ -134,5 +146,11 @@ ids =
     , navigation = id "navigation"
     , overviewMain = id "overviewMain"
     , referenceEntryEditor = id "referenceEntryEditor"
-    , statistics = id "statistics"
+    , statistics =
+        { food = id "statisticsFood"
+        , complexFood = id "statisticsComplexFood"
+        , meal = id "statisticsMeal"
+        , recipe = id "statisticsRecipe"
+        , time = id "statistics"
+        }
     }

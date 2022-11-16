@@ -6,20 +6,15 @@ import Api.Types.Recipe exposing (Recipe, decoderRecipe)
 import Api.Types.RecipeCreation exposing (RecipeCreation, encoderRecipeCreation)
 import Api.Types.RecipeUpdate exposing (RecipeUpdate, encoderRecipeUpdate)
 import Http
-import Json.Decode as Decode
 import Pages.Recipes.Page as Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.Requests
 import Util.HttpUtil as HttpUtil
 
 
 fetchRecipes : AuthorizedAccess -> Cmd Page.Msg
-fetchRecipes authorizedAccess =
-    HttpUtil.runPatternWithJwt
-        authorizedAccess
-        Addresses.Backend.recipes.all
-        { body = Http.emptyBody
-        , expect = HttpUtil.expectJson Page.GotFetchRecipesResponse (Decode.list decoderRecipe)
-        }
+fetchRecipes =
+    Pages.Util.Requests.fetchRecipesWith Page.GotFetchRecipesResponse
 
 
 createRecipe : AuthorizedAccess -> RecipeCreation -> Cmd Page.Msg

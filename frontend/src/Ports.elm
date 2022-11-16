@@ -2,15 +2,12 @@ port module Ports exposing
     ( deleteToken
     , doDeleteToken
     , doFetchFoods
-    , doFetchMeasures
     , doFetchNutrients
     , doFetchToken
     , fetchFoods
-    , fetchMeasures
     , fetchNutrients
     , fetchToken
     , storeFoods
-    , storeMeasures
     , storeNutrients
     , storeToken
     )
@@ -38,15 +35,6 @@ port doFetchFoods : () -> Cmd msg
 
 
 port fetchFoods : (String -> msg) -> Sub msg
-
-
-port storeMeasures : String -> Cmd msg
-
-
-port doFetchMeasures : () -> Cmd msg
-
-
-port fetchMeasures : (String -> msg) -> Sub msg
 
 
 port storeNutrients : String -> Cmd msg

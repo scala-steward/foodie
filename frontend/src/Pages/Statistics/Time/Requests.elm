@@ -1,12 +1,11 @@
-module Pages.Statistics.Requests exposing (fetchReferenceTrees, fetchStats)
+module Pages.Statistics.Time.Requests exposing (fetchReferenceTrees, fetchStats)
 
 import Addresses.Backend
-import Api.Types.ReferenceTree exposing (decoderReferenceTree)
 import Api.Types.RequestInterval exposing (RequestInterval)
 import Api.Types.Stats exposing (decoderStats)
 import Http
-import Json.Decode as Decode
-import Pages.Statistics.Page as Page
+import Pages.Statistics.StatisticsRequests as StatisticsRequests
+import Pages.Statistics.Time.Page as Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.DateUtil as DateUtil
 import Url.Builder
@@ -14,13 +13,8 @@ import Util.HttpUtil as HttpUtil
 
 
 fetchReferenceTrees : AuthorizedAccess -> Cmd Page.Msg
-fetchReferenceTrees authorizedAccess =
-    HttpUtil.runPatternWithJwt
-        authorizedAccess
-        Addresses.Backend.references.allTrees
-        { body = Http.emptyBody
-        , expect = HttpUtil.expectJson Page.GotFetchReferenceTreesResponse (Decode.list decoderReferenceTree)
-        }
+fetchReferenceTrees =
+    StatisticsRequests.fetchReferenceTreesWith Page.GotFetchReferenceTreesResponse
 
 
 fetchStats : AuthorizedAccess -> RequestInterval -> Cmd Page.Msg

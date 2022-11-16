@@ -4,6 +4,7 @@ import Api.Auxiliary exposing (JWT, RecipeId)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Dict
+import Dict.Extra
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens
@@ -210,8 +211,8 @@ gotFetchRecipesResponse model dataOrError =
                 model
                     |> Page.lenses.recipes.set
                         (recipes
-                            |> List.map (\r -> ( r.id, r |> Editing.asView ))
-                            |> Dict.fromList
+                            |> List.map Editing.asView
+                            |> Dict.Extra.fromListBy (.original >> .id)
                         )
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.recipes).set True
             )

@@ -1,4 +1,4 @@
-module Pages.Statistics.Status exposing (..)
+module Pages.Statistics.Time.Status exposing (..)
 
 import Monocle.Lens exposing (Lens)
 
