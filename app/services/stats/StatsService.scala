@@ -254,7 +254,8 @@ object StatsService {
         Logger
           .apply("StatsService")
           .info(
-            s"Fetching recipe nutrients: ${nutrientsPerRecipe.get(mealEntry.recipeId)}"
+            s"Fetching recipe nutrients for meal entry with id ${mealEntry.id}, and recipe id ${mealEntry.recipeId}. Result: ${nutrientsPerRecipe
+              .get(mealEntry.recipeId)}"
           )
         nutrientsPerRecipe
           .get(mealEntry.recipeId)
