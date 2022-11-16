@@ -5,6 +5,7 @@ import cats.data.OptionT
 import cats.syntax.traverse._
 import db.generated.Tables
 import io.scalaland.chimney.dsl.TransformerOps
+import play.api.Logger
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.complex.food.ComplexFoodService
 import services.complex.ingredient.ComplexIngredientService
@@ -248,9 +249,19 @@ object StatsService {
         nutrientsPerRecipe: Map[RecipeId, RecipeNutrientMap],
         allNutrients: Seq[Nutrient]
     ): NutrientAmountMap = {
-      val nutrientMap = mealEntries.map { mealEntry =>
-        val recipeNutrientMap = nutrientsPerRecipe(mealEntry.recipeId)
-        (mealEntry.numberOfServings / recipeNutrientMap.recipe.numberOfServings) *: recipeNutrientMap.nutrientMap
+      val nutrientMap = mealEntries.flatMap { mealEntry =>
+        // TODO: Remove or refactor properly
+        Logger
+          .apply("StatsService")
+          .info(
+            s"Fetching recipe nutrients for meal entry with id ${mealEntry.id}, and recipe id ${mealEntry.recipeId}. Result: ${nutrientsPerRecipe
+              .get(mealEntry.recipeId)}"
+          )
+        nutrientsPerRecipe
+          .get(mealEntry.recipeId)
+          .map { recipeNutrientMap =>
+            (mealEntry.numberOfServings / recipeNutrientMap.recipe.numberOfServings) *: recipeNutrientMap.nutrientMap
+          }
       }.qsum
       val totalNumberOfIngredients = nutrientsPerRecipe.values.flatMap(_.foodIds).toSet.size
 
