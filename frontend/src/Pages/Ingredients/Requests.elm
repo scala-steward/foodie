@@ -7,7 +7,6 @@ module Pages.Ingredients.Requests exposing
     , fetchComplexIngredients
     , fetchFoods
     , fetchIngredients
-    , fetchMeasures
     , fetchRecipe
     , saveComplexIngredient
     , saveIngredient
@@ -19,7 +18,6 @@ import Api.Types.ComplexIngredient exposing (ComplexIngredient, decoderComplexIn
 import Api.Types.Ingredient exposing (Ingredient, decoderIngredient)
 import Api.Types.IngredientCreation exposing (IngredientCreation, encoderIngredientCreation)
 import Api.Types.IngredientUpdate exposing (IngredientUpdate, encoderIngredientUpdate)
-import Api.Types.Measure exposing (Measure, decoderMeasure)
 import Http
 import Json.Decode as Decode
 import Pages.Ingredients.Page as Page
@@ -61,16 +59,6 @@ fetchFoods =
 fetchComplexFoods : AuthorizedAccess -> Cmd Page.Msg
 fetchComplexFoods =
     Pages.Util.Requests.fetchComplexFoodsWith Page.GotFetchComplexFoodsResponse
-
-
-fetchMeasures : AuthorizedAccess -> Cmd Page.Msg
-fetchMeasures flags =
-    HttpUtil.runPatternWithJwt
-        flags
-        Addresses.Backend.recipes.measures
-        { body = Http.emptyBody
-        , expect = HttpUtil.expectJson Page.GotFetchMeasuresResponse (Decode.list decoderMeasure)
-        }
 
 
 addFood :

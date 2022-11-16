@@ -5,7 +5,6 @@ import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.ComplexIngredient exposing (ComplexIngredient)
 import Api.Types.Food exposing (Food)
 import Api.Types.Ingredient exposing (Ingredient)
-import Api.Types.Measure exposing (Measure)
 import Api.Types.Recipe exposing (Recipe)
 import Dict exposing (Dict)
 import Monocle.Lens exposing (Lens)
@@ -27,7 +26,6 @@ type alias Model =
     , recipeInfo : Maybe RecipeInfo
     , ingredientsGroup : FoodGroup IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput
     , complexIngredientsGroup : FoodGroup ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood ComplexIngredientClientInput
-    , measures : MeasureMap
     , initialization : Initialization Status
     , foodsMode : FoodsMode
     , ingredientsSearchString : String
@@ -55,10 +53,6 @@ type alias RecipeMap =
     Dict RecipeId Recipe
 
 
-type alias MeasureMap =
-    Dict MeasureId Measure
-
-
 type alias AddFoodsMap =
     Dict FoodId IngredientCreationClientInput
 
@@ -81,8 +75,7 @@ type FoodsMode
 
 
 lenses :
-    { measures : Lens Model MeasureMap
-    , ingredientsGroup : Lens Model (FoodGroup IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput)
+    { ingredientsGroup : Lens Model (FoodGroup IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput)
     , complexIngredientsGroup : Lens Model (FoodGroup ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood ComplexIngredientClientInput)
     , recipeInfo : Lens Model (Maybe RecipeInfo)
     , initialization : Lens Model (Initialization Status)
@@ -91,8 +84,7 @@ lenses :
     , complexIngredientsSearchString : Lens Model String
     }
 lenses =
-    { measures = Lens .measures (\b a -> { a | measures = b })
-    , ingredientsGroup = Lens .ingredientsGroup (\b a -> { a | ingredientsGroup = b })
+    { ingredientsGroup = Lens .ingredientsGroup (\b a -> { a | ingredientsGroup = b })
     , complexIngredientsGroup = Lens .complexIngredientsGroup (\b a -> { a | complexIngredientsGroup = b })
     , recipeInfo = Lens .recipeInfo (\b a -> { a | recipeInfo = b })
     , initialization = Lens .initialization (\b a -> { a | initialization = b })
@@ -125,7 +117,6 @@ type Msg
     | GotFetchComplexIngredientsResponse (Result Error (List ComplexIngredient))
     | GotFetchFoodsResponse (Result Error (List Food))
     | GotFetchComplexFoodsResponse (Result Error (List ComplexFood))
-    | GotFetchMeasuresResponse (Result Error (List Measure))
     | GotFetchRecipeResponse (Result Error Recipe)
     | SelectFood Food
     | SelectComplexFood ComplexFood
@@ -138,7 +129,6 @@ type Msg
     | UpdateAddFood IngredientCreationClientInput
     | UpdateAddComplexFood ComplexIngredientClientInput
     | UpdateFoods String
-    | UpdateMeasures String
     | SetFoodsSearchString String
     | SetComplexFoodsSearchString String
     | SetIngredientsPagination Pagination

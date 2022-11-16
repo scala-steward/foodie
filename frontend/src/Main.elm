@@ -84,7 +84,7 @@ import Pages.Statistics.Time.View
 import Pages.UserSettings.Handler
 import Pages.UserSettings.Page
 import Pages.UserSettings.View
-import Ports exposing (doFetchToken, fetchFoods, fetchMeasures, fetchNutrients, fetchToken)
+import Ports exposing (doFetchToken, fetchFoods, fetchNutrients, fetchToken)
 import Url exposing (Url)
 import Url.Parser as Parser exposing ((</>), Parser)
 
@@ -106,7 +106,6 @@ subscriptions _ =
     Sub.batch
         [ fetchToken FetchToken
         , fetchFoods FetchFoods
-        , fetchMeasures FetchMeasures
         , fetchNutrients FetchNutrients
         , Ports.deleteToken DeleteToken
         ]
@@ -167,7 +166,6 @@ type Msg
     | FetchToken String
     | DeleteToken ()
     | FetchFoods String
-    | FetchMeasures String
     | FetchNutrients String
     | LoginMsg Pages.Login.Page.Msg
     | OverviewMsg Pages.Overview.Page.Msg
@@ -332,9 +330,6 @@ update msg model =
 
         ( FetchFoods foods, StatisticsFoodSearch statisticsFoodSearch ) ->
             stepThrough steps.statisticsFoodSearch model (Pages.Statistics.Food.Search.Handler.update (Pages.Statistics.Food.Search.Page.UpdateFoods foods) statisticsFoodSearch)
-
-        ( FetchMeasures measures, Ingredients ingredients ) ->
-            stepThrough steps.ingredients model (Pages.Ingredients.Handler.update (Pages.Ingredients.Page.UpdateMeasures measures) ingredients)
 
         ( FetchNutrients nutrients, ReferenceEntries referenceEntries ) ->
             stepThrough steps.referenceEntries model (Pages.ReferenceEntries.Handler.update (Pages.ReferenceEntries.Page.UpdateNutrients nutrients) referenceEntries)

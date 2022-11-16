@@ -18,6 +18,7 @@ import Html.Attributes exposing (colspan, disabled, scope, value)
 import Html.Attributes.Extra exposing (stringProperty)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
+import List.Extra
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
@@ -58,9 +59,9 @@ view model =
         let
             viewIngredientState =
                 Editing.unpack
-                    { onView = viewIngredientLine model.measures model.ingredientsGroup.foods
-                    , onUpdate = updateIngredientLine model.measures model.ingredientsGroup.foods
-                    , onDelete = deleteIngredientLine model.measures model.ingredientsGroup.foods
+                    { onView = viewIngredientLine model.ingredientsGroup.foods
+                    , onUpdate = updateIngredientLine model.ingredientsGroup.foods
+                    , onDelete = deleteIngredientLine model.ingredientsGroup.foods
                     }
 
             viewComplexIngredientState =
@@ -362,8 +363,8 @@ viewComplex model =
         ]
 
 
-viewIngredientLine : Page.MeasureMap -> Page.FoodMap -> Ingredient -> Html Page.Msg
-viewIngredientLine measureMap foodMap ingredient =
+viewIngredientLine : Page.FoodMap -> Ingredient -> Html Page.Msg
+viewIngredientLine foodMap ingredient =
     let
         editMsg =
             Page.EnterEditIngredient ingredient.id |> onClick
@@ -375,13 +376,12 @@ viewIngredientLine measureMap foodMap ingredient =
             ]
         , onClick = [ editMsg ]
         , foodMap = foodMap
-        , measureMap = measureMap
         }
         ingredient
 
 
-deleteIngredientLine : Page.MeasureMap -> Page.FoodMap -> Ingredient -> Html Page.Msg
-deleteIngredientLine measureMap foodMap ingredient =
+deleteIngredientLine : Page.FoodMap -> Ingredient -> Html Page.Msg
+deleteIngredientLine foodMap ingredient =
     ingredientLineWith
         { controls =
             [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteIngredient ingredient.id) ] [ text "Delete?" ] ]
@@ -389,16 +389,21 @@ deleteIngredientLine measureMap foodMap ingredient =
             ]
         , onClick = []
         , foodMap = foodMap
-        , measureMap = measureMap
         }
         ingredient
+
+
+measureOfFood : MeasureId -> Food -> Maybe Measure
+measureOfFood measureId food =
+    food
+        |> .measures
+        |> List.Extra.find (\measure -> measure.id == measureId)
 
 
 ingredientLineWith :
     { controls : List (Html Page.Msg)
     , onClick : List (Attribute Page.Msg)
     , foodMap : Page.FoodMap
-    , measureMap : Page.MeasureMap
     }
     -> Ingredient
     -> Html Page.Msg
@@ -406,11 +411,21 @@ ingredientLineWith ps ingredient =
     let
         withOnClick =
             (++) ps.onClick
+
+        food =
+            Dict.get ingredient.foodId ps.foodMap
     in
     tr [ Style.classes.editing ]
-        ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| DictUtil.nameOrEmpty ps.foodMap <| ingredient.foodId ] ]
+        ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.Extra.unwrap "" .name <| food ] ]
          , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| ingredient.amountUnit.factor ] ]
-         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| DictUtil.nameOrEmpty ps.measureMap <| ingredient.amountUnit.measureId ] ]
+         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick)
+            [ label []
+                [ text <|
+                    Maybe.Extra.unwrap "" .name <|
+                        Maybe.andThen (measureOfFood ingredient.amountUnit.measureId) <|
+                            food
+                ]
+            ]
          ]
             ++ ps.controls
         )
@@ -470,8 +485,8 @@ complexIngredientLineWith ps complexIngredient =
         )
 
 
-updateIngredientLine : Page.MeasureMap -> Page.FoodMap -> Ingredient -> IngredientUpdateClientInput -> Html Page.Msg
-updateIngredientLine measureMap foodMap ingredient ingredientUpdateClientInput =
+updateIngredientLine : Page.FoodMap -> Ingredient -> IngredientUpdateClientInput -> Html Page.Msg
+updateIngredientLine foodMap ingredient ingredientUpdateClientInput =
     let
         saveMsg =
             Page.SaveIngredientEdit ingredientUpdateClientInput
@@ -481,9 +496,17 @@ updateIngredientLine measureMap foodMap ingredient ingredientUpdateClientInput =
 
         validInput =
             ingredientUpdateClientInput.amountUnit.factor |> ValidatedInput.isValid
+
+        food =
+            Dict.get ingredient.foodId foodMap
+
+        maybeMeasure =
+            food
+                |> Maybe.andThen
+                    (measureOfFood ingredient.amountUnit.measureId)
     in
     tr [ Style.classes.editLine ]
-        [ td [] [ label [] [ text <| DictUtil.nameOrEmpty foodMap <| ingredient.foodId ] ]
+        [ td [] [ label [] [ text <| Maybe.Extra.unwrap "" .name <| food ] ]
         , td [ Style.classes.numberCell ]
             [ input
                 [ value
@@ -508,7 +531,7 @@ updateIngredientLine measureMap foodMap ingredient ingredientUpdateClientInput =
             [ dropdown
                 { items = unitDropdown foodMap ingredient.foodId
                 , emptyItem =
-                    Just <| startingDropdownUnit measureMap ingredient.amountUnit.measureId
+                    Maybe.map startingDropdownUnit <| maybeMeasure
                 , onChange =
                     onChangeDropdown
                         { amountUnitLens = IngredientUpdateClientInput.lenses.amountUnit
@@ -518,8 +541,7 @@ updateIngredientLine measureMap foodMap ingredient ingredientUpdateClientInput =
                         }
                 }
                 [ Style.classes.numberLabel, HtmlUtil.onEscape cancelMsg ]
-                (ingredient.amountUnit.measureId
-                    |> flip Dict.get measureMap
+                (maybeMeasure
                     |> Maybe.map .name
                 )
             ]
@@ -594,10 +616,10 @@ unitDropdown fm fId =
         |> List.map (\m -> { value = String.fromInt m.id, text = m.name, enabled = True })
 
 
-startingDropdownUnit : Page.MeasureMap -> MeasureId -> Dropdown.Item
-startingDropdownUnit measureMap measureId =
-    { value = String.fromInt measureId
-    , text = DictUtil.nameOrEmpty measureMap measureId
+startingDropdownUnit : Measure -> Dropdown.Item
+startingDropdownUnit measure =
+    { value = String.fromInt measure.id
+    , text = measure.name
     , enabled = True
     }
 
