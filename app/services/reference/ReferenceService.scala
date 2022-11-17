@@ -330,14 +330,16 @@ object ReferenceService {
           .getOrElseF(DBIO.failed(DBError.Reference.EntryNotFound))
       for {
         referenceEntryRow <- findAction
-        _ <- referenceEntryQuery(referenceEntryUpdate.referenceMapId, referenceEntryUpdate.nutrientCode).update(
-          (
-            ReferenceEntryUpdate
-              .update(referenceEntryRow.transformInto[ReferenceEntry], referenceEntryUpdate),
-            referenceEntryRow.referenceMapId.transformInto[ReferenceMapId]
+        _ <- ifReferenceMapExists(userId, referenceEntryRow.referenceMapId.transformInto[ReferenceMapId]) {
+          referenceEntryQuery(referenceEntryUpdate.referenceMapId, referenceEntryUpdate.nutrientCode).update(
+            (
+              ReferenceEntryUpdate
+                .update(referenceEntryRow.transformInto[ReferenceEntry], referenceEntryUpdate),
+              referenceEntryRow.referenceMapId.transformInto[ReferenceMapId]
+            )
+              .transformInto[Tables.ReferenceEntryRow]
           )
-            .transformInto[Tables.ReferenceEntryRow]
-        )
+        }
         updatedReferenceEntryRow <- findAction
       } yield updatedReferenceEntryRow.transformInto[ReferenceEntry]
     }
