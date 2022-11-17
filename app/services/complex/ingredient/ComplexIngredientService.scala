@@ -136,9 +136,10 @@ object ComplexIngredientService {
           .getOrElseF(DBIO.failed(DBError.Complex.Ingredient.NotFound))
       for {
         _ <- findAction
-        _ <-
+        _ <- ifRecipeExists(userId, complexIngredient.recipeId) {
           query
             .update(complexIngredient.transformInto[Tables.ComplexIngredientRow])
+        }
         updatedIngredient <- findAction
       } yield updatedIngredient.transformInto[ComplexIngredient]
     }

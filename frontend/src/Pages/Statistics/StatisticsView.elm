@@ -134,9 +134,12 @@ nutrientInformationLineWith ps referenceValues information =
         referenceValue =
             Dict.get (ps.nutrientBase information).nutrientCode referenceValues
 
+        dailyValue =
+            ps.dailyAmountOf |> Maybe.andThen (\daily -> daily information)
+
         factor =
             referenceFactor
-                { actualValue = ps.amountOf information
+                { actualValue = dailyValue
                 , referenceValue = referenceValue
                 }
 
@@ -171,10 +174,10 @@ nutrientInformationLineWith ps referenceValues information =
             Maybe.Extra.unwrap "" displayFloat >> flip (++) completenessInfo
 
         dailyAverage =
-            ps.dailyAmountOf
+            dailyValue
                 |> Maybe.Extra.unwrap []
-                    (\daily ->
-                        [ td [ Style.classes.numberCell ] [ label completenessStyles [ text <| displayValue <| daily <| information ] ] ]
+                    (\value ->
+                        [ td [ Style.classes.numberCell ] [ label completenessStyles [ text <| displayValue <| Just <| value ] ] ]
                     )
     in
     tr [ Style.classes.editLine ]

@@ -188,10 +188,12 @@ object MealService {
         .map(_ > 0)
 
     override def getMealEntries(userId: UserId, id: MealId)(implicit ec: ExecutionContext): DBIO[Seq[MealEntry]] =
-      Tables.MealEntry
-        .filter(_.mealId === id.transformInto[UUID])
-        .result
-        .map(_.map(_.transformInto[MealEntry]))
+      ifMealExists(userId, id) {
+        Tables.MealEntry
+          .filter(_.mealId === id.transformInto[UUID])
+          .result
+          .map(_.map(_.transformInto[MealEntry]))
+      }
 
     override def addMealEntry(
         userId: UserId,
@@ -217,14 +219,16 @@ object MealService {
         .getOrElseF(DBIO.failed(DBError.Meal.EntryNotFound))
       for {
         mealEntryRow <- findAction
-        _ <- mealEntryQuery(mealEntryUpdate.id).update(
-          (
-            MealEntryUpdate
-              .update(mealEntryRow.transformInto[MealEntry], mealEntryUpdate),
-            mealEntryRow.mealId.transformInto[MealId]
+        _ <- ifMealExists(userId, mealEntryRow.mealId.transformInto[MealId]) {
+          mealEntryQuery(mealEntryUpdate.id).update(
+            (
+              MealEntryUpdate
+                .update(mealEntryRow.transformInto[MealEntry], mealEntryUpdate),
+              mealEntryRow.mealId.transformInto[MealId]
+            )
+              .transformInto[Tables.MealEntryRow]
           )
-            .transformInto[Tables.MealEntryRow]
-        )
+        }
         updatedMealEntry <- findAction
       } yield updatedMealEntry.transformInto[MealEntry]
     }

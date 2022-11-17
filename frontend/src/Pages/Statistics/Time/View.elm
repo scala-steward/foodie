@@ -94,7 +94,7 @@ view model =
                         , nutrientBase = .base
                         , referenceTrees = .statisticsEvaluation >> .referenceTrees
                         , referenceTree = .statisticsEvaluation >> .referenceTree
-                        , tableLabel = "Nutrients in the meal"
+                        , tableLabel = "Nutrients in all meals in the interval"
                         }
                         model
                     ++ [ div [ Style.classes.elements ] [ text "Meals" ]
