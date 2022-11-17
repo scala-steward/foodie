@@ -495,6 +495,10 @@ th {
 .pagination table {
     margin-top: 15px;
     table-layout: fixed;
+    border-spacing: 0;
+    width: 100%;
+    border-collapse: collapse;
+    position: relative;
 }
 
 .incomplete {
