@@ -308,14 +308,16 @@ object RecipeService {
           .getOrElseF(DBIO.failed(DBError.Recipe.IngredientNotFound))
       for {
         ingredientRow <- findAction
-        _ <- ingredientQuery(ingredientUpdate.id).update(
-          (
-            IngredientUpdate
-              .update(ingredientRow.transformInto[Ingredient], ingredientUpdate),
-            ingredientRow.recipeId.transformInto[RecipeId]
+        _ <- ifRecipeExists(userId, ingredientRow.recipeId.transformInto[RecipeId]) {
+          ingredientQuery(ingredientUpdate.id).update(
+            (
+              IngredientUpdate
+                .update(ingredientRow.transformInto[Ingredient], ingredientUpdate),
+              ingredientRow.recipeId.transformInto[RecipeId]
+            )
+              .transformInto[Tables.RecipeIngredientRow]
           )
-            .transformInto[Tables.RecipeIngredientRow]
-        )
+        }
         updatedIngredientRow <- findAction
       } yield updatedIngredientRow.transformInto[Ingredient]
     }
