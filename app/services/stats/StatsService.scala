@@ -257,8 +257,7 @@ object StatsService {
         allNutrients: Seq[Nutrient]
     ): NutrientAmountMap = {
       val nutrientMap = mealEntries.map { mealEntry =>
-        val recipeNutrientMap = nutrientsPerRecipe(mealEntry.recipeId)
-        (mealEntry.numberOfServings / recipeNutrientMap.recipe.numberOfServings) *: recipeNutrientMap.nutrientMap
+        mealEntry.numberOfServings *: nutrientsPerRecipe(mealEntry.recipeId).nutrientMap
       }.qsum
       val totalNumberOfIngredients = nutrientsPerRecipe.values.flatMap(_.foodIds).toSet.size
 
