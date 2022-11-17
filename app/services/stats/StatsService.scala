@@ -5,14 +5,13 @@ import cats.data.OptionT
 import cats.syntax.traverse._
 import db.generated.Tables
 import io.scalaland.chimney.dsl.TransformerOps
-import play.api.Logger
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.complex.food.ComplexFoodService
 import services.complex.ingredient.ComplexIngredientService
 import services.meal.{ MealEntry, MealService }
 import services.nutrient.{ AmountEvaluation, Nutrient, NutrientMap, NutrientService }
 import services.recipe.RecipeService
-import services.{ ComplexFoodId, FoodId, MealId, RecipeId, UserId }
+import services._
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
@@ -23,6 +22,7 @@ import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 import utils.collection.MapUtil
 
+import java.util.UUID
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -93,7 +93,14 @@ object StatsService {
     ): DBIO[Stats] = {
       val dateFilter = DBIOUtil.dateFilter(requestInterval.from, requestInterval.to)
       for {
-        mealIdsPlain <- Tables.Meal.filter(m => dateFilter(m.consumedOnDate)).map(_.id).result
+        mealIdsPlain <-
+          Tables.Meal
+            .filter(m =>
+              dateFilter(m.consumedOnDate) &&
+                m.userId === userId.transformInto[UUID]
+            )
+            .map(_.id)
+            .result
         mealIds = mealIdsPlain.map(_.transformInto[MealId])
         meals              <- mealIds.traverse(MealService.Live.getMeal(userId, _)).map(_.flatten)
         mealEntries        <- mealIds.flatTraverse(MealService.Live.getMealEntries(userId, _))
@@ -203,18 +210,18 @@ object StatsService {
           nutrientMap: NutrientMap,
           foodIds: Set[FoodId]
       )
-      def descend(recipeId: RecipeId): OptionT[DBIO, NutrientsAndFoods] =
+      def descend(recipeId: RecipeId): DBIO[NutrientsAndFoods] =
         for {
-          ingredients        <- OptionT.liftF(RecipeService.Live.getIngredients(userId, recipeId))
-          complexIngredients <- OptionT.liftF(ComplexIngredientService.Live.all(userId, recipeId))
-          nutrients          <- OptionT.liftF(NutrientService.Live.nutrientsOfIngredients(ingredients))
+          ingredients        <- RecipeService.Live.getIngredients(userId, recipeId)
+          complexIngredients <- ComplexIngredientService.Live.all(userId, recipeId)
+          nutrients          <- NutrientService.Live.nutrientsOfIngredients(ingredients)
           recipeNutrientMapsOfComplexNutrients <-
             complexIngredients
               .traverse { complexIngredient =>
                 descend(complexIngredient.complexFoodId)
                   .map(recipeNutrientMap =>
                     recipeNutrientMap.copy(nutrientMap = complexIngredient.factor *: recipeNutrientMap.nutrientMap)
-                  )
+                  ): DBIO[NutrientsAndFoods]
               }
         } yield NutrientsAndFoods(
           nutrientMap = nutrients + recipeNutrientMapsOfComplexNutrients.map(_.nutrientMap).qsum,
@@ -223,7 +230,7 @@ object StatsService {
 
       for {
         recipe            <- OptionT(RecipeService.Live.getRecipe(userId, recipeId))
-        nutrientsAndFoods <- descend(recipeId)
+        nutrientsAndFoods <- OptionT.liftF(descend(recipeId))
       } yield {
         val scale = scaleMode match {
           case ScaleMode.Serving             => recipe.numberOfServings.reciprocal
@@ -249,19 +256,9 @@ object StatsService {
         nutrientsPerRecipe: Map[RecipeId, RecipeNutrientMap],
         allNutrients: Seq[Nutrient]
     ): NutrientAmountMap = {
-      val nutrientMap = mealEntries.flatMap { mealEntry =>
-        // TODO: Remove or refactor properly
-        Logger
-          .apply("StatsService")
-          .info(
-            s"Fetching recipe nutrients for meal entry with id ${mealEntry.id}, and recipe id ${mealEntry.recipeId}. Result: ${nutrientsPerRecipe
-              .get(mealEntry.recipeId)}"
-          )
-        nutrientsPerRecipe
-          .get(mealEntry.recipeId)
-          .map { recipeNutrientMap =>
-            (mealEntry.numberOfServings / recipeNutrientMap.recipe.numberOfServings) *: recipeNutrientMap.nutrientMap
-          }
+      val nutrientMap = mealEntries.map { mealEntry =>
+        val recipeNutrientMap = nutrientsPerRecipe(mealEntry.recipeId)
+        (mealEntry.numberOfServings / recipeNutrientMap.recipe.numberOfServings) *: recipeNutrientMap.nutrientMap
       }.qsum
       val totalNumberOfIngredients = nutrientsPerRecipe.values.flatMap(_.foodIds).toSet.size
 
