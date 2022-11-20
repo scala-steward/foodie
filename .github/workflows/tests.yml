@@ -40,6 +40,7 @@ jobs:
           cache: 'sbt'
       - name: Populate with CNF data
         run: |
+          export PGPASSWORD='2JoGcxcx8ibZrOdQ9y3zv9cJyB20xkvzwlaRC8Vz'
           psql -h localhost -U foodie_test -d foodie_test -c "grant all privileges on database foodie_test to foodie_test;"
           psql -h localhost -U foodie_test -d foodie_test -c "grant pg_read_server_files to 'foodie_test';"
           psql -h localhost -U foodie_test -d foodie_test -c "\ir scripts/populate_cnf_db.sql;"
