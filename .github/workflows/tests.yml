@@ -14,14 +14,24 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # Todo: Really node?
+    container: node:latest
     services:
       postgres:
-        image: postgres
+        image: postgres:12
         env:
-          POSTGRES_USER: foodie
-          POSTGRES_PASSWORD:
+          POSTGRES_DB: foodie_test
+          POSTGRES_PASSWORD: 2JoGcxcx8ibZrOdQ9y3zv9cJyB20xkvzwlaRC8Vz
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: foodie_test
         ports:
           - 5432:5432
+        # set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK 11
@@ -33,5 +43,5 @@ jobs:
       - name: Run tests
         run: sbt test
         env:
-          POSTGRES_HOST: postgres
-          POSTGRES_PORT: 5432
+          PGPASSWORD: 2JoGcxcx8ibZrOdQ9y3zv9cJyB20xkvzwlaRC8Vz
+          PGUSER: foodie_test
