@@ -14,8 +14,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    # Todo: Really node?
-    container: node:latest
+    container: adoptopenjdk/openjdk11:latest
     services:
       postgres:
         image: postgres:12
