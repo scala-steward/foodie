@@ -41,8 +41,8 @@ jobs:
       - name: Populate with CNF data
         run: |
           sudo service postgresql start
-          psql -h jdbc:postgres -U foodie_test -d foodie_test -c "grant all privileges on database foodie_test to foodie_test;"
-          psql -h jdbc:postgres -U foodie_test -d foodie_test -c "grant pg_read_server_files to 'foodie_test';"
-          psql -h jdbc:postgres -U foodie_test -d foodie_test -c "\ir scripts/populate_cnf_db.sql;"
+          psql -U foodie_test -d foodie_test -c "grant all privileges on database foodie_test to foodie_test;"
+          psql -U foodie_test -d foodie_test -c "grant pg_read_server_files to 'foodie_test';"
+          psql -U foodie_test -d foodie_test -c "\ir scripts/populate_cnf_db.sql;"
       - name: Run tests
         run: sbt test
