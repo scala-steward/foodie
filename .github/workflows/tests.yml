@@ -33,5 +33,5 @@ jobs:
       - name: Run tests
         run: sbt test
         env:
-          POSTGRES_HOST: localhost
+          POSTGRES_HOST: postgres
           POSTGRES_PORT: 5432
