@@ -40,8 +40,8 @@ jobs:
           cache: 'sbt'
       - name: Populate with CNF data
         run: | 
-          psql -h postgresql -U foodie_test -d foodie_test -c "grant all privileges on database foodie_test to foodie_test;"
-          psql -h postgresql -U foodie_test -d foodie_test -c "grant pg_read_server_files to 'foodie_test';"
-          psql -h postgresql -U foodie_test -d foodie_test -c "\ir scripts/populate_cnf_db.sql;"
+          psql -h jdbc:postgres -U foodie_test -d foodie_test -c "grant all privileges on database foodie_test to foodie_test;"
+          psql -h jdbc:postgres -U foodie_test -d foodie_test -c "grant pg_read_server_files to 'foodie_test';"
+          psql -h jdbc:postgres -U foodie_test -d foodie_test -c "\ir scripts/populate_cnf_db.sql;"
       - name: Run tests
         run: sbt test
