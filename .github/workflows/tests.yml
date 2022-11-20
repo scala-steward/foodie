@@ -38,6 +38,8 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
           cache: 'sbt'
+      - name: Run migrations
+        run: sbt 'testOnly *Initializer'
       - name: Populate with CNF data
         run: |
           export PGPASSWORD='2JoGcxcx8ibZrOdQ9y3zv9cJyB20xkvzwlaRC8Vz'
