@@ -8,7 +8,7 @@ version := "0.1"
 
 val circeVersion = "0.14.3"
 val slickVersion = "3.4.1"
-val jwtVersion   = "9.1.1"
+val jwtVersion   = "9.1.2"
 
 val config = ConfigFactory
   .parseFile(new File("conf/application.conf"))
@@ -40,15 +40,15 @@ lazy val root = (project in file("."))
       "io.scalaland"               %% "chimney"                   % "0.6.2",
       "com.github.jwt-scala"       %% "jwt-core"                  % jwtVersion,
       "com.github.jwt-scala"       %% "jwt-circe"                 % jwtVersion,
-      "com.github.pureconfig"      %% "pureconfig"                % "0.17.1",
-      "org.typelevel"              %% "cats-effect"               % "3.3.14",
-      "org.typelevel"              %% "cats-core"                 % "2.8.0",
+      "com.github.pureconfig"      %% "pureconfig"                % "0.17.2",
+      "org.typelevel"              %% "cats-effect"               % "3.4.0",
+      "org.typelevel"              %% "cats-core"                 % "2.9.0",
       "com.beachape"               %% "enumeratum-circe"          % "1.7.0",
       "com.typesafe.play"          %% "play-mailer"               % "8.0.1",
       "com.typesafe.play"          %% "play-mailer-guice"         % "8.0.1",
       "com.lihaoyi"                %% "pprint"                    % "0.8.0",
       "org.scalacheck"             %% "scalacheck"                % "1.17.0" % Test,
-      "org.typelevel"              %% "cats-laws"                 % "2.8.0"  % Test,
+      "org.typelevel"              %% "cats-laws"                 % "2.9.0"  % Test,
       "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.5"  % Test
     ),
     slickCodegenDatabaseUrl := config.getString("slick.dbs.default.db.url"),
