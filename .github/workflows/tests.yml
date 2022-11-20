@@ -38,6 +38,9 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
           cache: 'sbt'
+        # Workaround: A placeholder test initializes all migrations.
+        # Then the database is populated with CNF data via the standard script.
+        # Afterwards, the actual tests can be performed.
       - name: Run migrations
         run: sbt 'testOnly *Initializer'
       - name: Populate with CNF data
