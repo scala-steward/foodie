@@ -28,4 +28,9 @@ object Gens {
     hash = Hash.fromPassword("password", salt, Hash.defaultIterations)
   )
 
+  def optionalOneOf[A](seq: Seq[A]): Gen[Option[A]] =
+    if (seq.isEmpty)
+      Gen.const(None)
+    else Gen.option(Gen.oneOf(seq))
+
 }
