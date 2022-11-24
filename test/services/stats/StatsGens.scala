@@ -2,29 +2,26 @@ package services.stats
 
 import io.scalaland.chimney.dsl._
 import org.scalacheck.Gen
-import play.api.inject.guice.GuiceApplicationBuilder
 import services.recipe._
-import services.{ Gens, IngredientId, RecipeId }
+import services._
+import services.nutrient.{ Nutrient, NutrientService }
 import utils.TransformerUtils.Implicits._
-
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 
 object StatsGens {
 
-  private val recipeService = GuiceApplicationBuilder()
-    .build()
-    .injector
-    .instanceOf[RecipeService]
+  private val recipeService   = TestUtil.injector.instanceOf[RecipeService]
+  private val nutrientService = TestUtil.injector.instanceOf[NutrientService]
 
-  private val allFoods = Await
-    .result(recipeService.allFoods, Duration.Inf)
+  val allFoods: Seq[Food] = DBTestUtil
+    .await(recipeService.allFoods)
     .map(food =>
       food.copy(
         measures = food.measures
           .filter(measure => measure.id != AmountUnit.hundredGrams)
       )
     )
+
+  val allNutrients: Seq[Nutrient] = DBTestUtil.await(nutrientService.all)
 
   lazy val foodGen: Gen[Food] =
     Gen.oneOf(allFoods)
