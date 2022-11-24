@@ -7,7 +7,7 @@ import db.generated.Tables
 import org.scalacheck.{ Prop, Properties }
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.inject.guice.GuiceApplicationBuilder
-import services.Gens
+import services.{ DBTestUtil, Gens, TestUtil }
 import services.recipe.RecipeService
 import services.user.UserService
 import slick.jdbc.PostgresProfile
@@ -19,36 +19,16 @@ import scala.concurrent.duration.Duration
 
 object RecipeStatsProperties extends Properties("Recipe stats") {
 
-  private val injector = GuiceApplicationBuilder()
-    .build()
-    .injector
+  private val recipeService = TestUtil.injector.instanceOf[RecipeService]
 
-  private val recipeService = injector
-    .instanceOf[RecipeService]
-
-  private val userService = injector
-    .instanceOf[UserService]
-
-  private val databaseConfigProvider = injector.instanceOf[DatabaseConfigProvider]
+  private val userService = TestUtil.injector.instanceOf[UserService]
 
   // TODO: Rename
   property("First property") = Prop.forAll(
     Gens.userWithFixedPassword :| "User",
     StatsGens.recipeParametersGen :| "Recipe parameters"
   ) { (user, recipeParameters) =>
-    // TODO: Extract this function
-    Await.result(
-      databaseConfigProvider
-        .get[PostgresProfile]
-        .db
-        .run(
-          DBIO.seq(
-            Tables.Recipe.delete,
-            Tables.User.delete
-          )
-        ),
-      Duration.Inf
-    )
+    DBTestUtil.clearDb()
     val transformer = for {
       _      <- EitherT.liftF(userService.add(user))
       recipe <- EitherT(recipeService.createRecipe(user.id, recipeParameters.recipeCreation))
@@ -68,7 +48,7 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
         },
         identity
       ),
-      Duration.Inf
+      DBTestUtil.defaultAwaitTimeout
     )
   }
 }
