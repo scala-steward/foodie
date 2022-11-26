@@ -1,15 +1,15 @@
 package services.stats
 
-import cats.data.{EitherT, OptionT}
+import cats.data.{ EitherT, OptionT }
 import cats.instances.list._
 import cats.syntax.traverse._
 import db.generated.Tables
 import errors.ErrorContext
 import io.scalaland.chimney.dsl._
 import org.scalacheck.Prop._
-import org.scalacheck.{Prop, Properties}
+import org.scalacheck.{ Prop, Properties }
 import services._
-import services.recipe.{Ingredient, Recipe, RecipeService}
+import services.recipe.{ Ingredient, Recipe, RecipeService }
 import services.user.UserService
 import slick.jdbc.PostgresProfile.api._
 import spire.math.Natural
@@ -25,15 +25,11 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
   private val userService   = TestUtil.injector.instanceOf[UserService]
   private val statsService  = TestUtil.injector.instanceOf[StatsService]
 
-  private var iterations = 0
-
   // TODO: Remove seed
   propertyWithSeed("Per serving stats", Some("_bDwQjSyadeq9z1avjd-FvqO55x2ZKFcjrv4S2vHJNB=")) = Prop.forAll(
     Gens.userWithFixedPassword :| "User",
     StatsGens.recipeParametersGen :| "Recipe parameters"
   ) { (user, recipeParameters) =>
-    iterations += 1
-    pprint.log(s"iteration = $iterations")
     DBTestUtil.clearDb()
     val transformer = for {
       _      <- EitherT.liftF(userService.add(user))
@@ -54,15 +50,14 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
       val propsPerNutrient = StatsGens.allNutrients.map { nutrient =>
         val prop = (nutrientMapFromService.get(nutrient), expectedNutrientValues.get(nutrient.id)) match {
           case (Some(actual), Some(expected)) =>
-            val (expectedSize, expectedValue) = expected.getOrElse((0, None))
+            val (expectedSize, expectedValue) = expected.fold((0, Option.empty[BigDecimal])) {
+              case (size, value) => size -> Some(value)
+            }
             Prop.all(
-              // TODO: Figure out the issue here - Some(0) vs. None occurs, but why?
-              //              closeEnough(
-              //                actual.value,
-              //                expected.sequence.collect {
-              //                  case values if expected.nonEmpty => values.sum
-              //                }
-              //              ) :| "Value correct",
+              closeEnough(
+                actual.value,
+                expectedValue
+              ) :| "Value correct",
               (actual.numberOfDefinedValues ?= Natural(expectedSize)) :| "Number of defined values correct",
               (actual.numberOfIngredients ?= Natural(distinctIngredients)) :| "Total number of ingredients matches"
             )
