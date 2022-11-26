@@ -1,11 +1,13 @@
 package services.stats
 
+import db.generated.Tables
 import io.scalaland.chimney.dsl._
 import org.scalacheck.Gen
 import services.recipe._
 import services._
 import services.nutrient.{ Nutrient, NutrientService }
 import utils.TransformerUtils.Implicits._
+import slick.jdbc.PostgresProfile.api._
 
 object StatsGens {
 
@@ -22,6 +24,15 @@ object StatsGens {
     )
 
   val allNutrients: Seq[Nutrient] = DBTestUtil.await(nutrientService.all)
+
+  val allConversionFactors: Map[(FoodId, MeasureId), BigDecimal] = TestUtil.measure("fetch all conversion factors") {
+    DBTestUtil
+      .await(DBTestUtil.dbRun(Tables.ConversionFactor.result))
+      .map { row =>
+        (row.foodId.transformInto[FoodId], row.measureId.transformInto[MeasureId]) -> row.conversionFactorValue
+      }
+      .toMap
+  }
 
   lazy val foodGen: Gen[Food] =
     Gen.oneOf(allFoods)

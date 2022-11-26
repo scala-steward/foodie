@@ -1,16 +1,16 @@
 package services.stats
 
-import cats.data.{ EitherT, OptionT }
+import cats.data.{EitherT, OptionT}
 import cats.instances.list._
 import cats.syntax.traverse._
 import db.generated.Tables
 import errors.ErrorContext
 import io.scalaland.chimney.dsl._
 import org.scalacheck.Prop._
-import org.scalacheck.{ Prop, Properties }
-import services.recipe.{ Ingredient, Recipe, RecipeService }
-import services.user.UserService
+import org.scalacheck.{Prop, Properties}
 import services._
+import services.recipe.{Ingredient, Recipe, RecipeService}
+import services.user.UserService
 import slick.jdbc.PostgresProfile.api._
 import spire.math.Natural
 import utils.DBIOUtil.instances._
@@ -54,6 +54,7 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
       val propsPerNutrient = StatsGens.allNutrients.map { nutrient =>
         val prop = (nutrientMapFromService.get(nutrient), expectedNutrientValues.get(nutrient.id)) match {
           case (Some(actual), Some(expected)) =>
+            val (expectedSize, expectedValue) = expected.getOrElse((0, None))
             Prop.all(
               // TODO: Figure out the issue here - Some(0) vs. None occurs, but why?
               //              closeEnough(
@@ -62,10 +63,7 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
               //                  case values if expected.nonEmpty => values.sum
               //                }
               //              ) :| "Value correct",
-              // TODO: Account for the possibility that a food is added twice
-              (actual.numberOfDefinedValues ?= Natural(
-                expected.collect { case (id, value) if value.isDefined => id }.toSet.size
-              )) :| "Number of defined values correct",
+              (actual.numberOfDefinedValues ?= Natural(expectedSize)) :| "Number of defined values correct",
               (actual.numberOfIngredients ?= Natural(distinctIngredients)) :| "Total number of ingredients matches"
             )
           case (None, None) => Prop.passed
@@ -108,67 +106,62 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
 
   private def computeNutrientAmount(
       nutrientId: NutrientId,
-      ingredient: Ingredient
-  ): DBIO[Option[BigDecimal]] = {
+      ingredients: Seq[Ingredient]
+  ): DBIO[Option[(Int, BigDecimal)]] = {
     val transformer =
       for {
-        conversionFactor <-
-          OptionT
-            .fromOption[DBIO](ingredient.amountUnit.measureId)
-            .flatMapF(conversionFactorOf(ingredient.foodId, _))
-            .orElseF(DBIO.successful(Some(BigDecimal(1))))
-        nutrientAmount <- OptionT(
-          nutrientAmountOf(nutrientId, ingredient.foodId)
-        )
-      } yield nutrientAmount.nutrientValue *
-        ingredient.amountUnit.factor *
-        conversionFactor
+        conversionFactors <-
+          ingredients
+            .traverse { ingredient =>
+              OptionT
+                .fromOption[DBIO](ingredient.amountUnit.measureId)
+                .subflatMap(measureId => StatsGens.allConversionFactors.get((ingredient.foodId, measureId)))
+                .orElseF(DBIO.successful(Some(BigDecimal(1))))
+                .map(ingredient.foodId -> _)
+            }
+            .map(_.toMap)
+        nutrientAmounts <- OptionT.liftF(nutrientAmountOf(nutrientId, ingredients.map(_.foodId)))
+        ingredientAmounts = ingredients.flatMap { ingredient =>
+          nutrientAmounts.get(ingredient.foodId).map { nutrientAmount =>
+            nutrientAmount *
+              ingredient.amountUnit.factor *
+              conversionFactors(ingredient.foodId)
+          }
+        }
+        amounts <- OptionT.fromOption[DBIO](Some(ingredientAmounts).filter(_.nonEmpty))
+      } yield (nutrientAmounts.keySet.size, amounts.sum)
 
     transformer.value
   }
 
-  private def conversionFactorOf(
-      foodId: FoodId,
-      measureId: MeasureId
-  ): DBIO[Option[BigDecimal]] =
-    Tables.ConversionFactor
-      .filter(cf => cf.foodId === foodId.transformInto[Int] && cf.measureId === measureId.transformInto[Int])
-      .map(_.conversionFactorValue)
-      .result
-      .headOption
-
   private def nutrientAmountOf(
       nutrientId: NutrientId,
-      foodId: FoodId
-  ): DBIO[Option[Tables.NutrientAmountRow]] =
+      foodIds: Seq[FoodId]
+  ): DBIO[Map[FoodId, BigDecimal]] =
     Tables.NutrientAmount
       .filter(na =>
         na.nutrientId === nutrientId.transformInto[Int]
-          && na.foodId === foodId.transformInto[Int]
+          && na.foodId.inSetBind(foodIds.map(_.transformInto[Int]))
       )
       .result
-      .headOption
+      .map { nutrientAmounts =>
+        nutrientAmounts
+          .map(na => na.foodId.transformInto[FoodId] -> na.nutrientValue)
+          .toMap
+      }
 
   private def computeNutrientAmounts(
       recipe: Recipe,
       ingredients: List[Ingredient]
-  ): Future[Map[NutrientId, List[(FoodId, Option[BigDecimal])]]] = {
+  ): Future[Map[NutrientId, Option[(Int, BigDecimal)]]] = {
     DBTestUtil.dbRun {
       StatsGens.allNutrients
         .traverse { nutrient =>
-          ingredients
-            .traverse { ingredient =>
-              computeNutrientAmount(
-                nutrient.id,
-                ingredient
-              )
-                .map(ingredient.foodId -> _): DBIO[(FoodId, Option[BigDecimal])]
-            }
-            .map { amounts =>
-              nutrient.id -> amounts.map { case (id, value) => id -> value.map(_ / recipe.numberOfServings) }
-            }: DBIO[
-            (NutrientId, List[(FoodId, Option[BigDecimal])])
-          ]
+          computeNutrientAmount(nutrient.id, ingredients)
+            .map(v =>
+              nutrient.id ->
+                v.map { case (number, value) => number -> value / recipe.numberOfServings }
+            ): DBIO[(NutrientId, Option[(Int, BigDecimal)])]
         }
         .map(_.toMap)
     }
