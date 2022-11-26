@@ -44,7 +44,7 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
       )
     } yield {
       val lengthProp: Prop =
-        (ingredients.length == recipeParameters.ingredientParameters.length) :| "Correct ingredient number"
+        (ingredients.length ?= recipeParameters.ingredientParameters.length) :| "Correct ingredient number"
       val distinctIngredients = ingredients.distinctBy(_.foodId).length
 
       val propsPerNutrient = StatsGens.allNutrients.map { nutrient =>
@@ -54,10 +54,7 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
               case (size, value) => size -> Some(value)
             }
             Prop.all(
-              closeEnough(
-                actual.value,
-                expectedValue
-              ) :| "Value correct",
+              closeEnough(actual.value, expectedValue) :| "Value correct",
               (actual.numberOfDefinedValues ?= Natural(expectedSize)) :| "Number of defined values correct",
               (actual.numberOfIngredients ?= Natural(distinctIngredients)) :| "Total number of ingredients matches"
             )
