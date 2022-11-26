@@ -31,7 +31,7 @@ object StatsGens {
   case class RecipeParameters(
       recipeId: RecipeId,
       recipeCreation: RecipeCreation,
-      ingredientParameters: Seq[IngredientParameters]
+      ingredientParameters: List[IngredientParameters]
   )
 
   case class IngredientParameters(
