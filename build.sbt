@@ -51,6 +51,9 @@ lazy val root = (project in file("."))
       "org.typelevel"              %% "cats-laws"                 % "2.9.0"  % Test,
       "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.5"  % Test
     ),
+    dependencyOverrides ++= Seq(
+      "com.google.inject" % "guice" % "5.1.0"
+    ),
     slickCodegenDatabaseUrl := config.getString("slick.dbs.default.db.url"),
     slickCodegenDatabaseUser := config.getString("slick.dbs.default.db.user"),
     slickCodegenDatabasePassword := config.getString("slick.dbs.default.db.password"),
