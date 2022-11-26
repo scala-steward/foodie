@@ -9,7 +9,7 @@ import io.scalaland.chimney.dsl._
 import utils.TransformerUtils.Implicits._
 import org.scalacheck.Prop._
 import org.scalacheck.{ Prop, Properties }
-import services.{ DBTestUtil, Gens, NutrientId, TestUtil }
+import services.{ DBTestUtil, FoodId, Gens, IngredientId, NutrientId, TestUtil }
 import services.recipe.{ Ingredient, RecipeService }
 import services.user.UserService
 import slick.jdbc.PostgresProfile.api._
@@ -24,11 +24,15 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
   private val userService   = TestUtil.injector.instanceOf[UserService]
   private val statsService  = TestUtil.injector.instanceOf[StatsService]
 
+  private var iterations = 0
+
   // TODO: Remove seed
   propertyWithSeed("Per serving stats", Some("_bDwQjSyadeq9z1avjd-FvqO55x2ZKFcjrv4S2vHJNB=")) = Prop.forAll(
     Gens.userWithFixedPassword :| "User",
     StatsGens.recipeParametersGen :| "Recipe parameters"
   ) { (user, recipeParameters) =>
+    iterations += 1
+    pprint.log(s"iteration = $iterations")
     DBTestUtil.clearDb()
     // TODO: Refactor this code - it is barely readable!
     val transformer = for {
@@ -46,9 +50,12 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
                   nutrient.id,
                   ingredient
                 )
+                  .map(ingredient.foodId -> _): DBIO[(FoodId, Option[BigDecimal])]
               }
-              .map { amounts => nutrient.id -> amounts.map(_.map(_ / recipe.numberOfServings)) }: DBIO[
-              (NutrientId, List[Option[BigDecimal]])
+              .map { amounts =>
+                nutrient.id -> amounts.map { case (id, value) => id -> value.map(_ / recipe.numberOfServings) }
+              }: DBIO[
+              (NutrientId, List[(FoodId, Option[BigDecimal])])
             ]
           }
         }
@@ -68,17 +75,17 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
           case (Some(actual), Some(expected)) =>
             Prop.all(
               // TODO: Figure out the issue here - Some(0) vs. None occurs, but why?
-//              closeEnough(
-//                actual.value,
-//                expected.sequence.collect {
-//                  case values if expected.nonEmpty => values.sum
-//                }
-//              ) :| "Value correct",
+              //              closeEnough(
+              //                actual.value,
+              //                expected.sequence.collect {
+              //                  case values if expected.nonEmpty => values.sum
+              //                }
+              //              ) :| "Value correct",
               // TODO: Account for the possibility that a food is added twice
               (actual.numberOfDefinedValues ?= Natural(
-                expected.count(_.isDefined)
+                expected.collect { case (id, value) if value.isDefined => id }.toSet.size
               )) :| "Number of defined values correct",
-              (actual.numberOfIngredients ?= Natural(ingredients.length)) :| "Total number of ingredients matches"
+              (actual.numberOfIngredients ?= Natural(distinctIngredients)) :| "Total number of ingredients matches"
             )
           case (None, None) => Prop.passed
           case _            => Prop.falsified
