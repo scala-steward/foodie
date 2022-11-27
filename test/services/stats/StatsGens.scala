@@ -5,6 +5,7 @@ import io.scalaland.chimney.dsl._
 import org.scalacheck.Gen
 import services.recipe._
 import services._
+import services.meal.{ MealCreation, MealEntryCreation }
 import services.nutrient.{ Nutrient, NutrientService }
 import utils.TransformerUtils.Implicits._
 import slick.jdbc.PostgresProfile.api._
@@ -39,17 +40,6 @@ object StatsGens {
 
   val smallBigDecimalGen: Gen[BigDecimal] = Gen.choose(BigDecimal(0.001), BigDecimal(1000))
 
-  case class RecipeParameters(
-      recipeId: RecipeId,
-      recipeCreation: RecipeCreation,
-      ingredientParameters: List[IngredientParameters]
-  )
-
-  case class IngredientParameters(
-      ingredientId: IngredientId,
-      ingredientCreation: RecipeId => IngredientCreation
-  )
-
   val recipeCreationGen: Gen[RecipeCreation] = for {
     name             <- Gens.nonEmptyAsciiString
     description      <- Gen.option(Gens.nonEmptyAsciiString)
@@ -67,16 +57,14 @@ object StatsGens {
       factor       <- smallBigDecimalGen
       ingredientId <- Gen.uuid.map(_.transformInto[IngredientId])
     } yield IngredientParameters(
-      ingredientId,
-      recipeId =>
-        IngredientCreation(
-          recipeId = recipeId,
-          foodId = food.id,
-          amountUnit = AmountUnit(
-            measureId = measureId,
-            factor = factor
-          )
+      ingredientId = ingredientId,
+      ingredientPreCreation = IngredientPreCreation(
+        foodId = food.id,
+        amountUnit = AmountUnit(
+          measureId = measureId,
+          factor = factor
         )
+      )
     )
 
   val recipeParametersGen: Gen[RecipeParameters] = for {
@@ -87,6 +75,17 @@ object StatsGens {
     recipeId = recipeId,
     recipeCreation = recipeCreation,
     ingredientParameters = ingredientParameters
+  )
+
+  case class MealParameters(
+      mealId: MealId,
+      mealCreation: MealCreation,
+      mealEntryParameters: List[MealEntryParameters]
+  )
+
+  case class MealEntryParameters(
+      mealEntryId: MealEntryId,
+      mealEntryCreationCreation: MealId => MealEntryCreation
   )
 
 }

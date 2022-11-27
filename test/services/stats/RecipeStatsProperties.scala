@@ -34,7 +34,12 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
       _      <- EitherT.liftF(userService.add(user))
       recipe <- EitherT(recipeService.createRecipe(user.id, recipeParameters.recipeCreation))
       ingredients <- recipeParameters.ingredientParameters.traverse(ip =>
-        EitherT(recipeService.addIngredient(user.id, ip.ingredientCreation(recipe.id)))
+        EitherT(
+          recipeService.addIngredient(
+            userId = user.id,
+            ingredientCreation = IngredientPreCreation.toCreation(recipe.id, ip.ingredientPreCreation)
+          )
+        )
       )
       expectedNutrientValues <- EitherT.liftF(computeNutrientAmounts(recipe, ingredients))
       nutrientMapFromService <- EitherT.fromOptionF(
