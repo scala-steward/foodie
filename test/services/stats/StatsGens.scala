@@ -8,6 +8,7 @@ import services._
 import services.nutrient.{ Nutrient, NutrientService }
 import utils.TransformerUtils.Implicits._
 import slick.jdbc.PostgresProfile.api._
+import spire.math.Natural
 
 object StatsGens {
 
@@ -25,14 +26,13 @@ object StatsGens {
 
   val allNutrients: Seq[Nutrient] = DBTestUtil.await(nutrientService.all)
 
-  val allConversionFactors: Map[(FoodId, MeasureId), BigDecimal] = TestUtil.measure("fetch all conversion factors") {
+  val allConversionFactors: Map[(FoodId, MeasureId), BigDecimal] =
     DBTestUtil
       .await(DBTestUtil.dbRun(Tables.ConversionFactor.result))
       .map { row =>
         (row.foodId.transformInto[FoodId], row.measureId.transformInto[MeasureId]) -> row.conversionFactorValue
       }
       .toMap
-  }
 
   lazy val foodGen: Gen[Food] =
     Gen.oneOf(allFoods)
@@ -82,7 +82,7 @@ object StatsGens {
   val recipeParametersGen: Gen[RecipeParameters] = for {
     recipeCreation       <- recipeCreationGen
     recipeId             <- Gen.uuid.map(_.transformInto[RecipeId])
-    ingredientParameters <- Gen.listOf(ingredientGen)
+    ingredientParameters <- Gens.listOfAtMost(Natural(20), ingredientGen)
   } yield RecipeParameters(
     recipeId = recipeId,
     recipeCreation = recipeCreation,

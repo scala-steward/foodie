@@ -5,6 +5,7 @@ import services.user.User
 import utils.TransformerUtils.Implicits._
 import io.scalaland.chimney.dsl._
 import security.Hash
+import spire.math.Natural
 
 object Gens {
 
@@ -32,5 +33,10 @@ object Gens {
     if (seq.isEmpty)
       Gen.const(None)
     else Gen.option(Gen.oneOf(seq))
+
+  def listOfAtMost[A](n: Natural, gen: Gen[A]): Gen[List[A]] =
+    Gen
+      .choose(0, n.intValue)
+      .flatMap(Gen.listOfN(_, gen))
 
 }
