@@ -25,8 +25,7 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
   private val userService   = TestUtil.injector.instanceOf[UserService]
   private val statsService  = TestUtil.injector.instanceOf[StatsService]
 
-  // TODO: Remove seed
-  propertyWithSeed("Per serving stats", Some("_bDwQjSyadeq9z1avjd-FvqO55x2ZKFcjrv4S2vHJNB=")) = Prop.forAll(
+  property("Per serving stats") = Prop.forAll(
     Gens.userWithFixedPassword :| "User",
     StatsGens.recipeParametersGen :| "Recipe parameters"
   ) { (user, recipeParameters) =>
@@ -70,17 +69,15 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
       )
     }
 
-    TestUtil.measure("await") {
-      DBTestUtil.await(
-        transformer.fold(
-          error => {
-            pprint.log(error.message)
-            Prop.exception
-          },
-          identity
-        )
+    DBTestUtil.await(
+      transformer.fold(
+        error => {
+          pprint.log(error.message)
+          Prop.exception
+        },
+        identity
       )
-    }
+    )
   }
 
   private def closeEnough(
@@ -109,7 +106,7 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
                 .fromOption[DBIO](ingredient.amountUnit.measureId)
                 .subflatMap(measureId => StatsGens.allConversionFactors.get((ingredient.foodId, measureId)))
                 .orElseF(DBIO.successful(Some(BigDecimal(1))))
-                .map(ingredient.foodId -> _)
+                .map(ingredient.id -> _)
             }
             .map(_.toMap)
         nutrientAmounts <- OptionT.liftF(nutrientAmountOf(nutrientId, ingredients.map(_.foodId)))
@@ -117,7 +114,7 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
           nutrientAmounts.get(ingredient.foodId).map { nutrientAmount =>
             nutrientAmount *
               ingredient.amountUnit.factor *
-              conversionFactors(ingredient.foodId)
+              conversionFactors(ingredient.id)
           }
         }
         amounts <- OptionT.fromOption[DBIO](Some(ingredientAmounts).filter(_.nonEmpty))
