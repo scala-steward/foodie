@@ -3,13 +3,12 @@ package services.stats
 import db.generated.Tables
 import io.scalaland.chimney.dsl._
 import org.scalacheck.Gen
-import services.recipe._
 import services._
-import services.meal.{ MealCreation, MealEntryCreation }
 import services.nutrient.{ Nutrient, NutrientService }
-import utils.TransformerUtils.Implicits._
+import services.recipe._
 import slick.jdbc.PostgresProfile.api._
 import spire.math.Natural
+import utils.TransformerUtils.Implicits._
 
 object StatsGens {
 
@@ -75,17 +74,6 @@ object StatsGens {
     recipeId = recipeId,
     recipeCreation = recipeCreation,
     ingredientParameters = ingredientParameters
-  )
-
-  case class MealParameters(
-      mealId: MealId,
-      mealCreation: MealCreation,
-      mealEntryParameters: List[MealEntryParameters]
-  )
-
-  case class MealEntryParameters(
-      mealEntryId: MealEntryId,
-      mealEntryCreationCreation: MealId => MealEntryCreation
   )
 
 }
