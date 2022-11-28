@@ -70,10 +70,8 @@ object StatsGens {
 
   val recipeParametersGen: Gen[RecipeParameters] = for {
     recipeCreation       <- recipeCreationGen
-    recipeId             <- Gen.uuid.map(_.transformInto[RecipeId])
     ingredientParameters <- Gens.listOfAtMost(Natural(20), ingredientGen)
   } yield RecipeParameters(
-    recipeId = recipeId,
     recipeCreation = recipeCreation,
     ingredientParameters = ingredientParameters
   )

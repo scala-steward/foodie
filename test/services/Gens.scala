@@ -1,5 +1,6 @@
 package services
 
+import cats.data.NonEmptyList
 import io.scalaland.chimney.dsl._
 import org.scalacheck.Gen
 import security.Hash
@@ -41,6 +42,12 @@ object Gens {
     Gen
       .choose(0, n.intValue)
       .flatMap(Gen.listOfN(_, gen))
+
+  def nonEmptyListOfAtMost[A](n: Natural, gen: Gen[A]): Gen[NonEmptyList[A]] =
+    Gen
+      .choose(1, n.intValue.max(1))
+      .flatMap(Gen.listOfN(_, gen))
+      .map(NonEmptyList.fromListUnsafe)
 
   val timeGen: Gen[Time] = for {
     hour   <- Gen.choose(0, 23)

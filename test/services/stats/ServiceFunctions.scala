@@ -1,11 +1,14 @@
 package services.stats
 
-import cats.data.OptionT
+import cats.data.{ EitherT, OptionT }
 import cats.syntax.traverse._
 import db.generated.Tables
+import errors.ServerError
 import io.scalaland.chimney.dsl._
 import services._
-import services.recipe.{ Ingredient, Recipe }
+import services.meal.{ Meal, MealEntry, MealService }
+import services.recipe.{ Ingredient, Recipe, RecipeService }
+import services.user.User
 import slick.jdbc.PostgresProfile.api._
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
@@ -77,21 +80,67 @@ object ServiceFunctions {
     }
   }
 
-  def computeNutrientAmounts(
+  case class FullRecipe(
       recipe: Recipe,
       ingredients: List[Ingredient]
+  )
+
+  def computeNutrientAmounts(
+      fullRecipe: FullRecipe
   ): Future[Map[NutrientId, Option[(Int, BigDecimal)]]] = {
     DBTestUtil.dbRun {
       StatsGens.allNutrients
         .traverse { nutrient =>
-          computeNutrientAmount(nutrient.id, ingredients)
+          computeNutrientAmount(nutrient.id, fullRecipe.ingredients)
             .map(v =>
               nutrient.id ->
-                v.map { case (number, value) => number -> value / recipe.numberOfServings }
+                v.map { case (number, value) => number -> value / fullRecipe.recipe.numberOfServings }
             ): DBIO[(NutrientId, Option[(Int, BigDecimal)])]
         }
         .map(_.toMap)
     }
   }
+
+  def createRecipe(recipeService: RecipeService)(
+      user: User,
+      recipeParameters: RecipeParameters
+  ): EitherT[Future, ServerError, FullRecipe] =
+    for {
+      recipe <- EitherT(recipeService.createRecipe(user.id, recipeParameters.recipeCreation))
+      ingredients <- recipeParameters.ingredientParameters.traverse(ip =>
+        EitherT(
+          recipeService.addIngredient(
+            userId = user.id,
+            ingredientCreation = IngredientPreCreation.toCreation(recipe.id, ip.ingredientPreCreation)
+          )
+        )
+      )
+    } yield FullRecipe(recipe, ingredients)
+
+  case class FullMeal(
+      meal: Meal,
+      mealEntries: List[MealEntry]
+  )
+
+  def createMeal(
+      mealService: MealService
+  )(
+      user: User,
+      mealParameters: MealParameters
+  ): EitherT[Future, ServerError, FullMeal] =
+    for {
+      meal <- EitherT(mealService.createMeal(user.id, mealParameters.mealCreation))
+      mealEntries <- mealParameters.mealEntryParameters.traverse(mep =>
+        EitherT(
+          mealService.addMealEntry(
+            userId = user.id,
+            mealEntryCreation = MealEntryPreCreation.toCreation(meal.id, mep.mealEntryPreCreation)
+          )
+        )
+      )
+    } yield FullMeal(
+      meal = meal,
+      mealEntries = mealEntries
+    )
 
 }

@@ -1,8 +1,6 @@
 package services.stats
 
 import cats.data.EitherT
-import cats.instances.list._
-import cats.syntax.traverse._
 import errors.ErrorContext
 import org.scalacheck.Prop._
 import org.scalacheck.{ Prop, Properties }
@@ -25,25 +23,17 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
   ) { (user, recipeParameters) =>
     DBTestUtil.clearDb()
     val transformer = for {
-      _      <- EitherT.liftF(userService.add(user))
-      recipe <- EitherT(recipeService.createRecipe(user.id, recipeParameters.recipeCreation))
-      ingredients <- recipeParameters.ingredientParameters.traverse(ip =>
-        EitherT(
-          recipeService.addIngredient(
-            userId = user.id,
-            ingredientCreation = IngredientPreCreation.toCreation(recipe.id, ip.ingredientPreCreation)
-          )
-        )
-      )
-      expectedNutrientValues <- EitherT.liftF(ServiceFunctions.computeNutrientAmounts(recipe, ingredients))
+      _                      <- EitherT.liftF(userService.add(user))
+      fullRecipe             <- ServiceFunctions.createRecipe(recipeService)(user, recipeParameters)
+      expectedNutrientValues <- EitherT.liftF(ServiceFunctions.computeNutrientAmounts(fullRecipe))
       nutrientMapFromService <- EitherT.fromOptionF(
-        statsService.nutrientsOfRecipe(user.id, recipe.id),
+        statsService.nutrientsOfRecipe(user.id, fullRecipe.recipe.id),
         ErrorContext.Recipe.NotFound.asServerError
       )
     } yield {
       val lengthProp: Prop =
-        (ingredients.length ?= recipeParameters.ingredientParameters.length) :| "Correct ingredient number"
-      val distinctIngredients = ingredients.distinctBy(_.foodId).length
+        (fullRecipe.ingredients.length ?= recipeParameters.ingredientParameters.length) :| "Correct ingredient number"
+      val distinctIngredients = fullRecipe.ingredients.distinctBy(_.foodId).length
 
       val propsPerNutrient = StatsGens.allNutrients.map { nutrient =>
         val prop = (nutrientMapFromService.get(nutrient), expectedNutrientValues.get(nutrient.id)) match {
