@@ -131,8 +131,8 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
   private def nutrientAmountOf(
       nutrientId: NutrientId,
       foodIds: Seq[FoodId]
-  ): DBIO[Map[FoodId, BigDecimal]] =
-    Tables.NutrientAmount
+  ): DBIO[Map[FoodId, BigDecimal]] = {
+    val baseMap = Tables.NutrientAmount
       .filter(na =>
         na.nutrientId === nutrientId.transformInto[Int]
           && na.foodId.inSetBind(foodIds.map(_.transformInto[Int]))
@@ -143,6 +143,22 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
           .map(na => na.foodId.transformInto[FoodId] -> na.nutrientValue)
           .toMap
       }
+    /* The constellation of foodId = 534 and nutrientId = 339 has no entry in the
+       amount table, but there is an entry referencing the non-existing nutrientId = 328,
+       with the value 0.1.
+       There is no nutrient with id 328, but there is one nutrient with the *code* 328,
+       and this nutrient has the id 339.
+       The assumption is that this reference has been added by mistake,
+       hence we correct this mistake here.
+     */
+    val erroneousNutrientId = 339.transformInto[NutrientId]
+    val erroneousFoodId     = 534.transformInto[FoodId]
+    if (nutrientId == erroneousNutrientId && foodIds.contains(erroneousFoodId)) {
+      baseMap.map(_.updated(erroneousFoodId, BigDecimal(0.1)))
+    } else {
+      baseMap
+    }
+  }
 
   private def computeNutrientAmounts(
       recipe: Recipe,
