@@ -1,9 +1,11 @@
 package services.stats
 
+import cats.data.NonEmptyList
 import db.generated.Tables
 import io.scalaland.chimney.dsl._
 import org.scalacheck.Gen
 import services._
+import services.meal.MealCreation
 import services.nutrient.{ Nutrient, NutrientService }
 import services.recipe._
 import slick.jdbc.PostgresProfile.api._
@@ -75,5 +77,33 @@ object StatsGens {
     recipeCreation = recipeCreation,
     ingredientParameters = ingredientParameters
   )
+
+  def mealEntryGen(recipeIds: NonEmptyList[RecipeId]): Gen[MealEntryParameters] =
+    for {
+      mealEntryId      <- Gen.uuid.map(_.transformInto[MealEntryId])
+      recipeId         <- Gen.oneOf(recipeIds.toList)
+      numberOfServings <- smallBigDecimalGen
+    } yield MealEntryParameters(
+      mealEntryId = mealEntryId,
+      mealEntryPreCreation = MealEntryPreCreation(
+        recipeId = recipeId,
+        numberOfServings = numberOfServings
+      )
+    )
+
+  def mealGen(recipeIds: NonEmptyList[RecipeId]): Gen[MealParameters] =
+    for {
+      mealId              <- Gen.uuid.map(_.transformInto[MealId])
+      mealEntryParameters <- Gens.listOfAtMost(Natural(10), mealEntryGen(recipeIds))
+      name                <- Gen.option(Gens.nonEmptyAsciiString)
+      date                <- Gens.simpleDateGen
+    } yield MealParameters(
+      mealId = mealId,
+      mealCreation = MealCreation(
+        date = date,
+        name = name
+      ),
+      mealEntryParameters = mealEntryParameters
+    )
 
 }
