@@ -44,82 +44,91 @@ object MealStatsProperties extends Properties("Meal stats") {
   ) { setup =>
     DBTestUtil.clearDb()
 
-    val recipeIngredients = DBTestUtil.await(
-      EitherT
-        .liftF(userService.add(setup.user))
-        .flatMap(_ =>
-          setup.recipes
-            .traverse {
-              ServiceFunctions.createRecipe(recipeService)(setup.user, _)
-            }
-            .map {
-              _.map(fr => fr.recipe.id -> fr).toMap
-            }
-        )
-        .getOrRaise(new Throwable("Preliminary setup for meal generation failed")) // todo: Incorporate into property
-    )
+    DBTestUtil
+      .await(
+        EitherT
+          .liftF(userService.add(setup.user))
+          .flatMap(_ =>
+            setup.recipes
+              .traverse {
+                ServiceFunctions.createRecipe(recipeService)(setup.user, _)
+              }
+              .map {
+                _.map(fr => fr.recipe.id -> fr).toMap
+              }
+          )
+          .value
+      )
+      .fold(
+        error => Prop.exception :| error.message,
+        recipeIngredients => {
+          Prop.forAll(StatsGens.mealGen(NonEmptyList.fromListUnsafe(recipeIngredients.keys.toList))) { mealParameters =>
+            val transformer = for {
+              fullMeal <- ServiceFunctions.createMeal(mealService)(setup.user, mealParameters)
+              expectedNutrientValues <- EitherT.liftF[Future, ServerError, Map[NutrientId, Option[BigDecimal]]](
+                mealParameters.mealEntryParameters
+                  .traverse { mep =>
+                    ServiceFunctions
+                      .computeNutrientAmounts(recipeIngredients(mep.mealEntryPreCreation.recipeId))
+                      .map(
+                        _.view
+                          .mapValues(
+                            _.map {
+                              // TODO: Comparing the numbers of existing and non-existing values
+                              //       is not directly possible in the current implementation
+                              //       but would improve the test quality.
+                              //       However, it may be tricky to find a good implementation
+                              //       that is sufficiently different from the one already used
+                              //       in the production code.
+                              case (_, value) => value * mep.mealEntryPreCreation.numberOfServings
+                            }
+                          )
+                          .toMap
+                      )
+                  }
+                  .map(
+                    _.foldLeft(Map.empty[NutrientId, Option[BigDecimal]])(
+                      MapUtil.unionWith(_, _)(AdditiveSemigroup[Option[BigDecimal]].plus)
+                    )
+                  )
+              )
+              nutrientMapFromService <- EitherT.liftF[Future, ServerError, NutrientAmountMap](
+                statsService.nutrientsOfMeal(setup.user.id, fullMeal.meal.id)
+              )
+            } yield {
+              val lengthProp: Prop =
+                (fullMeal.mealEntries.length ?= mealParameters.mealEntryParameters.length) :| "Correct meal entry number"
 
-    Prop.forAll(StatsGens.mealGen(NonEmptyList.fromListUnsafe(recipeIngredients.keys.toList))) { mealParameters =>
-      val transformer = for {
-        fullMeal <- ServiceFunctions.createMeal(mealService)(setup.user, mealParameters)
-        expectedNutrientValues <- EitherT.liftF[Future, ServerError, Map[NutrientId, Option[BigDecimal]]](
-          mealParameters.mealEntryParameters
-            .traverse { mep =>
-              ServiceFunctions
-                .computeNutrientAmounts(recipeIngredients(mep.mealEntryPreCreation.recipeId))
-                .map(
-                  _.view
-                    .mapValues(_.map {
-                      // TODO: Comparing the numbers of existing and non-existing values
-                      //       is not directly possible in the current implementation
-                      //       but would improve the test quality.
-                      //       However, it may be tricky to find a good implementation
-                      //       that is sufficiently different from the one already used
-                      //       in the production code.
-                      case (_, value) => value * mep.mealEntryPreCreation.numberOfServings
-                    })
-                    .toMap
+              val propsPerNutrient = StatsGens.allNutrients.map { nutrient =>
+                val prop = PropUtil.closeEnough(
+                  nutrientMapFromService.get(nutrient).flatMap(_.value),
+                  expectedNutrientValues.get(nutrient.id).flatten
                 )
+                prop :| s"Correct values for nutrientId = ${nutrient.id}"
+              }
+
+              Prop.all(
+                lengthProp +:
+                  propsPerNutrient: _*
+              )
             }
-            .map(
-              _.foldLeft(Map.empty[NutrientId, Option[BigDecimal]])(
-                MapUtil.unionWith(_, _)(AdditiveSemigroup[Option[BigDecimal]].plus)
+
+            DBTestUtil.await(
+              transformer.fold(
+                error => {
+                  pprint.log(error.message)
+                  Prop.exception
+                },
+                identity
               )
             )
-        )
-        nutrientMapFromService <- EitherT.liftF[Future, ServerError, NutrientAmountMap](
-          statsService.nutrientsOfMeal(setup.user.id, fullMeal.meal.id)
-        )
-      } yield {
-        val lengthProp: Prop =
-          (fullMeal.mealEntries.length ?= mealParameters.mealEntryParameters.length) :| "Correct meal entry number"
-
-        val propsPerNutrient = StatsGens.allNutrients.map { nutrient =>
-          val prop = PropUtil.closeEnough(
-            nutrientMapFromService.get(nutrient).flatMap(_.value),
-            expectedNutrientValues.get(nutrient.id).flatten
-          )
-          prop :| s"Correct values for nutrientId = ${nutrient.id}"
+          }
         }
-
-        Prop.all(
-          lengthProp +:
-            propsPerNutrient: _*
-        )
-      }
-
-      DBTestUtil.await(
-        transformer.fold(
-          error => {
-            pprint.log(error.message)
-            Prop.exception
-          },
-          identity
-        )
       )
-    }
 
   }
+
+//  property("Over")
 
   override def overrideParameters(p: Test.Parameters): Test.Parameters = p.withMinSuccessfulTests(25)
 }
