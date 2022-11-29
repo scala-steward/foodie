@@ -39,13 +39,12 @@ object MealStatsProperties extends Properties("Meal stats") {
     recipes = recipes.toList
   )
 
-  propertyWithSeed("Per meal stats", Some("0qo71L0hNniSbfjhGP2pDhI2eih_Rg7p-FADLESTboB=")) = Prop.exists(
+  property("Per meal stats") = Prop.forAll(
     setupPerMealGen :| "Per meal setup"
   ) { setup =>
-    pprint.log("next iteration")
     DBTestUtil.clearDb()
 
-    val preliminary = DBTestUtil.await(
+    val recipeIngredients = DBTestUtil.await(
       EitherT
         .liftF(userService.add(setup.user))
         .flatMap(_ =>
@@ -59,17 +58,9 @@ object MealStatsProperties extends Properties("Meal stats") {
         )
         .getOrRaise(new Throwable("Preliminary setup for meal generation failed")) // todo: Incorporate into property
     )
-    Prop.forAll(StatsGens.mealGen(NonEmptyList.fromListUnsafe(preliminary.keys.toList))) { mealParameters =>
+
+    Prop.forAll(StatsGens.mealGen(NonEmptyList.fromListUnsafe(recipeIngredients.keys.toList))) { mealParameters =>
       val transformer = for {
-        _ <- EitherT.liftF(userService.add(setup.user))
-        recipeIngredients <-
-          setup.recipes
-            .traverse {
-              ServiceFunctions.createRecipe(recipeService)(setup.user, _)
-            }
-            .map {
-              _.map(fr => fr.recipe.id -> fr).toMap
-            }
         fullMeal <- ServiceFunctions.createMeal(mealService)(setup.user, mealParameters)
         expectedNutrientValues <- EitherT.liftF[Future, ServerError, Map[NutrientId, Option[BigDecimal]]](
           mealParameters.mealEntryParameters
@@ -104,14 +95,10 @@ object MealStatsProperties extends Properties("Meal stats") {
           (fullMeal.mealEntries.length ?= mealParameters.mealEntryParameters.length) :| "Correct meal entry number"
 
         val propsPerNutrient = StatsGens.allNutrients.map { nutrient =>
-          val prop = (nutrientMapFromService.get(nutrient), expectedNutrientValues.get(nutrient.id)) match {
-            case (Some(actual), Some(expected)) =>
-              Prop.all(
-                PropUtil.closeEnough(actual.value, expected) :| "Value correct"
-              )
-            case (None, None) => Prop.passed
-            case _            => Prop.falsified
-          }
+          val prop = PropUtil.closeEnough(
+            nutrientMapFromService.get(nutrient).flatMap(_.value),
+            expectedNutrientValues.get(nutrient.id).flatten
+          )
           prop :| s"Correct values for nutrientId = ${nutrient.id}"
         }
 
