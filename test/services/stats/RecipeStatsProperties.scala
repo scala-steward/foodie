@@ -3,7 +3,7 @@ package services.stats
 import cats.data.EitherT
 import errors.ErrorContext
 import org.scalacheck.Prop._
-import org.scalacheck.{ Prop, Properties }
+import org.scalacheck.{ Prop, Properties, Test }
 import services._
 import services.recipe.RecipeService
 import services.user.UserService
@@ -69,4 +69,5 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
     )
   }
 
+  override def overrideParameters(p: Test.Parameters): Test.Parameters = p.withMinSuccessfulTests(25)
 }
