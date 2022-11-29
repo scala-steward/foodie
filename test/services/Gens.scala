@@ -57,16 +57,18 @@ object Gens {
     minute = minute
   )
 
-  val dateGen: Gen[Date] = Gen
-    .choose(-100000, 100000)
-    .map(c => LocalDate.ofEpochDay(c).transformInto[Date])
+  def dateGen(earliest: Int = -100000, latest: Int = 100000): Gen[Date] =
+    Gen
+      .choose(earliest, latest)
+      .map(c => LocalDate.ofEpochDay(c).transformInto[Date])
 
-  val simpleDateGen: Gen[SimpleDate] = for {
-    date <- dateGen
-    time <- Gen.option(timeGen)
-  } yield SimpleDate(
-    date = date,
-    time = time
-  )
+  def simpleDateGen(earliest: Int = -100000, latest: Int = 100000): Gen[SimpleDate] =
+    for {
+      date <- dateGen(earliest, latest)
+      time <- Gen.option(timeGen)
+    } yield SimpleDate(
+      date = date,
+      time = time
+    )
 
 }
