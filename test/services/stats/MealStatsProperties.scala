@@ -24,23 +24,23 @@ object MealStatsProperties extends Properties("Meal stats") {
   private val userService   = TestUtil.injector.instanceOf[UserService]
   private val statsService  = TestUtil.injector.instanceOf[StatsService]
 
-  private case class SetupPerMeal(
+  private case class SetupUserAndRecipes(
       user: User,
       recipes: Seq[RecipeParameters]
   )
 
   private val maxNumberOfRecipesPerMeal = Natural(10)
 
-  private val setupPerMealGen = for {
+  private val setupUserAndRecipesGen = for {
     user    <- Gens.userWithFixedPassword
     recipes <- Gens.nonEmptyListOfAtMost(maxNumberOfRecipesPerMeal, StatsGens.recipeParametersGen)
-  } yield SetupPerMeal(
+  } yield SetupUserAndRecipes(
     user = user,
     recipes = recipes.toList
   )
 
   property("Per meal stats") = Prop.forAll(
-    setupPerMealGen :| "Per meal setup"
+    setupUserAndRecipesGen :| "Setup of user and recipes"
   ) { setup =>
     DBTestUtil.clearDb()
 
@@ -65,33 +65,34 @@ object MealStatsProperties extends Properties("Meal stats") {
           Prop.forAll(StatsGens.mealGen(NonEmptyList.fromListUnsafe(recipeIngredients.keys.toList))) { mealParameters =>
             val transformer = for {
               fullMeal <- ServiceFunctions.createMeal(mealService)(setup.user, mealParameters)
-              expectedNutrientValues <- EitherT.liftF[Future, ServerError, Map[NutrientId, Option[BigDecimal]]](
-                mealParameters.mealEntryParameters
-                  .traverse { mep =>
-                    ServiceFunctions
-                      .computeNutrientAmounts(recipeIngredients(mep.mealEntryPreCreation.recipeId))
-                      .map(
-                        _.view
-                          .mapValues(
-                            _.map {
-                              // TODO: Comparing the numbers of existing and non-existing values
-                              //       is not directly possible in the current implementation
-                              //       but would improve the test quality.
-                              //       However, it may be tricky to find a good implementation
-                              //       that is sufficiently different from the one already used
-                              //       in the production code.
-                              case (_, value) => value * mep.mealEntryPreCreation.numberOfServings
-                            }
-                          )
-                          .toMap
+              expectedNutrientValues <-
+                EitherT.liftF[Future, ServerError, Map[NutrientId, Option[BigDecimal]]](
+                  mealParameters.mealEntryParameters
+                    .traverse { mep =>
+                      ServiceFunctions
+                        .computeNutrientAmounts(recipeIngredients(mep.mealEntryPreCreation.recipeId))
+                        .map(
+                          _.view
+                            .mapValues(
+                              _.map {
+                                // TODO: Comparing the numbers of existing and non-existing values
+                                //       is not directly possible in the current implementation
+                                //       but would improve the test quality.
+                                //       However, it may be tricky to find a good implementation
+                                //       that is sufficiently different from the one already used
+                                //       in the production code.
+                                case (_, value) => value * mep.mealEntryPreCreation.numberOfServings
+                              }
+                            )
+                            .toMap
+                        )
+                    }
+                    .map(
+                      _.foldLeft(Map.empty[NutrientId, Option[BigDecimal]])(
+                        MapUtil.unionWith(_, _)(AdditiveSemigroup[Option[BigDecimal]].plus)
                       )
-                  }
-                  .map(
-                    _.foldLeft(Map.empty[NutrientId, Option[BigDecimal]])(
-                      MapUtil.unionWith(_, _)(AdditiveSemigroup[Option[BigDecimal]].plus)
                     )
-                  )
-              )
+                )
               nutrientMapFromService <- EitherT.liftF[Future, ServerError, NutrientAmountMap](
                 statsService.nutrientsOfMeal(setup.user.id, fullMeal.meal.id)
               )
@@ -128,7 +129,7 @@ object MealStatsProperties extends Properties("Meal stats") {
 
   }
 
-//  property("Over")
+  property("Over time stats") = ???
 
   override def overrideParameters(p: Test.Parameters): Test.Parameters = p.withMinSuccessfulTests(25)
 }
