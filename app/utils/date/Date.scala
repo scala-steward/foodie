@@ -1,7 +1,8 @@
 package utils.date
 
-import java.time.LocalDate
+import cats.Order
 
+import java.time.LocalDate
 import io.circe.generic.JsonCodec
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl._
@@ -35,5 +36,8 @@ object Date {
       month = localDate.getMonthValue,
       day = localDate.getDayOfMonth
     )
+
+  implicit val orderDate: Order[Date] =
+    Order.fromLessThan((d1, d2) => d1 == d2 || d1.transformInto[LocalDate].isBefore(d2.transformInto[LocalDate]))
 
 }
