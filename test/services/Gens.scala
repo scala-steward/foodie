@@ -9,7 +9,7 @@ import spire.math.Natural
 import utils.TransformerUtils.Implicits._
 import utils.date.{ Date, SimpleDate, Time }
 
-import java.util.Calendar
+import java.time.LocalDate
 
 object Gens {
 
@@ -57,13 +57,9 @@ object Gens {
     minute = minute
   )
 
-  val dateGen: Gen[Date] = Gen.calendar.map(c =>
-    Date(
-      year = c.get(Calendar.YEAR),
-      month = c.get(Calendar.MONTH),
-      day = c.get(Calendar.DAY_OF_MONTH)
-    )
-  )
+  val dateGen: Gen[Date] = Gen
+    .choose(-100000, 100000)
+    .map(c => LocalDate.ofEpochDay(c).transformInto[Date])
 
   val simpleDateGen: Gen[SimpleDate] = for {
     date <- dateGen
