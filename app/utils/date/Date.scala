@@ -38,6 +38,6 @@ object Date {
     )
 
   implicit val orderDate: Order[Date] =
-    Order.fromLessThan((d1, d2) => d1 == d2 || d1.transformInto[LocalDate].isBefore(d2.transformInto[LocalDate]))
+    Order.fromLessThan((d1, d2) => d1.transformInto[LocalDate].isBefore(d2.transformInto[LocalDate]))
 
 }
