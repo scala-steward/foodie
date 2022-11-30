@@ -91,12 +91,10 @@ object StatsGens {
 
   def mealGen(recipeIds: NonEmptyList[RecipeId], earliest: Int = -100000, latest: Int = 100000): Gen[MealParameters] =
     for {
-      mealId              <- Gen.uuid.map(_.transformInto[MealId])
       mealEntryParameters <- Gens.listOfAtMost(Natural(10), mealEntryGen(recipeIds))
       name                <- Gen.option(Gens.nonEmptyAsciiString)
       date                <- Gens.simpleDateGen(earliest, latest)
     } yield MealParameters(
-      mealId = mealId,
       mealCreation = MealCreation(
         date = date,
         name = name
