@@ -89,17 +89,29 @@ object StatsGens {
       )
     )
 
-  def mealGen(recipeIds: NonEmptyList[RecipeId], earliest: Int = -100000, latest: Int = 100000): Gen[MealParameters] =
+  def fullMealGen(
+      recipeIds: List[RecipeId],
+      earliest: Int = -100000,
+      latest: Int = 100000
+  ): Gen[MealParameters] =
     for {
-      mealEntryParameters <- Gens.listOfAtMost(Natural(10), mealEntryGen(recipeIds))
-      name                <- Gen.option(Gens.nonEmptyAsciiString)
-      date                <- Gens.simpleDateGen(earliest, latest)
+      mealEntryParameters <-
+        NonEmptyList
+          .fromList(recipeIds)
+          .fold(Gen.const(List.empty[MealEntryParameters]))(nel => Gens.listOfAtMost(Natural(10), mealEntryGen(nel)))
+      mealCreation <- mealCreationGen(earliest, latest)
     } yield MealParameters(
-      mealCreation = MealCreation(
-        date = date,
-        name = name
-      ),
+      mealCreation = mealCreation,
       mealEntryParameters = mealEntryParameters
+    )
+
+  def mealCreationGen(earliest: Int = -100000, latest: Int = 100000): Gen[MealCreation] =
+    for {
+      name <- Gen.option(Gens.nonEmptyAsciiString)
+      date <- Gens.simpleDateGen(earliest, latest)
+    } yield MealCreation(
+      date = date,
+      name = name
     )
 
 }
