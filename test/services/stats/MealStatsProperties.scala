@@ -4,6 +4,7 @@ import algebra.ring.AdditiveSemigroup
 import cats.data.{ EitherT, NonEmptyList }
 import cats.instances.list._
 import cats.syntax.traverse._
+import config.TestConfiguration
 import errors.ServerError
 import io.scalaland.chimney.dsl.TransformerOps
 import org.scalacheck.Prop.AnyOperators
@@ -253,5 +254,7 @@ object MealStatsProperties extends Properties("Meal stats") {
     )
   }
 
-  override def overrideParameters(p: Test.Parameters): Test.Parameters = p.withMinSuccessfulTests(25)
+  override def overrideParameters(p: Test.Parameters): Test.Parameters =
+    p.withMinSuccessfulTests(TestConfiguration.default.property.minSuccessfulTests)
+
 }
