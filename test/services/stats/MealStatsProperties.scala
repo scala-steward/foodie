@@ -1,7 +1,7 @@
 package services.stats
 
 import algebra.ring.AdditiveSemigroup
-import cats.data.{ EitherT, NonEmptyList }
+import cats.data.EitherT
 import cats.instances.list._
 import cats.syntax.contravariantSemigroupal._
 import cats.syntax.traverse._
@@ -93,7 +93,7 @@ object MealStatsProperties extends Properties("Meal stats") {
       .fold(
         error => Prop.exception :| error.message,
         fullRecipes => {
-          Prop.forAll(StatsGens.mealGen(NonEmptyList.fromListUnsafe(fullRecipes.keys.toList))) { mealParameters =>
+          Prop.forAll(StatsGens.fullMealGen(fullRecipes.keys.toList)) { mealParameters =>
             val transformer = for {
               fullMeal <- ServiceFunctions.createMeal(mealService)(setup.user, mealParameters)
               expectedNutrientValues <- EitherT.liftF[Future, ServerError, Map[NutrientId, Option[BigDecimal]]](
@@ -154,14 +154,9 @@ object MealStatsProperties extends Properties("Meal stats") {
     val earliest       = -latest
     val smallerDateGen = Gen.option(Gens.dateGen(earliest, latest))
     for {
-      date1 <- smallerDateGen
-      date2 <- smallerDateGen
-      mealParameters <-
-        NonEmptyList
-          .fromList(recipeIds)
-          .fold(Gen.const(List.empty[MealParameters]))(nel =>
-            Gen.nonEmptyListOf(StatsGens.mealGen(nel, earliest, latest))
-          )
+      date1          <- smallerDateGen
+      date2          <- smallerDateGen
+      mealParameters <- Gen.nonEmptyListOf(StatsGens.fullMealGen(recipeIds, earliest, latest))
     } yield {
       val dateInterval = (date1, date2) match {
         case (Some(d1), Some(d2)) =>
