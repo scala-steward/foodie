@@ -3,6 +3,7 @@ package services.stats
 import algebra.ring.AdditiveSemigroup
 import cats.data.{ EitherT, NonEmptyList }
 import cats.instances.list._
+import cats.syntax.contravariantSemigroupal._
 import cats.syntax.traverse._
 import config.TestConfiguration
 import errors.ServerError
@@ -10,7 +11,7 @@ import io.scalaland.chimney.dsl.TransformerOps
 import org.scalacheck.Prop.AnyOperators
 import org.scalacheck.{ Gen, Prop, Properties, Test }
 import services._
-import services.meal.MealService
+import services.meal.{ Meal, MealService }
 import services.recipe.RecipeService
 import services.user.{ User, UserService }
 import spire.implicits._
@@ -46,7 +47,7 @@ object MealStatsProperties extends Properties("Meal stats") {
 
   private def applyUserAndRecipeSetup(
       setup: SetupUserAndRecipes
-  ): Future[Either[ServerError, Map[RecipeId, ServiceFunctions.FullRecipe]]] =
+  ): EitherT[Future, ServerError, Map[RecipeId, ServiceFunctions.FullRecipe]] =
     EitherT
       .liftF(userService.add(setup.user))
       .flatMap(_ =>
@@ -58,7 +59,6 @@ object MealStatsProperties extends Properties("Meal stats") {
             _.map(fr => fr.recipe.id -> fr).toMap
           }
       )
-      .value
 
   private def computeNutrientsPerMealEntry(fullRecipes: Map[RecipeId, ServiceFunctions.FullRecipe])(
       mealEntryParameters: MealEntryParameters
@@ -88,7 +88,7 @@ object MealStatsProperties extends Properties("Meal stats") {
     DBTestUtil.clearDb()
 
     DBTestUtil
-      .await(applyUserAndRecipeSetup(setup))
+      .await(applyUserAndRecipeSetup(setup).value)
       .fold(
         error => Prop.exception :| error.message,
         fullRecipes => {
@@ -180,7 +180,7 @@ object MealStatsProperties extends Properties("Meal stats") {
     DBTestUtil.clearDb()
 
     DBTestUtil
-      .await(applyUserAndRecipeSetup(setup))
+      .await(applyUserAndRecipeSetup(setup).value)
       .fold(
         error => Prop.exception :| error.message,
         fullRecipes => {
@@ -207,8 +207,8 @@ object MealStatsProperties extends Properties("Meal stats") {
                 )
               )
             } yield {
-              val lengthProp: Prop =
-                (statsFromService.meals.length ?= mealsInInterval.length) :| "Correct number of meals"
+              val mealsProp: Prop =
+                compareMealAndParametersInOrder(statsFromService.meals, mealsInInterval) :| "Correct meals"
 
               val propsPerNutrient = StatsGens.allNutrients.map { nutrient =>
                 val prop = PropUtil.closeEnough(
@@ -219,7 +219,7 @@ object MealStatsProperties extends Properties("Meal stats") {
               }
 
               Prop.all(
-                lengthProp +:
+                mealsProp +:
                   propsPerNutrient: _*
               )
             }
@@ -238,6 +238,61 @@ object MealStatsProperties extends Properties("Meal stats") {
       )
   }
 
+  // Regression test for a bug, where the meals were computed over all users.
+  property("Meal stats restricted to user") = Prop.forAll(
+    setupUserAndRecipesGen :| "First user and their recipes",
+    setupUserAndRecipesGen :| "Second user and their recipes"
+  ) { (setup1, setup2) =>
+    DBTestUtil.clearDb()
+
+    DBTestUtil
+      .await(
+        (applyUserAndRecipeSetup(setup1), applyUserAndRecipeSetup(setup2)).tupled.value
+      )
+      .fold(
+        error => Prop.exception :| error.message,
+        {
+          case (fullRecipes1, fullRecipes2) =>
+            Prop.forAll(
+              overTimeSetupGen(NonEmptyList.fromListUnsafe(fullRecipes1.keys.toList)) :| "Over time setup 1",
+              overTimeSetupGen(NonEmptyList.fromListUnsafe(fullRecipes2.keys.toList)) :| "Over time setup 2"
+            ) {
+              (overTimeSetup1, overTimeSetup2) =>
+                val transformer =
+                  for {
+                    _ <-
+                      overTimeSetup1.mealParameters.traverse(ServiceFunctions.createMeal(mealService)(setup1.user, _))
+                    _ <-
+                      overTimeSetup2.mealParameters.traverse(ServiceFunctions.createMeal(mealService)(setup2.user, _))
+                    mealsInInterval =
+                      overTimeSetup1.mealParameters
+                        .filter(mp => overTimeSetup1.dateInterval.contains(mp.mealCreation.date.date))
+                    statsFromService <- EitherT.liftF[Future, ServerError, Stats](
+                      statsService.nutrientsOverTime(
+                        setup1.user.id,
+                        toRequestInterval(overTimeSetup1.dateInterval)
+                      )
+                    )
+                  } yield compareMealAndParametersInOrder(
+                    statsFromService.meals,
+                    mealsInInterval
+                  )
+
+                DBTestUtil.await(
+                  transformer.fold(
+                    error => {
+                      pprint.log(error.message)
+                      Prop.exception
+                    },
+                    identity
+                  )
+                )
+            }
+        }
+      )
+
+  }
+
   private def extractValue[A](bound: Bound[A]): Option[A] =
     bound match {
       case EmptyBound() => None
@@ -251,6 +306,24 @@ object MealStatsProperties extends Properties("Meal stats") {
     RequestInterval(
       from = toLocalDate(interval.lowerBound),
       to = toLocalDate(interval.upperBound)
+    )
+  }
+
+  private def compareMealAndParametersInOrder(
+      meals: Seq[Meal],
+      mealParameters: Seq[MealParameters]
+  ): Prop = {
+    val lengthProp =
+      (meals.length ?= mealParameters.length) :| "Correct number of meals"
+    val mealEntryProps: Seq[Prop] = meals.zip(mealParameters).map {
+      case (meal, mealParams) =>
+        Prop.all(
+          meal.date ?= mealParams.mealCreation.date,
+          meal.name ?= mealParams.mealCreation.name
+        )
+    }
+    Prop.all(
+      lengthProp +: mealEntryProps: _*
     )
   }
 
