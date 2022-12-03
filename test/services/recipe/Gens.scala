@@ -18,6 +18,17 @@ object Gens {
     numberOfServings = numberOfServings
   )
 
+  def recipePreUpdateGen: Gen[RecipePreUpdate] =
+    for {
+      name             <- GenUtils.nonEmptyAsciiString
+      description      <- Gen.option(GenUtils.nonEmptyAsciiString)
+      numberOfServings <- GenUtils.smallBigDecimalGen
+    } yield RecipePreUpdate(
+      name = name,
+      description = description,
+      numberOfServings = numberOfServings
+    )
+
   val ingredientGen: Gen[IngredientParameters] =
     for {
       food         <- GenUtils.foodGen
@@ -35,12 +46,13 @@ object Gens {
       )
     )
 
-  def recipeParametersGen(maxNumberOfRecipes: Natural = Natural(20)): Gen[RecipeParameters] = for {
-    recipeCreation       <- recipeCreationGen
-    ingredientParameters <- GenUtils.listOfAtMost(maxNumberOfRecipes, ingredientGen)
-  } yield RecipeParameters(
-    recipeCreation = recipeCreation,
-    ingredientParameters = ingredientParameters
-  )
+  def recipeParametersGen(maxNumberOfRecipes: Natural = Natural(20)): Gen[RecipeParameters] =
+    for {
+      recipeCreation       <- recipeCreationGen
+      ingredientParameters <- GenUtils.listOfAtMost(maxNumberOfRecipes, ingredientGen)
+    } yield RecipeParameters(
+      recipeCreation = recipeCreation,
+      ingredientParameters = ingredientParameters
+    )
 
 }
