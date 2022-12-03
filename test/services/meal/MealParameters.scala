@@ -1,6 +1,4 @@
-package services.stats
-
-import services.meal.MealCreation
+package services.meal
 
 case class MealParameters(
     mealCreation: MealCreation,

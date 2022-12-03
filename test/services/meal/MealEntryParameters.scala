@@ -1,4 +1,4 @@
-package services.stats
+package services.meal
 
 import services.MealEntryId
 

@@ -1,17 +1,24 @@
 package services
 
 import cats.data.NonEmptyList
+import db.generated.Tables
 import io.scalaland.chimney.dsl._
 import org.scalacheck.Gen
 import security.Hash
+import services.nutrient.{ Nutrient, NutrientService }
+import services.recipe._
 import services.user.User
+import slick.jdbc.PostgresProfile.api._
 import spire.math.Natural
 import utils.TransformerUtils.Implicits._
 import utils.date.{ Date, SimpleDate, Time }
 
 import java.time.LocalDate
 
-object Gens {
+object GenUtils {
+
+  private val recipeService   = TestUtil.injector.instanceOf[RecipeService]
+  private val nutrientService = TestUtil.injector.instanceOf[NutrientService]
 
   val nonEmptyAsciiString: Gen[String] =
     Gen
@@ -70,5 +77,29 @@ object Gens {
       date = date,
       time = time
     )
+
+  val allFoods: Seq[Food] = DBTestUtil
+    .await(recipeService.allFoods)
+    .map(food =>
+      food.copy(
+        measures = food.measures
+          .filter(measure => measure.id != AmountUnit.hundredGrams)
+      )
+    )
+
+  val allNutrients: Seq[Nutrient] = DBTestUtil.await(nutrientService.all)
+
+  val allConversionFactors: Map[(FoodId, MeasureId), BigDecimal] =
+    DBTestUtil
+      .await(DBTestUtil.dbRun(Tables.ConversionFactor.result))
+      .map { row =>
+        (row.foodId.transformInto[FoodId], row.measureId.transformInto[MeasureId]) -> row.conversionFactorValue
+      }
+      .toMap
+
+  lazy val foodGen: Gen[Food] =
+    Gen.oneOf(allFoods)
+
+  val smallBigDecimalGen: Gen[BigDecimal] = Gen.choose(BigDecimal(0.001), BigDecimal(1000))
 
 }

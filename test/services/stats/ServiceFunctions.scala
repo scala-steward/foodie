@@ -1,13 +1,13 @@
 package services.stats
 
-import cats.data.{ EitherT, OptionT }
+import cats.data.{EitherT, OptionT}
 import cats.syntax.traverse._
 import db.generated.Tables
 import errors.ServerError
 import io.scalaland.chimney.dsl._
 import services._
-import services.meal.{ Meal, MealEntry, MealService }
-import services.recipe.{ Ingredient, Recipe, RecipeService }
+import services.meal.{Meal, MealEntry, MealEntryPreCreation, MealParameters, MealService}
+import services.recipe.{Ingredient, IngredientPreCreation, Recipe, RecipeParameters, RecipeService}
 import services.user.User
 import slick.jdbc.PostgresProfile.api._
 import utils.DBIOUtil.instances._
@@ -29,7 +29,7 @@ object ServiceFunctions {
             .traverse { ingredient =>
               OptionT
                 .fromOption[DBIO](ingredient.amountUnit.measureId)
-                .subflatMap(measureId => StatsGens.allConversionFactors.get((ingredient.foodId, measureId)))
+                .subflatMap(measureId => GenUtils.allConversionFactors.get((ingredient.foodId, measureId)))
                 .orElseF(DBIO.successful(Some(BigDecimal(1))))
                 .map(ingredient.id -> _)
             }
@@ -89,7 +89,7 @@ object ServiceFunctions {
       fullRecipe: FullRecipe
   ): Future[Map[NutrientId, Option[(Int, BigDecimal)]]] = {
     DBTestUtil.dbRun {
-      StatsGens.allNutrients
+      GenUtils.allNutrients
         .traverse { nutrient =>
           computeNutrientAmount(nutrient.id, fullRecipe.ingredients)
             .map(v =>

@@ -1,7 +1,6 @@
-package services.stats
+package services.meal
 
-import services.meal.MealEntryCreation
-import services.{ MealId, RecipeId }
+import services.{MealId, RecipeId}
 
 case class MealEntryPreCreation(
     recipeId: RecipeId,

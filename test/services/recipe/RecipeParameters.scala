@@ -1,6 +1,4 @@
-package services.stats
-
-import services.recipe.RecipeCreation
+package services.recipe
 
 case class RecipeParameters(
     recipeCreation: RecipeCreation,

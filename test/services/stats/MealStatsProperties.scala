@@ -11,8 +11,8 @@ import io.scalaland.chimney.dsl.TransformerOps
 import org.scalacheck.Prop.AnyOperators
 import org.scalacheck.{ Gen, Prop, Properties, Test }
 import services._
-import services.meal.{ Meal, MealService }
-import services.recipe.RecipeService
+import services.meal.{ Meal, MealEntryParameters, MealParameters, MealService }
+import services.recipe.{ RecipeParameters, RecipeService }
 import services.user.{ User, UserService }
 import spire.compat._
 import spire.implicits._
@@ -39,8 +39,8 @@ object MealStatsProperties extends Properties("Meal stats") {
   private val maxNumberOfRecipesPerMeal = Natural(10)
 
   private val setupUserAndRecipesGen = for {
-    user    <- Gens.userWithFixedPassword
-    recipes <- Gens.nonEmptyListOfAtMost(maxNumberOfRecipesPerMeal, StatsGens.recipeParametersGen)
+    user    <- GenUtils.userWithFixedPassword
+    recipes <- GenUtils.nonEmptyListOfAtMost(maxNumberOfRecipesPerMeal, recipe.Gens.recipeParametersGen)
   } yield SetupUserAndRecipes(
     user = user,
     recipes = recipes.toList
@@ -93,7 +93,7 @@ object MealStatsProperties extends Properties("Meal stats") {
       .fold(
         error => Prop.exception :| error.message,
         fullRecipes => {
-          Prop.forAll(StatsGens.fullMealGen(fullRecipes.keys.toList)) { mealParameters =>
+          Prop.forAll(meal.Gens.fullMealGen(fullRecipes.keys.toList)) { mealParameters =>
             val transformer = for {
               fullMeal <- ServiceFunctions.createMeal(mealService)(setup.user, mealParameters)
               expectedNutrientValues <- EitherT.liftF[Future, ServerError, Map[NutrientId, Option[BigDecimal]]](
@@ -112,7 +112,7 @@ object MealStatsProperties extends Properties("Meal stats") {
               val lengthProp: Prop =
                 (fullMeal.mealEntries.length ?= mealParameters.mealEntryParameters.length) :| "Correct meal entry number"
 
-              val propsPerNutrient = StatsGens.allNutrients.map { nutrient =>
+              val propsPerNutrient = GenUtils.allNutrients.map { nutrient =>
                 val prop = PropUtil.closeEnough(
                   nutrientMapFromService.get(nutrient).flatMap(_.value),
                   expectedNutrientValues.get(nutrient.id).flatten
@@ -152,11 +152,11 @@ object MealStatsProperties extends Properties("Meal stats") {
   ): Gen[OverTimeSetup] = {
     val latest         = range.intValue
     val earliest       = -latest
-    val smallerDateGen = Gen.option(Gens.dateGen(earliest, latest))
+    val smallerDateGen = Gen.option(GenUtils.dateGen(earliest, latest))
     for {
       date1          <- smallerDateGen
       date2          <- smallerDateGen
-      mealParameters <- Gen.nonEmptyListOf(StatsGens.fullMealGen(recipeIds, earliest, latest))
+      mealParameters <- Gen.nonEmptyListOf(meal.Gens.fullMealGen(recipeIds, earliest, latest))
     } yield {
       val dateInterval = (date1, date2) match {
         case (Some(d1), Some(d2)) =>
@@ -211,7 +211,7 @@ object MealStatsProperties extends Properties("Meal stats") {
               val mealsProp: Prop =
                 compareMealAndParametersInOrder(statsFromService.meals, mealsInInterval) :| "Correct meals"
 
-              val propsPerNutrient = StatsGens.allNutrients.map { nutrient =>
+              val propsPerNutrient = GenUtils.allNutrients.map { nutrient =>
                 val prop = PropUtil.closeEnough(
                   statsFromService.nutrientAmountMap.get(nutrient).flatMap(_.value),
                   expectedNutrientValues.get(nutrient.id).flatten
@@ -241,8 +241,8 @@ object MealStatsProperties extends Properties("Meal stats") {
 
   // Regression test for a bug, where the meals were computed over all users.
   property("Meal stats restricted to user") = Prop.forAll(
-    Gens.userWithFixedPassword :| "First user",
-    Gens.userWithFixedPassword :| "Second user"
+    GenUtils.userWithFixedPassword :| "First user",
+    GenUtils.userWithFixedPassword :| "Second user"
   ) { (user1, user2) =>
     DBTestUtil.clearDb()
 

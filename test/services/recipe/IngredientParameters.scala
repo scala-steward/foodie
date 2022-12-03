@@ -1,4 +1,4 @@
-package services.stats
+package services.recipe
 
 import services.IngredientId
 

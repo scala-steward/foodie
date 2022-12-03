@@ -19,8 +19,8 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
   private val statsService  = TestUtil.injector.instanceOf[StatsService]
 
   property("Per serving stats") = Prop.forAll(
-    Gens.userWithFixedPassword :| "User",
-    StatsGens.recipeParametersGen :| "Recipe parameters"
+    GenUtils.userWithFixedPassword :| "User",
+    recipe.Gens.recipeParametersGen :| "Recipe parameters"
   ) { (user, recipeParameters) =>
     DBTestUtil.clearDb()
     val transformer = for {
@@ -36,7 +36,7 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
         (fullRecipe.ingredients.length ?= recipeParameters.ingredientParameters.length) :| "Correct ingredient number"
       val distinctIngredients = fullRecipe.ingredients.distinctBy(_.foodId).length
 
-      val propsPerNutrient = StatsGens.allNutrients.map { nutrient =>
+      val propsPerNutrient = GenUtils.allNutrients.map { nutrient =>
         val prop = (nutrientMapFromService.get(nutrient), expectedNutrientValues.get(nutrient.id)) match {
           case (Some(actual), Some(expected)) =>
             val (expectedSize, expectedValue) = expected.fold((0, Option.empty[BigDecimal])) {
