@@ -2,14 +2,16 @@ package services.recipe
 
 import cats.data.EitherT
 import config.TestConfiguration
-import errors.ErrorContext
+import errors.{ ErrorContext, ServerError }
 import org.scalacheck.Prop.AnyOperators
-import org.scalacheck.{Prop, Properties, Test}
+import org.scalacheck.{ Gen, Prop, Properties, Test }
 import services.stats.ServiceFunctions
-import services.{DBTestUtil, GenUtils, TestUtil}
-import services.user.UserService
+import services.{ DBTestUtil, GenUtils, TestUtil }
+import services.user.{ User, UserService }
+import cats.syntax.traverse._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 object RecipeServiceProperties extends Properties("Recipe service") {
 
@@ -64,7 +66,31 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     DBTestUtil.awaitProp(transformer)
   }
 
-  property("Read all") = ???
+  property("Read all") = Prop.forAll(
+    GenUtils.userWithFixedPassword :| "user",
+    Gen.listOf(Gens.recipeCreationGen) :| "recipe creations"
+  ) { (user, recipeCreations) =>
+    DBTestUtil.clearDb()
+    val transformer = for {
+      _ <- EitherT.liftF(userService.add(user))
+      insertedRecipes <- recipeCreations.traverse { recipeCreation =>
+        ServiceFunctions.createRecipe(recipeService)(
+          user.id,
+          RecipeParameters(
+            recipeCreation = recipeCreation,
+            ingredientParameters = List.empty
+          )
+        )
+      }
+      fetchedRecipes <- EitherT.liftF[Future, ServerError, Seq[Recipe]](
+        recipeService.allRecipes(user.id)
+      )
+    } yield {
+      fetchedRecipes.sortBy(_.id) ?= insertedRecipes.map(_.recipe).sortBy(_.id)
+    }
+
+    DBTestUtil.awaitProp(transformer)
+  }
 //  property("Update") = ???
 //  property("Delete") = ???
 //
@@ -86,4 +112,5 @@ object RecipeServiceProperties extends Properties("Recipe service") {
 
   override def overrideParameters(p: Test.Parameters): Test.Parameters =
     p.withMinSuccessfulTests(TestConfiguration.default.property.minSuccessfulTests)
+
 }
