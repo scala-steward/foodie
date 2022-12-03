@@ -91,8 +91,35 @@ object RecipeServiceProperties extends Properties("Recipe service") {
 
     DBTestUtil.awaitProp(transformer)
   }
+
 //  property("Update") = ???
-//  property("Delete") = ???
+  property("Delete") = Prop.forAll(
+    GenUtils.userWithFixedPassword :| "user",
+    Gens.recipeCreationGen :| "recipe creation"
+  ) { (user, recipeCreation) =>
+    DBTestUtil.clearDb()
+    val transformer = for {
+      _ <- EitherT.liftF(userService.add(user))
+      insertedRecipe <- ServiceFunctions.createRecipe(recipeService)(
+        user.id,
+        RecipeParameters(
+          recipeCreation = recipeCreation,
+          ingredientParameters = List.empty
+        )
+      )
+      result <-
+        EitherT.liftF[Future, ServerError, Boolean](recipeService.deleteRecipe(user.id, insertedRecipe.recipe.id))
+      fetched <-
+        EitherT.liftF[Future, ServerError, Option[Recipe]](recipeService.getRecipe(user.id, insertedRecipe.recipe.id))
+    } yield {
+      Prop.all(
+        Prop(result) :| "Deletion successful",
+        Prop(fetched.isEmpty) :| "Recipe should be deleted"
+      )
+    }
+
+    DBTestUtil.awaitProp(transformer)
+  }
 //
 //  property("Add ingredient") = ???
 //  property("Read ingredients") = ???
