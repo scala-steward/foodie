@@ -20,12 +20,12 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
 
   property("Per serving stats") = Prop.forAll(
     GenUtils.userWithFixedPassword :| "User",
-    recipe.Gens.recipeParametersGen :| "Recipe parameters"
+    recipe.Gens.recipeParametersGen() :| "Recipe parameters"
   ) { (user, recipeParameters) =>
     DBTestUtil.clearDb()
     val transformer = for {
       _                      <- EitherT.liftF(userService.add(user))
-      fullRecipe             <- ServiceFunctions.createRecipe(recipeService)(user, recipeParameters)
+      fullRecipe             <- ServiceFunctions.createRecipe(recipeService)(user.id, recipeParameters)
       expectedNutrientValues <- EitherT.liftF(ServiceFunctions.computeNutrientAmounts(fullRecipe))
       nutrientMapFromService <- EitherT.fromOptionF(
         statsService.nutrientsOfRecipe(user.id, fullRecipe.recipe.id),
@@ -59,15 +59,7 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
       )
     }
 
-    DBTestUtil.await(
-      transformer.fold(
-        error => {
-          pprint.log(error.message)
-          Prop.exception
-        },
-        identity
-      )
-    )
+    DBTestUtil.awaitProp(transformer)
   }
 
   override def overrideParameters(p: Test.Parameters): Test.Parameters =

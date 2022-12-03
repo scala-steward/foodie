@@ -40,7 +40,7 @@ object MealStatsProperties extends Properties("Meal stats") {
 
   private val setupUserAndRecipesGen = for {
     user    <- GenUtils.userWithFixedPassword
-    recipes <- GenUtils.nonEmptyListOfAtMost(maxNumberOfRecipesPerMeal, recipe.Gens.recipeParametersGen)
+    recipes <- GenUtils.nonEmptyListOfAtMost(maxNumberOfRecipesPerMeal, recipe.Gens.recipeParametersGen())
   } yield SetupUserAndRecipes(
     user = user,
     recipes = recipes.toList
@@ -54,7 +54,7 @@ object MealStatsProperties extends Properties("Meal stats") {
       .flatMap(_ =>
         setup.recipes
           .traverse {
-            ServiceFunctions.createRecipe(recipeService)(setup.user, _)
+            ServiceFunctions.createRecipe(recipeService)(setup.user.id, _)
           }
           .map {
             _.map(fr => fr.recipe.id -> fr).toMap

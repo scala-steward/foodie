@@ -35,9 +35,9 @@ object Gens {
       )
     )
 
-  val recipeParametersGen: Gen[RecipeParameters] = for {
+  def recipeParametersGen(maxNumberOfRecipes: Natural = Natural(20)): Gen[RecipeParameters] = for {
     recipeCreation       <- recipeCreationGen
-    ingredientParameters <- GenUtils.listOfAtMost(Natural(20), ingredientGen)
+    ingredientParameters <- GenUtils.listOfAtMost(maxNumberOfRecipes, ingredientGen)
   } yield RecipeParameters(
     recipeCreation = recipeCreation,
     ingredientParameters = ingredientParameters

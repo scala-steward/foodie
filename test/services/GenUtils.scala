@@ -78,7 +78,7 @@ object GenUtils {
       time = time
     )
 
-  val allFoods: Seq[Food] = DBTestUtil
+  lazy val allFoods: Seq[Food] = DBTestUtil
     .await(recipeService.allFoods)
     .map(food =>
       food.copy(
@@ -87,9 +87,9 @@ object GenUtils {
       )
     )
 
-  val allNutrients: Seq[Nutrient] = DBTestUtil.await(nutrientService.all)
+  lazy val allNutrients: Seq[Nutrient] = DBTestUtil.await(nutrientService.all)
 
-  val allConversionFactors: Map[(FoodId, MeasureId), BigDecimal] =
+  lazy val allConversionFactors: Map[(FoodId, MeasureId), BigDecimal] =
     DBTestUtil
       .await(DBTestUtil.dbRun(Tables.ConversionFactor.result))
       .map { row =>

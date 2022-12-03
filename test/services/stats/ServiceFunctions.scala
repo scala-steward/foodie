@@ -1,13 +1,13 @@
 package services.stats
 
-import cats.data.{EitherT, OptionT}
+import cats.data.{ EitherT, OptionT }
 import cats.syntax.traverse._
 import db.generated.Tables
 import errors.ServerError
 import io.scalaland.chimney.dsl._
 import services._
-import services.meal.{Meal, MealEntry, MealEntryPreCreation, MealParameters, MealService}
-import services.recipe.{Ingredient, IngredientPreCreation, Recipe, RecipeParameters, RecipeService}
+import services.meal.{ Meal, MealEntry, MealEntryPreCreation, MealParameters, MealService }
+import services.recipe.{ Ingredient, IngredientPreCreation, Recipe, RecipeParameters, RecipeService }
 import services.user.User
 import slick.jdbc.PostgresProfile.api._
 import utils.DBIOUtil.instances._
@@ -102,15 +102,15 @@ object ServiceFunctions {
   }
 
   def createRecipe(recipeService: RecipeService)(
-      user: User,
+      userId: UserId,
       recipeParameters: RecipeParameters
   ): EitherT[Future, ServerError, FullRecipe] =
     for {
-      recipe <- EitherT(recipeService.createRecipe(user.id, recipeParameters.recipeCreation))
+      recipe <- EitherT(recipeService.createRecipe(userId, recipeParameters.recipeCreation))
       ingredients <- recipeParameters.ingredientParameters.traverse(ip =>
         EitherT(
           recipeService.addIngredient(
-            userId = user.id,
+            userId = userId,
             ingredientCreation = IngredientPreCreation.toCreation(recipe.id, ip.ingredientPreCreation)
           )
         )
