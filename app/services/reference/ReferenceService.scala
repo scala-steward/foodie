@@ -161,6 +161,7 @@ object ReferenceService {
         nutrientCode: NutrientCode
     ): Future[Boolean] =
       db.run(companion.deleteReferenceEntry(userId, referenceMapId, nutrientCode))
+        .recover { _ => false }
 
   }
 

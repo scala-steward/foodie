@@ -119,6 +119,7 @@ object MealService {
 
     override def removeMealEntry(userId: UserId, mealEntryId: MealEntryId): Future[Boolean] =
       db.run(companion.removeMealEntry(userId, mealEntryId))
+        .recover { _ => false }
 
   }
 
