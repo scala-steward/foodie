@@ -78,14 +78,15 @@ object GenUtils {
       time = time
     )
 
-  lazy val allFoods: Seq[Food] = DBTestUtil
+  lazy val allFoods: Map[FoodId, Food] = DBTestUtil
     .await(recipeService.allFoods)
     .map(food =>
-      food.copy(
+      food.id -> food.copy(
         measures = food.measures
           .filter(measure => measure.id != AmountUnit.hundredGrams)
       )
     )
+    .toMap
 
   lazy val allNutrients: Seq[Nutrient] = DBTestUtil.await(nutrientService.all)
 
@@ -98,7 +99,7 @@ object GenUtils {
       .toMap
 
   lazy val foodGen: Gen[Food] =
-    Gen.oneOf(allFoods)
+    Gen.oneOf(allFoods.values)
 
   val smallBigDecimalGen: Gen[BigDecimal] = Gen.choose(BigDecimal(0.001), BigDecimal(1000))
 

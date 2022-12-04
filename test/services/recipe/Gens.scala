@@ -1,10 +1,8 @@
 package services.recipe
 
-import io.scalaland.chimney.dsl._
 import org.scalacheck.Gen
 import services._
 import spire.math.Natural
-import utils.TransformerUtils.Implicits._
 
 object Gens {
 
@@ -29,30 +27,39 @@ object Gens {
       numberOfServings = numberOfServings
     )
 
+  def amountUnitGen(food: Food): Gen[AmountUnit] = {
+    for {
+      measureId <- GenUtils.optionalOneOf(food.measures.map(_.id))
+      factor    <- GenUtils.smallBigDecimalGen
+    } yield AmountUnit(
+      measureId = measureId,
+      factor = factor
+    )
+  }
+
   val ingredientGen: Gen[IngredientParameters] =
     for {
-      food         <- GenUtils.foodGen
-      measureId    <- GenUtils.optionalOneOf(food.measures.map(_.id))
-      factor       <- GenUtils.smallBigDecimalGen
-      ingredientId <- Gen.uuid.map(_.transformInto[IngredientId])
+      food       <- GenUtils.foodGen
+      amountUnit <- amountUnitGen(food)
     } yield IngredientParameters(
-      ingredientId = ingredientId,
       ingredientPreCreation = IngredientPreCreation(
         foodId = food.id,
-        amountUnit = AmountUnit(
-          measureId = measureId,
-          factor = factor
-        )
+        amountUnit = amountUnit
       )
     )
 
-  def recipeParametersGen(maxNumberOfRecipes: Natural = Natural(20)): Gen[RecipeParameters] =
+  def recipeParametersGen(maxNumberOfIngredients: Natural = Natural(20)): Gen[RecipeParameters] =
     for {
       recipeCreation       <- recipeCreationGen
-      ingredientParameters <- GenUtils.listOfAtMost(maxNumberOfRecipes, ingredientGen)
+      ingredientParameters <- GenUtils.nonEmptyListOfAtMost(maxNumberOfIngredients, ingredientGen)
     } yield RecipeParameters(
       recipeCreation = recipeCreation,
-      ingredientParameters = ingredientParameters
+      ingredientParameters = ingredientParameters.toList
     )
+
+  def ingredientPreUpdateGen(foodId: FoodId): Gen[IngredientPreUpdate] = {
+    val food = GenUtils.allFoods(foodId)
+    amountUnitGen(food).map(IngredientPreUpdate.apply)
+  }
 
 }
