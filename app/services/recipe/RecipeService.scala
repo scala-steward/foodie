@@ -178,6 +178,9 @@ object RecipeService {
 
     override def removeIngredient(userId: UserId, ingredientId: IngredientId): Future[Boolean] =
       db.run(companion.removeIngredient(userId, ingredientId))
+        .recover { _ =>
+          false
+        }
 
   }
 
