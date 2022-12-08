@@ -40,6 +40,14 @@ object GenUtils {
     hash = Hash.fromPassword("password", salt, Hash.defaultIterations)
   )
 
+  val twoUsersGen: Gen[(User, User)] = for {
+    user1 <- userWithFixedPassword
+    user2 <- userWithFixedPassword
+  } yield (
+    user1.copy(nickname = "Test user 1"),
+    user2.copy(nickname = "Test user 2")
+  )
+
   def optionalOneOf[A](seq: Seq[A]): Gen[Option[A]] =
     if (seq.isEmpty)
       Gen.const(None)
