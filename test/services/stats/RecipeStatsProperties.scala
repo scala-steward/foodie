@@ -6,7 +6,6 @@ import errors.ErrorContext
 import org.scalacheck.Prop._
 import org.scalacheck.{ Prop, Properties, Test }
 import services._
-import services.recipe.RecipeService
 import services.user.UserService
 import spire.math.Natural
 
@@ -14,18 +13,17 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 object RecipeStatsProperties extends Properties("Recipe stats") {
 
-  private val recipeService = TestUtil.injector.instanceOf[RecipeService]
-  private val userService   = TestUtil.injector.instanceOf[UserService]
-  private val statsService  = TestUtil.injector.instanceOf[StatsService]
+  private val userService  = TestUtil.injector.instanceOf[UserService]
+  private val statsService = TestUtil.injector.instanceOf[StatsService]
 
   property("Per serving stats") = Prop.forAll(
     GenUtils.userWithFixedPassword :| "User",
-    recipe.Gens.recipeParametersGen() :| "Recipe parameters"
-  ) { (user, recipeParameters) =>
+    recipe.Gens.fullRecipeGen() :| "Full recipe"
+  ) { (user, fullRecipe) =>
     DBTestUtil.clearDb()
     val transformer = for {
       _                      <- EitherT.liftF(userService.add(user))
-      fullRecipe             <- ServiceFunctions.createRecipe(recipeService)(user.id, recipeParameters)
+      _                      <- EitherT.liftF(services.recipe.ServiceFunctions.createFull(user.id, fullRecipe))
       expectedNutrientValues <- EitherT.liftF(ServiceFunctions.computeNutrientAmounts(fullRecipe))
       nutrientMapFromService <- EitherT.fromOptionF(
         statsService.nutrientsOfRecipe(user.id, fullRecipe.recipe.id),
@@ -33,7 +31,7 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
       )
     } yield {
       val lengthProp: Prop =
-        (fullRecipe.ingredients.length ?= recipeParameters.ingredientParameters.length) :| "Correct ingredient number"
+        (fullRecipe.ingredients.length ?= fullRecipe.ingredients.length) :| "Correct ingredient number"
       val distinctIngredients = fullRecipe.ingredients.distinctBy(_.foodId).length
 
       val propsPerNutrient = GenUtils.allNutrients.map { nutrient =>

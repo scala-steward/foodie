@@ -3,6 +3,8 @@ package services.recipe
 import org.scalacheck.Gen
 import services._
 import spire.math.Natural
+import io.scalaland.chimney.dsl._
+import utils.TransformerUtils.Implicits._
 
 object Gens {
 
@@ -16,12 +18,18 @@ object Gens {
     numberOfServings = numberOfServings
   )
 
-  def recipePreUpdateGen: Gen[RecipePreUpdate] =
+  val recipeGen: Gen[Recipe] = for {
+    id             <- Gen.uuid.map(_.transformInto[RecipeId])
+    recipeCreation <- recipeCreationGen
+  } yield RecipeCreation.create(id, recipeCreation)
+
+  def recipeUpdateGen(recipeId: RecipeId): Gen[RecipeUpdate] =
     for {
       name             <- GenUtils.nonEmptyAsciiString
       description      <- Gen.option(GenUtils.nonEmptyAsciiString)
       numberOfServings <- GenUtils.smallBigDecimalGen
-    } yield RecipePreUpdate(
+    } yield RecipeUpdate(
+      recipeId,
       name = name,
       description = description,
       numberOfServings = numberOfServings
@@ -37,29 +45,29 @@ object Gens {
     )
   }
 
-  val ingredientGen: Gen[IngredientParameters] =
+  val ingredientGen: Gen[Ingredient] =
     for {
+      id         <- Gen.uuid.map(_.transformInto[IngredientId])
       food       <- GenUtils.foodGen
       amountUnit <- amountUnitGen(food)
-    } yield IngredientParameters(
-      ingredientPreCreation = IngredientPreCreation(
-        foodId = food.id,
-        amountUnit = amountUnit
-      )
+    } yield Ingredient(
+      id = id,
+      foodId = food.id,
+      amountUnit = amountUnit
     )
 
-  def recipeParametersGen(maxNumberOfIngredients: Natural = Natural(20)): Gen[RecipeParameters] =
+  def fullRecipeGen(maxNumberOfIngredients: Natural = Natural(20)): Gen[FullRecipe] =
     for {
-      recipeCreation       <- recipeCreationGen
-      ingredientParameters <- GenUtils.nonEmptyListOfAtMost(maxNumberOfIngredients, ingredientGen)
-    } yield RecipeParameters(
-      recipeCreation = recipeCreation,
-      ingredientParameters = ingredientParameters.toList
+      recipe      <- recipeGen
+      ingredients <- GenUtils.nonEmptyListOfAtMost(maxNumberOfIngredients, ingredientGen)
+    } yield FullRecipe(
+      recipe = recipe,
+      ingredients = ingredients.toList
     )
 
-  def ingredientPreUpdateGen(foodId: FoodId): Gen[IngredientPreUpdate] = {
+  def ingredientUpdateGen(ingredientId: IngredientId, foodId: FoodId): Gen[IngredientUpdate] = {
     val food = GenUtils.allFoods(foodId)
-    amountUnitGen(food).map(IngredientPreUpdate.apply)
+    amountUnitGen(food).map(IngredientUpdate(ingredientId, _))
   }
 
 }
