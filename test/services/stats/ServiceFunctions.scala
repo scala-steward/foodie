@@ -1,14 +1,11 @@
 package services.stats
 
-import cats.data.{ EitherT, OptionT }
+import cats.data.OptionT
 import cats.syntax.traverse._
 import db.generated.Tables
-import errors.ServerError
 import io.scalaland.chimney.dsl._
 import services._
-import services.meal.{ Meal, MealEntry, MealEntryPreCreation, MealParameters, MealService }
-import services.recipe.{ Ingredient, IngredientPreCreation, Recipe, RecipeParameters, RecipeService }
-import services.user.User
+import services.recipe._
 import slick.jdbc.PostgresProfile.api._
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
@@ -80,11 +77,6 @@ object ServiceFunctions {
     }
   }
 
-  case class FullRecipe(
-      recipe: Recipe,
-      ingredients: List[Ingredient]
-  )
-
   def computeNutrientAmounts(
       fullRecipe: FullRecipe
   ): Future[Map[NutrientId, Option[(Int, BigDecimal)]]] = {
@@ -100,47 +92,5 @@ object ServiceFunctions {
         .map(_.toMap)
     }
   }
-
-  def createRecipe(recipeService: RecipeService)(
-      userId: UserId,
-      recipeParameters: RecipeParameters
-  ): EitherT[Future, ServerError, FullRecipe] =
-    for {
-      recipe <- EitherT(recipeService.createRecipe(userId, recipeParameters.recipeCreation))
-      ingredients <- recipeParameters.ingredientParameters.traverse(ip =>
-        EitherT(
-          recipeService.addIngredient(
-            userId = userId,
-            ingredientCreation = IngredientPreCreation.toCreation(recipe.id, ip.ingredientPreCreation)
-          )
-        )
-      )
-    } yield FullRecipe(recipe, ingredients)
-
-  case class FullMeal(
-      meal: Meal,
-      mealEntries: List[MealEntry]
-  )
-
-  def createMeal(
-      mealService: MealService
-  )(
-      user: User,
-      mealParameters: MealParameters
-  ): EitherT[Future, ServerError, FullMeal] =
-    for {
-      meal <- EitherT(mealService.createMeal(user.id, mealParameters.mealCreation))
-      mealEntries <- mealParameters.mealEntryParameters.traverse(mep =>
-        EitherT(
-          mealService.addMealEntry(
-            userId = user.id,
-            mealEntryCreation = MealEntryPreCreation.toCreation(meal.id, mep.mealEntryPreCreation)
-          )
-        )
-      )
-    } yield FullMeal(
-      meal = meal,
-      mealEntries = mealEntries
-    )
 
 }
