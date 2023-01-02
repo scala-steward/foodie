@@ -15,8 +15,8 @@ class ApplicationModule extends play.api.inject.Module {
 
   override def bindings(environment: Environment, configuration: Configuration): collection.Seq[Binding[_]] = {
     val settings = Seq(
-      bind[UserService.Companion].toInstance(UserService.Live),
-      bind[UserService].to[UserService.Live],
+      bind[UserService.Companion].toInstance(services.user.Live.Companion),
+      bind[UserService].to[services.user.Live],
       bind[RecipeService.Companion].toInstance(services.recipe.Live.Companion),
       bind[RecipeService].to[services.recipe.Live],
       bind[ComplexIngredientService.Companion].to[services.complex.ingredient.Live.Companion],
@@ -25,10 +25,10 @@ class ApplicationModule extends play.api.inject.Module {
       bind[ComplexFoodService].to[services.complex.food.Live],
       bind[MealService.Companion].toInstance(services.meal.Live.Companion),
       bind[MealService].to[services.meal.Live],
-      bind[StatsService.Companion].toInstance(StatsService.Live),
-      bind[StatsService].to[StatsService.Live],
-      bind[NutrientService.Companion].toInstance(NutrientService.Live),
-      bind[NutrientService].to[NutrientService.Live],
+      bind[NutrientService.Companion].toInstance(services.nutrient.Live.Companion),
+      bind[NutrientService].to[services.nutrient.Live],
+      bind[StatsService.Companion].to[services.stats.Live.Companion],
+      bind[StatsService].to[services.stats.Live],
       bind[ReferenceService.Companion].toInstance(services.reference.Live.Companion),
       bind[ReferenceService].to[services.reference.Live]
     )
