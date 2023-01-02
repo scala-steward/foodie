@@ -1,15 +1,12 @@
 package services.meal
 
-import errors.{ ErrorContext, ServerError }
-import cats.effect.unsafe.implicits._
-import io.scalaland.chimney.dsl._
 import services.{ MealEntryId, MealId, UserId }
-import utils.TransformerUtils.Implicits._
+import slick.dbio.DBIO
 
 import scala.collection.mutable
-import scala.concurrent.Future
+import scala.concurrent.ExecutionContext
 
-sealed trait MockMealService extends MealService {
+sealed trait MockMealService extends MealService.Companion {
   protected def fullMealsByUserId: Seq[(UserId, Seq[FullMeal])]
 
   private lazy val mealMap: mutable.Map[(UserId, MealId), Meal] =
@@ -30,58 +27,60 @@ sealed trait MockMealService extends MealService {
       }
     )
 
-  override def allMeals(userId: UserId, interval: RequestInterval): Future[Seq[Meal]] =
-    Future.successful(mealMap.collect { case ((uid, _), meal) if uid == userId => meal }.toSeq)
+  override def allMeals(userId: UserId, interval: RequestInterval)(implicit ec: ExecutionContext): DBIO[Seq[Meal]] =
+    DBIO.successful(mealMap.collect { case ((uid, _), meal) if uid == userId => meal }.toSeq)
 
-  override def getMeal(userId: UserId, id: MealId): Future[Option[Meal]] =
-    Future.successful(mealMap.get((userId, id)))
+  override def getMeal(userId: UserId, id: MealId)(implicit ec: ExecutionContext): DBIO[Option[Meal]] =
+    DBIO.successful(mealMap.get((userId, id)))
 
-  override def createMeal(userId: UserId, mealCreation: MealCreation): Future[ServerError.Or[Meal]] =
-    utils.random.RandomGenerator.randomUUID
-      .map { id =>
-        val mealId = id.transformInto[MealId]
-        val meal   = MealCreation.create(mealId, mealCreation)
-        mealMap.update((userId, mealId), meal)
-        Right(meal)
-      }
-      .unsafeToFuture()
-
-  override def updateMeal(userId: UserId, mealUpdate: MealUpdate): Future[ServerError.Or[Meal]] =
-    Future.successful {
-      mealMap
-        .updateWith(
-          (userId, mealUpdate.id)
-        )(
-          _.map(MealUpdate.update(_, mealUpdate))
-        )
-        .toRight(ErrorContext.Meal.Update(s"Unknown meal id: ${mealUpdate.id}").asServerError)
+  override def createMeal(userId: UserId, mealId: MealId, mealCreation: MealCreation)(implicit
+      ec: ExecutionContext
+  ): DBIO[Meal] = {
+    DBIO.successful {
+      val meal = MealCreation.create(mealId, mealCreation)
+      mealMap.update((userId, mealId), meal)
+      meal
     }
+  }
 
-  override def deleteMeal(userId: UserId, id: MealId): Future[Boolean] =
-    Future.successful {
+  override def updateMeal(userId: UserId, mealUpdate: MealUpdate)(implicit ec: ExecutionContext): DBIO[Meal] =
+    mealMap
+      .updateWith(
+        (userId, mealUpdate.id)
+      )(
+        _.map(MealUpdate.update(_, mealUpdate))
+      )
+      .fold(DBIO.failed(new Throwable(s"Error updating meal with meal id: ${mealUpdate.id}")): DBIO[Meal])(
+        DBIO.successful
+      )
+
+  override def deleteMeal(userId: UserId, id: MealId)(implicit ec: ExecutionContext): DBIO[Boolean] =
+    DBIO.successful {
       mealMap
         .remove((userId, id))
         .isDefined
     }
 
-  override def getMealEntries(userId: UserId, id: MealId): Future[Seq[MealEntry]] =
-    Future.successful {
+  override def getMealEntries(userId: UserId, id: MealId)(implicit ec: ExecutionContext): DBIO[Seq[MealEntry]] =
+    DBIO.successful {
       mealEntriesMap.collect { case ((uid, mid, _), mealEntry) if userId == uid && mid == id => mealEntry }.toSeq
     }
 
-  override def addMealEntry(userId: UserId, mealEntryCreation: MealEntryCreation): Future[ServerError.Or[MealEntry]] =
-    utils.random.RandomGenerator.randomUUID
-      .map { id =>
-        val mealEntryId = id.transformInto[MealEntryId]
-        val mealEntry   = MealEntryCreation.create(mealEntryId, mealEntryCreation)
-        mealEntriesMap.update((userId, mealEntryCreation.mealId, mealEntryId), mealEntry)
-        Right(mealEntry)
-      }
-      .unsafeToFuture()
+  override def addMealEntry(userId: UserId, mealEntryId: MealEntryId, mealEntryCreation: MealEntryCreation)(implicit
+      ec: ExecutionContext
+  ): DBIO[MealEntry] = {
+    DBIO.successful {
+      val mealEntry = MealEntryCreation.create(mealEntryId, mealEntryCreation)
+      mealEntriesMap.update((userId, mealEntryCreation.mealId, mealEntryId), mealEntry)
+      mealEntry
+    }
+  }
 
-  override def updateMealEntry(userId: UserId, mealEntryUpdate: MealEntryUpdate): Future[ServerError.Or[MealEntry]] =
-    Future.successful {
-      val update = for {
+  override def updateMealEntry(userId: UserId, mealEntryUpdate: MealEntryUpdate)(implicit
+      ec: ExecutionContext
+  ): DBIO[MealEntry] = {
+    val action =
+      for {
         mealId <- mealEntriesMap.collectFirst {
           case ((uid, mealId, mealEntryId), _) if uid == userId && mealEntryId == mealEntryUpdate.id => mealId
         }
@@ -94,12 +93,13 @@ sealed trait MockMealService extends MealService {
             )
       } yield mealEntry
 
-      update
-        .toRight(ErrorContext.Meal.Update(s"Unknown meal entry id: ${mealEntryUpdate.id}").asServerError)
-    }
+    action.fold(
+      DBIO.failed(new Throwable(s"Error updating meal entry with id: ${mealEntryUpdate.id}")): DBIO[MealEntry]
+    )(DBIO.successful)
+  }
 
-  override def removeMealEntry(userId: UserId, mealEntryId: MealEntryId): Future[Boolean] =
-    Future.successful {
+  override def removeMealEntry(userId: UserId, mealEntryId: MealEntryId)(implicit ec: ExecutionContext): DBIO[Boolean] =
+    DBIO.successful {
       val deletion = for {
         mealId <- mealEntriesMap.collectFirst {
           case ((uId, mealId, meId), _) if uId == userId && mealEntryId == meId => mealId
@@ -113,7 +113,7 @@ sealed trait MockMealService extends MealService {
 
 object MockMealService {
 
-  def fromCollection(fullMeals: Seq[(UserId, Seq[FullMeal])]): MealService =
+  def fromCollection(fullMeals: Seq[(UserId, Seq[FullMeal])]): MealService.Companion =
     new MockMealService {
       override protected val fullMealsByUserId: Seq[(UserId, Seq[FullMeal])] = fullMeals
     }
