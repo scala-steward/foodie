@@ -111,4 +111,11 @@ sealed trait MockMealService extends MealService {
 
 }
 
-object MockMealService {}
+object MockMealService {
+
+  def fromCollection(fullMeals: Seq[(UserId, Seq[FullMeal])]): MealService =
+    new MockMealService {
+      override protected val fullMealsByUserId: Seq[(UserId, Seq[FullMeal])] = fullMeals
+    }
+
+}
