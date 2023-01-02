@@ -17,20 +17,20 @@ class ApplicationModule extends play.api.inject.Module {
     val settings = Seq(
       bind[UserService.Companion].toInstance(UserService.Live),
       bind[UserService].to[UserService.Live],
-      bind[RecipeService.Companion].toInstance(RecipeService.Live),
-      bind[RecipeService].to[RecipeService.Live],
+      bind[RecipeService.Companion].toInstance(services.recipe.Live.Companion),
+      bind[RecipeService].to[services.recipe.Live],
       bind[ComplexIngredientService.Companion].toInstance(ComplexIngredientService.Live),
       bind[ComplexIngredientService].to[ComplexIngredientService.Live],
       bind[ComplexFoodService.Companion].toInstance(ComplexFoodService.Live),
       bind[ComplexFoodService].to[ComplexFoodService.Live],
-      bind[MealService.Companion].toInstance(MealService.Live),
-      bind[MealService].to[MealService.Live],
+      bind[MealService.Companion].toInstance(services.meal.Live.Companion),
+      bind[MealService].to[services.meal.Live],
       bind[StatsService.Companion].toInstance(StatsService.Live),
       bind[StatsService].to[StatsService.Live],
       bind[NutrientService.Companion].toInstance(NutrientService.Live),
       bind[NutrientService].to[NutrientService.Live],
-      bind[ReferenceService.Companion].toInstance(ReferenceService.Live),
-      bind[ReferenceService].to[ReferenceService.Live]
+      bind[ReferenceService.Companion].toInstance(services.reference.Live.Companion),
+      bind[ReferenceService].to[services.reference.Live]
     )
     settings
   }
