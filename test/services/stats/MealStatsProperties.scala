@@ -8,20 +8,20 @@ import config.TestConfiguration
 import errors.ServerError
 import io.scalaland.chimney.dsl.TransformerOps
 import org.scalacheck.Prop.AnyOperators
-import org.scalacheck.{Gen, Prop, Properties, Test}
+import org.scalacheck.{ Gen, Prop, Properties, Test }
 import play.api.db.slick.DatabaseConfigProvider
 import services._
 import services.common.RequestInterval
 import services.complex.food.ComplexFoodService
 import services.complex.ingredient.ComplexIngredientService
-import services.meal.{FullMeal, Gens, Meal, MealEntry, MealService, MockMealService}
+import services.meal.{ FullMeal, Gens, Meal, MealEntry, MealService, MockMealService }
 import services.nutrient.NutrientService
-import services.recipe.{FullRecipe, MockRecipeService, RecipeService}
+import services.recipe.{ FullRecipe, MockRecipeService, RecipeService }
 import services.user.User
 import spire.compat._
 import spire.implicits._
 import spire.math.interval._
-import spire.math.{Interval, Natural}
+import spire.math.{ Interval, Natural }
 import utils.collection.MapUtil
 import utils.date.Date
 
