@@ -5,6 +5,7 @@ import db.generated.Tables
 import errors.{ ErrorContext, ServerError }
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
+import services.common.RequestInterval
 import services.{ DBError, MealEntryId, MealId, UserId }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
