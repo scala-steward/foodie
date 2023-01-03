@@ -8,15 +8,20 @@ import config.TestConfiguration
 import errors.ServerError
 import io.scalaland.chimney.dsl.TransformerOps
 import org.scalacheck.Prop.AnyOperators
-import org.scalacheck.{ Gen, Prop, Properties, Test }
+import org.scalacheck.{Gen, Prop, Properties, Test}
+import play.api.db.slick.DatabaseConfigProvider
 import services._
-import services.meal.{ Meal, MealEntry, FullMeal, Gens }
-import services.recipe.FullRecipe
-import services.user.{ User, UserService }
+import services.common.RequestInterval
+import services.complex.food.ComplexFoodService
+import services.complex.ingredient.ComplexIngredientService
+import services.meal.{FullMeal, Gens, Meal, MealEntry, MealService, MockMealService}
+import services.nutrient.NutrientService
+import services.recipe.{FullRecipe, MockRecipeService, RecipeService}
+import services.user.User
 import spire.compat._
 import spire.implicits._
 import spire.math.interval._
-import spire.math.{ Interval, Natural }
+import spire.math.{Interval, Natural}
 import utils.collection.MapUtil
 import utils.date.Date
 
@@ -25,8 +30,25 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 object MealStatsProperties extends Properties("Meal stats") {
-  private val userService  = TestUtil.injector.instanceOf[UserService]
-  private val statsService = TestUtil.injector.instanceOf[StatsService]
+  private val nutrientServiceCompanion          = TestUtil.injector.instanceOf[NutrientService.Companion]
+  private val complexFoodServiceCompanion       = TestUtil.injector.instanceOf[ComplexFoodService.Companion]
+  private val complexIngredientServiceCompanion = TestUtil.injector.instanceOf[ComplexIngredientService.Companion]
+  private val dbConfigProvider                  = TestUtil.injector.instanceOf[DatabaseConfigProvider]
+
+  private def statsServiceWith(
+      recipeServiceCompanion: RecipeService.Companion,
+      mealServiceCompanion: MealService.Companion
+  ): StatsService =
+    new Live(
+      dbConfigProvider = dbConfigProvider,
+      companion = new Live.Companion(
+        mealService = mealServiceCompanion,
+        recipeService = recipeServiceCompanion,
+        nutrientService = nutrientServiceCompanion,
+        complexFoodService = complexFoodServiceCompanion,
+        complexIngredientService = complexIngredientServiceCompanion
+      )
+    )
 
   private case class SetupUserAndRecipes(
       user: User,
@@ -42,18 +64,6 @@ object MealStatsProperties extends Properties("Meal stats") {
     user = user,
     fullRecipes = fullRecipes.toList
   )
-
-  private def applyUserAndRecipeSetup(
-      setup: SetupUserAndRecipes
-  ): Future[Unit] =
-    userService
-      .add(setup.user)
-      .flatMap(_ =>
-        services.recipe.ServiceFunctions.createAllFull(
-          setup.user.id,
-          setup.fullRecipes
-        )
-      )
 
   private def computeNutrientsPerMealEntry(fullRecipes: Map[RecipeId, FullRecipe])(
       mealEntry: MealEntry
@@ -96,10 +106,13 @@ object MealStatsProperties extends Properties("Meal stats") {
   ) { setup =>
     DBTestUtil.clearDb()
     val recipeMap = setup.userAndRecipes.fullRecipes.map(fr => fr.recipe.id -> fr).toMap
+    val statsService = statsServiceWith(
+      recipeServiceCompanion =
+        MockRecipeService.fromCollection(Seq(setup.userAndRecipes.user.id -> setup.userAndRecipes.fullRecipes)),
+      mealServiceCompanion = MockMealService.fromCollection(Seq(setup.userAndRecipes.user.id -> Seq(setup.fullMeal)))
+    )
 
     val transformer = for {
-      _ <- EitherT.liftF(applyUserAndRecipeSetup(setup.userAndRecipes))
-      _ <- EitherT.liftF(services.meal.ServiceFunctions.createFull(setup.userAndRecipes.user.id, setup.fullMeal))
       expectedNutrientValues <- EitherT.liftF[Future, ServerError, Map[NutrientId, Option[BigDecimal]]](
         setup.fullMeal.mealEntries
           .traverse(computeNutrientsPerMealEntry(recipeMap))
@@ -183,15 +196,20 @@ object MealStatsProperties extends Properties("Meal stats") {
   ) { overTimeSetup =>
     DBTestUtil.clearDb()
 
+    val statsService = statsServiceWith(
+      recipeServiceCompanion = MockRecipeService.fromCollection(
+        Seq(overTimeSetup.userAndRecipes.user.id -> overTimeSetup.userAndRecipes.fullRecipes)
+      ),
+      mealServiceCompanion =
+        MockMealService.fromCollection(Seq(overTimeSetup.userAndRecipes.user.id -> overTimeSetup.fullMeals))
+    )
+
+    val mealsInInterval =
+      overTimeSetup.fullMeals
+        .filter(fullMeal => overTimeSetup.dateInterval.contains(fullMeal.meal.date.date))
+    val fullRecipeMap = overTimeSetup.userAndRecipes.fullRecipes.map(fr => fr.recipe.id -> fr).toMap
+
     val transformer = for {
-      _ <- EitherT.liftF(applyUserAndRecipeSetup(overTimeSetup.userAndRecipes))
-      _ <- EitherT.liftF(
-        services.meal.ServiceFunctions.createAllFull(overTimeSetup.userAndRecipes.user.id, overTimeSetup.fullMeals)
-      )
-      mealsInInterval =
-        overTimeSetup.fullMeals
-          .filter(fullMeal => overTimeSetup.dateInterval.contains(fullMeal.meal.date.date))
-      fullRecipeMap = overTimeSetup.userAndRecipes.fullRecipes.map(fr => fr.recipe.id -> fr).toMap
       expectedNutrientValues <- EitherT.liftF[Future, ServerError, Map[NutrientId, Option[BigDecimal]]](
         mealsInInterval
           .flatMap(_.mealEntries)
@@ -265,15 +283,22 @@ object MealStatsProperties extends Properties("Meal stats") {
   ) { setup =>
     DBTestUtil.clearDb()
 
+    val statsService = statsServiceWith(
+      recipeServiceCompanion = MockRecipeService.fromCollection(
+        Seq.empty
+      ),
+      mealServiceCompanion = MockMealService.fromCollection(
+        Seq(
+          setup.user1.id -> setup.meals1.map(FullMeal(_, List.empty)),
+          setup.user2.id -> setup.meals2.map(FullMeal(_, List.empty))
+        )
+      )
+    )
+    val mealsInInterval =
+      setup.meals1
+        .filter(meal => setup.dateInterval.contains(meal.date.date))
     val transformer =
       for {
-        _ <- EitherT.liftF(applyUserAndRecipeSetup(SetupUserAndRecipes(setup.user1, List.empty)))
-        _ <- EitherT.liftF(applyUserAndRecipeSetup(SetupUserAndRecipes(setup.user2, List.empty)))
-        _ <- EitherT.liftF(services.meal.ServiceFunctions.createAll(setup.user1.id, setup.meals1))
-        _ <- EitherT.liftF(services.meal.ServiceFunctions.createAll(setup.user2.id, setup.meals2))
-        mealsInInterval =
-          setup.meals1
-            .filter(meal => setup.dateInterval.contains(meal.date.date))
         statsFromService <- EitherT.liftF[Future, ServerError, Stats](
           statsService.nutrientsOverTime(
             setup.user1.id,
