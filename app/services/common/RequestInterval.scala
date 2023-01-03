@@ -1,4 +1,4 @@
-package services.stats
+package services.common
 
 import java.time.LocalDate
 
