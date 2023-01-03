@@ -6,7 +6,7 @@ import errors.{ ErrorContext, ServerError }
 import org.scalacheck.Prop.AnyOperators
 import org.scalacheck.{ Gen, Prop, Properties, Test }
 import services.user.{ User, UserService }
-import services.{ DBTestUtil, GenUtils, TestUtil }
+import services.{ DBTestUtil, GenUtils, IngredientId, TestUtil }
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -209,20 +209,20 @@ object RecipeServiceProperties extends Properties("Recipe service") {
   private case class IngredientUpdateSetup(
       user: User,
       fullRecipe: FullRecipe,
-      ingredientIndex: Int,
+      ingredient: Ingredient,
       ingredientUpdate: IngredientUpdate
   )
 
   private val ingredientUpdateSetupGen: Gen[IngredientUpdateSetup] =
     for {
-      user                <- GenUtils.userWithFixedPassword
-      fullRecipe          <- Gens.fullRecipeGen()
-      (ingredient, index) <- Gen.oneOf(fullRecipe.ingredients.zipWithIndex)
-      ingredientUpdate    <- Gens.ingredientUpdateGen(ingredient.id, ingredient.foodId)
+      user             <- GenUtils.userWithFixedPassword
+      fullRecipe       <- Gens.fullRecipeGen()
+      ingredient       <- Gen.oneOf(fullRecipe.ingredients)
+      ingredientUpdate <- Gens.ingredientUpdateGen(ingredient.id, ingredient.foodId)
     } yield IngredientUpdateSetup(
       user = user,
       fullRecipe = fullRecipe,
-      ingredientIndex = index,
+      ingredient = ingredient,
       ingredientUpdate = ingredientUpdate
     )
 
@@ -246,11 +246,14 @@ object RecipeServiceProperties extends Properties("Recipe service") {
       )
     } yield {
       val expectedIngredient = IngredientUpdate.update(
-        ingredientUpdateSetup.fullRecipe.ingredients(ingredientUpdateSetup.ingredientIndex),
+        ingredientUpdateSetup.ingredient,
         ingredientUpdateSetup.ingredientUpdate
       )
       val expectedIngredients =
-        ingredientUpdateSetup.fullRecipe.ingredients.updated(ingredientUpdateSetup.ingredientIndex, expectedIngredient)
+        ingredientUpdateSetup.fullRecipe.ingredients.map { ingredient =>
+          if (ingredient.id == ingredientUpdateSetup.ingredient.id) expectedIngredient
+          else ingredient
+        }
       Prop.all(
         (updatedIngredient ?= expectedIngredient) :| "Update correct",
         (ingredients.sortBy(_.id) ?= expectedIngredients.sortBy(_.id)) :| "Ingredients after update correct"
@@ -260,40 +263,49 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     DBTestUtil.awaitProp(transformer)
   }
 
-  property("Delete ingredient") = Prop.forAll(
-    GenUtils.userWithFixedPassword :| "user",
-    Gens.fullRecipeGen() :| "full recipe"
-  ) { (user, fullRecipe) =>
-    DBTestUtil.clearDb()
-    Prop.forAll(
-      Gen
-        .oneOf(fullRecipe.ingredients.zipWithIndex)
-        .map(_._2)
-        :| "index"
-    ) { index =>
-      val transformer = for {
-        _ <- EitherT.liftF(userService.add(user))
-        _ <- EitherT.liftF(
-          ServiceFunctions.createFull(
-            user.id,
-            fullRecipe
-          )
-        )
-        ingredient = fullRecipe.ingredients.apply(index)
-        deletionResult <- EitherT.liftF(recipeService.removeIngredient(user.id, ingredient.id))
-        ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
-          recipeService.getIngredients(user.id, fullRecipe.recipe.id)
-        )
-      } yield {
-        val expectedIngredients = fullRecipe.ingredients.zipWithIndex.filter(_._2 != index).map(_._1)
-        Prop.all(
-          Prop(deletionResult) :| "Deletion successful",
-          (ingredients.sortBy(_.id) ?= expectedIngredients.sortBy(_.id)) :| "Ingredients after update correct"
-        )
-      }
+  private case class DeleteIngredientSetup(
+      user: User,
+      fullRecipe: FullRecipe,
+      ingredientId: IngredientId
+  )
 
-      DBTestUtil.awaitProp(transformer)
+  private val deleteIngredientSetupGen: Gen[DeleteIngredientSetup] =
+    for {
+      user         <- GenUtils.userWithFixedPassword
+      fullRecipe   <- Gens.fullRecipeGen()
+      ingredientId <- Gen.oneOf(fullRecipe.ingredients).map(_.id)
+    } yield DeleteIngredientSetup(
+      user = user,
+      fullRecipe = fullRecipe,
+      ingredientId = ingredientId
+    )
+
+  property("Delete ingredient") = Prop.forAll(
+    deleteIngredientSetupGen :| "delete ingredient setup"
+  ) { setup =>
+    DBTestUtil.clearDb()
+
+    val transformer = for {
+      _ <- EitherT.liftF(userService.add(setup.user))
+      _ <- EitherT.liftF(
+        ServiceFunctions.createFull(
+          setup.user.id,
+          setup.fullRecipe
+        )
+      )
+      deletionResult <- EitherT.liftF(recipeService.removeIngredient(setup.user.id, setup.ingredientId))
+      ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
+        recipeService.getIngredients(setup.user.id, setup.fullRecipe.recipe.id)
+      )
+    } yield {
+      val expectedIngredients = setup.fullRecipe.ingredients.filter(_.id != setup.ingredientId)
+      Prop.all(
+        Prop(deletionResult) :| "Deletion successful",
+        (ingredients.sortBy(_.id) ?= expectedIngredients.sortBy(_.id)) :| "Ingredients after update correct"
+      )
     }
+
+    DBTestUtil.awaitProp(transformer)
   }
 
   property("Creation (wrong user)") = Prop.forAll(
@@ -485,21 +497,19 @@ object RecipeServiceProperties extends Properties("Recipe service") {
       user1: User,
       user2: User,
       fullRecipe: FullRecipe,
-      ingredientIndex: Int,
       ingredientUpdate: IngredientUpdate
   )
 
   private val wrongIngredientUpdateSetupGen: Gen[WrongIngredientUpdateSetup] =
     for {
-      (user1, user2)      <- GenUtils.twoUsersGen
-      fullRecipe          <- Gens.fullRecipeGen()
-      (ingredient, index) <- Gen.oneOf(fullRecipe.ingredients.zipWithIndex)
-      ingredientUpdate    <- Gens.ingredientUpdateGen(ingredient.id, ingredient.foodId)
+      (user1, user2)   <- GenUtils.twoUsersGen
+      fullRecipe       <- Gens.fullRecipeGen()
+      ingredient       <- Gen.oneOf(fullRecipe.ingredients)
+      ingredientUpdate <- Gens.ingredientUpdateGen(ingredient.id, ingredient.foodId)
     } yield WrongIngredientUpdateSetup(
       user1 = user1,
       user2 = user2,
       fullRecipe = fullRecipe,
-      ingredientIndex = index,
       ingredientUpdate = ingredientUpdate
     )
 
@@ -534,45 +544,53 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     }
 
     DBTestUtil.awaitProp(transformer)
-
   }
 
-  property("Delete ingredient (wrong user)") = Prop.forAll(
-    GenUtils.twoUsersGen :| "users",
-    Gens.fullRecipeGen() :| "full recipe"
-  ) {
-    case ((user1, user2), fullRecipe) =>
-      DBTestUtil.clearDb()
-      Prop.forAll(
-        Gen
-          .oneOf(fullRecipe.ingredients.zipWithIndex)
-          .map(_._2)
-          :| "index"
-      ) { index =>
-        val transformer = for {
-          _ <- EitherT.liftF(userService.add(user1))
-          _ <- EitherT.liftF(userService.add(user2))
-          _ <- EitherT.liftF(
-            ServiceFunctions.createFull(
-              user1.id,
-              fullRecipe
-            )
-          )
-          ingredient = fullRecipe.ingredients.apply(index)
-          deletionResult <- EitherT.liftF(recipeService.removeIngredient(user2.id, ingredient.id))
-          ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
-            recipeService.getIngredients(user1.id, fullRecipe.recipe.id)
-          )
-        } yield {
-          val expectedIngredients = fullRecipe.ingredients
-          Prop.all(
-            Prop(!deletionResult) :| "Ingredient deletion failed",
-            (ingredients.sortBy(_.id) ?= expectedIngredients.sortBy(_.id)) :| "Ingredients after update correct"
-          )
-        }
+  private case class WrongDeleteIngredientSetup(
+      user1: User,
+      user2: User,
+      fullRecipe: FullRecipe,
+      ingredientId: IngredientId
+  )
 
-        DBTestUtil.awaitProp(transformer)
-      }
+  private val wrongDeleteIngredientSetupGen: Gen[WrongDeleteIngredientSetup] =
+    for {
+      (user1, user2) <- GenUtils.twoUsersGen
+      fullRecipe     <- Gens.fullRecipeGen()
+      ingredientId   <- Gen.oneOf(fullRecipe.ingredients).map(_.id)
+    } yield WrongDeleteIngredientSetup(
+      user1 = user1,
+      user2 = user2,
+      fullRecipe = fullRecipe,
+      ingredientId = ingredientId
+    )
+
+  property("Delete ingredient (wrong user)") = Prop.forAll(
+    wrongDeleteIngredientSetupGen :| "wrong delete ingredient setup"
+  ) { setup =>
+    DBTestUtil.clearDb()
+    val transformer = for {
+      _ <- EitherT.liftF(userService.add(setup.user1))
+      _ <- EitherT.liftF(userService.add(setup.user2))
+      _ <- EitherT.liftF(
+        ServiceFunctions.createFull(
+          setup.user1.id,
+          setup.fullRecipe
+        )
+      )
+      deletionResult <- EitherT.liftF(recipeService.removeIngredient(setup.user2.id, setup.ingredientId))
+      ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
+        recipeService.getIngredients(setup.user1.id, setup.fullRecipe.recipe.id)
+      )
+    } yield {
+      val expectedIngredients = setup.fullRecipe.ingredients
+      Prop.all(
+        Prop(!deletionResult) :| "Ingredient deletion failed",
+        (ingredients.sortBy(_.id) ?= expectedIngredients.sortBy(_.id)) :| "Ingredients after update correct"
+      )
+    }
+
+    DBTestUtil.awaitProp(transformer)
   }
 
   override def overrideParameters(p: Test.Parameters): Test.Parameters =
