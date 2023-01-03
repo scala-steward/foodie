@@ -1,10 +1,12 @@
 package controllers.stats
 
 import action.UserAction
+import controllers.common.RequestInterval
 import io.circe.syntax._
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.libs.circe.Circe
 import play.api.mvc._
+import services.common
 import services.nutrient.NutrientService
 import services.stats.StatsService
 import utils.TransformerUtils.Implicits._
@@ -32,7 +34,7 @@ class StatsController @Inject() (
           requestInterval = RequestInterval(
             from = from.flatMap(Date.parse),
             to = to.flatMap(Date.parse)
-          ).transformInto[services.stats.RequestInterval]
+          ).transformInto[common.RequestInterval]
         )
         .map(
           _.pipe(_.transformInto[Stats])
