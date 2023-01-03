@@ -1,6 +1,7 @@
 package services.stats
 
 import services._
+import services.common.RequestInterval
 import slick.dbio.DBIO
 
 import scala.concurrent.{ ExecutionContext, Future }
