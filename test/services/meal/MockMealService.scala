@@ -1,7 +1,11 @@
 package services.meal
 
+import cats.syntax.order._
+import io.scalaland.chimney.dsl._
+import services.common.RequestInterval
 import services.{ MealEntryId, MealId, UserId }
 import slick.dbio.DBIO
+import utils.date.Date
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
@@ -27,8 +31,19 @@ sealed trait MockMealService extends MealService.Companion {
       }
     )
 
-  override def allMeals(userId: UserId, interval: RequestInterval)(implicit ec: ExecutionContext): DBIO[Seq[Meal]] =
-    DBIO.successful(mealMap.collect { case ((uid, _), meal) if uid == userId => meal }.toSeq)
+  override def allMeals(userId: UserId, interval: RequestInterval)(implicit ec: ExecutionContext): DBIO[Seq[Meal]] = {
+    def dateComparison(date: Date): Boolean =
+      (interval.from.map(_.transformInto[Date]), interval.to.map(_.transformInto[Date])) match {
+        case (Some(earliest), Some(latest)) => date >= earliest && date <= latest
+        case (Some(earliest), None)         => date >= earliest
+        case (None, Some(latest))           => date <= latest
+        case _                              => true
+      }
+
+    DBIO.successful(mealMap.collect {
+      case ((uid, _), meal) if uid == userId && dateComparison(meal.date.date) => meal
+    }.toSeq)
+  }
 
   override def getMeal(userId: UserId, id: MealId)(implicit ec: ExecutionContext): DBIO[Option[Meal]] =
     DBIO.successful(mealMap.get((userId, id)))
