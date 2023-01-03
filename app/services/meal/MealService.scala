@@ -1,6 +1,7 @@
 package services.meal
 
 import errors.ServerError
+import services.common.RequestInterval
 import services.{ MealEntryId, MealId, UserId }
 import slick.dbio.DBIO
 
