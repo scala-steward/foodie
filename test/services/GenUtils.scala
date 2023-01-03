@@ -97,6 +97,7 @@ object GenUtils {
     .toMap
 
   lazy val allNutrients: Seq[Nutrient] = DBTestUtil.await(nutrientService.all)
+  lazy val allMeasures: Seq[Measure]   = DBTestUtil.await(recipeService.allMeasures)
 
   lazy val allConversionFactors: Map[(FoodId, MeasureId), BigDecimal] =
     DBTestUtil
