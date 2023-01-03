@@ -12,17 +12,16 @@ import services.meal.{ MealEntry, MealService }
 import services.nutrient.{ AmountEvaluation, Nutrient, NutrientMap, NutrientService }
 import services.recipe.RecipeService
 import services._
+import services.common.RequestInterval
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
 import spire.implicits._
 import spire.math.Natural
-import utils.DBIOUtil
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 import utils.collection.MapUtil
 
-import java.util.UUID
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -70,17 +69,9 @@ object Live {
     )(implicit
         ec: ExecutionContext
     ): DBIO[Stats] = {
-      val dateFilter = DBIOUtil.dateFilter(requestInterval.from, requestInterval.to)
       for {
-        mealIdsPlain <-
-          Tables.Meal
-            .filter(m =>
-              dateFilter(m.consumedOnDate) &&
-                m.userId === userId.transformInto[UUID]
-            )
-            .map(_.id)
-            .result
-        mealIds = mealIdsPlain.map(_.transformInto[MealId])
+        meals <- mealService.allMeals(userId, requestInterval)
+        mealIds = meals.map(_.id)
         meals              <- mealIds.traverse(mealService.getMeal(userId, _)).map(_.flatten)
         mealEntries        <- mealIds.flatTraverse(mealService.getMealEntries(userId, _))
         nutrientsPerRecipe <- nutrientsOfRecipeIds(userId, mealEntries.map(_.recipeId))
