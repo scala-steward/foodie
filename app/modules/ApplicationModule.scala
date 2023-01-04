@@ -15,6 +15,8 @@ class ApplicationModule extends play.api.inject.Module {
 
   override def bindings(environment: Environment, configuration: Configuration): collection.Seq[Binding[_]] = {
     val settings = Seq(
+      bind[db.daos.meal.DAO].toInstance(db.daos.meal.DAO.instance),
+      bind[db.daos.mealEntry.DAO].toInstance(db.daos.mealEntry.DAO.instance),
       bind[db.daos.recipe.DAO].toInstance(db.daos.recipe.DAO.instance),
       bind[UserService.Companion].toInstance(services.user.Live.Companion),
       bind[UserService].to[services.user.Live],
@@ -24,7 +26,7 @@ class ApplicationModule extends play.api.inject.Module {
       bind[ComplexIngredientService].to[services.complex.ingredient.Live],
       bind[ComplexFoodService.Companion].to[services.complex.food.Live.Companion],
       bind[ComplexFoodService].to[services.complex.food.Live],
-      bind[MealService.Companion].toInstance(services.meal.Live.Companion),
+      bind[MealService.Companion].to[services.meal.Live.Companion],
       bind[MealService].to[services.meal.Live],
       bind[NutrientService.Companion].toInstance(services.nutrient.Live.Companion),
       bind[NutrientService].to[services.nutrient.Live],

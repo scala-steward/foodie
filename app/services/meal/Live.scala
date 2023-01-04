@@ -1,6 +1,7 @@
 package services.meal
 
 import cats.data.OptionT
+import db.daos.meal.MealKey
 import db.generated.Tables
 import db.{ MealEntryId, MealId, UserId }
 import errors.{ ErrorContext, ServerError }
@@ -79,7 +80,10 @@ class Live @Inject() (
 
 object Live {
 
-  object Companion extends MealService.Companion {
+  class Companion @Inject() (
+      mealDao: db.daos.meal.DAO,
+      mealEntryDao: db.daos.mealEntry.DAO
+  ) extends MealService.Companion {
 
     override def allMeals(
         userId: UserId,
@@ -89,9 +93,8 @@ object Live {
     ): DBIO[Seq[Meal]] = {
       val dateFilter: Rep[java.sql.Date] => Rep[Boolean] = DBIOUtil.dateFilter(interval.from, interval.to)
 
-      Tables.Meal
-        .filter(m => m.userId === userId.transformInto[UUID] && dateFilter(m.consumedOnDate))
-        .result
+      mealDao
+        .findPartial(m => m.userId === userId.transformInto[UUID] && dateFilter(m.consumedOnDate))
         .map(
           _.map(_.transformInto[Meal])
         )
@@ -102,7 +105,7 @@ object Live {
         id: MealId
     )(implicit ec: ExecutionContext): DBIO[Option[Meal]] =
       OptionT(
-        mealQuery(userId, id).result.headOption: DBIO[Option[Tables.MealRow]]
+        mealDao.find(MealKey(userId, id))
       ).map(_.transformInto[Meal]).value
 
     override def createMeal(
@@ -112,7 +115,8 @@ object Live {
     )(implicit ec: ExecutionContext): DBIO[Meal] = {
       val meal    = MealCreation.create(id, mealCreation)
       val mealRow = (meal, userId).transformInto[Tables.MealRow]
-      (Tables.Meal.returning(Tables.Meal) += mealRow)
+      mealDao
+        .insert(mealRow)
         .map(_.transformInto[Meal])
     }
 
@@ -125,14 +129,14 @@ object Live {
 
       for {
         meal <- findAction
-        _ <- mealQuery(userId, mealUpdate.id).update(
+        _ <- mealDao.update(
           (
             MealUpdate
               .update(meal, mealUpdate),
             userId
           )
             .transformInto[Tables.MealRow]
-        )
+        )(MealKey.of)
         updatedMeal <- findAction
       } yield updatedMeal
     }
@@ -141,14 +145,14 @@ object Live {
         userId: UserId,
         id: MealId
     )(implicit ec: ExecutionContext): DBIO[Boolean] =
-      mealQuery(userId, id).delete
+      mealDao
+        .delete(MealKey(userId, id))
         .map(_ > 0)
 
     override def getMealEntries(userId: UserId, id: MealId)(implicit ec: ExecutionContext): DBIO[Seq[MealEntry]] =
       ifMealExists(userId, id) {
-        Tables.MealEntry
-          .filter(_.mealId === id.transformInto[UUID])
-          .result
+        mealEntryDao
+          .findPartial(_.mealId === id.transformInto[UUID])
           .map(_.map(_.transformInto[MealEntry]))
       }
 
@@ -162,7 +166,7 @@ object Live {
       val mealEntry    = MealEntryCreation.create(id, mealEntryCreation)
       val mealEntryRow = (mealEntry, mealEntryCreation.mealId).transformInto[Tables.MealEntryRow]
       ifMealExists(userId, mealEntryCreation.mealId) {
-        (Tables.MealEntry.returning(Tables.MealEntry) += mealEntryRow).map(_.transformInto[MealEntry])
+        mealEntryDao.insert(mealEntryRow).map(_.transformInto[MealEntry])
       }
     }
 
@@ -172,19 +176,19 @@ object Live {
     )(implicit
         ec: ExecutionContext
     ): DBIO[MealEntry] = {
-      val findAction = OptionT(mealEntryQuery(mealEntryUpdate.id).result.headOption: DBIO[Option[Tables.MealEntryRow]])
-        .getOrElseF(DBIO.failed(DBError.Meal.EntryNotFound))
+      val findAction =
+        OptionT(mealEntryDao.find(mealEntryUpdate.id)).getOrElseF(DBIO.failed(DBError.Meal.EntryNotFound))
       for {
         mealEntryRow <- findAction
         _ <- ifMealExists(userId, mealEntryRow.mealId.transformInto[MealId]) {
-          mealEntryQuery(mealEntryUpdate.id).update(
+          mealEntryDao.update(
             (
               MealEntryUpdate
                 .update(mealEntryRow.transformInto[MealEntry], mealEntryUpdate),
               mealEntryRow.mealId.transformInto[MealId]
             )
               .transformInto[Tables.MealEntryRow]
-          )
+          )(_.id.transformInto[MealEntryId])
         }
         updatedMealEntry <- findAction
       } yield updatedMealEntry.transformInto[MealEntry]
@@ -197,40 +201,23 @@ object Live {
         ec: ExecutionContext
     ): DBIO[Boolean] =
       OptionT(
-        mealEntryQuery(id)
-          .map(_.mealId)
-          .result
-          .headOption: DBIO[Option[UUID]]
+        mealEntryDao.find(id)
       )
+        .map(_.mealId)
         .semiflatMap(mealId =>
           ifMealExists(userId, mealId.transformInto[MealId]) {
-            mealEntryQuery(id).delete
+            mealEntryDao
+              .delete(id)
               .map(_ > 0)
           }
         )
         .getOrElse(false)
 
-    private def mealQuery(
-        userId: UserId,
-        id: MealId
-    ): Query[Tables.Meal, Tables.MealRow, Seq] =
-      Tables.Meal
-        .filter(r =>
-          r.id === id.transformInto[UUID] &&
-            r.userId === userId.transformInto[UUID]
-        )
-
-    private def mealEntryQuery(
-        mealEntryId: MealEntryId
-    ): Query[Tables.MealEntry, Tables.MealEntryRow, Seq] =
-      Tables.MealEntry
-        .filter(_.id === mealEntryId.transformInto[UUID])
-
     private def ifMealExists[A](
         userId: UserId,
         id: MealId
     )(action: => DBIO[A])(implicit ec: ExecutionContext): DBIO[A] =
-      mealQuery(userId, id).exists.result.flatMap(exists => if (exists) action else notFound)
+      mealDao.exists(MealKey(userId, id)).flatMap(exists => if (exists) action else notFound)
 
     private def notFound[A]: DBIO[A] = DBIO.failed(DBError.Meal.NotFound)
 

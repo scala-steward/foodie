@@ -16,15 +16,15 @@ trait DAOActions[Content, Table <: RelationalProfile#Table[Content], Key] {
   def find(key: Key): DBIO[Option[Content]] =
     findQuery(key).result.headOption
 
-  def findPartial[Part](
-      part: Part
-  )(partCompare: FindPredicate[Table, Part]): DBIO[Seq[Content]] =
-    findPartialQuery(partCompare)(part).result
+  def findPartial(
+      predicate: Table => Rep[Boolean]
+  ): DBIO[Seq[Content]] =
+    findPartialQuery(predicate).result
 
-  private def findPartialQuery[Part](
-      partCompare: FindPredicate[Table, Part]
-  )(part: Part): Query[Table, Content, Seq] =
-    dbTable.filter(partCompare(_, part))
+  private def findPartialQuery(
+      predicate: Table => Rep[Boolean]
+  ): Query[Table, Content, Seq] =
+    dbTable.filter(predicate)
 
   def delete(key: Key): DBIO[Int] =
     findQuery(key).delete
@@ -48,7 +48,7 @@ trait DAOActions[Content, Table <: RelationalProfile#Table[Content], Key] {
     findQuery(key).exists.result
 
   private def findQuery(key: Key): Query[Table, Content, Seq] =
-    findPartialQuery(compareByKey)(key)
+    findPartialQuery(compareByKey(_, key))
 
 }
 
