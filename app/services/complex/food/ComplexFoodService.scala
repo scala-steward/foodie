@@ -1,7 +1,7 @@
 package services.complex.food
 
+import db.{ RecipeId, UserId }
 import errors.ServerError
-import services.{ RecipeId, UserId }
 import slick.dbio.DBIO
 
 import scala.concurrent.{ ExecutionContext, Future }

@@ -2,10 +2,11 @@ package services.user
 
 import cats.data.OptionT
 import db.generated.Tables
+import db.{ SessionId, UserId }
 import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import security.Hash
-import services.{ DBError, SessionId, UserId }
+import services.DBError
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._

@@ -1,8 +1,8 @@
 package services.reference
 
+import db.{ NutrientCode, ReferenceMapId, UserId }
 import errors.ServerError
 import services.nutrient.ReferenceNutrientMap
-import services.{ NutrientCode, ReferenceMapId, UserId }
 import slick.dbio.DBIO
 
 import scala.concurrent.{ ExecutionContext, Future }

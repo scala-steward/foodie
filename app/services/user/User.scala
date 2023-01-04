@@ -1,8 +1,8 @@
 package services.user
 
 import db.generated.Tables
+import db.UserId
 import io.scalaland.chimney.Transformer
-import services.UserId
 import utils.TransformerUtils.Implicits._
 
 case class User(

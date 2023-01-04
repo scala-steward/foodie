@@ -1,6 +1,6 @@
 package services.stats
 
-import services.FoodId
+import db.FoodId
 import services.nutrient.NutrientMap
 import services.recipe.Recipe
 

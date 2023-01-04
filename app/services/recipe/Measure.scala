@@ -1,8 +1,8 @@
 package services.recipe
 
 import db.generated.Tables
+import db.MeasureId
 import io.scalaland.chimney.Transformer
-import services.MeasureId
 import utils.TransformerUtils.Implicits._
 
 case class Measure(

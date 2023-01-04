@@ -2,11 +2,12 @@ package services.complex.food
 
 import cats.data.OptionT
 import db.generated.Tables
+import db.{ RecipeId, UserId }
 import errors.{ ErrorContext, ServerError }
 import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
+import services.DBError
 import services.recipe.{ Recipe, RecipeService }
-import services.{ DBError, RecipeId, UserId }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._

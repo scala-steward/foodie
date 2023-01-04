@@ -1,9 +1,9 @@
 package controllers.recipe
 
+import db.MeasureId
 import io.circe.generic.JsonCodec
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl._
-import services.MeasureId
 import utils.TransformerUtils.Implicits._
 
 @JsonCodec

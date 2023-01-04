@@ -1,12 +1,15 @@
 package services.recipe
 
+import cats.Applicative
 import cats.data.OptionT
 import cats.syntax.traverse._
+import db.daos.recipe.RecipeKey
 import db.generated.Tables
+import db.{ FoodId, IngredientId, RecipeId, UserId }
 import errors.{ ErrorContext, ServerError }
-import io.scalaland.chimney.dsl.TransformerOps
+import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
-import services.{ DBError, FoodId, IngredientId, RecipeId, UserId }
+import services.DBError
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
@@ -14,8 +17,6 @@ import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 
 import java.util.UUID
-import cats.Applicative
-
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -106,7 +107,7 @@ class Live @Inject() (
 
 object Live {
 
-  object Companion extends RecipeService.Companion {
+  class Companion @Inject() (dao: db.daos.recipe.DAO) extends RecipeService.Companion {
 
     override def allFoods(implicit ec: ExecutionContext): DBIO[Seq[Food]] =
       for {
@@ -137,9 +138,8 @@ object Live {
         .map(_.map(_.transformInto[Measure]))
 
     override def allRecipes(userId: UserId)(implicit ec: ExecutionContext): DBIO[Seq[Recipe]] =
-      Tables.Recipe
-        .filter(_.userId === userId.transformInto[UUID])
-        .result
+      dao
+        .findPartial(userId)((table, userId) => table.userId === userId.transformInto[UUID])
         .map(
           _.map(_.transformInto[Recipe])
         )
@@ -148,7 +148,7 @@ object Live {
         ec: ExecutionContext
     ): DBIO[Option[Recipe]] =
       OptionT(
-        recipeQuery(userId, id).result.headOption: DBIO[Option[Tables.RecipeRow]]
+        dao.find(RecipeKey(userId, id))
       ).map(_.transformInto[Recipe]).value
 
     override def createRecipe(
@@ -160,7 +160,8 @@ object Live {
     ): DBIO[Recipe] = {
       val recipe    = RecipeCreation.create(id, recipeCreation)
       val recipeRow = (recipe, userId).transformInto[Tables.RecipeRow]
-      (Tables.Recipe.returning(Tables.Recipe) += recipeRow)
+      dao
+        .insert(recipeRow)
         .map(_.transformInto[Recipe])
     }
 
@@ -173,14 +174,14 @@ object Live {
       val findAction = OptionT(getRecipe(userId, recipeUpdate.id)).getOrElseF(notFound)
       for {
         recipe <- findAction
-        _ <- recipeQuery(userId, recipeUpdate.id).update(
+        _ <- dao.update(
           (
             RecipeUpdate
               .update(recipe, recipeUpdate),
             userId
           )
             .transformInto[Tables.RecipeRow]
-        )
+        )(RecipeKey.of)
         updatedRecipe <- findAction
       } yield updatedRecipe
     }
@@ -188,7 +189,8 @@ object Live {
     override def deleteRecipe(userId: UserId, id: RecipeId)(implicit
         ec: ExecutionContext
     ): DBIO[Boolean] =
-      recipeQuery(userId, id).delete
+      dao
+        .delete(RecipeKey(userId, id))
         .map(_ > 0)
 
     override def getIngredients(
@@ -198,7 +200,7 @@ object Live {
         ec: ExecutionContext
     ): DBIO[List[Ingredient]] =
       for {
-        exists <- recipeQuery(userId, recipeId).exists.result
+        exists <- dao.exists(RecipeKey(userId, recipeId))
         ingredients <-
           if (exists)
             Tables.RecipeIngredient
@@ -266,16 +268,6 @@ object Live {
         .getOrElse(false)
     }
 
-    private def recipeQuery(
-        userId: UserId,
-        id: RecipeId
-    ): Query[Tables.Recipe, Tables.RecipeRow, Seq] =
-      Tables.Recipe
-        .filter(r =>
-          r.id === id.transformInto[UUID] &&
-            r.userId === userId.transformInto[UUID]
-        )
-
     private def ingredientQuery(
         ingredientId: IngredientId
     ): Query[Tables.RecipeIngredient, Tables.RecipeIngredientRow, Seq] =
@@ -286,7 +278,7 @@ object Live {
         userId: UserId,
         id: RecipeId
     )(action: => DBIO[A])(implicit ec: ExecutionContext): DBIO[A] =
-      recipeQuery(userId, id).exists.result.flatMap(exists => if (exists) action else notFound)
+      dao.exists(RecipeKey(userId, id)).flatMap(exists => if (exists) action else notFound)
 
     private def notFound[A]: DBIO[A] = DBIO.failed(DBError.Recipe.NotFound)
   }

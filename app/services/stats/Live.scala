@@ -11,7 +11,7 @@ import services.complex.ingredient.ComplexIngredientService
 import services.meal.{ MealEntry, MealService }
 import services.nutrient.{ AmountEvaluation, Nutrient, NutrientMap, NutrientService }
 import services.recipe.RecipeService
-import services._
+import db._
 import services.common.RequestInterval
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile

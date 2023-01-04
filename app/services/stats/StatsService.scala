@@ -1,6 +1,6 @@
 package services.stats
 
-import services._
+import db._
 import services.common.RequestInterval
 import slick.dbio.DBIO
 

@@ -1,9 +1,9 @@
 package services.reference
 
 import db.generated.Tables
+import db.{ NutrientCode, ReferenceMapId }
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl._
-import services.{ NutrientCode, ReferenceMapId }
 import utils.TransformerUtils.Implicits._
 
 import java.util.UUID

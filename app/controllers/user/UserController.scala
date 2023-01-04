@@ -13,7 +13,7 @@ import play.api.libs.circe.Circe
 import play.api.mvc._
 import security.Hash
 import security.jwt.{ JwtConfiguration, JwtExpiration, LoginContent }
-import services.UserId
+import db.UserId
 import services.mail.MailService
 import services.user.{ PasswordParameters, UserService }
 import spire.math.Natural

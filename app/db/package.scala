@@ -2,7 +2,7 @@ import shapeless.tag.@@
 
 import java.util.UUID
 
-package object services {
+package object db {
   sealed trait MealTag
 
   type MealId = UUID @@ MealTag

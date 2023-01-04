@@ -1,7 +1,7 @@
 package services.nutrient
 
 import algebra.instances.MapAdditiveMonoid
-import services.FoodId
+import db.FoodId
 import spire.algebra.{ Field, LeftModule, Ring }
 import spire.implicits._
 

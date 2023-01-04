@@ -1,15 +1,14 @@
 package services.meal
 
-import java.time.{ LocalDate, LocalTime }
-
 import db.generated.Tables
+import db.{ MealId, UserId }
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl.TransformerOps
-import services.{ MealId, UserId }
 import utils.TransformerUtils.Implicits._
-import java.util.UUID
-
 import utils.date.{ Date, SimpleDate, Time }
+
+import java.time.{ LocalDate, LocalTime }
+import java.util.UUID
 
 case class Meal(
     id: MealId,

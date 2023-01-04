@@ -1,6 +1,6 @@
 package services.meal
 
-import services.MealId
+import db.MealId
 import utils.date.SimpleDate
 
 case class MealCreation(
@@ -14,7 +14,7 @@ object MealCreation {
     Meal(
       id = id,
       date = mealCreation.date,
-      name = mealCreation.name,
+      name = mealCreation.name
     )
 
 }

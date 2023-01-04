@@ -1,9 +1,9 @@
 package services.recipe
 
 import db.generated.Tables
+import db.{ RecipeId, UserId }
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl.TransformerOps
-import services.{ RecipeId, UserId }
 import utils.TransformerUtils.Implicits._
 
 import java.util.UUID

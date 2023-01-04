@@ -1,6 +1,6 @@
 package services.user
 
-import services.{ SessionId, UserId }
+import db.{ SessionId, UserId }
 import slick.dbio.DBIO
 
 import scala.concurrent.{ ExecutionContext, Future }

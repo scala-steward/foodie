@@ -1,6 +1,6 @@
 package services.meal
 
-import services.MealId
+import db.MealId
 import utils.date.SimpleDate
 
 case class MealUpdate(

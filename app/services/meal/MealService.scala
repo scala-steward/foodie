@@ -1,8 +1,8 @@
 package services.meal
 
+import db.{ MealEntryId, MealId, UserId }
 import errors.ServerError
 import services.common.RequestInterval
-import services.{ MealEntryId, MealId, UserId }
 import slick.dbio.DBIO
 
 import scala.concurrent.{ ExecutionContext, Future }

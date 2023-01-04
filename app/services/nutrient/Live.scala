@@ -5,10 +5,11 @@ import cats.data.OptionT
 import cats.syntax.contravariantSemigroupal._
 import cats.syntax.traverse._
 import db.generated.Tables
+import db.{ FoodId, MeasureId }
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
+import services.DBError
 import services.recipe.Ingredient
-import services.{ DBError, FoodId, MeasureId }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._

@@ -1,9 +1,9 @@
 package services.nutrient
 
 import db.generated.Tables
+import db.{ NutrientCode, NutrientId }
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl.TransformerOps
-import services.{ NutrientCode, NutrientId }
 import spire.math.Natural
 import utils.TransformerUtils.Implicits._
 

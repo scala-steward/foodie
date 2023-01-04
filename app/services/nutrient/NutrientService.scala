@@ -1,8 +1,8 @@
 package services.nutrient
 
 import db.generated.Tables
+import db.{ FoodId, MeasureId }
 import services.recipe.Ingredient
-import services.{ FoodId, MeasureId }
 import slick.dbio.DBIO
 
 import scala.concurrent.{ ExecutionContext, Future }

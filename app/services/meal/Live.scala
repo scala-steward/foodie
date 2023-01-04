@@ -2,11 +2,12 @@ package services.meal
 
 import cats.data.OptionT
 import db.generated.Tables
+import db.{ MealEntryId, MealId, UserId }
 import errors.{ ErrorContext, ServerError }
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
+import services.DBError
 import services.common.RequestInterval
-import services.{ DBError, MealEntryId, MealId, UserId }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
