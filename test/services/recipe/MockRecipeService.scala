@@ -1,6 +1,7 @@
 package services.recipe
 
-import services.{ FoodId, GenUtils, IngredientId, RecipeId, UserId }
+import db.{ FoodId, IngredientId, RecipeId, UserId }
+import services.GenUtils
 import slick.dbio.DBIO
 
 import scala.collection.mutable

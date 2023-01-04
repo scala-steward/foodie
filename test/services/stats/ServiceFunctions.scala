@@ -2,10 +2,11 @@ package services.stats
 
 import cats.data.OptionT
 import cats.syntax.traverse._
+import db._
 import db.generated.Tables
 import io.scalaland.chimney.dsl._
-import services._
 import services.recipe._
+import services.{ DBTestUtil, GenUtils }
 import slick.jdbc.PostgresProfile.api._
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
