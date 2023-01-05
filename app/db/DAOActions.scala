@@ -6,7 +6,7 @@ import slick.relational.RelationalProfile
 
 import scala.concurrent.ExecutionContext
 
-trait DAOActions[Content, Table <: RelationalProfile#Table[Content], Key] {
+trait DAOActions[Content, Table, Key] {
 
   def find(key: Key): DBIO[Option[Content]]
 
