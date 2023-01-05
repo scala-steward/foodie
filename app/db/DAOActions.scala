@@ -29,6 +29,9 @@ trait DAOActions[Content, Table <: RelationalProfile#Table[Content], Key] {
   def delete(key: Key): DBIO[Int] =
     findQuery(key).delete
 
+  def deleteBy(predicate: Table => Rep[Boolean]): DBIO[Int] =
+    findPartialQuery(predicate).delete
+
   def insert(
       content: Content
   ): DBIO[Content] =
