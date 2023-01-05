@@ -1,6 +1,7 @@
 package services.meal
 
 import cats.data.NonEmptyList
+import db.{ MealEntryId, MealId, RecipeId }
 import io.scalaland.chimney.dsl._
 import org.scalacheck.Gen
 import services._

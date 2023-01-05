@@ -5,6 +5,7 @@ import cats.data.EitherT
 import cats.instances.list._
 import cats.syntax.traverse._
 import config.TestConfiguration
+import db._
 import errors.ServerError
 import io.scalaland.chimney.dsl.TransformerOps
 import org.scalacheck.Prop.AnyOperators

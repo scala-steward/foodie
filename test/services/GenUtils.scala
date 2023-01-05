@@ -7,6 +7,7 @@ import org.scalacheck.Gen
 import security.Hash
 import services.nutrient.{ Nutrient, NutrientService }
 import services.recipe._
+import db.{ FoodId, MeasureId, UserId }
 import services.user.User
 import slick.jdbc.PostgresProfile.api._
 import spire.math.Natural

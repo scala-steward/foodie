@@ -2,11 +2,12 @@ package services.recipe
 
 import cats.data.EitherT
 import config.TestConfiguration
+import db.IngredientId
 import errors.{ ErrorContext, ServerError }
 import org.scalacheck.Prop.AnyOperators
 import org.scalacheck.{ Gen, Prop, Properties, Test }
 import services.user.{ User, UserService }
-import services.{ DBTestUtil, GenUtils, IngredientId, TestUtil }
+import services.{ DBTestUtil, GenUtils, TestUtil }
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

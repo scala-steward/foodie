@@ -1,8 +1,9 @@
 package services.recipe
 
+import db.UserId
 import db.generated.Tables
 import io.scalaland.chimney.dsl._
-import services.{ DBTestUtil, UserId }
+import services.DBTestUtil
 import slick.jdbc.PostgresProfile.api._
 
 import scala.concurrent.ExecutionContext.Implicits.global

@@ -1,5 +1,6 @@
 package services.recipe
 
+import db.{FoodId, IngredientId, RecipeId}
 import org.scalacheck.Gen
 import services._
 import spire.math.Natural

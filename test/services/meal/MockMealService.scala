@@ -1,9 +1,9 @@
 package services.meal
 
 import cats.syntax.order._
+import db.{ MealEntryId, MealId, UserId }
 import io.scalaland.chimney.dsl._
 import services.common.RequestInterval
-import services.{ MealEntryId, MealId, UserId }
 import slick.dbio.DBIO
 import utils.date.Date
 
