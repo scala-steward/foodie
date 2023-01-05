@@ -33,7 +33,7 @@ object UserService {
     def get(userId: UserId)(implicit executionContext: ExecutionContext): DBIO[Option[User]]
     def getByNickname(nickname: String)(implicit executionContext: ExecutionContext): DBIO[Option[User]]
     def getByIdentifier(string: String)(implicit executionContext: ExecutionContext): DBIO[Seq[User]]
-    def add(user: User)(implicit executionContext: ExecutionContext): DBIO[Boolean]
+    def add(user: User)(implicit executionContext: ExecutionContext): DBIO[Unit]
     def update(userId: UserId, userUpdate: UserUpdate)(implicit executionContext: ExecutionContext): DBIO[User]
     def updatePassword(userId: UserId, password: String)(implicit executionContext: ExecutionContext): DBIO[Boolean]
     def delete(userId: UserId)(implicit executionContext: ExecutionContext): DBIO[Boolean]

@@ -1,6 +1,7 @@
 package services.user
 
 import cats.data.OptionT
+import db.daos.session.SessionKey
 import db.generated.Tables
 import db.{ SessionId, UserId }
 import io.scalaland.chimney.dsl._
@@ -27,7 +28,11 @@ class Live @Inject() (
   override def get(userId: UserId): Future[Option[User]]             = db.run(companion.get(userId))
   override def getByNickname(nickname: String): Future[Option[User]] = db.run(companion.getByNickname(nickname))
   override def getByIdentifier(string: String): Future[Seq[User]]    = db.run(companion.getByIdentifier(string))
-  override def add(user: User): Future[Boolean]                      = db.run(companion.add(user))
+
+  override def add(user: User): Future[Boolean] =
+    db.run(companion.add(user))
+      .map(_ => true)
+      .recover { case _ => false }
 
   override def update(userId: UserId, userUpdate: UserUpdate): Future[User] =
     db.run(companion.update(userId, userUpdate))
@@ -52,34 +57,35 @@ class Live @Inject() (
 
 object Live {
 
-  object Companion extends UserService.Companion {
+  class Companion @Inject() (
+      userDao: db.daos.user.DAO,
+      sessionDao: db.daos.session.DAO
+  ) extends UserService.Companion {
 
     def get(userId: UserId)(implicit executionContext: ExecutionContext): DBIO[Option[User]] =
-      OptionT(
-        userQuery(userId).result.headOption: DBIO[Option[Tables.UserRow]]
-      )
+      OptionT(userDao.find(userId))
         .map(_.transformInto[User])
         .value
 
     override def getByNickname(nickname: String)(implicit executionContext: ExecutionContext): DBIO[Option[User]] =
-      OptionT(
-        Tables.User
-          .filter(_.nickname === nickname)
-          .result
-          .headOption: DBIO[Option[Tables.UserRow]]
-      )
+      OptionT
+        .liftF(
+          userDao
+            .findBy(_.nickname === nickname)
+        )
+        .subflatMap(_.headOption)
         .map(_.transformInto[User])
         .value
 
     override def getByIdentifier(string: String)(implicit executionContext: ExecutionContext): DBIO[Seq[User]] =
-      Tables.User
-        .filter(u => u.email === string || u.nickname === string)
-        .result
+      userDao
+        .findBy(u => u.email === string || u.nickname === string)
         .map(_.map(_.transformInto[User]))
 
-    override def add(user: User)(implicit executionContext: ExecutionContext): DBIO[Boolean] =
-      (Tables.User += user.transformInto[Tables.UserRow])
-        .map(_ > 0)
+    override def add(user: User)(implicit executionContext: ExecutionContext): DBIO[Unit] =
+      userDao
+        .insert(user.transformInto[Tables.UserRow])
+        .map(_ => ())
 
     override def update(userId: UserId, userUpdate: UserUpdate)(implicit
         executionContext: ExecutionContext
@@ -89,11 +95,11 @@ object Live {
 
       for {
         user <- findAction
-        _ <- userQuery(userId).update(
+        _ <- userDao.update(
           UserUpdate
             .update(user, userUpdate)
             .transformInto[Tables.UserRow]
-        )
+        )(_.id.transformInto[UserId])
         updatedUser <- findAction
       } yield updatedUser
     }
@@ -108,11 +114,9 @@ object Live {
           user.salt,
           Hash.defaultIterations
         )
+        newUser = user.copy(hash = newHash)
         result <- OptionT.liftF(
-          userQuery(userId)
-            .map(_.hash)
-            .update(newHash)
-            .map(_ > 0): DBIO[Boolean]
+          userDao.update(newUser.transformInto[Tables.UserRow])(_.id.transformInto[UserId])
         )
       } yield result
 
@@ -120,44 +124,38 @@ object Live {
     }
 
     override def delete(userId: UserId)(implicit executionContext: ExecutionContext): DBIO[Boolean] =
-      userQuery(userId).delete
+      userDao
+        .delete(userId)
         .map(_ > 0)
 
     override def addSession(userId: UserId, sessionId: SessionId)(implicit
         executionContext: ExecutionContext
     ): DBIO[SessionId] =
-      (Tables.Session.returning(Tables.Session) += Tables.SessionRow(
-        id = sessionId.transformInto[UUID],
-        userId = userId.transformInto[UUID]
-      )).map(_.id.transformInto[SessionId])
+      sessionDao
+        .insert(
+          Tables.SessionRow(
+            id = sessionId.transformInto[UUID],
+            userId = userId.transformInto[UUID]
+          )
+        )
+        .map(_.id.transformInto[SessionId])
 
     override def deleteSession(userId: UserId, sessionId: SessionId)(implicit
         executionContext: ExecutionContext
     ): DBIO[Boolean] =
-      sessionQuery(userId, sessionId).delete
+      sessionDao
+        .delete(SessionKey(userId, sessionId))
         .map(_ > 0)
 
     override def deleteAllSessions(userId: UserId)(implicit executionContext: ExecutionContext): DBIO[Boolean] =
-      Tables.Session
-        .filter(_.userId === userId.transformInto[UUID])
-        .delete
+      sessionDao
+        .deleteBy(_.userId === userId.transformInto[UUID])
         .map(_ > 0)
 
     override def existsSession(userId: UserId, sessionId: SessionId)(implicit
         executionContext: ExecutionContext
     ): DBIO[Boolean] =
-      sessionQuery(userId, sessionId).exists.result
-
-    private def userQuery(userId: UserId): Query[Tables.User, Tables.UserRow, Seq] =
-      Tables.User
-        .filter(_.id === userId.transformInto[UUID])
-
-    private def sessionQuery(userId: UserId, sessionId: SessionId): Query[Tables.Session, Tables.SessionRow, Seq] =
-      Tables.Session
-        .filter(session =>
-          session.userId === userId.transformInto[UUID] &&
-            session.id === sessionId.transformInto[UUID]
-        )
+      sessionDao.exists(SessionKey(userId, sessionId))
 
   }
 
