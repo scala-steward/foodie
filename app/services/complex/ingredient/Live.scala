@@ -1,6 +1,7 @@
 package services.complex.ingredient
 
 import cats.Applicative
+import cats.data.OptionT
 import db.daos.complexIngredient.ComplexIngredientKey
 import db.daos.recipe.RecipeKey
 import db.generated.Tables
@@ -90,14 +91,17 @@ object Live {
     override def update(userId: UserId, complexIngredient: ComplexIngredient)(implicit
         ec: ExecutionContext
     ): DBIO[ComplexIngredient] = {
-      val key = ComplexIngredientKey(complexIngredient.recipeId, complexIngredient.complexFoodId)
+      val findAction = OptionT(
+        dao.find(ComplexIngredientKey(complexIngredient.recipeId, complexIngredient.complexFoodId))
+      ).getOrElseF(DBIO.failed(DBError.Complex.Ingredient.NotFound))
+
       for {
-        _ <- dao.exists(key)
+        _ <- findAction
         _ <- ifRecipeExists(userId, complexIngredient.recipeId) {
           dao
             .update(complexIngredient.transformInto[Tables.ComplexIngredientRow])(ComplexIngredientKey.of)
         }
-        updatedIngredient <- dao.find(key)
+        updatedIngredient <- findAction
       } yield updatedIngredient.transformInto[ComplexIngredient]
     }
 
