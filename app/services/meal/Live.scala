@@ -94,7 +94,7 @@ object Live {
       val dateFilter: Rep[java.sql.Date] => Rep[Boolean] = DBIOUtil.dateFilter(interval.from, interval.to)
 
       mealDao
-        .findPartial(m => m.userId === userId.transformInto[UUID] && dateFilter(m.consumedOnDate))
+        .findBy(m => m.userId === userId.transformInto[UUID] && dateFilter(m.consumedOnDate))
         .map(
           _.map(_.transformInto[Meal])
         )
@@ -152,7 +152,7 @@ object Live {
     override def getMealEntries(userId: UserId, id: MealId)(implicit ec: ExecutionContext): DBIO[Seq[MealEntry]] =
       ifMealExists(userId, id) {
         mealEntryDao
-          .findPartial(_.mealId === id.transformInto[UUID])
+          .findBy(_.mealId === id.transformInto[UUID])
           .map(_.map(_.transformInto[MealEntry]))
       }
 

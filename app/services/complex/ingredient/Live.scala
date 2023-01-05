@@ -1,14 +1,14 @@
 package services.complex.ingredient
 
 import cats.Applicative
-import cats.data.OptionT
+import db.daos.complexIngredient.ComplexIngredientKey
+import db.daos.recipe.RecipeKey
 import db.generated.Tables
 import db.{ ComplexFoodId, RecipeId, UserId }
 import errors.{ ErrorContext, ServerError }
 import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
-import services.recipe.RecipeService
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
@@ -61,17 +61,16 @@ class Live @Inject() (
 object Live {
 
   class Companion @Inject() (
-      recipeService: RecipeService.Companion
+      recipeDao: db.daos.recipe.DAO,
+      dao: db.daos.complexIngredient.DAO
   ) extends ComplexIngredientService.Companion {
 
     override def all(userId: UserId, recipeId: RecipeId)(implicit ec: ExecutionContext): DBIO[Seq[ComplexIngredient]] =
       for {
-        exists <- recipeService.getRecipe(userId, recipeId).map(_.isDefined)
+        exists <- recipeDao.exists(RecipeKey(userId, recipeId))
         complexIngredients <-
           if (exists)
-            Tables.ComplexIngredient
-              .filter(_.recipeId === recipeId.transformInto[UUID])
-              .result
+            dao.findBy(_.recipeId === recipeId.transformInto[UUID])
           else Applicative[DBIO].pure(List.empty)
       } yield complexIngredients.map(_.transformInto[ComplexIngredient])
 
@@ -83,7 +82,7 @@ object Live {
         for {
           createsCycle <- cycleCheck(complexIngredient.recipeId, complexIngredient.complexFoodId)
           _            <- if (!createsCycle) DBIO.successful(()) else DBIO.failed(DBError.Complex.Ingredient.Cycle)
-          row          <- Tables.ComplexIngredient.returning(Tables.ComplexIngredient) += complexIngredientRow
+          row          <- dao.insert(complexIngredientRow)
         } yield row.transformInto[ComplexIngredient]
       }
     }
@@ -91,48 +90,31 @@ object Live {
     override def update(userId: UserId, complexIngredient: ComplexIngredient)(implicit
         ec: ExecutionContext
     ): DBIO[ComplexIngredient] = {
-      val query = complexIngredientQuery(
-        recipeId = complexIngredient.recipeId,
-        complexFoodId = complexIngredient.complexFoodId
-      )
-      val findAction =
-        OptionT(
-          query.result.headOption: DBIO[Option[Tables.ComplexIngredientRow]]
-        )
-          .getOrElseF(DBIO.failed(DBError.Complex.Ingredient.NotFound))
+      val key = ComplexIngredientKey(complexIngredient.recipeId, complexIngredient.complexFoodId)
       for {
-        _ <- findAction
+        _ <- dao.exists(key)
         _ <- ifRecipeExists(userId, complexIngredient.recipeId) {
-          query
-            .update(complexIngredient.transformInto[Tables.ComplexIngredientRow])
+          dao
+            .update(complexIngredient.transformInto[Tables.ComplexIngredientRow])(ComplexIngredientKey.of)
         }
-        updatedIngredient <- findAction
+        updatedIngredient <- dao.find(key)
       } yield updatedIngredient.transformInto[ComplexIngredient]
     }
 
     override def delete(userId: UserId, recipeId: RecipeId, complexFoodId: ComplexFoodId)(implicit
         ec: ExecutionContext
     ): DBIO[Boolean] =
-      complexIngredientQuery(recipeId, complexFoodId).delete
+      dao
+        .delete(ComplexIngredientKey(recipeId, complexFoodId))
         .map(_ > 0)
 
     private def ifRecipeExists[A](
         userId: UserId,
         recipeId: RecipeId
     )(action: => DBIO[A])(implicit ec: ExecutionContext): DBIO[A] =
-      recipeService
-        .getRecipe(userId, recipeId)
-        .map(_.isDefined)
+      recipeDao
+        .exists(RecipeKey(userId, recipeId))
         .flatMap(exists => if (exists) action else DBIO.failed(DBError.Complex.Ingredient.RecipeNotFound))
-
-    private def complexIngredientQuery(
-        recipeId: RecipeId,
-        complexFoodId: ComplexFoodId
-    ): Query[Tables.ComplexIngredient, Tables.ComplexIngredientRow, Seq] =
-      Tables.ComplexIngredient.filter(ingredient =>
-        ingredient.recipeId === recipeId.transformInto[UUID] &&
-          ingredient.complexFoodId === complexFoodId.transformInto[UUID]
-      )
 
     private def cycleCheck(recipeId: RecipeId, newReferenceRecipeId: RecipeId)(implicit
         ec: ExecutionContext

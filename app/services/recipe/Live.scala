@@ -139,7 +139,7 @@ object Live {
 
     override def allRecipes(userId: UserId)(implicit ec: ExecutionContext): DBIO[Seq[Recipe]] =
       dao
-        .findPartial(_.userId === userId.transformInto[UUID])
+        .findBy(_.userId === userId.transformInto[UUID])
         .map(
           _.map(_.transformInto[Recipe])
         )
