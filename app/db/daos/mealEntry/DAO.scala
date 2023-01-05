@@ -8,7 +8,7 @@ import utils.TransformerUtils.Implicits._
 
 import java.util.UUID
 
-trait DAO extends DAOActions.Instance[Tables.MealEntryRow, Tables.MealEntry, MealEntryId]
+trait DAO extends DAOActions[Tables.MealEntryRow, Tables.MealEntry, MealEntryId]
 
 object DAO {
 
