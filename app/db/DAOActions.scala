@@ -16,7 +16,7 @@ trait DAOActions[Content, Table <: RelationalProfile#Table[Content], Key] {
   def find(key: Key): DBIO[Option[Content]] =
     findQuery(key).result.headOption
 
-  def findPartial(
+  def findBy(
       predicate: Table => Rep[Boolean]
   ): DBIO[Seq[Content]] =
     findPartialQuery(predicate).result
