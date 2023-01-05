@@ -16,7 +16,8 @@ object DAO {
       Tables.ReferenceEntry,
       (table, key) =>
         table.referenceMapId === key.referenceMapId.transformInto[UUID] &&
-          table.nutrientCode === key.nutrientCode.transformInto[Int]
+          table.nutrientCode === key.nutrientCode.transformInto[Int],
+      ReferenceMapEntryKey.of
     ) with DAO
 
 }

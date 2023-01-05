@@ -99,7 +99,7 @@ object Live {
           UserUpdate
             .update(user, userUpdate)
             .transformInto[Tables.UserRow]
-        )(_.id.transformInto[UserId])
+        )
         updatedUser <- findAction
       } yield updatedUser
     }
@@ -116,7 +116,7 @@ object Live {
         )
         newUser = user.copy(hash = newHash)
         result <- OptionT.liftF(
-          userDao.update(newUser.transformInto[Tables.UserRow])(_.id.transformInto[UserId])
+          userDao.update(newUser.transformInto[Tables.UserRow])
         )
       } yield result
 

@@ -8,6 +8,8 @@ import scala.concurrent.ExecutionContext
 
 trait DAOActions[Content, Table, Key] {
 
+  def keyOf: Content => Key
+
   def find(key: Key): DBIO[Option[Content]]
 
   def findBy(
@@ -21,7 +23,7 @@ trait DAOActions[Content, Table, Key] {
   def insert(content: Content): DBIO[Content]
 
   def insertAll(contents: Seq[Content]): DBIO[Seq[Content]]
-  def update(value: Content)(keyOf: Content => Key)(implicit ec: ExecutionContext): DBIO[Boolean]
+  def update(value: Content)(implicit ec: ExecutionContext): DBIO[Boolean]
 
   def exists(key: Key): DBIO[Boolean]
 
@@ -31,7 +33,8 @@ object DAOActions {
 
   abstract class Instance[Content, Table <: RelationalProfile#Table[Content], Key](
       table: TableQuery[Table],
-      compare: (Table, Key) => Rep[Boolean]
+      compare: (Table, Key) => Rep[Boolean],
+      override val keyOf: Content => Key
   ) extends DAOActions[Content, Table, Key] {
 
     override def find(key: Key): DBIO[Option[Content]] =
@@ -58,7 +61,7 @@ object DAOActions {
     ): DBIO[Seq[Content]] =
       table.returning(table) ++= contents
 
-    override def update(value: Content)(keyOf: Content => Key)(implicit ec: ExecutionContext): DBIO[Boolean] =
+    override def update(value: Content)(implicit ec: ExecutionContext): DBIO[Boolean] =
       findQuery(keyOf(value))
         .update(value)
         .map(_ == 1)

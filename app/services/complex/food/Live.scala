@@ -104,7 +104,7 @@ object Live {
           .getOrElseF(DBIO.failed(DBError.Complex.Food.NotFound))
       for {
         _           <- findAction
-        _           <- dao.update(complexFood.transformInto[Tables.ComplexFoodRow])(_.recipeId.transformInto[RecipeId])
+        _           <- dao.update(complexFood.transformInto[Tables.ComplexFoodRow])
         updatedFood <- findAction
       } yield updatedFood
     }

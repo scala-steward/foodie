@@ -16,7 +16,8 @@ object DAO {
     new DAOActions.Instance[Tables.ReferenceMapRow, Tables.ReferenceMap, ReferenceMapKey](
       Tables.ReferenceMap,
       (table, key) =>
-        table.userId === key.userId.transformInto[UUID] && table.id === key.referenceMapId.transformInto[UUID]
+        table.userId === key.userId.transformInto[UUID] && table.id === key.referenceMapId.transformInto[UUID],
+      ReferenceMapKey.of
     ) with DAO
 
 }

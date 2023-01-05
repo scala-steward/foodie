@@ -15,7 +15,8 @@ object DAO {
   val instance: DAO =
     new DAOActions.Instance[Tables.SessionRow, Tables.Session, SessionKey](
       Tables.Session,
-      (table, key) => table.userId === key.userId.transformInto[UUID] && table.id === key.sessionId.transformInto[UUID]
+      (table, key) => table.userId === key.userId.transformInto[UUID] && table.id === key.sessionId.transformInto[UUID],
+      SessionKey.of
     ) with DAO
 
 }

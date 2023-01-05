@@ -98,8 +98,7 @@ object Live {
       for {
         _ <- findAction
         _ <- ifRecipeExists(userId, complexIngredient.recipeId) {
-          dao
-            .update(complexIngredient.transformInto[Tables.ComplexIngredientRow])(ComplexIngredientKey.of)
+          dao.update(complexIngredient.transformInto[Tables.ComplexIngredientRow])
         }
         updatedIngredient <- findAction
       } yield updatedIngredient.transformInto[ComplexIngredient]

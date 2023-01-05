@@ -186,7 +186,7 @@ object Live {
             userId
           )
             .transformInto[Tables.ReferenceMapRow]
-        )(ReferenceMapKey.of)
+        )
         updatedReferenceMap <- findAction
       } yield updatedReferenceMap
     }
@@ -245,7 +245,7 @@ object Live {
               referenceEntryRow.referenceMapId.transformInto[ReferenceMapId]
             )
               .transformInto[Tables.ReferenceEntryRow]
-          )(ReferenceMapEntryKey.of)
+          )
         }
         updatedReferenceEntryRow <- findAction
       } yield updatedReferenceEntryRow.transformInto[ReferenceEntry]

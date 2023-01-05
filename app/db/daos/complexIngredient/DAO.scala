@@ -17,7 +17,8 @@ object DAO {
       Tables.ComplexIngredient,
       (table, key) =>
         table.recipeId === key.recipeId.transformInto[UUID] &&
-          table.complexFoodId === key.complexFoodId.transformInto[UUID]
+          table.complexFoodId === key.complexFoodId.transformInto[UUID],
+      ComplexIngredientKey.of
     ) with DAO
 
 }

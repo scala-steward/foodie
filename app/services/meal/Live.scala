@@ -136,7 +136,7 @@ object Live {
             userId
           )
             .transformInto[Tables.MealRow]
-        )(MealKey.of)
+        )
         updatedMeal <- findAction
       } yield updatedMeal
     }
@@ -188,7 +188,7 @@ object Live {
               mealEntryRow.mealId.transformInto[MealId]
             )
               .transformInto[Tables.MealEntryRow]
-          )(_.id.transformInto[MealEntryId])
+          )
         }
         updatedMealEntry <- findAction
       } yield updatedMealEntry.transformInto[MealEntry]
