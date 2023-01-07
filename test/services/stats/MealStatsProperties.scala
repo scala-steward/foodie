@@ -37,6 +37,7 @@ object MealStatsProperties extends Properties("Meal stats") {
   private val complexIngredientServiceCompanion = TestUtil.injector.instanceOf[ComplexIngredientService.Companion]
   private val dbConfigProvider                  = TestUtil.injector.instanceOf[DatabaseConfigProvider]
 
+  // TODO: Rewrite in terms of the collections that are used. This should reduce duplication.
   private def statsServiceWith(
       recipeServiceCompanion: RecipeService.Companion,
       mealServiceCompanion: MealService.Companion
@@ -106,12 +107,24 @@ object MealStatsProperties extends Properties("Meal stats") {
   property("Per meal stats") = Prop.forAll(
     perMealSetupGen :| "Per meal setup"
   ) { setup =>
-    DBTestUtil.clearDb()
     val recipeMap = setup.userAndRecipes.fullRecipes.map(fr => fr.recipe.id -> fr).toMap
     val statsService = statsServiceWith(
-      recipeServiceCompanion =
-        MockRecipeService.fromCollection(Seq(setup.userAndRecipes.user.id -> setup.userAndRecipes.fullRecipes)),
-      mealServiceCompanion = MockMealService.fromCollection(Seq(setup.userAndRecipes.user.id -> Seq(setup.fullMeal)))
+      recipeServiceCompanion = new services.recipe.Live.Companion(
+        recipeDao = DAOTestInstance.Recipe.instanceFrom(
+          setup.userAndRecipes.fullRecipes.map(fr => setup.userAndRecipes.user.id -> fr.recipe)
+        ),
+        ingredientDao = DAOTestInstance.Ingredient.instanceFrom(
+          setup.userAndRecipes.fullRecipes.flatMap { fr => fr.ingredients.map(fr.recipe.id -> _) }
+        )
+      ),
+      mealServiceCompanion = new services.meal.Live.Companion(
+        mealDao = DAOTestInstance.Meal.instanceFrom(
+          Seq(setup.userAndRecipes.user.id -> setup.fullMeal.meal)
+        ),
+        mealEntryDao = DAOTestInstance.MealEntry.instanceFrom(
+          setup.fullMeal.mealEntries.map(setup.fullMeal.meal.id -> _)
+        )
+      )
     )
 
     val transformer = for {
