@@ -14,6 +14,8 @@ import scala.concurrent.ExecutionContext
 import utils.TransformerUtils.Implicits._
 import io.scalaland.chimney.dsl._
 import services.common.RequestInterval
+import services.meal.{ Meal, MealEntry }
+import services.recipe.{ Ingredient, Recipe }
 import util.DateUtil
 import utils.date.Date
 
@@ -21,7 +23,7 @@ abstract class DAOTestInstance[Content, Key](
     contents: Seq[(Key, Content)]
 ) extends DAOActions[Content, Key] {
 
-  private val map: mutable.Map[Key, Content] = mutable.Map.from(contents)
+  protected val map: mutable.Map[Key, Content] = mutable.Map.from(contents)
 
   override def find(key: Key): DBIO[Option[Content]] = DBIO.successful(map.get(key))
 
@@ -107,6 +109,14 @@ object DAOTestInstance {
 
       }
 
+    def instanceFrom(contents: Seq[(RecipeId, Ingredient)]): db.daos.ingredient.DAO =
+      instance(
+        contents.map {
+          case (recipeId, ingredient) =>
+            ingredient.id -> (ingredient, recipeId).transformInto[Tables.RecipeIngredientRow]
+        }
+      )
+
   }
 
   object Meal {
@@ -135,6 +145,11 @@ object DAOTestInstance {
 
       }
 
+    def instanceFrom(contents: Seq[(UserId, Meal)]): db.daos.meal.DAO =
+      instance(
+        contents.map { case (userId, meal) => MealKey(userId, meal.id) -> (meal, userId).transformInto[Tables.MealRow] }
+      )
+
   }
 
   object MealEntry {
@@ -153,6 +168,13 @@ object DAOTestInstance {
 
       }
 
+    def instanceFrom(contents: Seq[(MealId, MealEntry)]): db.daos.mealEntry.DAO =
+      instance(
+        contents.map {
+          case (mealId, mealEntry) => mealEntry.id -> (mealEntry, mealId).transformInto[Tables.MealEntryRow]
+        }
+      )
+
   }
 
   object Recipe {
@@ -170,6 +192,13 @@ object DAOTestInstance {
           }
 
       }
+
+    def instanceFrom(contents: Seq[(UserId, Recipe)]): db.daos.recipe.DAO =
+      instance(
+        contents.map {
+          case (userId, recipe) => RecipeKey(userId, recipe.id) -> (recipe, userId).transformInto[Tables.RecipeRow]
+        }
+      )
 
   }
 
