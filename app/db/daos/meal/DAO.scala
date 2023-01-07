@@ -11,6 +11,9 @@ import utils.TransformerUtils.Implicits._
 import java.util.UUID
 
 trait DAO extends DAOActions[Tables.MealRow, MealKey] {
+
+  override val keyOf: Tables.MealRow => MealKey = MealKey.of
+
   def allInInterval(userId: UserId, requestInterval: RequestInterval): DBIO[Seq[Tables.MealRow]]
 }
 
@@ -19,8 +22,7 @@ object DAO {
   val instance: DAO =
     new DAOActions.Instance[Tables.MealRow, Tables.Meal, MealKey](
       Tables.Meal,
-      (table, key) => table.userId === key.userId.transformInto[UUID] && table.id === key.mealId.transformInto[UUID],
-      MealKey.of
+      (table, key) => table.userId === key.userId.transformInto[UUID] && table.id === key.mealId.transformInto[UUID]
     ) with DAO {
 
       override def allInInterval(

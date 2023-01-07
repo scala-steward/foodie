@@ -27,8 +27,7 @@ object DAOActions {
 
   abstract class Instance[Content, Table <: RelationalProfile#Table[Content], Key](
       table: TableQuery[Table],
-      compare: (Table, Key) => Rep[Boolean],
-      override val keyOf: Content => Key
+      compare: (Table, Key) => Rep[Boolean]
   ) extends DAOActions[Content, Key] {
 
     override def find(key: Key): DBIO[Option[Content]] =
@@ -56,12 +55,7 @@ object DAOActions {
       findQuery(key).exists.result
 
     private def findQuery(key: Key): Query[Table, Content, Seq] =
-      findPartialQuery(compare(_, key))
-
-    protected def findPartialQuery(
-        predicate: Table => Rep[Boolean]
-    ): Query[Table, Content, Seq] =
-      table.filter(predicate)
+      table.filter(compare(_, key))
 
   }
 

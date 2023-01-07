@@ -9,6 +9,9 @@ import utils.TransformerUtils.Implicits._
 import java.util.UUID
 
 trait DAO extends DAOActions[Tables.RecipeRow, RecipeKey] {
+
+  override val keyOf: Tables.RecipeRow => RecipeKey = RecipeKey.of
+
   def findAllFor(userId: UserId): DBIO[Seq[Tables.RecipeRow]]
 }
 
@@ -17,8 +20,7 @@ object DAO {
   val instance: DAO =
     new DAOActions.Instance[Tables.RecipeRow, Tables.Recipe, RecipeKey](
       Tables.Recipe,
-      (table, key) => table.userId === key.userId.transformInto[UUID] && table.id === key.recipeId.transformInto[UUID],
-      RecipeKey.of
+      (table, key) => table.userId === key.userId.transformInto[UUID] && table.id === key.recipeId.transformInto[UUID]
     ) with DAO {
 
       override def findAllFor(userId: UserId): DBIO[Seq[Tables.RecipeRow]] =

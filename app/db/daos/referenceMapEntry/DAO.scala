@@ -9,6 +9,9 @@ import utils.TransformerUtils.Implicits._
 import java.util.UUID
 
 trait DAO extends DAOActions[Tables.ReferenceEntryRow, ReferenceMapEntryKey] {
+
+  override def keyOf: Tables.ReferenceEntryRow => ReferenceMapEntryKey = ReferenceMapEntryKey.of
+
   def findAllFor(referenceMapId: ReferenceMapId): DBIO[Seq[Tables.ReferenceEntryRow]]
 }
 
@@ -19,8 +22,7 @@ object DAO {
       Tables.ReferenceEntry,
       (table, key) =>
         table.referenceMapId === key.referenceMapId.transformInto[UUID] &&
-          table.nutrientCode === key.nutrientCode.transformInto[Int],
-      ReferenceMapEntryKey.of
+          table.nutrientCode === key.nutrientCode.transformInto[Int]
     ) with DAO {
 
       override def findAllFor(referenceMapId: ReferenceMapId): DBIO[Seq[Tables.ReferenceEntryRow]] =

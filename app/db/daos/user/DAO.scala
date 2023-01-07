@@ -9,6 +9,9 @@ import utils.TransformerUtils.Implicits._
 import java.util.UUID
 
 trait DAO extends DAOActions[Tables.UserRow, UserId] {
+
+  override val keyOf: Tables.UserRow => UserId = _.id.transformInto[UserId]
+
   def findByNickname(nickname: String): DBIO[Seq[Tables.UserRow]]
 
   def findByIdentifier(identifier: String): DBIO[Seq[Tables.UserRow]]
@@ -19,8 +22,7 @@ object DAO {
   val instance: DAO =
     new DAOActions.Instance[Tables.UserRow, Tables.User, UserId](
       Tables.User,
-      (table, key) => table.id === key.transformInto[UUID],
-      _.id.transformInto[UserId]
+      (table, key) => table.id === key.transformInto[UUID]
     ) with DAO {
 
       override def findByNickname(nickname: String): DBIO[Seq[Tables.UserRow]] =
