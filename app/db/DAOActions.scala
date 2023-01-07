@@ -6,19 +6,13 @@ import slick.relational.RelationalProfile
 
 import scala.concurrent.ExecutionContext
 
-trait DAOActions[Content, Table, Key] {
+trait DAOActions[Content, Key] {
 
   def keyOf: Content => Key
 
   def find(key: Key): DBIO[Option[Content]]
 
-  def findBy(
-      predicate: Table => Rep[Boolean]
-  ): DBIO[Seq[Content]]
-
   def delete(key: Key): DBIO[Int]
-
-  def deleteBy(predicate: Table => Rep[Boolean]): DBIO[Int]
 
   def insert(content: Content): DBIO[Content]
 
@@ -35,21 +29,13 @@ object DAOActions {
       table: TableQuery[Table],
       compare: (Table, Key) => Rep[Boolean],
       override val keyOf: Content => Key
-  ) extends DAOActions[Content, Table, Key] {
+  ) extends DAOActions[Content, Key] {
 
     override def find(key: Key): DBIO[Option[Content]] =
       findQuery(key).result.headOption
 
-    override def findBy(
-        predicate: Table => Rep[Boolean]
-    ): DBIO[Seq[Content]] =
-      findPartialQuery(predicate).result
-
     override def delete(key: Key): DBIO[Int] =
       findQuery(key).delete
-
-    override def deleteBy(predicate: Table => Rep[Boolean]): DBIO[Int] =
-      findPartialQuery(predicate).delete
 
     override def insert(
         content: Content
@@ -72,7 +58,7 @@ object DAOActions {
     private def findQuery(key: Key): Query[Table, Content, Seq] =
       findPartialQuery(compare(_, key))
 
-    private def findPartialQuery(
+    protected def findPartialQuery(
         predicate: Table => Rep[Boolean]
     ): Query[Table, Content, Seq] =
       table.filter(predicate)

@@ -1,14 +1,16 @@
 package db.daos.recipe
 
-import db.DAOActions
 import db.generated.Tables
+import db.{ DAOActions, UserId }
 import io.scalaland.chimney.dsl._
 import slick.jdbc.PostgresProfile.api._
 import utils.TransformerUtils.Implicits._
 
 import java.util.UUID
 
-trait DAO extends DAOActions[Tables.RecipeRow, Tables.Recipe, RecipeKey]
+trait DAO extends DAOActions[Tables.RecipeRow, RecipeKey] {
+  def findAllFor(userId: UserId): DBIO[Seq[Tables.RecipeRow]]
+}
 
 object DAO {
 
@@ -17,6 +19,15 @@ object DAO {
       Tables.Recipe,
       (table, key) => table.userId === key.userId.transformInto[UUID] && table.id === key.recipeId.transformInto[UUID],
       RecipeKey.of
-    ) with DAO
+    ) with DAO {
+
+      override def findAllFor(userId: UserId): DBIO[Seq[Tables.RecipeRow]] =
+        Tables.Recipe
+          .filter(
+            _.userId === userId.transformInto[UUID]
+          )
+          .result
+
+    }
 
 }

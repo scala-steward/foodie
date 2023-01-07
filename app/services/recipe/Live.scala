@@ -142,7 +142,7 @@ object Live {
 
     override def allRecipes(userId: UserId)(implicit ec: ExecutionContext): DBIO[Seq[Recipe]] =
       recipeDao
-        .findBy(_.userId === userId.transformInto[UUID])
+        .findAllFor(userId)
         .map(
           _.map(_.transformInto[Recipe])
         )
@@ -207,7 +207,7 @@ object Live {
         ingredients <-
           if (exists)
             ingredientDao
-              .findBy(_.recipeId === recipeId.transformInto[UUID])
+              .findAllFor(recipeId)
               .map(_.map(_.transformInto[Ingredient]).toList)
           else Applicative[DBIO].pure(List.empty)
       } yield ingredients

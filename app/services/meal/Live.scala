@@ -11,8 +11,6 @@ import services.DBError
 import services.common.RequestInterval
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
-import slick.jdbc.PostgresProfile.api._
-import utils.DBIOUtil
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 
@@ -90,15 +88,12 @@ object Live {
         interval: RequestInterval
     )(implicit
         ec: ExecutionContext
-    ): DBIO[Seq[Meal]] = {
-      val dateFilter: Rep[java.sql.Date] => Rep[Boolean] = DBIOUtil.dateFilter(interval.from, interval.to)
-
+    ): DBIO[Seq[Meal]] =
       mealDao
-        .findBy(m => m.userId === userId.transformInto[UUID] && dateFilter(m.consumedOnDate))
+        .allInInterval(userId, interval)
         .map(
           _.map(_.transformInto[Meal])
         )
-    }
 
     override def getMeal(
         userId: UserId,
@@ -152,7 +147,7 @@ object Live {
     override def getMealEntries(userId: UserId, id: MealId)(implicit ec: ExecutionContext): DBIO[Seq[MealEntry]] =
       ifMealExists(userId, id) {
         mealEntryDao
-          .findBy(_.mealId === id.transformInto[UUID])
+          .findAllFor(id)
           .map(_.map(_.transformInto[MealEntry]))
       }
 

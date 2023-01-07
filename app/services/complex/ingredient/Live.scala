@@ -71,7 +71,7 @@ object Live {
         exists <- recipeDao.exists(RecipeKey(userId, recipeId))
         complexIngredients <-
           if (exists)
-            dao.findBy(_.recipeId === recipeId.transformInto[UUID])
+            dao.findAllFor(recipeId)
           else Applicative[DBIO].pure(List.empty)
       } yield complexIngredients.map(_.transformInto[ComplexIngredient])
 

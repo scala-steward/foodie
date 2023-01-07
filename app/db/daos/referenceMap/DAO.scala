@@ -1,14 +1,16 @@
 package db.daos.referenceMap
 
-import db.DAOActions
 import db.generated.Tables
+import db.{ DAOActions, UserId }
 import io.scalaland.chimney.dsl._
 import slick.jdbc.PostgresProfile.api._
 import utils.TransformerUtils.Implicits._
 
 import java.util.UUID
 
-trait DAO extends DAOActions[Tables.ReferenceMapRow, Tables.ReferenceMap, ReferenceMapKey]
+trait DAO extends DAOActions[Tables.ReferenceMapRow, ReferenceMapKey] {
+  def findAllFor(userId: UserId): DBIO[Seq[Tables.ReferenceMapRow]]
+}
 
 object DAO {
 
@@ -18,6 +20,13 @@ object DAO {
       (table, key) =>
         table.userId === key.userId.transformInto[UUID] && table.id === key.referenceMapId.transformInto[UUID],
       ReferenceMapKey.of
-    ) with DAO
+    ) with DAO {
+
+      override def findAllFor(userId: UserId): DBIO[Seq[Tables.ReferenceMapRow]] =
+        Tables.ReferenceMap
+          .filter(_.userId === userId.transformInto[UUID])
+          .result
+
+    }
 
 }

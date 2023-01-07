@@ -128,7 +128,7 @@ object Live {
 
     override def allReferenceMaps(userId: UserId)(implicit ec: ExecutionContext): DBIO[Seq[ReferenceMap]] =
       referenceMapDao
-        .findBy(_.userId === userId.transformInto[UUID])
+        .findAllFor(userId)
         .map(
           _.map(_.transformInto[ReferenceMap])
         )
@@ -204,7 +204,7 @@ object Live {
         referenceEntries <-
           if (exists)
             referenceMapEntryDao
-              .findBy(_.referenceMapId === referenceMapId.transformInto[UUID])
+              .findAllFor(referenceMapId)
               .map(_.map(_.transformInto[ReferenceEntry]).toList)
           else Applicative[DBIO].pure(List.empty)
       } yield referenceEntries

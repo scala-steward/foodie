@@ -10,7 +10,6 @@ import services.DBError
 import services.recipe.{ Recipe, RecipeService }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
-import slick.jdbc.PostgresProfile.api._
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 
@@ -68,7 +67,7 @@ object Live {
     override def all(userId: UserId)(implicit ec: ExecutionContext): DBIO[Seq[ComplexFood]] =
       for {
         recipes <- recipeService.allRecipes(userId)
-        complex <- dao.findBy(_.recipeId.inSetBind(recipes.map(_.id)))
+        complex <- dao.findByKeys(recipes.map(_.id))
       } yield {
         val recipeMap = recipes.map(r => r.id.transformInto[UUID] -> r).toMap
         complex.map { complexFood =>

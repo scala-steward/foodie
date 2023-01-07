@@ -10,7 +10,6 @@ import security.Hash
 import services.DBError
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
-import slick.jdbc.PostgresProfile.api._
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 
@@ -69,17 +68,14 @@ object Live {
 
     override def getByNickname(nickname: String)(implicit executionContext: ExecutionContext): DBIO[Option[User]] =
       OptionT
-        .liftF(
-          userDao
-            .findBy(_.nickname === nickname)
-        )
+        .liftF(userDao.findByNickname(nickname))
         .subflatMap(_.headOption)
         .map(_.transformInto[User])
         .value
 
     override def getByIdentifier(string: String)(implicit executionContext: ExecutionContext): DBIO[Seq[User]] =
       userDao
-        .findBy(u => u.email === string || u.nickname === string)
+        .findByIdentifier(string)
         .map(_.map(_.transformInto[User]))
 
     override def add(user: User)(implicit executionContext: ExecutionContext): DBIO[Unit] =
@@ -149,7 +145,7 @@ object Live {
 
     override def deleteAllSessions(userId: UserId)(implicit executionContext: ExecutionContext): DBIO[Boolean] =
       sessionDao
-        .deleteBy(_.userId === userId.transformInto[UUID])
+        .deleteAllFor(userId)
         .map(_ > 0)
 
     override def existsSession(userId: UserId, sessionId: SessionId)(implicit
