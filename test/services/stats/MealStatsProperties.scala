@@ -23,6 +23,7 @@ import spire.compat._
 import spire.implicits._
 import spire.math.interval._
 import spire.math.{ Interval, Natural }
+import util.DateUtil
 import utils.collection.MapUtil
 import utils.date.Date
 
@@ -163,15 +164,7 @@ object MealStatsProperties extends Properties("Meal stats") {
     for {
       date1 <- smallerDateGen
       date2 <- smallerDateGen
-    } yield (date1, date2) match {
-      case (Some(d1), Some(d2)) =>
-        if (d1 <= d2)
-          Interval.closed(d1, d2)
-        else Interval.closed(d2, d1)
-      case (Some(d1), None) => Interval.atOrAbove(d1)
-      case (None, Some(d2)) => Interval.atOrBelow(d2)
-      case _                => Interval.all[Date]
-    }
+    } yield DateUtil.toInterval(date1, date2)
   }
 
   private def overTimeSetupGen(
