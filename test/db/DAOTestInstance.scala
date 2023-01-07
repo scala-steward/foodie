@@ -18,8 +18,7 @@ import util.DateUtil
 import utils.date.Date
 
 abstract class DAOTestInstance[Content, Key](
-    contents: Seq[(Key, Content)],
-    override val keyOf: Content => Key
+    contents: Seq[(Key, Content)]
 ) extends DAOActions[Content, Key] {
 
   private val map: mutable.Map[Key, Content] = mutable.Map.from(contents)
@@ -59,8 +58,7 @@ object DAOTestInstance {
 
     def instance(contents: Seq[(RecipeId, Tables.ComplexFoodRow)]): db.daos.complexFood.DAO =
       new DAOTestInstance[Tables.ComplexFoodRow, RecipeId](
-        contents,
-        _.recipeId.transformInto[RecipeId]
+        contents
       ) with db.daos.complexFood.DAO {
 
         override def findByKeys(keys: Seq[RecipeId]): DBIO[Seq[Tables.ComplexFoodRow]] =
@@ -78,8 +76,7 @@ object DAOTestInstance {
 
     def instance(contents: Seq[(ComplexIngredientKey, Tables.ComplexIngredientRow)]): db.daos.complexIngredient.DAO =
       new DAOTestInstance[Tables.ComplexIngredientRow, ComplexIngredientKey](
-        contents,
-        ComplexIngredientKey.of
+        contents
       ) with db.daos.complexIngredient.DAO {
 
         override def findAllFor(recipeId: RecipeId): DBIO[Seq[Tables.ComplexIngredientRow]] =
@@ -98,8 +95,7 @@ object DAOTestInstance {
 
     def instance(contents: Seq[(IngredientId, Tables.RecipeIngredientRow)]): db.daos.ingredient.DAO =
       new DAOTestInstance[Tables.RecipeIngredientRow, IngredientId](
-        contents,
-        _.id.transformInto[IngredientId]
+        contents
       ) with db.daos.ingredient.DAO {
 
         override def findAllFor(recipeId: RecipeId): DBIO[Seq[Tables.RecipeIngredientRow]] =
@@ -117,8 +113,7 @@ object DAOTestInstance {
 
     def instance(contents: Seq[(MealKey, Tables.MealRow)]): db.daos.meal.DAO =
       new DAOTestInstance[Tables.MealRow, MealKey](
-        contents,
-        MealKey.of
+        contents
       ) with db.daos.meal.DAO {
 
         override def allInInterval(userId: UserId, requestInterval: RequestInterval): DBIO[Seq[Tables.MealRow]] =
@@ -146,8 +141,7 @@ object DAOTestInstance {
 
     def instance(contents: Seq[(MealEntryId, Tables.MealEntryRow)]): db.daos.mealEntry.DAO =
       new DAOTestInstance[Tables.MealEntryRow, MealEntryId](
-        contents,
-        _.id.transformInto[MealEntryId]
+        contents
       ) with db.daos.mealEntry.DAO {
 
         override def findAllFor(mealId: MealId): DBIO[Seq[Tables.MealEntryRow]] =
@@ -165,8 +159,7 @@ object DAOTestInstance {
 
     def instance(contents: Seq[(RecipeKey, Tables.RecipeRow)]): db.daos.recipe.DAO =
       new DAOTestInstance[Tables.RecipeRow, RecipeKey](
-        contents,
-        RecipeKey.of
+        contents
       ) with db.daos.recipe.DAO {
 
         override def findAllFor(userId: UserId): DBIO[Seq[Tables.RecipeRow]] =
@@ -184,8 +177,7 @@ object DAOTestInstance {
 
     def instance(contents: Seq[(ReferenceMapKey, Tables.ReferenceMapRow)]): db.daos.referenceMap.DAO =
       new DAOTestInstance[Tables.ReferenceMapRow, ReferenceMapKey](
-        contents,
-        ReferenceMapKey.of
+        contents
       ) with db.daos.referenceMap.DAO {
 
         override def findAllFor(userId: UserId): DBIO[Seq[Tables.ReferenceMapRow]] =
@@ -204,8 +196,7 @@ object DAOTestInstance {
 
     def instance(contents: Seq[(ReferenceMapEntryKey, Tables.ReferenceEntryRow)]): db.daos.referenceMapEntry.DAO =
       new DAOTestInstance[Tables.ReferenceEntryRow, ReferenceMapEntryKey](
-        contents,
-        ReferenceMapEntryKey.of
+        contents
       ) with db.daos.referenceMapEntry.DAO {
 
         override def findAllFor(referenceMapId: ReferenceMapId): DBIO[Seq[Tables.ReferenceEntryRow]] =
@@ -224,8 +215,7 @@ object DAOTestInstance {
 
     def instance(contents: Seq[(SessionKey, Tables.SessionRow)]): db.daos.session.DAO =
       new DAOTestInstance[Tables.SessionRow, SessionKey](
-        contents,
-        SessionKey.of
+        contents
       ) with db.daos.session.DAO {
 
         override def deleteAllFor(userId: UserId): DBIO[Int] =
@@ -244,8 +234,7 @@ object DAOTestInstance {
 
     def instance(contents: Seq[(UserId, Tables.UserRow)]): db.daos.user.DAO =
       new DAOTestInstance[Tables.UserRow, UserId](
-        contents,
-        _.id.transformInto[UserId]
+        contents
       ) with db.daos.user.DAO {
 
         override def findByNickname(nickname: String): DBIO[Seq[Tables.UserRow]] =
