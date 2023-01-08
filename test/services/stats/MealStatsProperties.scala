@@ -15,9 +15,9 @@ import services._
 import services.common.RequestInterval
 import services.complex.food.ComplexFoodService
 import services.complex.ingredient.ComplexIngredientService
-import services.meal.{ FullMeal, Gens, Meal, MealEntry, MealService, MockMealService }
+import services.meal._
 import services.nutrient.NutrientService
-import services.recipe.{ FullRecipe, MockRecipeService, RecipeService }
+import services.recipe.{ FullRecipe, Ingredient, Recipe }
 import services.user.User
 import spire.compat._
 import spire.implicits._
@@ -37,21 +37,29 @@ object MealStatsProperties extends Properties("Meal stats") {
   private val complexIngredientServiceCompanion = TestUtil.injector.instanceOf[ComplexIngredientService.Companion]
   private val dbConfigProvider                  = TestUtil.injector.instanceOf[DatabaseConfigProvider]
 
-  // TODO: Rewrite in terms of the collections that are used. This should reduce duplication.
   private def statsServiceWith(
-      recipeServiceCompanion: RecipeService.Companion,
-      mealServiceCompanion: MealService.Companion
-  ): StatsService =
-    new Live(
+      mealContents: Seq[(UserId, Meal)],
+      mealEntryContents: Seq[(MealId, MealEntry)],
+      recipeContents: Seq[(UserId, Recipe)],
+      ingredientContents: Seq[(RecipeId, Ingredient)]
+  ): StatsService = {
+    new services.stats.Live(
       dbConfigProvider = dbConfigProvider,
-      companion = new Live.Companion(
-        mealService = mealServiceCompanion,
-        recipeService = recipeServiceCompanion,
+      companion = new services.stats.Live.Companion(
+        mealService = new services.meal.Live.Companion(
+          mealDao = DAOTestInstance.Meal.instanceFrom(mealContents),
+          mealEntryDao = DAOTestInstance.MealEntry.instanceFrom(mealEntryContents)
+        ),
+        recipeService = new services.recipe.Live.Companion(
+          recipeDao = DAOTestInstance.Recipe.instanceFrom(recipeContents),
+          ingredientDao = DAOTestInstance.Ingredient.instanceFrom(ingredientContents)
+        ),
         nutrientService = nutrientServiceCompanion,
         complexFoodService = complexFoodServiceCompanion,
         complexIngredientService = complexIngredientServiceCompanion
       )
     )
+  }
 
   private case class SetupUserAndRecipes(
       user: User,
@@ -109,22 +117,10 @@ object MealStatsProperties extends Properties("Meal stats") {
   ) { setup =>
     val recipeMap = setup.userAndRecipes.fullRecipes.map(fr => fr.recipe.id -> fr).toMap
     val statsService = statsServiceWith(
-      recipeServiceCompanion = new services.recipe.Live.Companion(
-        recipeDao = DAOTestInstance.Recipe.instanceFrom(
-          setup.userAndRecipes.fullRecipes.map(fr => setup.userAndRecipes.user.id -> fr.recipe)
-        ),
-        ingredientDao = DAOTestInstance.Ingredient.instanceFrom(
-          setup.userAndRecipes.fullRecipes.flatMap { fr => fr.ingredients.map(fr.recipe.id -> _) }
-        )
-      ),
-      mealServiceCompanion = new services.meal.Live.Companion(
-        mealDao = DAOTestInstance.Meal.instanceFrom(
-          Seq(setup.userAndRecipes.user.id -> setup.fullMeal.meal)
-        ),
-        mealEntryDao = DAOTestInstance.MealEntry.instanceFrom(
-          setup.fullMeal.mealEntries.map(setup.fullMeal.meal.id -> _)
-        )
-      )
+      mealContents = Seq(setup.userAndRecipes.user.id -> setup.fullMeal.meal),
+      mealEntryContents = setup.fullMeal.mealEntries.map(setup.fullMeal.meal.id -> _),
+      recipeContents = setup.userAndRecipes.fullRecipes.map(fr => setup.userAndRecipes.user.id -> fr.recipe),
+      ingredientContents = setup.userAndRecipes.fullRecipes.flatMap { fr => fr.ingredients.map(fr.recipe.id -> _) }
     )
 
     val transformer = for {
@@ -201,14 +197,12 @@ object MealStatsProperties extends Properties("Meal stats") {
   property("Over time stats") = Prop.forAll(
     overTimeSetupGen() :| "Over time setup"
   ) { overTimeSetup =>
-    DBTestUtil.clearDb()
-
     val statsService = statsServiceWith(
-      recipeServiceCompanion = MockRecipeService.fromCollection(
-        Seq(overTimeSetup.userAndRecipes.user.id -> overTimeSetup.userAndRecipes.fullRecipes)
-      ),
-      mealServiceCompanion =
-        MockMealService.fromCollection(Seq(overTimeSetup.userAndRecipes.user.id -> overTimeSetup.fullMeals))
+      mealContents = overTimeSetup.fullMeals.map(fm => overTimeSetup.userAndRecipes.user.id -> fm.meal),
+      mealEntryContents = overTimeSetup.fullMeals.flatMap(fm => fm.mealEntries.map(fm.meal.id -> _)),
+      recipeContents =
+        overTimeSetup.userAndRecipes.fullRecipes.map(fr => overTimeSetup.userAndRecipes.user.id -> fr.recipe),
+      ingredientContents = overTimeSetup.userAndRecipes.fullRecipes.flatMap(fr => fr.ingredients.map(fr.recipe.id -> _))
     )
 
     val mealsInInterval =
@@ -288,18 +282,14 @@ object MealStatsProperties extends Properties("Meal stats") {
   property("Meal stats restricted to user") = Prop.forAll(
     restrictedOverTimeSetupGen :| "restricted over time setup"
   ) { setup =>
-    DBTestUtil.clearDb()
-
     val statsService = statsServiceWith(
-      recipeServiceCompanion = MockRecipeService.fromCollection(
-        Seq.empty
-      ),
-      mealServiceCompanion = MockMealService.fromCollection(
-        Seq(
-          setup.user1.id -> setup.meals1.map(FullMeal(_, List.empty)),
-          setup.user2.id -> setup.meals2.map(FullMeal(_, List.empty))
-        )
-      )
+      mealContents = Seq(
+        setup.meals1.map(setup.user1.id -> _),
+        setup.meals2.map(setup.user2.id -> _)
+      ).flatten,
+      mealEntryContents = Seq.empty,
+      recipeContents = Seq.empty,
+      ingredientContents = Seq.empty
     )
     val mealsInInterval =
       setup.meals1
