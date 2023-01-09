@@ -1,5 +1,7 @@
 package db
 
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import db.daos.complexIngredient.ComplexIngredientKey
 import db.daos.meal.MealKey
 import db.daos.recipe.RecipeKey
@@ -7,17 +9,18 @@ import db.daos.referenceMap.ReferenceMapKey
 import db.daos.referenceMapEntry.ReferenceMapEntryKey
 import db.daos.session.SessionKey
 import db.generated.Tables
-import slick.jdbc.PostgresProfile.api._
-
-import scala.collection.mutable
-import scala.concurrent.ExecutionContext
-import utils.TransformerUtils.Implicits._
 import io.scalaland.chimney.dsl._
 import services.common.RequestInterval
 import services.meal.{ Meal, MealEntry }
 import services.recipe.{ Ingredient, Recipe }
+import slick.jdbc.PostgresProfile.api._
+import slickeffect.catsio.implicits._
 import util.DateUtil
+import utils.TransformerUtils.Implicits._
 import utils.date.Date
+
+import scala.collection.mutable
+import scala.concurrent.ExecutionContext
 
 abstract class DAOTestInstance[Content, Key](
     contents: Seq[(Key, Content)]
@@ -25,30 +28,36 @@ abstract class DAOTestInstance[Content, Key](
 
   protected val map: mutable.Map[Key, Content] = mutable.Map.from(contents)
 
-  override def find(key: Key): DBIO[Option[Content]] = DBIO.successful(map.get(key))
+  /* Use IO indirection to ensure that a DBIO action may in fact yield different
+     values when it is run at different times.
+   */
+  protected def fromIO[A](a: => A): DBIO[A] = IO(a).to[DBIO]
 
-  override def delete(key: Key): DBIO[Int] = DBIO.successful(map.remove(key).fold(0)(_ => 1))
+  override def find(key: Key): DBIO[Option[Content]] =
+    fromIO(map.get(key))
+
+  override def delete(key: Key): DBIO[Int] = fromIO(map.remove(key).fold(0)(_ => 1))
 
   override def insert(content: Content): DBIO[Content] =
-    DBIO.successful {
+    fromIO {
       map.update(keyOf(content), content)
       content
     }
 
   override def insertAll(contents: Seq[Content]): DBIO[Seq[Content]] =
-    DBIO.successful {
+    fromIO {
       map.addAll(contents.map(content => keyOf(content) -> content))
       contents
     }
 
   override def update(value: Content)(implicit ec: ExecutionContext): DBIO[Boolean] =
-    DBIO.successful {
+    fromIO {
       map.update(keyOf(value), value)
       true
     }
 
   override def exists(key: Key): DBIO[Boolean] =
-    DBIO.successful(
+    fromIO(
       map.contains(key)
     )
 
@@ -64,7 +73,7 @@ object DAOTestInstance {
       ) with db.daos.complexFood.DAO {
 
         override def findByKeys(keys: Seq[RecipeId]): DBIO[Seq[Tables.ComplexFoodRow]] =
-          DBIO.successful {
+          fromIO {
             map.collect {
               case (recipeId, complexFood) if keys.contains(recipeId) => complexFood
             }.toList
@@ -82,7 +91,7 @@ object DAOTestInstance {
       ) with db.daos.complexIngredient.DAO {
 
         override def findAllFor(recipeId: RecipeId): DBIO[Seq[Tables.ComplexIngredientRow]] =
-          DBIO.successful {
+          fromIO {
             map.view
               .filterKeys(_.recipeId == recipeId)
               .values
@@ -101,7 +110,7 @@ object DAOTestInstance {
       ) with db.daos.ingredient.DAO {
 
         override def findAllFor(recipeId: RecipeId): DBIO[Seq[Tables.RecipeIngredientRow]] =
-          DBIO.successful {
+          fromIO {
             map.values.collect {
               case ingredient if ingredient.recipeId.transformInto[RecipeId] == recipeId => ingredient
             }.toList
@@ -127,7 +136,7 @@ object DAOTestInstance {
       ) with db.daos.meal.DAO {
 
         override def allInInterval(userId: UserId, requestInterval: RequestInterval): DBIO[Seq[Tables.MealRow]] =
-          DBIO.successful {
+          fromIO {
             map
               .filter {
                 case (key, meal) =>
@@ -160,7 +169,7 @@ object DAOTestInstance {
       ) with db.daos.mealEntry.DAO {
 
         override def findAllFor(mealId: MealId): DBIO[Seq[Tables.MealEntryRow]] =
-          DBIO.successful {
+          fromIO {
             map.values
               .filter(_.mealId.transformInto[MealId] == mealId)
               .toList
@@ -185,7 +194,7 @@ object DAOTestInstance {
       ) with db.daos.recipe.DAO {
 
         override def findAllFor(userId: UserId): DBIO[Seq[Tables.RecipeRow]] =
-          DBIO.successful {
+          fromIO {
             map.values
               .filter(_.userId.transformInto[UserId] == userId)
               .toList
@@ -210,7 +219,7 @@ object DAOTestInstance {
       ) with db.daos.referenceMap.DAO {
 
         override def findAllFor(userId: UserId): DBIO[Seq[Tables.ReferenceMapRow]] =
-          DBIO.successful {
+          fromIO {
             map.view
               .filterKeys(_.userId == userId)
               .values
@@ -229,7 +238,7 @@ object DAOTestInstance {
       ) with db.daos.referenceMapEntry.DAO {
 
         override def findAllFor(referenceMapId: ReferenceMapId): DBIO[Seq[Tables.ReferenceEntryRow]] =
-          DBIO.successful {
+          fromIO {
             map.view
               .filterKeys(_.referenceMapId == referenceMapId)
               .values
@@ -248,7 +257,7 @@ object DAOTestInstance {
       ) with db.daos.session.DAO {
 
         override def deleteAllFor(userId: UserId): DBIO[Int] =
-          DBIO.successful {
+          fromIO {
             map.keys
               .filter(_.userId == userId)
               .flatMap(map.remove)
@@ -267,14 +276,14 @@ object DAOTestInstance {
       ) with db.daos.user.DAO {
 
         override def findByNickname(nickname: String): DBIO[Seq[Tables.UserRow]] =
-          DBIO.successful {
+          fromIO {
             map.values
               .filter(_.nickname == nickname)
               .toList
           }
 
         override def findByIdentifier(identifier: String): DBIO[Seq[Tables.UserRow]] =
-          DBIO.successful {
+          fromIO {
             map.values
               .filter(user => user.email == identifier || user.nickname == identifier)
               .toList
