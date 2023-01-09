@@ -2,11 +2,12 @@ package services.recipe
 
 import cats.data.EitherT
 import config.TestConfiguration
-import db.IngredientId
+import db.{ DAOTestInstance, IngredientId, RecipeId, UserId }
 import errors.{ ErrorContext, ServerError }
 import org.scalacheck.Prop.AnyOperators
 import org.scalacheck.{ Gen, Prop, Properties, Test }
-import services.user.{ User, UserService }
+import play.api.db.slick.DatabaseConfigProvider
+import services.user.User
 import services.{ DBTestUtil, GenUtils, TestUtil }
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -14,22 +15,29 @@ import scala.concurrent.Future
 
 object RecipeServiceProperties extends Properties("Recipe service") {
 
-  private val recipeService = TestUtil.injector.instanceOf[RecipeService]
-  private val userService   = TestUtil.injector.instanceOf[UserService]
+  private val dbConfigProvider = TestUtil.injector.instanceOf[DatabaseConfigProvider]
 
-  private def setupUserAndRecipe(user: User, recipe: Recipe): Future[Unit] =
-    for {
-      _ <- userService.add(user)
-      _ <- ServiceFunctions.create(user.id, recipe)
-    } yield ()
+  private def recipeServiceWith(
+      recipeContents: Seq[(UserId, Recipe)],
+      ingredientContents: Seq[(RecipeId, Ingredient)]
+  ): RecipeService =
+    new services.recipe.Live(
+      dbConfigProvider = dbConfigProvider,
+      companion = new services.recipe.Live.Companion(
+        recipeDao = DAOTestInstance.Recipe.instanceFrom(recipeContents),
+        ingredientDao = DAOTestInstance.Ingredient.instanceFrom(ingredientContents)
+      )
+    )
 
   property("Creation") = Prop.forAll(
     GenUtils.userWithFixedPassword :| "user",
     Gens.recipeCreationGen :| "recipe"
   ) { (user, recipeCreation) =>
-    DBTestUtil.clearDb()
+    val recipeService = recipeServiceWith(
+      Seq.empty,
+      Seq.empty
+    )
     val transformer = for {
-      _             <- EitherT.liftF(userService.add(user))
       createdRecipe <- EitherT(recipeService.createRecipe(user.id, recipeCreation))
       fetchedRecipe <- EitherT.fromOptionF(
         recipeService.getRecipe(user.id, createdRecipe.id),
@@ -50,22 +58,16 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     GenUtils.userWithFixedPassword :| "user",
     Gens.recipeGen :| "recipe"
   ) { (user, recipe) =>
-    DBTestUtil.clearDb()
+    val recipeService = recipeServiceWith(
+      recipeContents = Seq(user.id -> recipe),
+      ingredientContents = Seq.empty
+    )
     val transformer = for {
-      _ <- EitherT.liftF(userService.add(user))
-      _ <- EitherT.liftF(
-        ServiceFunctions.create(
-          user.id,
-          recipe
-        )
-      )
       fetchedRecipe <- EitherT.fromOptionF(
         recipeService.getRecipe(user.id, recipe.id),
         ErrorContext.Recipe.NotFound.asServerError
       )
-    } yield {
-      fetchedRecipe ?= recipe
-    }
+    } yield fetchedRecipe ?= recipe
 
     DBTestUtil.awaitProp(transformer)
   }
@@ -74,21 +76,15 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     GenUtils.userWithFixedPassword :| "user",
     Gen.listOf(Gens.recipeGen) :| "recipes"
   ) { (user, recipes) =>
-    DBTestUtil.clearDb()
+    val recipeService = recipeServiceWith(
+      recipeContents = recipes.map(user.id -> _),
+      ingredientContents = Seq.empty
+    )
     val transformer = for {
-      _ <- EitherT.liftF(userService.add(user))
-      _ <- EitherT.liftF(
-        ServiceFunctions.createAll(
-          user.id,
-          recipes
-        )
-      )
       fetchedRecipes <- EitherT.liftF[Future, ServerError, Seq[Recipe]](
         recipeService.allRecipes(user.id)
       )
-    } yield {
-      fetchedRecipes.sortBy(_.id) ?= recipes.sortBy(_.id)
-    }
+    } yield fetchedRecipes.sortBy(_.id) ?= recipes.sortBy(_.id)
 
     DBTestUtil.awaitProp(transformer)
   }
@@ -113,9 +109,11 @@ object RecipeServiceProperties extends Properties("Recipe service") {
   property("Update") = Prop.forAll(
     updateSetupGen :| "update setup"
   ) { updateSetup =>
-    DBTestUtil.clearDb()
+    val recipeService = recipeServiceWith(
+      recipeContents = Seq(updateSetup.user.id -> updateSetup.recipe),
+      ingredientContents = Seq.empty
+    )
     val transformer = for {
-      _             <- EitherT.liftF(setupUserAndRecipe(updateSetup.user, updateSetup.recipe))
       updatedRecipe <- EitherT(recipeService.updateRecipe(updateSetup.user.id, updateSetup.recipeUpdate))
       fetchedRecipe <- EitherT.fromOptionF(
         recipeService.getRecipe(updateSetup.user.id, updateSetup.recipe.id),
@@ -136,15 +134,11 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     GenUtils.userWithFixedPassword :| "user",
     Gens.recipeGen :| "recipe"
   ) { (user, recipe) =>
-    DBTestUtil.clearDb()
+    val recipeService = recipeServiceWith(
+      recipeContents = Seq(user.id -> recipe),
+      ingredientContents = Seq.empty
+    )
     val transformer = for {
-      _ <- EitherT.liftF(userService.add(user))
-      _ <- EitherT.liftF(
-        ServiceFunctions.create(
-          user.id,
-          recipe = recipe
-        )
-      )
       result  <- EitherT.liftF[Future, ServerError, Boolean](recipeService.deleteRecipe(user.id, recipe.id))
       fetched <- EitherT.liftF[Future, ServerError, Option[Recipe]](recipeService.getRecipe(user.id, recipe.id))
     } yield {
@@ -162,16 +156,12 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     Gens.fullRecipeGen() :| "full recipe",
     Gens.ingredientGen :| "ingredient"
   ) { (user, fullRecipe, ingredient) =>
-    DBTestUtil.clearDb()
+    val recipeService = recipeServiceWith(
+      recipeContents = Seq(user.id -> fullRecipe.recipe),
+      ingredientContents = fullRecipe.ingredients.map(fullRecipe.recipe.id -> _)
+    )
+    val ingredientCreation = IngredientCreation(fullRecipe.recipe.id, ingredient.foodId, ingredient.amountUnit)
     val transformer = for {
-      _ <- EitherT.liftF(userService.add(user))
-      _ <- EitherT.liftF(
-        ServiceFunctions.createFull(
-          user.id,
-          fullRecipe
-        )
-      )
-      ingredientCreation = IngredientCreation(fullRecipe.recipe.id, ingredient.foodId, ingredient.amountUnit)
       ingredient <- EitherT(recipeService.addIngredient(user.id, ingredientCreation))
       ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
         recipeService.getIngredients(user.id, fullRecipe.recipe.id)
@@ -188,15 +178,11 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     GenUtils.userWithFixedPassword :| "user",
     Gens.fullRecipeGen() :| "full recipe"
   ) { (user, fullRecipe) =>
-    DBTestUtil.clearDb()
+    val recipeService = recipeServiceWith(
+      recipeContents = Seq(user.id -> fullRecipe.recipe),
+      ingredientContents = fullRecipe.ingredients.map(fullRecipe.recipe.id -> _)
+    )
     val transformer = for {
-      _ <- EitherT.liftF(userService.add(user))
-      _ <- EitherT.liftF(
-        ServiceFunctions.createFull(
-          user.id,
-          fullRecipe
-        )
-      )
       ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
         recipeService.getIngredients(user.id, fullRecipe.recipe.id)
       )
@@ -229,30 +215,25 @@ object RecipeServiceProperties extends Properties("Recipe service") {
 
   property("Update ingredient") = Prop.forAll(
     ingredientUpdateSetupGen :| "ingredient update setup"
-  ) { ingredientUpdateSetup =>
-    DBTestUtil.clearDb()
+  ) { setup =>
+    val recipeService = recipeServiceWith(
+      recipeContents = Seq(setup.user.id -> setup.fullRecipe.recipe),
+      ingredientContents = setup.fullRecipe.ingredients.map(setup.fullRecipe.recipe.id -> _)
+    )
 
     val transformer = for {
-      _ <- EitherT.liftF(userService.add(ingredientUpdateSetup.user))
-      _ <- EitherT.liftF(
-        ServiceFunctions.createFull(
-          ingredientUpdateSetup.user.id,
-          ingredientUpdateSetup.fullRecipe
-        )
-      )
-      updatedIngredient <-
-        EitherT(recipeService.updateIngredient(ingredientUpdateSetup.user.id, ingredientUpdateSetup.ingredientUpdate))
+      updatedIngredient <- EitherT(recipeService.updateIngredient(setup.user.id, setup.ingredientUpdate))
       ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
-        recipeService.getIngredients(ingredientUpdateSetup.user.id, ingredientUpdateSetup.fullRecipe.recipe.id)
+        recipeService.getIngredients(setup.user.id, setup.fullRecipe.recipe.id)
       )
     } yield {
       val expectedIngredient = IngredientUpdate.update(
-        ingredientUpdateSetup.ingredient,
-        ingredientUpdateSetup.ingredientUpdate
+        setup.ingredient,
+        setup.ingredientUpdate
       )
       val expectedIngredients =
-        ingredientUpdateSetup.fullRecipe.ingredients.map { ingredient =>
-          if (ingredient.id == ingredientUpdateSetup.ingredient.id) expectedIngredient
+        setup.fullRecipe.ingredients.map { ingredient =>
+          if (ingredient.id == setup.ingredient.id) expectedIngredient
           else ingredient
         }
       Prop.all(
@@ -284,16 +265,12 @@ object RecipeServiceProperties extends Properties("Recipe service") {
   property("Delete ingredient") = Prop.forAll(
     deleteIngredientSetupGen :| "delete ingredient setup"
   ) { setup =>
-    DBTestUtil.clearDb()
+    val recipeService = recipeServiceWith(
+      recipeContents = Seq(setup.user.id -> setup.fullRecipe.recipe),
+      ingredientContents = setup.fullRecipe.ingredients.map(setup.fullRecipe.recipe.id -> _)
+    )
 
     val transformer = for {
-      _ <- EitherT.liftF(userService.add(setup.user))
-      _ <- EitherT.liftF(
-        ServiceFunctions.createFull(
-          setup.user.id,
-          setup.fullRecipe
-        )
-      )
       deletionResult <- EitherT.liftF(recipeService.removeIngredient(setup.user.id, setup.ingredientId))
       ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
         recipeService.getIngredients(setup.user.id, setup.fullRecipe.recipe.id)
@@ -314,10 +291,11 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     Gens.recipeCreationGen :| "recipe creation"
   ) {
     case ((user1, user2), recipeCreation) =>
-      DBTestUtil.clearDb()
+      val recipeService = recipeServiceWith(
+        recipeContents = Seq.empty,
+        ingredientContents = Seq.empty
+      )
       val transformer = for {
-        _             <- EitherT.liftF(userService.add(user1))
-        _             <- EitherT.liftF(userService.add(user2))
         createdRecipe <- EitherT(recipeService.createRecipe(user1.id, recipeCreation))
         fetchedRecipe <-
           EitherT.liftF[Future, ServerError, Option[Recipe]](recipeService.getRecipe(user2.id, createdRecipe.id))
@@ -333,16 +311,11 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     Gens.recipeGen :| "recipe"
   ) {
     case ((user1, user2), recipe) =>
-      DBTestUtil.clearDb()
+      val recipeService = recipeServiceWith(
+        recipeContents = Seq(user1.id -> recipe),
+        ingredientContents = Seq.empty
+      )
       val transformer = for {
-        _ <- EitherT.liftF(userService.add(user1))
-        _ <- EitherT.liftF(userService.add(user2))
-        _ <- EitherT.liftF(
-          ServiceFunctions.create(
-            user1.id,
-            recipe = recipe
-          )
-        )
         fetchedRecipe <- EitherT.liftF[Future, ServerError, Option[Recipe]](
           recipeService.getRecipe(user2.id, recipe.id)
         )
@@ -358,11 +331,11 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     Gen.listOf(Gens.recipeGen) :| "recipes"
   ) {
     case ((user1, user2), recipes) =>
-      DBTestUtil.clearDb()
+      val recipeService = recipeServiceWith(
+        recipeContents = recipes.map(user1.id -> _),
+        ingredientContents = Seq.empty
+      )
       val transformer = for {
-        _ <- EitherT.liftF(userService.add(user1))
-        _ <- EitherT.liftF(userService.add(user2))
-        _ <- EitherT.liftF(ServiceFunctions.createAll(user1.id, recipes))
         fetchedRecipes <- EitherT.liftF[Future, ServerError, Seq[Recipe]](
           recipeService.allRecipes(user2.id)
         )
@@ -396,16 +369,11 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     wrongUpdateSetupGen :| "update setup"
   ) {
     case WrongUpdateSetup(user1, user2, recipe, update) =>
-      DBTestUtil.clearDb()
+      val recipeService = recipeServiceWith(
+        recipeContents = Seq(user1.id -> recipe),
+        ingredientContents = Seq.empty
+      )
       val transformer = for {
-        _ <- EitherT.liftF(userService.add(user1))
-        _ <- EitherT.liftF(userService.add(user2))
-        _ <- EitherT.liftF(
-          ServiceFunctions.create(
-            user1.id,
-            recipe = recipe
-          )
-        )
         updatedRecipe <-
           EitherT.liftF[Future, ServerError, ServerError.Or[Recipe]](recipeService.updateRecipe(user2.id, update))
       } yield {
@@ -420,16 +388,11 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     Gens.recipeGen :| "recipe"
   ) {
     case ((user1, user2), recipe) =>
-      DBTestUtil.clearDb()
+      val recipeService = recipeServiceWith(
+        recipeContents = Seq(user1.id -> recipe),
+        ingredientContents = Seq.empty
+      )
       val transformer = for {
-        _ <- EitherT.liftF(userService.add(user1))
-        _ <- EitherT.liftF(userService.add(user2))
-        _ <- EitherT.liftF(
-          ServiceFunctions.create(
-            user1.id,
-            recipe = recipe
-          )
-        )
         result <- EitherT.liftF[Future, ServerError, Boolean](recipeService.deleteRecipe(user2.id, recipe.id))
       } yield {
         Prop(!result) :| "Deletion failed"
@@ -444,17 +407,12 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     Gens.ingredientGen :| "ingredient"
   ) {
     case ((user1, user2), fullRecipe, ingredient) =>
-      DBTestUtil.clearDb()
+      val recipeService = recipeServiceWith(
+        recipeContents = Seq(user1.id -> fullRecipe.recipe),
+        ingredientContents = fullRecipe.ingredients.map(fullRecipe.recipe.id -> _)
+      )
+      val ingredientCreation = IngredientCreation(fullRecipe.recipe.id, ingredient.foodId, ingredient.amountUnit)
       val transformer = for {
-        _ <- EitherT.liftF(userService.add(user1))
-        _ <- EitherT.liftF(userService.add(user2))
-        _ <- EitherT.liftF(
-          ServiceFunctions.createFull(
-            user1.id,
-            fullRecipe
-          )
-        )
-        ingredientCreation = IngredientCreation(fullRecipe.recipe.id, ingredient.foodId, ingredient.amountUnit)
         result <- EitherT.liftF(recipeService.addIngredient(user2.id, ingredientCreation))
         ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
           recipeService.getIngredients(user1.id, fullRecipe.recipe.id)
@@ -474,16 +432,11 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     Gens.fullRecipeGen() :| "full recipe"
   ) {
     case ((user1, user2), fullRecipe) =>
-      DBTestUtil.clearDb()
+      val recipeService = recipeServiceWith(
+        recipeContents = Seq(user1.id -> fullRecipe.recipe),
+        ingredientContents = fullRecipe.ingredients.map(fullRecipe.recipe.id -> _)
+      )
       val transformer = for {
-        _ <- EitherT.liftF(userService.add(user1))
-        _ <- EitherT.liftF(userService.add(user2))
-        _ <- EitherT.liftF(
-          ServiceFunctions.createFull(
-            user1.id,
-            fullRecipe
-          )
-        )
         ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
           recipeService.getIngredients(user2.id, fullRecipe.recipe.id)
         )
@@ -516,29 +469,23 @@ object RecipeServiceProperties extends Properties("Recipe service") {
 
   property("Update ingredient (wrong user)") = Prop.forAll(
     wrongIngredientUpdateSetupGen :| "ingredient update setup"
-  ) { wrongIngredientUpdateSetup =>
-    DBTestUtil.clearDb()
-
+  ) { setup =>
+    val recipeService = recipeServiceWith(
+      recipeContents = Seq(setup.user1.id -> setup.fullRecipe.recipe),
+      ingredientContents = setup.fullRecipe.ingredients.map(setup.fullRecipe.recipe.id -> _)
+    )
     val transformer = for {
-      _ <- EitherT.liftF(userService.add(wrongIngredientUpdateSetup.user1))
-      _ <- EitherT.liftF(userService.add(wrongIngredientUpdateSetup.user2))
-      _ <- EitherT.liftF(
-        ServiceFunctions.createFull(
-          wrongIngredientUpdateSetup.user1.id,
-          wrongIngredientUpdateSetup.fullRecipe
-        )
-      )
       result <- EitherT.liftF(
-        recipeService.updateIngredient(wrongIngredientUpdateSetup.user2.id, wrongIngredientUpdateSetup.ingredientUpdate)
+        recipeService.updateIngredient(setup.user2.id, setup.ingredientUpdate)
       )
       ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
         recipeService
-          .getIngredients(wrongIngredientUpdateSetup.user1.id, wrongIngredientUpdateSetup.fullRecipe.recipe.id)
+          .getIngredients(setup.user1.id, setup.fullRecipe.recipe.id)
       )
     } yield {
       Prop.all(
         Prop(result.isLeft) :| "Ingredient update failed",
-        (ingredients.sortBy(_.id) ?= wrongIngredientUpdateSetup.fullRecipe.ingredients.sortBy(
+        (ingredients.sortBy(_.id) ?= setup.fullRecipe.ingredients.sortBy(
           _.id
         )) :| "Ingredients after update correct"
       )
@@ -569,16 +516,11 @@ object RecipeServiceProperties extends Properties("Recipe service") {
   property("Delete ingredient (wrong user)") = Prop.forAll(
     wrongDeleteIngredientSetupGen :| "wrong delete ingredient setup"
   ) { setup =>
-    DBTestUtil.clearDb()
+    val recipeService = recipeServiceWith(
+      recipeContents = Seq(setup.user1.id -> setup.fullRecipe.recipe),
+      ingredientContents = setup.fullRecipe.ingredients.map(setup.fullRecipe.recipe.id -> _)
+    )
     val transformer = for {
-      _ <- EitherT.liftF(userService.add(setup.user1))
-      _ <- EitherT.liftF(userService.add(setup.user2))
-      _ <- EitherT.liftF(
-        ServiceFunctions.createFull(
-          setup.user1.id,
-          setup.fullRecipe
-        )
-      )
       deletionResult <- EitherT.liftF(recipeService.removeIngredient(setup.user2.id, setup.ingredientId))
       ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
         recipeService.getIngredients(setup.user1.id, setup.fullRecipe.recipe.id)
