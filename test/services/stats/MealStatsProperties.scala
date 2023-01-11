@@ -1,7 +1,7 @@
 package services.stats
 
 import algebra.ring.AdditiveSemigroup
-import cats.data.EitherT
+import cats.data.{ EitherT, NonEmptyList }
 import cats.instances.list._
 import cats.syntax.traverse._
 import config.TestConfiguration
@@ -63,7 +63,7 @@ object MealStatsProperties extends Properties("Meal stats") {
 
   private case class SetupUserAndRecipes(
       user: User,
-      fullRecipes: List[FullRecipe]
+      fullRecipes: NonEmptyList[FullRecipe]
   )
 
   private val maxNumberOfRecipesPerMeal = Natural(10)
@@ -73,7 +73,7 @@ object MealStatsProperties extends Properties("Meal stats") {
     fullRecipes <- GenUtils.nonEmptyListOfAtMost(maxNumberOfRecipesPerMeal, recipe.Gens.fullRecipeGen())
   } yield SetupUserAndRecipes(
     user = user,
-    fullRecipes = fullRecipes.toList
+    fullRecipes = fullRecipes
   )
 
   private def computeNutrientsPerMealEntry(fullRecipes: Map[RecipeId, FullRecipe])(
@@ -115,12 +115,14 @@ object MealStatsProperties extends Properties("Meal stats") {
   property("Per meal stats") = Prop.forAll(
     perMealSetupGen :| "Per meal setup"
   ) { setup =>
-    val recipeMap = setup.userAndRecipes.fullRecipes.map(fr => fr.recipe.id -> fr).toMap
+    val recipeMap = setup.userAndRecipes.fullRecipes.map(fr => fr.recipe.id -> fr).toList.toMap
     val statsService = statsServiceWith(
       mealContents = Seq(setup.userAndRecipes.user.id -> setup.fullMeal.meal),
       mealEntryContents = setup.fullMeal.mealEntries.map(setup.fullMeal.meal.id -> _),
-      recipeContents = setup.userAndRecipes.fullRecipes.map(fr => setup.userAndRecipes.user.id -> fr.recipe),
-      ingredientContents = setup.userAndRecipes.fullRecipes.flatMap { fr => fr.ingredients.map(fr.recipe.id -> _) }
+      recipeContents = setup.userAndRecipes.fullRecipes.toList.map(fr => setup.userAndRecipes.user.id -> fr.recipe),
+      ingredientContents = setup.userAndRecipes.fullRecipes.toList.flatMap { fr =>
+        fr.ingredients.map(fr.recipe.id -> _)
+      }
     )
 
     val transformer = for {
@@ -201,14 +203,15 @@ object MealStatsProperties extends Properties("Meal stats") {
       mealContents = overTimeSetup.fullMeals.map(fm => overTimeSetup.userAndRecipes.user.id -> fm.meal),
       mealEntryContents = overTimeSetup.fullMeals.flatMap(fm => fm.mealEntries.map(fm.meal.id -> _)),
       recipeContents =
-        overTimeSetup.userAndRecipes.fullRecipes.map(fr => overTimeSetup.userAndRecipes.user.id -> fr.recipe),
-      ingredientContents = overTimeSetup.userAndRecipes.fullRecipes.flatMap(fr => fr.ingredients.map(fr.recipe.id -> _))
+        overTimeSetup.userAndRecipes.fullRecipes.toList.map(fr => overTimeSetup.userAndRecipes.user.id -> fr.recipe),
+      ingredientContents =
+        overTimeSetup.userAndRecipes.fullRecipes.toList.flatMap(fr => fr.ingredients.map(fr.recipe.id -> _))
     )
 
     val mealsInInterval =
       overTimeSetup.fullMeals
         .filter(fullMeal => overTimeSetup.dateInterval.contains(fullMeal.meal.date.date))
-    val fullRecipeMap = overTimeSetup.userAndRecipes.fullRecipes.map(fr => fr.recipe.id -> fr).toMap
+    val fullRecipeMap = overTimeSetup.userAndRecipes.fullRecipes.map(fr => fr.recipe.id -> fr).toList.toMap
 
     val transformer = for {
       expectedNutrientValues <- EitherT.liftF[Future, ServerError, Map[NutrientId, Option[BigDecimal]]](
