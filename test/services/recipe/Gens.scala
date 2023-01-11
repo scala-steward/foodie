@@ -1,10 +1,10 @@
 package services.recipe
 
-import db.{FoodId, IngredientId, RecipeId}
+import db.{ FoodId, IngredientId, RecipeId }
+import io.scalaland.chimney.dsl._
 import org.scalacheck.Gen
 import services._
 import spire.math.Natural
-import io.scalaland.chimney.dsl._
 import utils.TransformerUtils.Implicits._
 
 object Gens {

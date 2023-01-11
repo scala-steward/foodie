@@ -9,12 +9,14 @@ import services.nutrient.{ Nutrient, NutrientService }
 import services.recipe._
 import db.{ FoodId, MeasureId, UserId }
 import services.user.User
+import shapeless.tag.@@
 import slick.jdbc.PostgresProfile.api._
 import spire.math.Natural
 import utils.TransformerUtils.Implicits._
 import utils.date.{ Date, SimpleDate, Time }
 
 import java.time.LocalDate
+import java.util.UUID
 
 object GenUtils {
 
@@ -112,5 +114,8 @@ object GenUtils {
     Gen.oneOf(allFoods.values)
 
   val smallBigDecimalGen: Gen[BigDecimal] = Gen.choose(BigDecimal(0.001), BigDecimal(1000))
+
+  def taggedId[Tag]: Gen[UUID @@ Tag] =
+    Gen.uuid.map(_.transformInto[UUID @@ Tag])
 
 }
