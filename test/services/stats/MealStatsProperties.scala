@@ -199,6 +199,7 @@ object MealStatsProperties extends Properties("Meal stats") {
   property("Over time stats") = Prop.forAll(
     overTimeSetupGen() :| "Over time setup"
   ) { overTimeSetup =>
+    // TODO: Add convenience functions to avoid duplication
     val statsService = statsServiceWith(
       mealContents = overTimeSetup.fullMeals.map(fm => overTimeSetup.userAndRecipes.user.id -> fm.meal),
       mealEntryContents = overTimeSetup.fullMeals.flatMap(fm => fm.mealEntries.map(fm.meal.id -> _)),

@@ -348,6 +348,7 @@ object RecipeServiceProperties extends Properties("Recipe service") {
       DBTestUtil.awaitProp(transformer)
   }
 
+  // TODO: Reuse update setup to avoid too much duplication, same goes for the other "wrong" cases.
   private case class WrongUpdateSetup(
       userId1: UserId,
       userId2: UserId,
