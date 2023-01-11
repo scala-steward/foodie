@@ -47,20 +47,27 @@ object Gens {
       numberOfServings = numberOfServings
     )
 
+  def mealEntryUpdateGen(mealEntryId: MealEntryId, recipeIds: NonEmptyList[RecipeId]): Gen[MealEntryUpdate] =
+    for {
+      recipeId         <- Gen.oneOf(recipeIds.toList)
+      numberOfServings <- GenUtils.smallBigDecimalGen
+    } yield MealEntryUpdate(
+      id = mealEntryId,
+      recipeId = recipeId,
+      numberOfServings = numberOfServings
+    )
+
   def fullMealGen(
-      recipeIds: List[RecipeId],
+      recipeIds: NonEmptyList[RecipeId],
       earliest: Int = -100000,
       latest: Int = 100000
   ): Gen[FullMeal] =
     for {
-      mealEntries <-
-        NonEmptyList
-          .fromList(recipeIds)
-          .fold(Gen.const(List.empty[MealEntry]))(nel => GenUtils.listOfAtMost(Natural(10), mealEntryGen(nel)))
-      meal <- mealGen(earliest, latest)
+      mealEntries <- GenUtils.nonEmptyListOfAtMost(Natural(10), mealEntryGen(recipeIds))
+      meal        <- mealGen(earliest, latest)
     } yield FullMeal(
       meal = meal,
-      mealEntries = mealEntries
+      mealEntries = mealEntries.toList
     )
 
 }
