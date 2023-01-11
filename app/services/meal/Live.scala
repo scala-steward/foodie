@@ -1,5 +1,6 @@
 package services.meal
 
+import cats.Applicative
 import cats.data.OptionT
 import db.daos.meal.MealKey
 import db.generated.Tables
@@ -144,12 +145,17 @@ object Live {
         .delete(MealKey(userId, id))
         .map(_ > 0)
 
-    override def getMealEntries(userId: UserId, id: MealId)(implicit ec: ExecutionContext): DBIO[Seq[MealEntry]] =
-      ifMealExists(userId, id) {
-        mealEntryDao
-          .findAllFor(id)
-          .map(_.map(_.transformInto[MealEntry]))
-      }
+    override def getMealEntries(userId: UserId, id: MealId)(implicit ec: ExecutionContext): DBIO[Seq[MealEntry]] = {
+      for {
+        exists <- mealDao.exists(MealKey(userId, id))
+        mealEntries <-
+          if (exists)
+            mealEntryDao
+              .findAllFor(id)
+              .map(_.map(_.transformInto[MealEntry]))
+          else Applicative[DBIO].pure(List.empty)
+      } yield mealEntries
+    }
 
     override def addMealEntry(
         userId: UserId,
