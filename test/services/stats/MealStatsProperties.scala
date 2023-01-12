@@ -14,7 +14,6 @@ import services._
 import services.common.RequestInterval
 import services.meal._
 import services.recipe.FullRecipe
-import services.user.User
 import spire.compat._
 import spire.implicits._
 import spire.math.interval._
@@ -29,18 +28,18 @@ import scala.concurrent.Future
 
 object MealStatsProperties extends Properties("Meal stats") {
 
-  private case class SetupUserAndRecipes(
-      user: User,
+  private case class SetupUserIdAndRecipes(
+      userId: UserId,
       fullRecipes: NonEmptyList[FullRecipe]
   )
 
   private val maxNumberOfRecipesPerMeal = Natural(10)
 
-  private val setupUserAndRecipesGen = for {
-    user        <- GenUtils.userWithFixedPassword
+  private val setupUserIdAndRecipesGen = for {
+    userId      <- GenUtils.taggedId[UserTag]
     fullRecipes <- GenUtils.nonEmptyListOfAtMost(maxNumberOfRecipesPerMeal, recipe.Gens.fullRecipeGen())
-  } yield SetupUserAndRecipes(
-    user = user,
+  } yield SetupUserIdAndRecipes(
+    userId = userId,
     fullRecipes = fullRecipes
   )
 
@@ -67,13 +66,13 @@ object MealStatsProperties extends Properties("Meal stats") {
   }
 
   private case class PerMealSetup(
-      userAndRecipes: SetupUserAndRecipes,
+      userAndRecipes: SetupUserIdAndRecipes,
       fullMeal: FullMeal
   )
 
   private val perMealSetupGen: Gen[PerMealSetup] =
     for {
-      userAndRecipeSetup <- setupUserAndRecipesGen
+      userAndRecipeSetup <- setupUserIdAndRecipesGen
       fullMeal           <- meal.Gens.fullMealGen(userAndRecipeSetup.fullRecipes.map(_.recipe.id))
     } yield PerMealSetup(
       userAndRecipes = userAndRecipeSetup,
@@ -85,12 +84,11 @@ object MealStatsProperties extends Properties("Meal stats") {
   ) { setup =>
     val recipeMap = setup.userAndRecipes.fullRecipes.map(fr => fr.recipe.id -> fr).toList.toMap
     val statsService = ServiceFunctions.statsServiceWith(
-      mealContents = Seq(setup.userAndRecipes.user.id -> setup.fullMeal.meal),
-      mealEntryContents = setup.fullMeal.mealEntries.map(setup.fullMeal.meal.id -> _),
-      recipeContents = setup.userAndRecipes.fullRecipes.toList.map(fr => setup.userAndRecipes.user.id -> fr.recipe),
-      ingredientContents = setup.userAndRecipes.fullRecipes.toList.flatMap { fr =>
-        fr.ingredients.map(fr.recipe.id -> _)
-      }
+      mealContents = ContentsUtil.Meal.from(setup.userAndRecipes.userId, Seq(setup.fullMeal.meal)),
+      mealEntryContents = ContentsUtil.MealEntry.from(setup.fullMeal),
+      recipeContents =
+        ContentsUtil.Recipe.from(setup.userAndRecipes.userId, setup.userAndRecipes.fullRecipes.toList.map(_.recipe)),
+      ingredientContents = setup.userAndRecipes.fullRecipes.toList.flatMap(ContentsUtil.Ingredient.from)
     )
 
     val transformer = for {
@@ -104,7 +102,7 @@ object MealStatsProperties extends Properties("Meal stats") {
           )
       )
       nutrientMapFromService <- EitherT.liftF[Future, ServerError, NutrientAmountMap](
-        statsService.nutrientsOfMeal(setup.userAndRecipes.user.id, setup.fullMeal.meal.id)
+        statsService.nutrientsOfMeal(setup.userAndRecipes.userId, setup.fullMeal.meal.id)
       )
     } yield {
       val propsPerNutrient = GenUtils.allNutrients.map { nutrient =>
@@ -133,7 +131,7 @@ object MealStatsProperties extends Properties("Meal stats") {
   }
 
   private case class OverTimeSetup(
-      userAndRecipes: SetupUserAndRecipes,
+      userIdAndRecipes: SetupUserIdAndRecipes,
       dateInterval: Interval[Date],
       fullMeals: List[FullMeal]
   )
@@ -154,11 +152,11 @@ object MealStatsProperties extends Properties("Meal stats") {
 
     for {
       dateInterval       <- dateIntervalGen(earliest, latest)
-      userAndRecipeSetup <- setupUserAndRecipesGen
+      userAndRecipeSetup <- setupUserIdAndRecipesGen
       fullMeals <-
         Gen.nonEmptyListOf(meal.Gens.fullMealGen(userAndRecipeSetup.fullRecipes.map(_.recipe.id), earliest, latest))
     } yield OverTimeSetup(
-      userAndRecipes = userAndRecipeSetup,
+      userIdAndRecipes = userAndRecipeSetup,
       dateInterval = dateInterval,
       fullMeals = fullMeals
     )
@@ -166,21 +164,19 @@ object MealStatsProperties extends Properties("Meal stats") {
 
   property("Over time stats") = Prop.forAll(
     overTimeSetupGen() :| "Over time setup"
-  ) { overTimeSetup =>
-    // TODO: Add convenience functions to avoid duplication
+  ) { setup =>
     val statsService = ServiceFunctions.statsServiceWith(
-      mealContents = overTimeSetup.fullMeals.map(fm => overTimeSetup.userAndRecipes.user.id -> fm.meal),
-      mealEntryContents = overTimeSetup.fullMeals.flatMap(fm => fm.mealEntries.map(fm.meal.id -> _)),
-      recipeContents =
-        overTimeSetup.userAndRecipes.fullRecipes.toList.map(fr => overTimeSetup.userAndRecipes.user.id -> fr.recipe),
-      ingredientContents =
-        overTimeSetup.userAndRecipes.fullRecipes.toList.flatMap(fr => fr.ingredients.map(fr.recipe.id -> _))
+      mealContents = ContentsUtil.Meal.from(setup.userIdAndRecipes.userId, setup.fullMeals.map(_.meal)),
+      mealEntryContents = setup.fullMeals.flatMap(ContentsUtil.MealEntry.from),
+      recipeContents = ContentsUtil.Recipe
+        .from(setup.userIdAndRecipes.userId, setup.userIdAndRecipes.fullRecipes.toList.map(_.recipe)),
+      ingredientContents = setup.userIdAndRecipes.fullRecipes.toList.flatMap(ContentsUtil.Ingredient.from)
     )
 
     val mealsInInterval =
-      overTimeSetup.fullMeals
-        .filter(fullMeal => overTimeSetup.dateInterval.contains(fullMeal.meal.date.date))
-    val fullRecipeMap = overTimeSetup.userAndRecipes.fullRecipes.map(fr => fr.recipe.id -> fr).toList.toMap
+      setup.fullMeals
+        .filter(fullMeal => setup.dateInterval.contains(fullMeal.meal.date.date))
+    val fullRecipeMap = setup.userIdAndRecipes.fullRecipes.map(fr => fr.recipe.id -> fr).toList.toMap
 
     val transformer = for {
       expectedNutrientValues <- EitherT.liftF[Future, ServerError, Map[NutrientId, Option[BigDecimal]]](
@@ -195,8 +191,8 @@ object MealStatsProperties extends Properties("Meal stats") {
       )
       statsFromService <- EitherT.liftF[Future, ServerError, Stats](
         statsService.nutrientsOverTime(
-          overTimeSetup.userAndRecipes.user.id,
-          toRequestInterval(overTimeSetup.dateInterval)
+          setup.userIdAndRecipes.userId,
+          toRequestInterval(setup.dateInterval)
         )
       )
     } yield {
@@ -229,8 +225,8 @@ object MealStatsProperties extends Properties("Meal stats") {
   }
 
   private case class RestrictedOverTimeSetup(
-      user1: User,
-      user2: User,
+      userId1: UserId,
+      userId2: UserId,
       meals1: List[Meal],
       meals2: List[Meal],
       dateInterval: Interval[Date]
@@ -238,13 +234,14 @@ object MealStatsProperties extends Properties("Meal stats") {
 
   private val restrictedOverTimeSetupGen: Gen[RestrictedOverTimeSetup] =
     for {
-      (user1, user2) <- GenUtils.twoUsersGen
-      meals1         <- Gen.nonEmptyListOf(Gens.mealGen())
-      meals2         <- Gen.nonEmptyListOf(Gens.mealGen())
-      dateInterval   <- dateIntervalGen(-10000, 10000)
+      userId1      <- GenUtils.taggedId[UserTag]
+      userId2      <- GenUtils.taggedId[UserTag]
+      meals1       <- Gen.nonEmptyListOf(Gens.mealGen())
+      meals2       <- Gen.nonEmptyListOf(Gens.mealGen())
+      dateInterval <- dateIntervalGen(-10000, 10000)
     } yield RestrictedOverTimeSetup(
-      user1 = user1,
-      user2 = user2,
+      userId1 = userId1,
+      userId2 = userId2,
       meals1 = meals1,
       meals2 = meals2,
       dateInterval = dateInterval
@@ -255,10 +252,8 @@ object MealStatsProperties extends Properties("Meal stats") {
     restrictedOverTimeSetupGen :| "restricted over time setup"
   ) { setup =>
     val statsService = ServiceFunctions.statsServiceWith(
-      mealContents = Seq(
-        setup.meals1.map(setup.user1.id -> _),
-        setup.meals2.map(setup.user2.id -> _)
-      ).flatten,
+      mealContents = ContentsUtil.Meal.from(setup.userId1, setup.meals1) ++
+        ContentsUtil.Meal.from(setup.userId2, setup.meals2),
       mealEntryContents = Seq.empty,
       recipeContents = Seq.empty,
       ingredientContents = Seq.empty
@@ -270,7 +265,7 @@ object MealStatsProperties extends Properties("Meal stats") {
       for {
         statsFromService <- EitherT.liftF[Future, ServerError, Stats](
           statsService.nutrientsOverTime(
-            setup.user1.id,
+            setup.userId1,
             toRequestInterval(setup.dateInterval)
           )
         )
