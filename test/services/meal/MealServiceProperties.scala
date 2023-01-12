@@ -8,7 +8,7 @@ import org.scalacheck.Prop.AnyOperators
 import org.scalacheck.{ Gen, Prop, Properties, Test }
 import play.api.db.slick.DatabaseConfigProvider
 import services.common.RequestInterval
-import services.{ DBTestUtil, GenUtils, TestUtil }
+import services.{ ContentsUtil, DBTestUtil, GenUtils, TestUtil }
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -31,9 +31,6 @@ object MealServiceProperties extends Properties("Meal service") {
         mealEntryDao = DAOTestInstance.MealEntry.instanceFrom(mealEntryContents)
       )
     )
-
-  private def mealEntriesContentFrom(fullMeal: FullMeal): Seq[(MealId, MealEntry)] =
-    fullMeal.mealEntries.map(fullMeal.meal.id -> _)
 
   property("Creation") = Prop.forAll(
     GenUtils.taggedId[UserTag] :| "userId",
@@ -65,7 +62,7 @@ object MealServiceProperties extends Properties("Meal service") {
     Gens.mealGen() :| "meal creation"
   ) { (userId, meal) =>
     val mealService = mealServiceWith(
-      mealContents = Seq(userId -> meal),
+      mealContents = ContentsUtil.Meal.from(userId, Seq(meal)),
       mealEntryContents = Seq.empty
     )
     val transformer = for {
@@ -73,9 +70,7 @@ object MealServiceProperties extends Properties("Meal service") {
         mealService.getMeal(userId, meal.id),
         ErrorContext.Meal.NotFound.asServerError
       )
-    } yield {
-      fetchedMeal ?= meal
-    }
+    } yield fetchedMeal ?= meal
 
     DBTestUtil.awaitProp(transformer)
   }
@@ -85,16 +80,14 @@ object MealServiceProperties extends Properties("Meal service") {
     Gen.listOf(Gens.mealGen()) :| "meal creations"
   ) { (userId, meals) =>
     val mealService = mealServiceWith(
-      mealContents = meals.map(userId -> _),
+      mealContents = ContentsUtil.Meal.from(userId, meals),
       mealEntryContents = Seq.empty
     )
     val transformer = for {
       fetchedMeals <- EitherT.liftF[Future, ServerError, Seq[Meal]](
         mealService.allMeals(userId, RequestInterval(None, None))
       )
-    } yield {
-      fetchedMeals.sortBy(_.id) ?= meals.sortBy(_.id)
-    }
+    } yield fetchedMeals.sortBy(_.id) ?= meals.sortBy(_.id)
 
     DBTestUtil.awaitProp(transformer)
   }
@@ -120,7 +113,7 @@ object MealServiceProperties extends Properties("Meal service") {
     updateSetupGen :| "update setup"
   ) { setup =>
     val mealService = mealServiceWith(
-      mealContents = Seq(setup.userId -> setup.meal),
+      mealContents = ContentsUtil.Meal.from(setup.userId, Seq(setup.meal)),
       mealEntryContents = Seq.empty
     )
     val transformer = for {
@@ -145,18 +138,16 @@ object MealServiceProperties extends Properties("Meal service") {
     Gens.mealGen() :| "meal creation"
   ) { (userId, meal) =>
     val mealService = mealServiceWith(
-      mealContents = Seq(userId -> meal),
+      mealContents = ContentsUtil.Meal.from(userId, Seq(meal)),
       mealEntryContents = Seq.empty
     )
     val transformer = for {
       result  <- EitherT.liftF[Future, ServerError, Boolean](mealService.deleteMeal(userId, meal.id))
       fetched <- EitherT.liftF[Future, ServerError, Option[Meal]](mealService.getMeal(userId, meal.id))
-    } yield {
-      Prop.all(
-        Prop(result) :| "Deletion successful",
-        Prop(fetched.isEmpty) :| "Meal should be deleted"
-      )
-    }
+    } yield Prop.all(
+      Prop(result) :| "Deletion successful",
+      Prop(fetched.isEmpty) :| "Meal should be deleted"
+    )
 
     DBTestUtil.awaitProp(transformer)
   }
@@ -186,8 +177,8 @@ object MealServiceProperties extends Properties("Meal service") {
     addMealEntrySetupGen :| "setup"
   ) { setup =>
     val mealService = mealServiceWith(
-      mealContents = Seq(setup.userId -> setup.fullMeal.meal),
-      mealEntryContents = mealEntriesContentFrom(setup.fullMeal)
+      mealContents = ContentsUtil.Meal.from(setup.userId, Seq(setup.fullMeal.meal)),
+      mealEntryContents = ContentsUtil.MealEntry.from(setup.fullMeal)
     )
     val transformer = for {
       mealEntry <- EitherT(mealService.addMealEntry(setup.userId, setup.mealEntryCreation))
@@ -220,16 +211,14 @@ object MealServiceProperties extends Properties("Meal service") {
     readMealEntriesSetupGen :| "setup"
   ) { setup =>
     val mealService = mealServiceWith(
-      mealContents = Seq(setup.userId -> setup.fullMeal.meal),
-      mealEntryContents = mealEntriesContentFrom(setup.fullMeal)
+      mealContents = ContentsUtil.Meal.from(setup.userId, Seq(setup.fullMeal.meal)),
+      mealEntryContents = ContentsUtil.MealEntry.from(setup.fullMeal)
     )
     val transformer = for {
       mealEntries <- EitherT.liftF[Future, ServerError, Seq[MealEntry]](
         mealService.getMealEntries(setup.userId, setup.fullMeal.meal.id)
       )
-    } yield {
-      mealEntries.sortBy(_.id) ?= setup.fullMeal.mealEntries.sortBy(_.id)
-    }
+    } yield mealEntries.sortBy(_.id) ?= setup.fullMeal.mealEntries.sortBy(_.id)
 
     DBTestUtil.awaitProp(transformer)
   }
@@ -258,8 +247,8 @@ object MealServiceProperties extends Properties("Meal service") {
     updateMealEntrySetupGen :| "setup"
   ) { setup =>
     val mealService = mealServiceWith(
-      mealContents = Seq(setup.userId -> setup.fullMeal.meal),
-      mealEntryContents = mealEntriesContentFrom(setup.fullMeal)
+      mealContents = ContentsUtil.Meal.from(setup.userId, Seq(setup.fullMeal.meal)),
+      mealEntryContents = ContentsUtil.MealEntry.from(setup.fullMeal)
     )
     val transformer = for {
       updatedMealEntry <- EitherT(mealService.updateMealEntry(setup.userId, setup.mealEntryUpdate))
@@ -306,8 +295,8 @@ object MealServiceProperties extends Properties("Meal service") {
     deleteMealEntrySetupGen :| "setup"
   ) { setup =>
     val mealService = mealServiceWith(
-      mealContents = Seq(setup.userId -> setup.fullMeal.meal),
-      mealEntryContents = mealEntriesContentFrom(setup.fullMeal)
+      mealContents = ContentsUtil.Meal.from(setup.userId, Seq(setup.fullMeal.meal)),
+      mealEntryContents = ContentsUtil.MealEntry.from(setup.fullMeal)
     )
     val transformer = for {
       deletionResult <- EitherT.liftF(mealService.removeMealEntry(setup.userId, setup.mealEntryId))
@@ -338,9 +327,7 @@ object MealServiceProperties extends Properties("Meal service") {
       val transformer = for {
         createdMeal <- EitherT(mealService.createMeal(userId1, mealCreation))
         fetchedMeal <- EitherT.liftF[Future, ServerError, Option[Meal]](mealService.getMeal(userId2, createdMeal.id))
-      } yield {
-        Prop(fetchedMeal.isEmpty) :| "Access denied"
-      }
+      } yield Prop(fetchedMeal.isEmpty) :| "Access denied"
 
       DBTestUtil.awaitProp(transformer)
   }
@@ -352,16 +339,14 @@ object MealServiceProperties extends Properties("Meal service") {
   ) {
     case (userId1, userId2, meal) =>
       val mealService = mealServiceWith(
-        mealContents = Seq(userId1 -> meal),
+        mealContents = ContentsUtil.Meal.from(userId1, Seq(meal)),
         mealEntryContents = Seq.empty
       )
       val transformer = for {
         fetchedMeal <- EitherT.liftF[Future, ServerError, Option[Meal]](
           mealService.getMeal(userId2, meal.id)
         )
-      } yield {
-        Prop(fetchedMeal.isEmpty) :| "Access denied"
-      }
+      } yield Prop(fetchedMeal.isEmpty) :| "Access denied"
 
       DBTestUtil.awaitProp(transformer)
   }
@@ -373,16 +358,14 @@ object MealServiceProperties extends Properties("Meal service") {
   ) {
     case (userId1, userId2, meals) =>
       val mealService = mealServiceWith(
-        mealContents = meals.map(userId1 -> _),
+        mealContents = ContentsUtil.Meal.from(userId1, meals),
         mealEntryContents = Seq.empty
       )
       val transformer = for {
         fetchedMeals <- EitherT.liftF[Future, ServerError, Seq[Meal]](
           mealService.allMeals(userId2, RequestInterval(None, None))
         )
-      } yield {
-        fetchedMeals ?= Seq.empty
-      }
+      } yield fetchedMeals ?= Seq.empty
 
       DBTestUtil.awaitProp(transformer)
   }
@@ -411,16 +394,14 @@ object MealServiceProperties extends Properties("Meal service") {
     wrongUpdateSetupGen :| "setup"
   ) { setup =>
     val mealService = mealServiceWith(
-      mealContents = Seq(setup.userId1 -> setup.meal),
+      mealContents = ContentsUtil.Meal.from(setup.userId1, Seq(setup.meal)),
       mealEntryContents = Seq.empty
     )
     val transformer = for {
       updatedMeal <- EitherT.liftF[Future, ServerError, ServerError.Or[Meal]](
         mealService.updateMeal(setup.userId2, setup.mealUpdate)
       )
-    } yield {
-      Prop(updatedMeal.isLeft)
-    }
+    } yield Prop(updatedMeal.isLeft)
 
     DBTestUtil.awaitProp(transformer)
   }
@@ -437,9 +418,7 @@ object MealServiceProperties extends Properties("Meal service") {
       )
       val transformer = for {
         result <- EitherT.liftF[Future, ServerError, Boolean](mealService.deleteMeal(userId2, meal.id))
-      } yield {
-        Prop(!result) :| "Deletion failed"
-      }
+      } yield Prop(!result) :| "Deletion failed"
 
       DBTestUtil.awaitProp(transformer)
   }
@@ -449,20 +428,18 @@ object MealServiceProperties extends Properties("Meal service") {
     GenUtils.taggedId[UserTag] :| "userId2"
   ) { (setup, userId2) =>
     val mealService = mealServiceWith(
-      mealContents = Seq(setup.userId -> setup.fullMeal.meal),
-      mealEntryContents = mealEntriesContentFrom(setup.fullMeal)
+      mealContents = ContentsUtil.Meal.from(setup.userId, Seq(setup.fullMeal.meal)),
+      mealEntryContents = ContentsUtil.MealEntry.from(setup.fullMeal)
     )
     val transformer = for {
       result <- EitherT.liftF(mealService.addMealEntry(userId2, setup.mealEntryCreation))
       mealEntries <- EitherT.liftF[Future, ServerError, Seq[MealEntry]](
         mealService.getMealEntries(setup.userId, setup.fullMeal.meal.id)
       )
-    } yield {
-      Prop.all(
-        Prop(result.isLeft) :| "MealEntry addition failed",
-        mealEntries.sortBy(_.id) ?= setup.fullMeal.mealEntries.sortBy(_.id)
-      )
-    }
+    } yield Prop.all(
+      Prop(result.isLeft) :| "MealEntry addition failed",
+      mealEntries.sortBy(_.id) ?= setup.fullMeal.mealEntries.sortBy(_.id)
+    )
 
     DBTestUtil.awaitProp(transformer)
   }
@@ -472,16 +449,14 @@ object MealServiceProperties extends Properties("Meal service") {
     GenUtils.taggedId[UserTag] :| "userId2"
   ) { (setup, userId2) =>
     val mealService = mealServiceWith(
-      mealContents = Seq(setup.userId -> setup.fullMeal.meal),
-      mealEntryContents = mealEntriesContentFrom(setup.fullMeal)
+      mealContents = ContentsUtil.Meal.from(setup.userId, Seq(setup.fullMeal.meal)),
+      mealEntryContents = ContentsUtil.MealEntry.from(setup.fullMeal)
     )
     val transformer = for {
       mealEntries <- EitherT.liftF[Future, ServerError, Seq[MealEntry]](
         mealService.getMealEntries(userId2, setup.fullMeal.meal.id)
       )
-    } yield {
-      mealEntries ?= List.empty
-    }
+    } yield mealEntries ?= List.empty
 
     DBTestUtil.awaitProp(transformer)
   }
@@ -491,22 +466,20 @@ object MealServiceProperties extends Properties("Meal service") {
     GenUtils.taggedId[UserTag] :| "userId2"
   ) { (setup, userId2) =>
     val mealService = mealServiceWith(
-      mealContents = Seq(setup.userId -> setup.fullMeal.meal),
-      mealEntryContents = mealEntriesContentFrom(setup.fullMeal)
+      mealContents = ContentsUtil.Meal.from(setup.userId, Seq(setup.fullMeal.meal)),
+      mealEntryContents = ContentsUtil.MealEntry.from(setup.fullMeal)
     )
     val transformer = for {
       result <- EitherT.liftF(mealService.updateMealEntry(userId2, setup.mealEntryUpdate))
       mealEntries <- EitherT.liftF[Future, ServerError, Seq[MealEntry]](
         mealService.getMealEntries(setup.userId, setup.fullMeal.meal.id)
       )
-    } yield {
-      Prop.all(
-        Prop(result.isLeft) :| "Meal entry update failed",
-        (mealEntries.sortBy(_.id) ?= setup.fullMeal.mealEntries.sortBy(
-          _.id
-        )) :| "Meal entries after update correct"
-      )
-    }
+    } yield Prop.all(
+      Prop(result.isLeft) :| "Meal entry update failed",
+      (mealEntries.sortBy(_.id) ?= setup.fullMeal.mealEntries.sortBy(
+        _.id
+      )) :| "Meal entries after update correct"
+    )
 
     DBTestUtil.awaitProp(transformer)
   }
@@ -516,8 +489,8 @@ object MealServiceProperties extends Properties("Meal service") {
     GenUtils.taggedId[UserTag] :| "userId2"
   ) { (setup, userId2) =>
     val mealService = mealServiceWith(
-      mealContents = Seq(setup.userId -> setup.fullMeal.meal),
-      mealEntryContents = mealEntriesContentFrom(setup.fullMeal)
+      mealContents = ContentsUtil.Meal.from(setup.userId, Seq(setup.fullMeal.meal)),
+      mealEntryContents = ContentsUtil.MealEntry.from(setup.fullMeal)
     )
     val transformer = for {
       deletionResult <- EitherT.liftF(mealService.removeMealEntry(userId2, setup.mealEntryId))
@@ -533,7 +506,6 @@ object MealServiceProperties extends Properties("Meal service") {
     }
 
     DBTestUtil.awaitProp(transformer)
-
   }
 
   override def overrideParameters(p: Test.Parameters): Test.Parameters =
