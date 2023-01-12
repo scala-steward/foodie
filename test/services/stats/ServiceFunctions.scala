@@ -5,8 +5,13 @@ import cats.syntax.traverse._
 import db._
 import db.generated.Tables
 import io.scalaland.chimney.dsl._
+import play.api.db.slick.DatabaseConfigProvider
+import services.complex.food.ComplexFoodService
+import services.complex.ingredient.ComplexIngredientService
+import services.meal.{ Meal, MealEntry }
+import services.nutrient.NutrientService
 import services.recipe._
-import services.{ DBTestUtil, GenUtils }
+import services.{ DBTestUtil, GenUtils, TestUtil }
 import slick.jdbc.PostgresProfile.api._
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
@@ -15,6 +20,36 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 object ServiceFunctions {
+
+  private val nutrientServiceCompanion          = TestUtil.injector.instanceOf[NutrientService.Companion]
+  private val complexFoodServiceCompanion       = TestUtil.injector.instanceOf[ComplexFoodService.Companion]
+  private val complexIngredientServiceCompanion = TestUtil.injector.instanceOf[ComplexIngredientService.Companion]
+  private val dbConfigProvider                  = TestUtil.injector.instanceOf[DatabaseConfigProvider]
+
+  def statsServiceWith(
+      mealContents: Seq[(UserId, Meal)],
+      mealEntryContents: Seq[(MealId, MealEntry)],
+      recipeContents: Seq[(UserId, Recipe)],
+      ingredientContents: Seq[(RecipeId, Ingredient)]
+  ): StatsService = {
+    new services.stats.Live(
+      dbConfigProvider = dbConfigProvider,
+      companion = new services.stats.Live.Companion(
+        mealService = new services.meal.Live.Companion(
+          mealDao = DAOTestInstance.Meal.instanceFrom(mealContents),
+          mealEntryDao = DAOTestInstance.MealEntry.instanceFrom(mealEntryContents)
+        ),
+        recipeService = new services.recipe.Live.Companion(
+          recipeDao = DAOTestInstance.Recipe.instanceFrom(recipeContents),
+          ingredientDao = DAOTestInstance.Ingredient.instanceFrom(ingredientContents)
+        ),
+        // TODO: These services should also be mocked.
+        nutrientService = nutrientServiceCompanion,
+        complexFoodService = complexFoodServiceCompanion,
+        complexIngredientService = complexIngredientServiceCompanion
+      )
+    )
+  }
 
   def computeNutrientAmount(
       nutrientId: NutrientId,

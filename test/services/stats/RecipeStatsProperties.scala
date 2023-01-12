@@ -2,31 +2,32 @@ package services.stats
 
 import cats.data.EitherT
 import config.TestConfiguration
+import db.UserTag
 import errors.ErrorContext
 import org.scalacheck.Prop._
 import org.scalacheck.{ Prop, Properties, Test }
 import services._
-import services.user.UserService
 import spire.math.Natural
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object RecipeStatsProperties extends Properties("Recipe stats") {
 
-  private val userService  = TestUtil.injector.instanceOf[UserService]
-  private val statsService = TestUtil.injector.instanceOf[StatsService]
-
   property("Per serving stats") = Prop.forAll(
-    GenUtils.userWithFixedPassword :| "User",
+    GenUtils.taggedId[UserTag] :| "UserId",
     recipe.Gens.fullRecipeGen() :| "Full recipe"
-  ) { (user, fullRecipe) =>
-    DBTestUtil.clearDb()
+  ) { (userId, fullRecipe) =>
+    val statsService = ServiceFunctions.statsServiceWith(
+      mealContents = Seq.empty,
+      mealEntryContents = Seq.empty,
+      recipeContents = ContentsUtil.Recipe.from(userId, Seq(fullRecipe.recipe)),
+      ingredientContents = ContentsUtil.Ingredient.from(fullRecipe)
+    )
+
     val transformer = for {
-      _                      <- EitherT.liftF(userService.add(user))
-      _                      <- EitherT.liftF(services.recipe.ServiceFunctions.createFull(user.id, fullRecipe))
       expectedNutrientValues <- EitherT.liftF(ServiceFunctions.computeNutrientAmounts(fullRecipe))
       nutrientMapFromService <- EitherT.fromOptionF(
-        statsService.nutrientsOfRecipe(user.id, fullRecipe.recipe.id),
+        statsService.nutrientsOfRecipe(userId, fullRecipe.recipe.id),
         ErrorContext.Recipe.NotFound.asServerError
       )
     } yield {
