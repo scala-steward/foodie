@@ -13,15 +13,24 @@ import scala.concurrent.Future
 
 object RecipeServiceProperties extends Properties("Recipe service") {
 
+  def companionWith(
+      recipeContents: Seq[(UserId, Recipe)],
+      ingredientContents: Seq[(RecipeId, Ingredient)]
+  ): services.recipe.Live.Companion =
+    new services.recipe.Live.Companion(
+      recipeDao = DAOTestInstance.Recipe.instanceFrom(recipeContents),
+      ingredientDao = DAOTestInstance.Ingredient.instanceFrom(ingredientContents)
+    )
+
   def recipeServiceWith(
       recipeContents: Seq[(UserId, Recipe)],
       ingredientContents: Seq[(RecipeId, Ingredient)]
   ): RecipeService =
     new services.recipe.Live(
       dbConfigProvider = TestUtil.databaseConfigProvider,
-      companion = new services.recipe.Live.Companion(
-        recipeDao = DAOTestInstance.Recipe.instanceFrom(recipeContents),
-        ingredientDao = DAOTestInstance.Ingredient.instanceFrom(ingredientContents)
+      companion = companionWith(
+        recipeContents = recipeContents,
+        ingredientContents = ingredientContents
       )
     )
 

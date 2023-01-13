@@ -11,6 +11,7 @@ import db.daos.session.SessionKey
 import db.generated.Tables
 import io.scalaland.chimney.dsl._
 import services.common.RequestInterval
+import services.complex.food.ComplexFoodIncoming
 import services.meal.{ Meal, MealEntry }
 import services.recipe.{ Ingredient, Recipe }
 import slick.jdbc.PostgresProfile.api._
@@ -80,6 +81,14 @@ object DAOTestInstance {
           }
 
       }
+
+    def instanceFrom(contents: Seq[(RecipeId, ComplexFoodIncoming)]): db.daos.complexFood.DAO =
+      instance(
+        contents.map {
+          case (recipeId, complexFoodIncoming) =>
+            recipeId -> complexFoodIncoming.transformInto[Tables.ComplexFoodRow]
+        }
+      )
 
   }
 
