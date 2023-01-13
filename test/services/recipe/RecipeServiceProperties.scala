@@ -6,7 +6,6 @@ import db._
 import errors.{ ErrorContext, ServerError }
 import org.scalacheck.Prop.AnyOperators
 import org.scalacheck.{ Gen, Prop, Properties, Test }
-import play.api.db.slick.DatabaseConfigProvider
 import services.{ ContentsUtil, DBTestUtil, GenUtils, TestUtil }
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -14,14 +13,12 @@ import scala.concurrent.Future
 
 object RecipeServiceProperties extends Properties("Recipe service") {
 
-  private val dbConfigProvider = TestUtil.injector.instanceOf[DatabaseConfigProvider]
-
-  private def recipeServiceWith(
+  def recipeServiceWith(
       recipeContents: Seq[(UserId, Recipe)],
       ingredientContents: Seq[(RecipeId, Ingredient)]
   ): RecipeService =
     new services.recipe.Live(
-      dbConfigProvider = dbConfigProvider,
+      dbConfigProvider = TestUtil.databaseConfigProvider,
       companion = new services.recipe.Live.Companion(
         recipeDao = DAOTestInstance.Recipe.instanceFrom(recipeContents),
         ingredientDao = DAOTestInstance.Ingredient.instanceFrom(ingredientContents)

@@ -5,7 +5,6 @@ import cats.syntax.traverse._
 import db._
 import db.generated.Tables
 import io.scalaland.chimney.dsl._
-import play.api.db.slick.DatabaseConfigProvider
 import services.complex.food.ComplexFoodService
 import services.complex.ingredient.ComplexIngredientService
 import services.meal.{ Meal, MealEntry }
@@ -24,7 +23,6 @@ object ServiceFunctions {
   private val nutrientServiceCompanion          = TestUtil.injector.instanceOf[NutrientService.Companion]
   private val complexFoodServiceCompanion       = TestUtil.injector.instanceOf[ComplexFoodService.Companion]
   private val complexIngredientServiceCompanion = TestUtil.injector.instanceOf[ComplexIngredientService.Companion]
-  private val dbConfigProvider                  = TestUtil.injector.instanceOf[DatabaseConfigProvider]
 
   def statsServiceWith(
       mealContents: Seq[(UserId, Meal)],
@@ -33,7 +31,7 @@ object ServiceFunctions {
       ingredientContents: Seq[(RecipeId, Ingredient)]
   ): StatsService = {
     new services.stats.Live(
-      dbConfigProvider = dbConfigProvider,
+      dbConfigProvider = TestUtil.databaseConfigProvider,
       companion = new services.stats.Live.Companion(
         mealService = new services.meal.Live.Companion(
           mealDao = DAOTestInstance.Meal.instanceFrom(mealContents),

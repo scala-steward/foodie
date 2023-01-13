@@ -4,17 +4,15 @@ import cats.data.EitherT
 import db.generated.Tables
 import errors.ServerError
 import org.scalacheck.Prop
-import play.api.db.slick.DatabaseConfigProvider
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
 
-import scala.concurrent.{ Await, ExecutionContext, Future }
-import scala.concurrent.duration.{ Duration, _ }
+import scala.concurrent.duration.{Duration, _}
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 object DBTestUtil {
 
-  val defaultAwaitTimeout: Duration  = 2.minutes
-  private val databaseConfigProvider = TestUtil.injector.instanceOf[DatabaseConfigProvider]
+  val defaultAwaitTimeout: Duration = 2.minutes
 
   def clearDb(): Unit =
     await(
@@ -28,7 +26,7 @@ object DBTestUtil {
     )
 
   def dbRun[A](action: DBIO[A]): Future[A] =
-    databaseConfigProvider
+    TestUtil.databaseConfigProvider
       .get[PostgresProfile]
       .db
       .run(action)
