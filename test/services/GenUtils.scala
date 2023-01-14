@@ -1,5 +1,6 @@
 package services
 
+import cats.{ Monad, StackSafeMonad }
 import cats.data.NonEmptyList
 import db.generated.Tables
 import io.scalaland.chimney.dsl._
@@ -19,6 +20,16 @@ import java.time.LocalDate
 import java.util.UUID
 
 object GenUtils {
+
+  object implicits {
+
+    implicit val genMonad: Monad[Gen] = new Monad[Gen] with StackSafeMonad[Gen] {
+      override def pure[A](x: A): Gen[A] = Gen.const(x)
+
+      override def flatMap[A, B](fa: Gen[A])(f: A => Gen[B]): Gen[B] = fa.flatMap(f)
+    }
+
+  }
 
   private val recipeService   = TestUtil.injector.instanceOf[RecipeService]
   private val nutrientService = TestUtil.injector.instanceOf[NutrientService]
@@ -55,6 +66,18 @@ object GenUtils {
     if (seq.isEmpty)
       Gen.const(None)
     else Gen.option(Gen.oneOf(seq))
+
+  def subset[A](collection: Iterable[A]): Gen[List[A]] =
+    for {
+      size   <- Gen.choose(0, collection.size)
+      subset <- Gen.pick(size, collection)
+    } yield subset.distinct.toList
+
+  def nonEmptySubset[A](nonEmptyList: NonEmptyList[A]): Gen[NonEmptyList[A]] =
+    for {
+      size   <- Gen.choose(1, nonEmptyList.size)
+      subset <- Gen.pick(size, nonEmptyList.toList)
+    } yield NonEmptyList.fromListUnsafe(subset.distinct.toList)
 
   def listOfAtMost[A](n: Natural, gen: Gen[A]): Gen[List[A]] =
     Gen

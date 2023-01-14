@@ -1,10 +1,18 @@
 package services
 
 import db.{ MealId, RecipeId, UserId }
+import services.complex.food.ComplexFoodIncoming
 import services.meal.{ FullMeal, Meal, MealEntry }
 import services.recipe.{ FullRecipe, Ingredient, Recipe }
 
 object ContentsUtil {
+
+  object ComplexFood {
+
+    def from(complexFoods: Seq[ComplexFoodIncoming]): Seq[(RecipeId, ComplexFoodIncoming)] =
+      complexFoods.map(complexFood => complexFood.recipeId -> complexFood)
+
+  }
 
   object Ingredient {
 
