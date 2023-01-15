@@ -41,6 +41,9 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
       )
     )
 
+  private def toComplexFood(complexFoodIncoming: ComplexFoodIncoming, recipe: Recipe): ComplexFood =
+    (complexFoodIncoming.transformInto[Tables.ComplexFoodRow], recipe).transformInto[ComplexFood]
+
   private case class SetupBase(
       userId: UserId,
       recipes: Seq[Recipe],
@@ -82,8 +85,7 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
       all <- complexFoodService.all(setup.userId)
     } yield {
       val expected = setup.complexFoods.map { complexFoodIncoming =>
-        (complexFoodIncoming.transformInto[Tables.ComplexFoodRow], recipeMap(complexFoodIncoming.recipeId))
-          .transformInto[ComplexFood]
+        toComplexFood(complexFoodIncoming, recipeMap(complexFoodIncoming.recipeId))
       }
       all.sortBy(_.recipeId) ?= expected.sortBy(_.recipeId)
     }
@@ -127,14 +129,63 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
         ErrorContext.ComplexFood.NotFound.asServerError
       )
     } yield {
-      val expected = (preExpected.transformInto[Tables.ComplexFoodRow], recipe).transformInto[ComplexFood]
+      val expected = toComplexFood(preExpected, recipe)
       complexFood ?= expected
     }
 
     DBTestUtil.awaitProp(transformer)
   }
 
-  property("Creation") = ???
+  private case class CreationSetup(
+      userId: UserId,
+      recipe: Recipe,
+      complexFoodIncoming: ComplexFoodIncoming
+  )
+
+  private val creationSetupGen: Gen[CreationSetup] = for {
+    userId              <- GenUtils.taggedId[UserTag]
+    recipe              <- services.recipe.Gens.recipeGen
+    complexFoodIncoming <- Gens.complexFood(recipe.id)
+  } yield CreationSetup(
+    userId = userId,
+    recipe = recipe,
+    complexFoodIncoming = complexFoodIncoming
+  )
+
+  property("Creation (success)") = Prop.forAll(creationSetupGen :| "setup") { setup =>
+    val complexFoodService = complexFoodServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(setup.userId, Seq(setup.recipe)),
+      complexFoodContents = Seq.empty
+    )
+    val transformer = for {
+      inserted <- EitherT(complexFoodService.create(setup.userId, setup.complexFoodIncoming))
+      fetched <- EitherT.fromOptionF(
+        complexFoodService.get(setup.userId, setup.complexFoodIncoming.recipeId),
+        ErrorContext.ComplexFood.NotFound.asServerError
+      )
+    } yield {
+      val expected = toComplexFood(setup.complexFoodIncoming, setup.recipe)
+      Prop.all(
+        inserted ?= expected,
+        fetched ?= expected
+      )
+    }
+
+    DBTestUtil.awaitProp(transformer)
+  }
+
+  property("Creation (failure)") = Prop.forAll(creationSetupGen :| "setup") { setup =>
+    val complexFoodService = complexFoodServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(setup.userId, Seq(setup.recipe)),
+      complexFoodContents = ContentsUtil.ComplexFood.from(Seq(setup.complexFoodIncoming))
+    )
+    val propF = for {
+      created <- complexFoodService.create(setup.userId, setup.complexFoodIncoming)
+    } yield created.isLeft
+
+    DBTestUtil.await(propF)
+  }
+
   property("Update") = ???
   property("Delete") = ???
 
