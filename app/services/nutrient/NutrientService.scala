@@ -9,6 +9,7 @@ import scala.concurrent.{ ExecutionContext, Future }
 
 trait NutrientService {
 
+  // TODO: Why is this function unused? Can it be removed safely?
   def nutrientsOfFood(
       foodId: FoodId,
       measureId: Option[MeasureId],
