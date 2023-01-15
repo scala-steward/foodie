@@ -54,6 +54,10 @@ class Live @Inject() (
 
   override def delete(userId: UserId, recipeId: RecipeId): Future[Boolean] =
     db.run(companion.delete(userId, recipeId))
+      .recover {
+        case _ =>
+          false
+      }
 
 }
 
@@ -109,9 +113,11 @@ object Live {
     }
 
     override def delete(userId: UserId, recipeId: RecipeId)(implicit ec: ExecutionContext): DBIO[Boolean] =
-      dao
-        .delete(recipeId)
-        .map(_ > 0)
+      ifRecipeExists(userId, recipeId) { recipe =>
+        dao
+          .delete(recipe.id)
+          .map(_ > 0)
+      }
 
     private def ifRecipeExists[A](
         userId: UserId,
