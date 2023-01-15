@@ -40,10 +40,13 @@ abstract class DAOTestInstance[Content, Key](
   override def delete(key: Key): DBIO[Int] = fromIO(map.remove(key).fold(0)(_ => 1))
 
   override def insert(content: Content): DBIO[Content] =
-    fromIO {
-      map.update(keyOf(content), content)
-      content
-    }
+    if (map.contains(keyOf(content)))
+      DBIO.failed(new Throwable("Duplicate entry"))
+    else
+      fromIO {
+        map.update(keyOf(content), content)
+        content
+      }
 
   override def insertAll(contents: Seq[Content]): DBIO[Seq[Content]] =
     fromIO {
