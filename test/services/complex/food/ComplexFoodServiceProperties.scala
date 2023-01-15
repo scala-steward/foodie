@@ -1,12 +1,13 @@
 package services.complex.food
 
 import cats.data.{ EitherT, NonEmptyList }
+import config.TestConfiguration
 import db._
 import db.generated.Tables
 import errors.ErrorContext
 import io.scalaland.chimney.dsl._
 import org.scalacheck.Prop.AnyOperators
-import org.scalacheck.{ Gen, Prop, Properties }
+import org.scalacheck.{ Gen, Prop, Properties, Test }
 import services.GenUtils.implicits._
 import services.recipe.{ Recipe, RecipeServiceProperties }
 import services.{ ContentsUtil, DBTestUtil, GenUtils, TestUtil }
@@ -357,4 +358,8 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
 
     DBTestUtil.awaitProp(transformer)
   }
+
+  override def overrideParameters(p: Test.Parameters): Test.Parameters =
+    p.withMinSuccessfulTests(TestConfiguration.default.property.minSuccessfulTests.withoutDB)
+
 }

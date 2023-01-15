@@ -473,6 +473,6 @@ object RecipeServiceProperties extends Properties("Recipe service") {
   }
 
   override def overrideParameters(p: Test.Parameters): Test.Parameters =
-    p.withMinSuccessfulTests(TestConfiguration.default.property.minSuccessfulTests)
+    p.withMinSuccessfulTests(TestConfiguration.default.property.minSuccessfulTests.withoutDB)
 
 }
