@@ -1,16 +1,15 @@
 package services.complex.food
 
-import db.{ ComplexFoodId, DAOTestInstance, RecipeId, UserId, UserTag }
-import org.scalacheck.{ Gen, Prop, Properties }
-import services.{ ContentsUtil, DBTestUtil, GenUtils, TestUtil }
-import services.recipe.{ Ingredient, Recipe, RecipeServiceProperties }
-import Prop.AnyOperators
 import cats.data.{ EitherT, NonEmptyList }
+import db._
 import db.generated.Tables
-import io.scalaland.chimney.dsl._
-import services.stats.PropUtil
-import GenUtils.implicits._
 import errors.ErrorContext
+import io.scalaland.chimney.dsl._
+import org.scalacheck.Prop.AnyOperators
+import org.scalacheck.{ Gen, Prop, Properties }
+import services.GenUtils.implicits._
+import services.recipe.{ Recipe, RecipeServiceProperties }
+import services.{ ContentsUtil, DBTestUtil, GenUtils, TestUtil }
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -261,9 +260,101 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
     DBTestUtil.await(propF)
   }
 
-  property("Fetch all (wrong user)") = ???
-  property("Fetch single (wrong user)") = ???
-  property("Creation (wrong user)") = ???
-  property("Update (wrong user)") = ???
-  property("Delete (wrong user)") = ???
+  property("Fetch all (wrong user)") = Prop.forAll(
+    fetchAllSetupGen :| "setup",
+    GenUtils.taggedId[UserTag] :| "userId2"
+  ) { (setup, userId2) =>
+    val complexFoodService = complexFoodServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(setup.userId, setup.recipes),
+      complexFoodContents = ContentsUtil.ComplexFood.from(setup.complexFoods)
+    )
+
+    val propF = for {
+      all <- complexFoodService.all(userId2)
+    } yield {
+      all.isEmpty
+    }
+
+    DBTestUtil.await(propF)
+  }
+
+  property("Fetch single (wrong user)") = Prop.forAll(
+    fetchSingleSetupGen :| "setup",
+    GenUtils.taggedId[UserTag] :| "userId2"
+  ) { (setup, userId2) =>
+    val complexFoodService = complexFoodServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(setup.userId, setup.recipes),
+      complexFoodContents = ContentsUtil.ComplexFood.from(setup.complexFoods)
+    )
+    val propF = for {
+      result <- complexFoodService.get(userId2, setup.complexFoodId)
+    } yield result.isEmpty
+
+    DBTestUtil.await(propF)
+  }
+
+  property("Creation (wrong user)") = Prop.forAll(
+    creationSetupGen :| "setup",
+    GenUtils.taggedId[UserTag] :| "userId2"
+  ) { (setup, userId2) =>
+    val complexFoodService = complexFoodServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(setup.userId, Seq(setup.recipe)),
+      complexFoodContents = Seq.empty
+    )
+    val propF = for {
+      result <- complexFoodService.create(userId2, setup.complexFoodIncoming)
+    } yield result.isLeft
+
+    DBTestUtil.await(propF)
+  }
+
+  property("Update (wrong user)") = Prop.forAll(
+    updateSetupGen :| "setup",
+    GenUtils.taggedId[UserTag] :| "userId2"
+  ) { (setup, userId2) =>
+    val complexFoodService = complexFoodServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(setup.creationSetup.userId, Seq(setup.creationSetup.recipe)),
+      complexFoodContents = ContentsUtil.ComplexFood.from(Seq(setup.creationSetup.complexFoodIncoming))
+    )
+    val transformer = for {
+      result <- EitherT.liftF(complexFoodService.update(userId2, setup.update))
+      fetched <- EitherT.fromOptionF(
+        complexFoodService.get(setup.creationSetup.userId, setup.creationSetup.complexFoodIncoming.recipeId),
+        ErrorContext.ComplexFood.NotFound.asServerError
+      )
+    } yield {
+      val expected = toComplexFood(setup.creationSetup.complexFoodIncoming, setup.creationSetup.recipe)
+      Prop.all(
+        result.isLeft,
+        fetched ?= expected
+      )
+    }
+
+    DBTestUtil.awaitProp(transformer)
+  }
+
+  property("Delete (wrong user)") = Prop.forAll(
+    creationSetupGen :| "setup",
+    GenUtils.taggedId[UserTag] :| "userId2"
+  ) { (setup, userId2) =>
+    val complexFoodService = complexFoodServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(setup.userId, Seq(setup.recipe)),
+      complexFoodContents = ContentsUtil.ComplexFood.from(Seq(setup.complexFoodIncoming))
+    )
+    val transformer = for {
+      result <- EitherT.liftF(complexFoodService.delete(userId2, setup.recipe.id))
+      fetched <- EitherT.fromOptionF(
+        complexFoodService.get(setup.userId, setup.complexFoodIncoming.recipeId),
+        ErrorContext.ComplexFood.NotFound.asServerError
+      )
+    } yield {
+      val expected = toComplexFood(setup.complexFoodIncoming, setup.recipe)
+      Prop.all(
+        !result,
+        fetched ?= expected
+      )
+    }
+
+    DBTestUtil.awaitProp(transformer)
+  }
 }
