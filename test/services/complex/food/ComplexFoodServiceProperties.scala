@@ -186,8 +186,80 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
     DBTestUtil.await(propF)
   }
 
-  property("Update") = ???
-  property("Delete") = ???
+  private case class UpdateSetup(
+      creationSetup: CreationSetup,
+      update: ComplexFoodIncoming
+  )
+
+  private val updateSetupGen: Gen[UpdateSetup] = for {
+    creationSetup <- creationSetupGen
+    update        <- Gens.complexFood(creationSetup.recipe.id)
+  } yield UpdateSetup(
+    creationSetup = creationSetup,
+    update = update
+  )
+
+  property("Update (success)") = Prop.forAll(updateSetupGen :| "setup") { setup =>
+    val complexFoodService = complexFoodServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(setup.creationSetup.userId, Seq(setup.creationSetup.recipe)),
+      complexFoodContents = ContentsUtil.ComplexFood.from(Seq(setup.creationSetup.complexFoodIncoming))
+    )
+    val transformer = for {
+      updated <- EitherT(complexFoodService.update(setup.creationSetup.userId, setup.update))
+      fetched <- EitherT.fromOptionF(
+        complexFoodService.get(setup.creationSetup.userId, setup.creationSetup.complexFoodIncoming.recipeId),
+        ErrorContext.ComplexFood.NotFound.asServerError
+      )
+    } yield {
+      val expected = toComplexFood(setup.update, setup.creationSetup.recipe)
+      Prop.all(
+        updated ?= expected,
+        fetched ?= expected
+      )
+    }
+
+    DBTestUtil.awaitProp(transformer)
+  }
+
+  property("Update (failure)") = Prop.forAll(updateSetupGen :| "setup") { setup =>
+    val complexFoodService = complexFoodServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(setup.creationSetup.userId, Seq(setup.creationSetup.recipe)),
+      complexFoodContents = Seq.empty
+    )
+    val propF = for {
+      result <- complexFoodService.update(setup.creationSetup.userId, setup.update)
+    } yield result.isLeft
+
+    DBTestUtil.await(propF)
+  }
+
+  property("Delete (existent)") = Prop.forAll(creationSetupGen :| "setup") { setup =>
+    val complexFoodService = complexFoodServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(setup.userId, Seq(setup.recipe)),
+      complexFoodContents = ContentsUtil.ComplexFood.from(Seq(setup.complexFoodIncoming))
+    )
+    val propF = for {
+      result  <- complexFoodService.delete(setup.userId, setup.recipe.id)
+      fetched <- complexFoodService.get(setup.userId, setup.recipe.id)
+    } yield Prop.all(
+      result,
+      fetched.isEmpty
+    )
+
+    DBTestUtil.await(propF)
+  }
+
+  property("Delete (non-existent)") = Prop.forAll(creationSetupGen :| "setup") { setup =>
+    val complexFoodService = complexFoodServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(setup.userId, Seq(setup.recipe)),
+      complexFoodContents = Seq.empty
+    )
+    val propF = for {
+      result <- complexFoodService.delete(setup.userId, setup.recipe.id)
+    } yield !result
+
+    DBTestUtil.await(propF)
+  }
 
   property("Fetch all (wrong user)") = ???
   property("Fetch single (wrong user)") = ???
