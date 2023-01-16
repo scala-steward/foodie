@@ -1,7 +1,7 @@
 package db.daos.complexIngredient
 
 import db.generated.Tables
-import db.{ ComplexFoodId, RecipeId, ReferenceMapId, UserId }
+import db.{ ComplexFoodId, RecipeId }
 import io.scalaland.chimney.dsl._
 import utils.TransformerUtils.Implicits._
 

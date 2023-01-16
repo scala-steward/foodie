@@ -18,7 +18,6 @@ import utils.CycleCheck.Arc
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 
-import java.util.UUID
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
 
