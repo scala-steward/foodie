@@ -62,7 +62,8 @@ object Live {
 
   class Companion @Inject() (
       recipeDao: db.daos.recipe.DAO,
-      dao: db.daos.complexIngredient.DAO
+      complexFoodDao: db.daos.complexFood.DAO,
+      complexIngredientDao: db.daos.complexIngredient.DAO
   ) extends ComplexIngredientService.Companion {
 
     override def all(userId: UserId, recipeId: RecipeId)(implicit ec: ExecutionContext): DBIO[Seq[ComplexIngredient]] =
@@ -70,7 +71,7 @@ object Live {
         exists <- recipeDao.exists(RecipeKey(userId, recipeId))
         complexIngredients <-
           if (exists)
-            dao.findAllFor(recipeId)
+            complexIngredientDao.findAllFor(recipeId)
           else Applicative[DBIO].pure(List.empty)
       } yield complexIngredients.map(_.transformInto[ComplexIngredient])
 
@@ -78,11 +79,15 @@ object Live {
         ec: ExecutionContext
     ): DBIO[ComplexIngredient] = {
       val complexIngredientRow = complexIngredient.transformInto[Tables.ComplexIngredientRow]
-      ifRecipeExists(userId, complexIngredient.recipeId) {
+      ifRecipeAndComplexFoodExist(
+        userId = userId,
+        recipeId = complexIngredient.recipeId,
+        complexFoodId = complexIngredient.complexFoodId
+      ) {
         for {
           createsCycle <- cycleCheck(complexIngredient.recipeId, complexIngredient.complexFoodId)
           _            <- if (!createsCycle) DBIO.successful(()) else DBIO.failed(DBError.Complex.Ingredient.Cycle)
-          row          <- dao.insert(complexIngredientRow)
+          row          <- complexIngredientDao.insert(complexIngredientRow)
         } yield row.transformInto[ComplexIngredient]
       }
     }
@@ -91,13 +96,17 @@ object Live {
         ec: ExecutionContext
     ): DBIO[ComplexIngredient] = {
       val findAction = OptionT(
-        dao.find(ComplexIngredientKey(complexIngredient.recipeId, complexIngredient.complexFoodId))
+        complexIngredientDao.find(ComplexIngredientKey(complexIngredient.recipeId, complexIngredient.complexFoodId))
       ).getOrElseF(DBIO.failed(DBError.Complex.Ingredient.NotFound))
 
       for {
         _ <- findAction
-        _ <- ifRecipeExists(userId, complexIngredient.recipeId) {
-          dao.update(complexIngredient.transformInto[Tables.ComplexIngredientRow])
+        _ <- ifRecipeAndComplexFoodExist(
+          userId = userId,
+          recipeId = complexIngredient.recipeId,
+          complexFoodId = complexIngredient.complexFoodId
+        ) {
+          complexIngredientDao.update(complexIngredient.transformInto[Tables.ComplexIngredientRow])
         }
         updatedIngredient <- findAction
       } yield updatedIngredient.transformInto[ComplexIngredient]
@@ -106,17 +115,23 @@ object Live {
     override def delete(userId: UserId, recipeId: RecipeId, complexFoodId: ComplexFoodId)(implicit
         ec: ExecutionContext
     ): DBIO[Boolean] =
-      dao
+      complexIngredientDao
         .delete(ComplexIngredientKey(recipeId, complexFoodId))
         .map(_ > 0)
 
-    private def ifRecipeExists[A](
+    private def ifRecipeAndComplexFoodExist[A](
         userId: UserId,
-        recipeId: RecipeId
+        recipeId: RecipeId,
+        complexFoodId: ComplexFoodId
     )(action: => DBIO[A])(implicit ec: ExecutionContext): DBIO[A] =
-      recipeDao
-        .exists(RecipeKey(userId, recipeId))
-        .flatMap(exists => if (exists) action else DBIO.failed(DBError.Complex.Ingredient.RecipeNotFound))
+      for {
+        recipeExists      <- recipeDao.exists(RecipeKey(userId, recipeId))
+        complexFoodExists <- complexFoodDao.exists(complexFoodId)
+        result <-
+          if (!recipeExists) DBIO.failed(DBError.Complex.Ingredient.RecipeNotFound)
+          else if (!complexFoodExists) DBIO.failed(DBError.Complex.Ingredient.NotFound)
+          else action
+      } yield result
 
     private def cycleCheck(recipeId: RecipeId, newReferenceRecipeId: RecipeId)(implicit
         ec: ExecutionContext
