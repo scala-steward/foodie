@@ -1,6 +1,6 @@
 package services.complex.ingredient
 
-import db.{ComplexFoodId, RecipeId}
+import db.{ ComplexFoodId, RecipeId }
 import org.scalacheck.Gen
 import services.GenUtils
 
@@ -18,5 +18,15 @@ object Gens {
           factor = factor
         )
     }
+
+  def complexIngredientGen(recipeId: RecipeId, complexFoodIds: Seq[ComplexFoodId]): Gen[ComplexIngredient] =
+    for {
+      complexFoodId <- Gen.oneOf(complexFoodIds)
+      factor        <- GenUtils.smallBigDecimalGen
+    } yield ComplexIngredient(
+      recipeId = recipeId,
+      complexFoodId = complexFoodId,
+      factor = factor
+    )
 
 }
