@@ -2,7 +2,7 @@ package services.complex.ingredient
 
 import cats.data.EitherT
 import db._
-import errors.{ ErrorContext, ServerError }
+import errors.ServerError
 import org.scalacheck.Prop.AnyOperators
 import org.scalacheck.{ Gen, Prop, Properties }
 import services.complex.food.ComplexFoodIncoming
@@ -145,7 +145,67 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
 
     DBTestUtil.await(propF)
   }
-//  property("Create (failure, cycle)") = ???
+
+  private case class CycleSetup(
+      base: SetupBase,
+      recipes: Seq[Recipe],
+      complexFoods: Seq[ComplexFoodIncoming],
+      chainEnd: ComplexIngredient,
+      chain: Seq[ComplexIngredient]
+  )
+
+//  // TODO #61: Use this as a base for a proper DB cycle check test.
+//  private val cycleSetupGen: Gen[CycleSetup] = for {
+//    base           <- setupBaseGen
+//    innerChainSize <- Gen.choose(0, 20)
+//    chainSize = 2 + innerChainSize
+//    factors <- Gen.listOfN(chainSize, GenUtils.smallBigDecimalGen)
+//    recipes = base.recipesAsComplexFoods.map(_._1)
+//    complexFoods <- recipes.traverse { recipe => services.complex.food.Gens.complexFood(recipe.id) }
+//  } yield {
+//    val chain = recipes.zip(recipes.tail).zip(factors).map {
+//      case ((r1, r2), factor) =>
+//        ComplexIngredient(
+//          recipeId = r1.id,
+//          complexFoodId = r2.id,
+//          factor = factor
+//        )
+//    }
+//    val chainEnd = ComplexIngredient(
+//      recipeId = recipes.last.id,
+//      complexFoodId = recipes.head.id,
+//      factor = factors.last
+//    )
+//    CycleSetup(
+//      base = base,
+//      recipes,
+//      complexFoods,
+//      chainEnd = chainEnd,
+//      chain = chain
+//    )
+//  }
+//
+//  property("Create (failure, cycle)") = Prop.forAll(cycleSetupGen :| "setup") { setup =>
+//    val complexIngredientService = complexIngredientServiceWith(
+//      recipeContents = ContentsUtil.Recipe.from(setup.base.userId, setup.base.recipe +: setup.recipes),
+//      complexFoodContents = ContentsUtil.ComplexFood.from(setup.base.recipesAsComplexFoods.map(_._2)),
+//      complexIngredientContents = ContentsUtil.ComplexIngredient.from(setup.base.recipe.id, setup.chain)
+//    )
+//    val propF = for {
+//      created <- complexIngredientService.create(setup.base.userId, setup.chainEnd)
+//      fetched <- complexIngredientService.all(setup.base.userId, setup.base.recipe.id)
+//    } yield {
+//      Prop.all(
+//        created.left.map(_.message) ?= Left(
+//          ErrorContext.Recipe.ComplexIngredient.Creation(DBError.Complex.Ingredient.Cycle.getMessage).message
+//        ),
+//        fetched ?= setup.chain
+//      )
+//    }
+//
+//    DBTestUtil.await(propF)
+//  }
+
 //  property("Update (success)") = ???
 //  property("Update (failure)") = ???
 //  property("Delete (existent)") = ???
