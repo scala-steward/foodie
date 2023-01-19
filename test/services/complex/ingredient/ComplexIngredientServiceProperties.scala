@@ -1,6 +1,7 @@
 package services.complex.ingredient
 
 import cats.data.EitherT
+import cats.implicits.catsSyntaxTuple2Semigroupal
 import db._
 import errors.ServerError
 import org.scalacheck.Prop.AnyOperators
@@ -8,6 +9,7 @@ import org.scalacheck.{ Gen, Prop, Properties }
 import services.complex.food.ComplexFoodIncoming
 import services.recipe.Recipe
 import services.{ ContentsUtil, DBTestUtil, GenUtils, TestUtil }
+import GenUtils.implicits._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -274,9 +276,83 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
 
     DBTestUtil.await(propF)
   }
-//  property("Delete (existent)") = ???
-//  property("Delete (non-existent)") = ???
-//
+
+  property("Delete (existent)") = Prop.forAll(createSetupGen :| "setup") { setup =>
+    val complexIngredientService = complexIngredientServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(setup.base.userId, Seq(setup.base.recipe)),
+      complexFoodContents = ContentsUtil.ComplexFood.from(setup.base.recipesAsComplexFoods.map(_._2)),
+      complexIngredientContents =
+        ContentsUtil.ComplexIngredient.from(setup.base.recipe.id, Seq(setup.complexIngredient))
+    )
+    val propF = for {
+      deleted <-
+        complexIngredientService.delete(setup.base.userId, setup.base.recipe.id, setup.complexIngredient.complexFoodId)
+      fetched <- complexIngredientService.all(setup.base.userId, setup.base.recipe.id)
+    } yield Prop.all(
+      deleted,
+      fetched ?= Seq.empty
+    )
+    DBTestUtil.await(propF)
+  }
+
+  private case class OtherKey(
+      recipeId: RecipeId,
+      complexFoodId: ComplexFoodId
+  )
+
+  private case class DeleteFailureSetup(
+      existing: CreateSetup,
+      otherKey: OtherKey
+  )
+
+  private def otherKeyGen(recipeId: RecipeId, complexFoodId: ComplexFoodId): Gen[OtherKey] = {
+    val fixedRecipeGen      = Gen.const(recipeId)
+    val anyRecipeGen        = GenUtils.taggedId[RecipeTag]
+    val fixedComplexFoodGen = Gen.const(complexFoodId)
+    val anyComplexFoodGen   = GenUtils.taggedId[RecipeTag]
+    Gen
+      .oneOf(
+        List(
+          (fixedComplexFoodGen, anyRecipeGen),
+          (anyComplexFoodGen, fixedRecipeGen),
+          (anyComplexFoodGen, anyRecipeGen)
+        ).map(_.mapN(OtherKey))
+      )
+      .flatMap(identity)
+  }
+
+  private val deleteFailureSetupGen: Gen[DeleteFailureSetup] = for {
+    existing <- createSetupGen
+    otherKey <- otherKeyGen(existing.base.recipe.id, existing.complexIngredient.complexFoodId)
+  } yield DeleteFailureSetup(
+    existing = existing,
+    otherKey = otherKey
+  )
+
+  property("Delete (non-existent)") = Prop.forAll(
+    deleteFailureSetupGen :| "setup"
+  ) { setup =>
+    val complexIngredientService = complexIngredientServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(setup.existing.base.userId, Seq(setup.existing.base.recipe)),
+      complexFoodContents = ContentsUtil.ComplexFood.from(setup.existing.base.recipesAsComplexFoods.map(_._2)),
+      complexIngredientContents =
+        ContentsUtil.ComplexIngredient.from(setup.existing.base.recipe.id, Seq(setup.existing.complexIngredient))
+    )
+    val propF = for {
+      deleted <- complexIngredientService.delete(
+        setup.existing.base.userId,
+        setup.otherKey.recipeId,
+        setup.otherKey.complexFoodId
+      )
+      fetched <- complexIngredientService.all(setup.existing.base.userId, setup.existing.base.recipe.id)
+    } yield Prop.all(
+      !deleted,
+      fetched ?= Seq(setup.existing.complexIngredient)
+    )
+
+    DBTestUtil.await(propF)
+  }
+
 //  property("Fetch all (wrong user)") = ???
 //  property("Create (wrong user)") = ???
 //  property("Update (wrong user)") = ???
