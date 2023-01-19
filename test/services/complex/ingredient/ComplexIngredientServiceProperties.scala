@@ -353,9 +353,83 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
     DBTestUtil.await(propF)
   }
 
-//  property("Fetch all (wrong user)") = ???
-//  property("Create (wrong user)") = ???
-//  property("Update (wrong user)") = ???
-//  property("Delete (wrong user)") = ???
+  property("Fetch all (wrong user)") = Prop.forAll(
+    fetchAllSetupGen :| "setup",
+    GenUtils.taggedId[UserTag] :| "userId2"
+  ) { (setup, userId2) =>
+    val complexIngredientService = complexIngredientServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(setup.base.userId, Seq(setup.base.recipe)),
+      complexFoodContents = ContentsUtil.ComplexFood.from(setup.base.recipesAsComplexFoods.map(_._2)),
+      complexIngredientContents = ContentsUtil.ComplexIngredient.from(setup.base.recipe.id, setup.complexIngredients)
+    )
+    val propF = for {
+      fetched <- complexIngredientService.all(userId2, setup.base.recipe.id)
+    } yield fetched ?= Seq.empty
+    DBTestUtil.await(propF)
+  }
+
+  property("Create (wrong user)") = Prop.forAll(
+    createSetupGen :| "setup",
+    GenUtils.taggedId[UserTag] :| "userId2"
+  ) { (setup, userId2) =>
+    val complexIngredientService = complexIngredientServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(setup.base.userId, Seq(setup.base.recipe)),
+      complexFoodContents = ContentsUtil.ComplexFood.from(setup.base.recipesAsComplexFoods.map(_._2)),
+      complexIngredientContents = Seq.empty
+    )
+    val propF = for {
+      created <- complexIngredientService.create(userId2, setup.complexIngredient)
+      fetched <- complexIngredientService.all(userId2, setup.base.recipe.id)
+    } yield {
+      Prop.all(
+        created.isLeft,
+        fetched ?= Seq.empty
+      )
+    }
+
+    DBTestUtil.await(propF)
+  }
+  property("Update (wrong user)") = Prop.forAll(
+    updateSetupGen :| "setup",
+    GenUtils.taggedId[UserTag] :| "userId2"
+  ) { (setup, userId2) =>
+    val complexIngredientService = complexIngredientServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(setup.base.userId, Seq(setup.base.recipe)),
+      complexFoodContents = ContentsUtil.ComplexFood.from(setup.base.recipesAsComplexFoods.map(_._2)),
+      complexIngredientContents =
+        ContentsUtil.ComplexIngredient.from(setup.base.recipe.id, Seq(setup.complexIngredient))
+    )
+    val propF = for {
+      updated  <- complexIngredientService.update(userId2, setup.update)
+      fetched1 <- complexIngredientService.all(setup.base.userId, setup.base.recipe.id)
+      fetched2 <- complexIngredientService.all(userId2, setup.base.recipe.id)
+    } yield Prop.all(
+      updated.isLeft,
+      fetched1 ?= Seq(setup.complexIngredient),
+      fetched2 ?= Seq.empty
+    )
+
+    DBTestUtil.await(propF)
+  }
+
+  property("Delete (wrong user)") = Prop.forAll(
+    createSetupGen :| "setup",
+    GenUtils.taggedId[UserTag] :| "userId2"
+  ) { (setup, userId2) =>
+    val complexIngredientService = complexIngredientServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(setup.base.userId, Seq(setup.base.recipe)),
+      complexFoodContents = ContentsUtil.ComplexFood.from(setup.base.recipesAsComplexFoods.map(_._2)),
+      complexIngredientContents =
+        ContentsUtil.ComplexIngredient.from(setup.base.recipe.id, Seq(setup.complexIngredient))
+    )
+    val propF = for {
+      deleted <- complexIngredientService.delete(userId2, setup.base.recipe.id, setup.complexIngredient.complexFoodId)
+      fetched <- complexIngredientService.all(setup.base.userId, setup.base.recipe.id)
+    } yield Prop.all(
+      !deleted,
+      fetched ?= Seq(setup.complexIngredient)
+    )
+    DBTestUtil.await(propF)
+  }
 
 }
