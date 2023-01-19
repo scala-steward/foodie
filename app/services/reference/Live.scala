@@ -254,11 +254,15 @@ object Live {
     override def deleteReferenceEntry(userId: UserId, referenceMapId: ReferenceMapId, nutrientCode: NutrientCode)(
         implicit ec: ExecutionContext
     ): DBIO[Boolean] =
-      ifReferenceMapExists(userId, referenceMapId) {
-        referenceMapEntryDao
-          .delete(ReferenceMapEntryKey(referenceMapId, nutrientCode))
-          .map(_ > 0)
-      }
+      for {
+        exists <- referenceMapDao.exists(ReferenceMapKey(userId, referenceMapId))
+        result <-
+          if (exists)
+            referenceMapEntryDao
+              .delete(ReferenceMapEntryKey(referenceMapId, nutrientCode))
+              .map(_ > 0)
+          else DBIO.successful(false)
+      } yield result
 
     private def nutrientNameByCode(nutrientCode: Int): DBIO[Option[Tables.NutrientNameRow]] =
       Tables.NutrientName
