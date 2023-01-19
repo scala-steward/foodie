@@ -136,6 +136,9 @@ object GenUtils {
   lazy val foodGen: Gen[Food] =
     Gen.oneOf(allFoods.values)
 
+  lazy val nutrientGen: Gen[Nutrient] =
+    Gen.oneOf(allNutrients)
+
   val smallBigDecimalGen: Gen[BigDecimal] = Gen.choose(BigDecimal(0.001), BigDecimal(1000))
 
   def taggedId[Tag]: Gen[UUID @@ Tag] =

@@ -5,11 +5,12 @@ import cats.implicits.catsSyntaxTuple2Semigroupal
 import db._
 import errors.ServerError
 import org.scalacheck.Prop.AnyOperators
-import org.scalacheck.{ Gen, Prop, Properties }
+import org.scalacheck.{ Gen, Prop, Properties, Test }
 import services.complex.food.ComplexFoodIncoming
 import services.recipe.Recipe
 import services.{ ContentsUtil, DBTestUtil, GenUtils, TestUtil }
 import GenUtils.implicits._
+import config.TestConfiguration
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -431,5 +432,8 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
     )
     DBTestUtil.await(propF)
   }
+
+  override def overrideParameters(p: Test.Parameters): Test.Parameters =
+    p.withMinSuccessfulTests(TestConfiguration.default.property.minSuccessfulTests.withoutDB)
 
 }

@@ -15,6 +15,7 @@ import services.complex.food.ComplexFoodIncoming
 import services.complex.ingredient.ComplexIngredient
 import services.meal.{ Meal, MealEntry }
 import services.recipe.{ Ingredient, Recipe }
+import services.reference.{ ReferenceEntry, ReferenceMap }
 import slick.jdbc.PostgresProfile.api._
 import slickeffect.catsio.implicits._
 import util.DateUtil
@@ -250,6 +251,14 @@ object DAOTestInstance {
 
       }
 
+    def instanceFrom(contents: Seq[(UserId, ReferenceMap)]): db.daos.referenceMap.DAO =
+      instance(
+        contents.map {
+          case (userId, referenceMap) =>
+            ReferenceMapKey(userId, referenceMap.id) -> (referenceMap, userId).transformInto[Tables.ReferenceMapRow]
+        }
+      )
+
   }
 
   object ReferenceMapEntry {
@@ -268,6 +277,15 @@ object DAOTestInstance {
           }
 
       }
+
+    def instanceFrom(contents: Seq[(ReferenceMapId, ReferenceEntry)]): db.daos.referenceMapEntry.DAO =
+      instance(
+        contents.map {
+          case (referenceMapId, referenceEntry) =>
+            ReferenceMapEntryKey(referenceMapId, referenceEntry.nutrientCode) -> (referenceEntry, referenceMapId)
+              .transformInto[Tables.ReferenceEntryRow]
+        }
+      )
 
   }
 
