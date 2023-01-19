@@ -115,9 +115,15 @@ object Live {
     override def delete(userId: UserId, recipeId: RecipeId, complexFoodId: ComplexFoodId)(implicit
         ec: ExecutionContext
     ): DBIO[Boolean] =
-      complexIngredientDao
-        .delete(ComplexIngredientKey(recipeId, complexFoodId))
-        .map(_ > 0)
+      for {
+        exists <- recipeDao.exists(RecipeKey(userId, recipeId))
+        result <-
+          if (exists)
+            complexIngredientDao
+              .delete(ComplexIngredientKey(recipeId, complexFoodId))
+              .map(_ > 0)
+          else DBIO.successful(false)
+      } yield result
 
     private def ifRecipeAndComplexFoodExist[A](
         userId: UserId,
