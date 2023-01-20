@@ -1,10 +1,10 @@
 package controllers.user
 
 import cats.effect.unsafe.IORuntime
+import db.UserId
 import io.circe.generic.JsonCodec
 import io.scalaland.chimney.dsl._
 import security.Hash
-import services.UserId
 import services.user.User
 import spire.math.Natural
 import utils.TransformerUtils.Implicits._

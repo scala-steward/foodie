@@ -1,6 +1,6 @@
 package services.recipe
 
-import services.RecipeId
+import db.RecipeId
 
 case class RecipeCreation(
     name: String,

@@ -1,7 +1,7 @@
 package services.recipe
 
+import db.MeasureId
 import io.scalaland.chimney.dsl._
-import services.MeasureId
 import utils.TransformerUtils.Implicits._
 
 case class AmountUnit(

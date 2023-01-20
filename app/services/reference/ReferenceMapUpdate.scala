@@ -1,6 +1,6 @@
 package services.reference
 
-import services.ReferenceMapId
+import db.ReferenceMapId
 
 case class ReferenceMapUpdate(
     id: ReferenceMapId,

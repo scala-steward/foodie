@@ -1,7 +1,7 @@
 package action
 
+import db.SessionId
 import play.api.mvc.{ Request, WrappedRequest }
-import services.SessionId
 import services.user.User
 
 case class UserRequest[A](

@@ -2,13 +2,15 @@ package controllers.meal
 
 import action.UserAction
 import cats.data.{ EitherT, OptionT }
+import db.{ MealEntryId, MealId }
 import errors.{ ErrorContext, ServerError }
 import io.circe.syntax._
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.libs.circe.Circe
 import play.api.mvc._
+import services.DBError
+import services.common.RequestInterval
 import services.meal.MealService
-import services.{ DBError, MealEntryId, MealId }
 import utils.TransformerUtils.Implicits._
 
 import java.util.UUID
@@ -29,7 +31,7 @@ class MealController @Inject() (
       mealService
         .allMeals(
           userId = request.user.id,
-          interval = RequestInterval(from = None, to = None).transformInto[services.meal.RequestInterval]
+          interval = RequestInterval(from = None, to = None).transformInto[services.common.RequestInterval]
         )
         .map(
           _.pipe(

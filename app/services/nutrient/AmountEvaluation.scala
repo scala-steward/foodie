@@ -1,10 +1,9 @@
 package services.nutrient
 
 import algebra.instances.MapAdditiveMonoid
-import services.FoodId
+import db.FoodId
 import spire.algebra.{ Field, LeftModule, Ring }
 import spire.implicits._
-import spire.math.Natural
 
 case class AmountEvaluation(
     amount: BigDecimal,

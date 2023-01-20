@@ -1,6 +1,7 @@
 package action
 
 import cats.data.EitherT
+import db.{ SessionId, UserId }
 import errors.{ ErrorContext, ServerError }
 import io.circe.syntax._
 import io.scalaland.chimney.dsl._
@@ -8,7 +9,6 @@ import play.api.libs.circe.Circe
 import play.api.mvc._
 import security.jwt.{ JwtConfiguration, LoginContent }
 import services.user.{ User, UserService }
-import services.{ SessionId, UserId }
 import utils.TransformerUtils.Implicits._
 import utils.jwt.JwtUtil
 

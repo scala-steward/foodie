@@ -1,10 +1,12 @@
 package controllers.stats
 
 import action.UserAction
+import controllers.common.RequestInterval
 import io.circe.syntax._
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.libs.circe.Circe
 import play.api.mvc._
+import services.common
 import services.nutrient.NutrientService
 import services.stats.StatsService
 import utils.TransformerUtils.Implicits._
@@ -32,7 +34,7 @@ class StatsController @Inject() (
           requestInterval = RequestInterval(
             from = from.flatMap(Date.parse),
             to = to.flatMap(Date.parse)
-          ).transformInto[services.stats.RequestInterval]
+          ).transformInto[common.RequestInterval]
         )
         .map(
           _.pipe(_.transformInto[Stats])
@@ -44,7 +46,7 @@ class StatsController @Inject() (
   def ofFood(foodId: Int): Action[AnyContent] =
     userAction.async {
       statsService
-        .nutrientsOfFood(foodId.transformInto[services.FoodId])
+        .nutrientsOfFood(foodId.transformInto[db.FoodId])
         .map(
           _.fold(NotFound: Result)(
             _.pipe(_.transformInto[FoodStats])
@@ -57,7 +59,7 @@ class StatsController @Inject() (
   def ofComplexFood(recipeId: UUID): Action[AnyContent] =
     userAction.async { request =>
       statsService
-        .nutrientsOfComplexFood(request.user.id, recipeId.transformInto[services.ComplexFoodId])
+        .nutrientsOfComplexFood(request.user.id, recipeId.transformInto[db.ComplexFoodId])
         .map(
           _.fold(NotFound: Result)(
             _.pipe(_.transformInto[TotalOnlyStats])
@@ -70,7 +72,7 @@ class StatsController @Inject() (
   def ofRecipe(recipeId: UUID): Action[AnyContent] =
     userAction.async { request =>
       statsService
-        .nutrientsOfRecipe(request.user.id, recipeId.transformInto[services.RecipeId])
+        .nutrientsOfRecipe(request.user.id, recipeId.transformInto[db.RecipeId])
         .map(
           _.fold(NotFound: Result)(
             _.pipe(_.transformInto[TotalOnlyStats])
@@ -83,7 +85,7 @@ class StatsController @Inject() (
   def ofMeal(mealId: UUID): Action[AnyContent] =
     userAction.async { request =>
       statsService
-        .nutrientsOfMeal(request.user.id, mealId.transformInto[services.MealId])
+        .nutrientsOfMeal(request.user.id, mealId.transformInto[db.MealId])
         .map(
           _.pipe(_.transformInto[TotalOnlyStats])
             .pipe(_.asJson)

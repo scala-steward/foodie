@@ -1,7 +1,8 @@
-package controllers.stats
+package controllers.common
 
 import io.circe.generic.JsonCodec
 import io.scalaland.chimney.Transformer
+import services.common
 import utils.date.Date
 
 @JsonCodec
@@ -12,9 +13,9 @@ case class RequestInterval(
 
 object RequestInterval {
 
-  implicit val toDomain: Transformer[RequestInterval, services.stats.RequestInterval] =
+  implicit val toDomain: Transformer[RequestInterval, common.RequestInterval] =
     Transformer
-      .define[RequestInterval, services.stats.RequestInterval]
+      .define[RequestInterval, common.RequestInterval]
       .buildTransformer
 
 }

@@ -1,9 +1,9 @@
 package controllers.recipe
 
+import db.{ ComplexFoodId, RecipeId }
 import io.circe.generic.JsonCodec
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl._
-import services.{ComplexFoodId, RecipeId}
 import utils.TransformerUtils.Implicits._
 
 import java.util.UUID

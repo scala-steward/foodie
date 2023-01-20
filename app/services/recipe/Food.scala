@@ -1,10 +1,10 @@
 package services.recipe
 
+import db.FoodId
 import db.generated.Tables
 import io.scalaland.chimney.Transformer
-import services.FoodId
-import utils.TransformerUtils.Implicits._
 import io.scalaland.chimney.dsl._
+import utils.TransformerUtils.Implicits._
 
 case class Food(
     id: FoodId,

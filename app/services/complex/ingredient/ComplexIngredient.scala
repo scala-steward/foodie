@@ -1,9 +1,9 @@
 package services.complex.ingredient
 
 import db.generated.Tables
+import db.{ ComplexFoodId, RecipeId }
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl._
-import services.{ ComplexFoodId, RecipeId }
 import utils.TransformerUtils.Implicits._
 
 import java.util.UUID

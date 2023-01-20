@@ -5,11 +5,12 @@ import bridges.core.Type.Ref
 import bridges.core._
 import bridges.core.syntax._
 import bridges.elm._
+import controllers.common.RequestInterval
 import controllers.complex.{ ComplexFood, ComplexFoodIncoming }
 import controllers.meal._
 import controllers.recipe._
 import controllers.reference._
-import controllers.stats.{ RequestInterval, _ }
+import controllers.stats._
 import controllers.user._
 import security.jwt.LoginContent
 import shapeless.Lazy
