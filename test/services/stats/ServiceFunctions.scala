@@ -5,8 +5,8 @@ import cats.syntax.traverse._
 import db._
 import db.generated.Tables
 import io.scalaland.chimney.dsl._
-import services.complex.food.ComplexFoodService
-import services.complex.ingredient.ComplexIngredientService
+import services.complex.food.ComplexFoodServiceProperties
+import services.complex.ingredient.ComplexIngredientServiceProperties
 import services.meal.{ Meal, MealEntry }
 import services.nutrient.NutrientService
 import services.recipe._
@@ -20,10 +20,9 @@ import scala.concurrent.Future
 
 object ServiceFunctions {
 
-  private val nutrientServiceCompanion          = TestUtil.injector.instanceOf[NutrientService.Companion]
-  private val complexFoodServiceCompanion       = TestUtil.injector.instanceOf[ComplexFoodService.Companion]
-  private val complexIngredientServiceCompanion = TestUtil.injector.instanceOf[ComplexIngredientService.Companion]
+  private val nutrientServiceCompanion = TestUtil.injector.instanceOf[NutrientService.Companion]
 
+  // TODO #64: Add values for complex food, and complex ingredient services.
   def statsServiceWith(
       mealContents: Seq[(UserId, Meal)],
       mealEntryContents: Seq[(MealId, MealEntry)],
@@ -41,10 +40,19 @@ object ServiceFunctions {
           recipeDao = DAOTestInstance.Recipe.instanceFrom(recipeContents),
           ingredientDao = DAOTestInstance.Ingredient.instanceFrom(ingredientContents)
         ),
-        // TODO: These services should also be mocked.
         nutrientService = nutrientServiceCompanion,
-        complexFoodService = complexFoodServiceCompanion,
-        complexIngredientService = complexIngredientServiceCompanion
+        complexFoodService = ComplexFoodServiceProperties.companionWith(
+          recipeContents = recipeContents,
+          // TODO #64: Use provided complex food values.
+          complexFoodContents = Seq.empty
+        ),
+        complexIngredientService = ComplexIngredientServiceProperties.companionWith(
+          recipeContents = recipeContents,
+          // TODO #64: Use provided complex food values.
+          complexFoodContents = Seq.empty,
+          // TODO #64: Use provided complex ingredient values.
+          complexIngredientContents = Seq.empty
+        )
       )
     )
   }
