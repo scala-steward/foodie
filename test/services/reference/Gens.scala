@@ -4,7 +4,6 @@ import db.{ NutrientCode, ReferenceMapId }
 import io.scalaland.chimney.dsl._
 import org.scalacheck.Gen
 import services.GenUtils
-import spire.math.Natural
 import utils.TransformerUtils.Implicits._
 
 object Gens {
@@ -37,13 +36,13 @@ object Gens {
       amount = amount
     )
 
-  def fullReferenceMapGen(maxNumberOfReferenceEntries: Natural = Natural(20)): Gen[FullReferenceMap] =
+  val fullReferenceMapGen: Gen[FullReferenceMap] =
     for {
       referenceMap     <- referenceMapGen
-      referenceEntries <- GenUtils.nonEmptyListOfAtMost(maxNumberOfReferenceEntries, referenceEntryGen)
+      referenceEntries <- Gen.nonEmptyListOf(referenceEntryGen)
     } yield FullReferenceMap(
       referenceMap = referenceMap,
-      referenceEntries = referenceEntries.toList
+      referenceEntries = referenceEntries.distinctBy(_.nutrientCode)
     )
 
   def referenceEntryUpdateGen(referenceMapId: ReferenceMapId, nutrientCode: NutrientCode): Gen[ReferenceEntryUpdate] = {

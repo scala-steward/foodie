@@ -157,34 +157,47 @@ object ReferenceServiceProperties extends Properties("Reference service properti
     DBTestUtil.awaitProp(transformer)
   }
 
-  // TODO: There are two gotchas regarding reference entry generation:
-  // 1. every value can occur at most once (cf. complex ingredient logic)
-  // 2. any newly added reference entry needs to be truly new
+  private case class AddReferenceEntrySetup(
+      fullReferenceMap: FullReferenceMap,
+      referenceEntry: ReferenceEntry
+  )
+
+  private val addReferenceEntrySetupGen: Gen[AddReferenceEntrySetup] = for {
+    fullReferenceMap <- Gens.fullReferenceMapGen
+    referenceEntry   <- Gen.oneOf(fullReferenceMap.referenceEntries)
+  } yield AddReferenceEntrySetup(
+    fullReferenceMap.copy(
+      referenceEntries = fullReferenceMap.referenceEntries.filter(_.nutrientCode != referenceEntry.nutrientCode)
+    ),
+    referenceEntry
+  )
+
   property("Add reference entry") = Prop.forAll(
     GenUtils.taggedId[UserTag] :| "userId",
-    Gens.fullReferenceMapGen() :| "full reference map",
-    Gens.referenceEntryGen :| "reference entry"
-  ) { (userId, fullReferenceMap, referenceMapEntry) =>
+    addReferenceEntrySetupGen :| "setup"
+  ) { (userId, setup) =>
     val referenceMapService = referenceMapServiceWith(
-      referenceMapContents = ContentsUtil.ReferenceMap.from(userId, Seq(fullReferenceMap.referenceMap)),
-      referenceMapEntryContents = ContentsUtil.ReferenceEntry.from(fullReferenceMap)
+      referenceMapContents = ContentsUtil.ReferenceMap.from(userId, Seq(setup.fullReferenceMap.referenceMap)),
+      referenceMapEntryContents = ContentsUtil.ReferenceEntry.from(setup.fullReferenceMap)
     )
     val referenceMapEntryCreation =
       ReferenceEntryCreation(
-        fullReferenceMap.referenceMap.id,
-        referenceMapEntry.nutrientCode,
-        referenceMapEntry.amount
+        setup.fullReferenceMap.referenceMap.id,
+        setup.referenceEntry.nutrientCode,
+        setup.referenceEntry.amount
       )
     val transformer = for {
       referenceMapEntry <- EitherT(referenceMapService.addReferenceEntry(userId, referenceMapEntryCreation))
       referenceMapEntries <- EitherT.liftF[Future, ServerError, List[ReferenceEntry]](
-        referenceMapService.allReferenceEntries(userId, fullReferenceMap.referenceMap.id)
+        referenceMapService.allReferenceEntries(userId, setup.fullReferenceMap.referenceMap.id)
       )
     } yield {
       val expectedReferenceEntry = ReferenceEntryCreation.create(referenceMapEntryCreation)
       Prop.all(
         referenceMapEntry ?= expectedReferenceEntry,
-        referenceMapEntries.sortBy(_.nutrientCode) ?= (expectedReferenceEntry +: fullReferenceMap.referenceEntries)
+        referenceMapEntries.sortBy(
+          _.nutrientCode
+        ) ?= (expectedReferenceEntry +: setup.fullReferenceMap.referenceEntries)
           .sortBy(
             _.nutrientCode
           )
@@ -196,7 +209,7 @@ object ReferenceServiceProperties extends Properties("Reference service properti
 
   property("Read reference entries") = Prop.forAll(
     GenUtils.taggedId[UserTag] :| "userId",
-    Gens.fullReferenceMapGen() :| "full reference map"
+    Gens.fullReferenceMapGen :| "full reference map"
   ) { (userId, fullReferenceMap) =>
     val referenceMapService = referenceMapServiceWith(
       referenceMapContents = ContentsUtil.ReferenceMap.from(userId, Seq(fullReferenceMap.referenceMap)),
@@ -221,7 +234,7 @@ object ReferenceServiceProperties extends Properties("Reference service properti
   private val referenceMapEntryUpdateSetupGen: Gen[ReferenceEntryUpdateSetup] =
     for {
       userId            <- GenUtils.taggedId[UserTag]
-      fullReferenceMap  <- Gens.fullReferenceMapGen()
+      fullReferenceMap  <- Gens.fullReferenceMapGen
       referenceMapEntry <- Gen.oneOf(fullReferenceMap.referenceEntries)
       referenceMapEntryUpdate <-
         Gens.referenceEntryUpdateGen(fullReferenceMap.referenceMap.id, referenceMapEntry.nutrientCode)
@@ -276,7 +289,7 @@ object ReferenceServiceProperties extends Properties("Reference service properti
   private val deleteReferenceEntrySetupGen: Gen[DeleteReferenceEntrySetup] =
     for {
       userId           <- GenUtils.taggedId[UserTag]
-      fullReferenceMap <- Gens.fullReferenceMapGen()
+      fullReferenceMap <- Gens.fullReferenceMapGen
       nutrientCode     <- Gen.oneOf(fullReferenceMap.referenceEntries).map(_.nutrientCode)
     } yield DeleteReferenceEntrySetup(
       userId = userId,
@@ -412,7 +425,7 @@ object ReferenceServiceProperties extends Properties("Reference service properti
   property("Add reference entry (wrong user)") = Prop.forAll(
     GenUtils.taggedId[UserTag] :| "userId1",
     GenUtils.taggedId[UserTag] :| "userId2",
-    Gens.fullReferenceMapGen() :| "full reference map",
+    Gens.fullReferenceMapGen :| "full reference map",
     Gens.referenceEntryGen :| "reference entry"
   ) {
     case (userId1, userId2, fullReferenceMap, referenceMapEntry) =>
@@ -442,7 +455,7 @@ object ReferenceServiceProperties extends Properties("Reference service properti
   property("Read reference entries (wrong user)") = Prop.forAll(
     GenUtils.taggedId[UserTag] :| "userId1",
     GenUtils.taggedId[UserTag] :| "userId2",
-    Gens.fullReferenceMapGen() :| "full reference map"
+    Gens.fullReferenceMapGen :| "full reference map"
   ) {
     case (userId1, userId2, fullReferenceMap) =>
       val referenceMapService = referenceMapServiceWith(
