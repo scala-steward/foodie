@@ -4,7 +4,7 @@ import Addresses.Backend
 import Api.Auxiliary exposing (JWT, RecipeId)
 import Api.Types.Recipe exposing (Recipe, decoderRecipe)
 import Api.Types.RecipeCreation exposing (RecipeCreation, encoderRecipeCreation)
-import Api.Types.RecipeUpdate exposing (RecipeUpdate, encoderRecipeUpdate)
+import Api.Types.RecipeUpdate exposing (RecipeUpdate)
 import Http
 import Pages.Recipes.Page as Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
@@ -27,21 +27,24 @@ createRecipe authorizedAccess recipeCreation =
         }
 
 
-saveRecipe : AuthorizedAccess -> RecipeUpdate -> Cmd Page.Msg
-saveRecipe authorizedAccess recipeUpdate =
-    HttpUtil.runPatternWithJwt
-        authorizedAccess
-        Addresses.Backend.recipes.update
-        { body = encoderRecipeUpdate recipeUpdate |> Http.jsonBody
-        , expect = HttpUtil.expectJson Page.GotSaveRecipeResponse decoderRecipe
-        }
+
+-- Todo: Remove entirely in favour of the generalised function?
 
 
-deleteRecipe : AuthorizedAccess -> RecipeId -> Cmd Page.Msg
-deleteRecipe authorizedAccess recipeId =
-    HttpUtil.runPatternWithJwt
-        authorizedAccess
-        (Addresses.Backend.recipes.delete recipeId)
-        { body = Http.emptyBody
-        , expect = HttpUtil.expectWhatever (Page.GotDeleteRecipeResponse recipeId)
-        }
+saveRecipe :
+    { authorizedAccess : AuthorizedAccess
+    , recipeUpdate : RecipeUpdate
+    }
+    -> Cmd Page.Msg
+saveRecipe =
+    Pages.Util.Requests.saveRecipeWith
+        Page.GotSaveRecipeResponse
+
+
+deleteRecipe :
+    { authorizedAccess : AuthorizedAccess
+    , recipeId : RecipeId
+    }
+    -> Cmd Page.Msg
+deleteRecipe ps =
+    Pages.Util.Requests.deleteRecipeWith (Page.GotDeleteRecipeResponse ps.recipeId) ps

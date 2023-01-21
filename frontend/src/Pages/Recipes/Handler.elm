@@ -139,7 +139,12 @@ saveRecipeEdit model recipeId =
         |> Maybe.Extra.unwrap
             Cmd.none
             (RecipeUpdateClientInput.to
-                >> Requests.saveRecipe model.authorizedAccess
+                >> (\recipeUpdate ->
+                        Requests.saveRecipe
+                            { authorizedAccess = model.authorizedAccess
+                            , recipeUpdate = recipeUpdate
+                            }
+                   )
             )
     )
 
@@ -183,7 +188,10 @@ requestDeleteRecipe model recipeId =
 confirmDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 confirmDeleteRecipe model recipeId =
     ( model
-    , Requests.deleteRecipe model.authorizedAccess recipeId
+    , Requests.deleteRecipe
+        { authorizedAccess = model.authorizedAccess
+        , recipeId = recipeId
+        }
     )
 
 
