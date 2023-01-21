@@ -14,14 +14,16 @@ import Pages.Ingredients.IngredientCreationClientInput exposing (IngredientCreat
 import Pages.Ingredients.IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
 import Pages.Ingredients.Pagination exposing (Pagination)
 import Pages.Ingredients.Status exposing (Status)
+import Pages.Recipes.RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization)
 
 
 type alias Model =
     { authorizedAccess : AuthorizedAccess
-    , recipe : Recipe
+    , recipe : Editing Recipe RecipeUpdateClientInput
     , ingredientsGroup : FoodGroup IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput
     , complexIngredientsGroup : FoodGroup ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood ComplexIngredientClientInput
     , initialization : Initialization Status
@@ -75,7 +77,7 @@ type FoodsMode
 lenses :
     { ingredientsGroup : Lens Model (FoodGroup IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput)
     , complexIngredientsGroup : Lens Model (FoodGroup ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood ComplexIngredientClientInput)
-    , recipe : Lens Model Recipe
+    , recipe : Lens Model (Editing Recipe RecipeUpdateClientInput)
     , initialization : Lens Model (Initialization Status)
     , foodsMode : Lens Model FoodsMode
     , ingredientsSearchString : Lens Model String
@@ -134,6 +136,15 @@ type Msg
     | ChangeFoodsMode FoodsMode
     | SetIngredientsSearchString String
     | SetComplexIngredientsSearchString String
+    | UpdateRecipe RecipeUpdateClientInput
+    | SaveRecipeEdit
+    | GotSaveRecipeResponse (Result Error Recipe)
+    | EnterEditRecipe
+    | ExitEditRecipe
+    | RequestDeleteRecipe
+    | ConfirmDeleteRecipe
+    | CancelDeleteRecipe
+    | GotDeleteRecipeResponse (Result Error ())
 
 
 type alias Flags =

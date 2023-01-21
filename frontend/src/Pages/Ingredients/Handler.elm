@@ -1,5 +1,6 @@
 module Pages.Ingredients.Handler exposing (init, update)
 
+import Addresses.Frontend
 import Api.Auxiliary exposing (ComplexFoodId, ComplexIngredientId, FoodId, IngredientId, JWT, MeasureId, RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.ComplexIngredient exposing (ComplexIngredient)
@@ -13,7 +14,7 @@ import Json.Decode as Decode
 import Json.Encode as Encode
 import Maybe.Extra
 import Monocle.Compose as Compose
-import Monocle.Lens exposing (Lens)
+import Monocle.Lens as Lens exposing (Lens)
 import Monocle.Optional
 import Pages.Ingredients.ComplexIngredientClientInput as ComplexIngredientClientInput exposing (ComplexIngredientClientInput)
 import Pages.Ingredients.FoodGroup as FoodGroup
@@ -23,8 +24,11 @@ import Pages.Ingredients.Page as Page
 import Pages.Ingredients.Pagination as Pagination exposing (Pagination)
 import Pages.Ingredients.Requests as Requests
 import Pages.Ingredients.Status as Status
+import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
+import Pages.Util.Requests
 import Ports exposing (doFetchFoods, storeFoods)
 import Result.Extra
 import Util.Editing as Editing exposing (Editing)
@@ -50,11 +54,12 @@ init flags =
       , ingredientsGroup = FoodGroup.initial
       , complexIngredientsGroup = FoodGroup.initial
       , recipe =
-            { id = flags.recipeId
-            , name = ""
-            , description = Nothing
-            , numberOfServings = 0
-            }
+            Editing.asView
+                { id = flags.recipeId
+                , name = ""
+                , description = Nothing
+                , numberOfServings = 0
+                }
       , initialization = Loading Status.initial
       , foodsMode = Page.Plain
       , ingredientsSearchString = ""
@@ -192,6 +197,33 @@ update msg model =
         Page.SetComplexIngredientsSearchString string ->
             setComplexIngredientsSearchString model string
 
+        Page.UpdateRecipe recipeUpdateClientInput ->
+            updateRecipe model recipeUpdateClientInput
+
+        Page.SaveRecipeEdit ->
+            saveRecipeEdit model
+
+        Page.GotSaveRecipeResponse result ->
+            gotSaveRecipeResponse model result
+
+        Page.EnterEditRecipe ->
+            enterEditRecipe model
+
+        Page.ExitEditRecipe ->
+            exitEditRecipe model
+
+        Page.RequestDeleteRecipe ->
+            requestDeleteRecipe model
+
+        Page.ConfirmDeleteRecipe ->
+            confirmDeleteRecipe model
+
+        Page.CancelDeleteRecipe ->
+            cancelDeleteRecipe model
+
+        Page.GotDeleteRecipeResponse result ->
+            gotDeleteRecipeResponse model result
+
 
 mapIngredientStateById : IngredientId -> (Page.PlainIngredientState -> Page.PlainIngredientState) -> Page.Model -> Page.Model
 mapIngredientStateById ingredientId =
@@ -239,7 +271,7 @@ saveComplexIngredientEdit model complexIngredientClientInput =
     ( model
     , complexIngredientClientInput
         |> ComplexIngredientClientInput.to
-        |> Requests.saveComplexIngredient model.authorizedAccess model.recipe.id
+        |> Requests.saveComplexIngredient model.authorizedAccess model.recipe.original.id
     )
 
 
@@ -339,7 +371,7 @@ requestDeleteComplexIngredient model complexIngredientId =
 confirmDeleteComplexIngredient : Page.Model -> ComplexIngredientId -> ( Page.Model, Cmd Page.Msg )
 confirmDeleteComplexIngredient model complexIngredientId =
     ( model
-    , Requests.deleteComplexIngredient model.authorizedAccess model.recipe.id complexIngredientId
+    , Requests.deleteComplexIngredient model.authorizedAccess model.recipe.original.id complexIngredientId
     )
 
 
@@ -445,7 +477,7 @@ gotFetchRecipeResponse model result =
         |> Result.Extra.unpack (flip setError model)
             (\recipe ->
                 model
-                    |> Page.lenses.recipe.set recipe
+                    |> Page.lenses.recipe.set (Editing.asView recipe)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.recipe).set True
             )
     , Cmd.none
@@ -515,7 +547,7 @@ selectFood model food =
     ( model
         |> LensUtil.insertAtId food.id
             (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
-            (IngredientCreationClientInput.default model.recipe.id food.id (food.measures |> List.head |> Maybe.Extra.unwrap 0 .id))
+            (IngredientCreationClientInput.default model.recipe.original.id food.id (food.measures |> List.head |> Maybe.Extra.unwrap 0 .id))
     , Cmd.none
     )
 
@@ -571,7 +603,7 @@ addComplexFood model complexFoodId =
            ).getOption
         |> Maybe.Extra.unwrap Cmd.none
             (ComplexIngredientClientInput.to
-                >> Requests.addComplexFood model.authorizedAccess model.recipe.id
+                >> Requests.addComplexFood model.authorizedAccess model.recipe.original.id
             )
     )
 
@@ -664,6 +696,104 @@ setComplexIngredientsSearchString =
         { searchStringLens = Page.lenses.complexIngredientsSearchString
         , foodGroupLens = Page.lenses.complexIngredientsGroup
         }
+
+
+updateRecipe : Page.Model -> RecipeUpdateClientInput -> ( Page.Model, Cmd Page.Msg )
+updateRecipe model recipeUpdateClientInput =
+    ( model
+        |> (Page.lenses.recipe
+                |> Compose.lensWithOptional Editing.lenses.update
+           ).set
+            recipeUpdateClientInput
+    , Cmd.none
+    )
+
+
+saveRecipeEdit : Page.Model -> ( Page.Model, Cmd Page.Msg )
+saveRecipeEdit model =
+    ( model
+    , model
+        |> Page.lenses.recipe.get
+        |> Editing.extractUpdate
+        |> Maybe.Extra.unwrap
+            Cmd.none
+            (RecipeUpdateClientInput.to
+                >> (\recipeUpdate ->
+                        Pages.Util.Requests.saveRecipeWith
+                            Page.GotSaveRecipeResponse
+                            { authorizedAccess = model.authorizedAccess
+                            , recipeUpdate = recipeUpdate
+                            }
+                   )
+            )
+    )
+
+
+gotSaveRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.Msg )
+gotSaveRecipeResponse model result =
+    ( result
+        |> Result.Extra.unpack (flip setError model)
+            (\recipe ->
+                model
+                    |> Page.lenses.recipe.set (recipe |> Editing.asView)
+            )
+    , Cmd.none
+    )
+
+
+enterEditRecipe : Page.Model -> ( Page.Model, Cmd Page.Msg )
+enterEditRecipe model =
+    ( model
+        |> Lens.modify Page.lenses.recipe (Editing.toUpdate RecipeUpdateClientInput.from)
+    , Cmd.none
+    )
+
+
+exitEditRecipe : Page.Model -> ( Page.Model, Cmd Page.Msg )
+exitEditRecipe model =
+    ( model
+        |> Lens.modify Page.lenses.recipe Editing.toView
+    , Cmd.none
+    )
+
+
+requestDeleteRecipe : Page.Model -> ( Page.Model, Cmd Page.Msg )
+requestDeleteRecipe model =
+    ( model
+        |> Lens.modify Page.lenses.recipe Editing.toDelete
+    , Cmd.none
+    )
+
+
+confirmDeleteRecipe : Page.Model -> ( Page.Model, Cmd Page.Msg )
+confirmDeleteRecipe model =
+    ( model
+    , Pages.Util.Requests.deleteRecipeWith Page.GotDeleteRecipeResponse
+        { authorizedAccess = model.authorizedAccess
+        , recipeId = model.recipe.original.id
+        }
+    )
+
+
+cancelDeleteRecipe : Page.Model -> ( Page.Model, Cmd Page.Msg )
+cancelDeleteRecipe model =
+    ( model
+        |> Lens.modify Page.lenses.recipe Editing.toView
+    , Cmd.none
+    )
+
+
+gotDeleteRecipeResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotDeleteRecipeResponse model result =
+    result
+        |> Result.Extra.unpack (\error -> ( model |> setError error, Cmd.none ))
+            (\_ ->
+                ( model
+                , Links.loadFrontendPage
+                    model.authorizedAccess.configuration
+                    (() |> Addresses.Frontend.recipes.address)
+                )
+            )
 
 
 setSearchString :
