@@ -21,7 +21,6 @@ import Pages.Ingredients.IngredientCreationClientInput as IngredientCreationClie
 import Pages.Ingredients.IngredientUpdateClientInput as IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
 import Pages.Ingredients.Page as Page
 import Pages.Ingredients.Pagination as Pagination exposing (Pagination)
-import Pages.Ingredients.RecipeInfo as RecipeInfo exposing (RecipeInfo)
 import Pages.Ingredients.Requests as Requests
 import Pages.Ingredients.Status as Status
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
@@ -48,10 +47,14 @@ initialFetch authorizedAccess recipeId =
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
     ( { authorizedAccess = flags.authorizedAccess
-      , recipeId = flags.recipeId
       , ingredientsGroup = FoodGroup.initial
       , complexIngredientsGroup = FoodGroup.initial
-      , recipeInfo = Nothing
+      , recipe =
+            { id = flags.recipeId
+            , name = ""
+            , description = Nothing
+            , numberOfServings = 0
+            }
       , initialization = Loading Status.initial
       , foodsMode = Page.Plain
       , ingredientsSearchString = ""
@@ -236,7 +239,7 @@ saveComplexIngredientEdit model complexIngredientClientInput =
     ( model
     , complexIngredientClientInput
         |> ComplexIngredientClientInput.to
-        |> Requests.saveComplexIngredient model.authorizedAccess model.recipeId
+        |> Requests.saveComplexIngredient model.authorizedAccess model.recipe.id
     )
 
 
@@ -336,7 +339,7 @@ requestDeleteComplexIngredient model complexIngredientId =
 confirmDeleteComplexIngredient : Page.Model -> ComplexIngredientId -> ( Page.Model, Cmd Page.Msg )
 confirmDeleteComplexIngredient model complexIngredientId =
     ( model
-    , Requests.deleteComplexIngredient model.authorizedAccess model.recipeId complexIngredientId
+    , Requests.deleteComplexIngredient model.authorizedAccess model.recipe.id complexIngredientId
     )
 
 
@@ -442,7 +445,7 @@ gotFetchRecipeResponse model result =
         |> Result.Extra.unpack (flip setError model)
             (\recipe ->
                 model
-                    |> Page.lenses.recipeInfo.set (RecipeInfo.from recipe |> Just)
+                    |> Page.lenses.recipe.set recipe
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.recipe).set True
             )
     , Cmd.none
@@ -512,7 +515,7 @@ selectFood model food =
     ( model
         |> LensUtil.insertAtId food.id
             (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd)
-            (IngredientCreationClientInput.default model.recipeId food.id (food.measures |> List.head |> Maybe.Extra.unwrap 0 .id))
+            (IngredientCreationClientInput.default model.recipe.id food.id (food.measures |> List.head |> Maybe.Extra.unwrap 0 .id))
     , Cmd.none
     )
 
@@ -568,7 +571,7 @@ addComplexFood model complexFoodId =
            ).getOption
         |> Maybe.Extra.unwrap Cmd.none
             (ComplexIngredientClientInput.to
-                >> Requests.addComplexFood model.authorizedAccess model.recipeId
+                >> Requests.addComplexFood model.authorizedAccess model.recipe.id
             )
     )
 

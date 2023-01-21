@@ -29,7 +29,6 @@ import Pages.Ingredients.IngredientCreationClientInput as IngredientCreationClie
 import Pages.Ingredients.IngredientUpdateClientInput as IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
 import Pages.Ingredients.Page as Page
 import Pages.Ingredients.Pagination as Pagination exposing (Pagination)
-import Pages.Ingredients.RecipeInfo exposing (RecipeInfo)
 import Pages.Ingredients.Status as Status
 import Pages.Util.DictUtil as DictUtil
 import Pages.Util.HtmlUtil as HtmlUtil
@@ -120,11 +119,11 @@ view model =
                 [ table [ Style.classes.info ]
                     [ tr []
                         [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Recipe" ] ]
-                        , td [] [ label [] [ text <| Maybe.Extra.unwrap "" .name <| model.recipeInfo ] ]
+                        , td [] [ label [] [ text <| .name <| model.recipe ] ]
                         ]
                     , tr []
                         [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Description" ] ]
-                        , td [] [ label [] [ text <| Maybe.withDefault "" <| Maybe.andThen .description <| model.recipeInfo ] ]
+                        , td [] [ label [] [ text <| Maybe.withDefault "" <| .description <| model.recipe ] ]
                         ]
                     ]
                 ]
