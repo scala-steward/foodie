@@ -122,7 +122,8 @@ type alias CompletenessFraction information =
 
 nutrientInformationLineWith :
     { amountOf : information -> Maybe Float
-    , dailyAmountOf : Maybe (information -> Maybe Float)
+    , dailyAmountOf : information -> Maybe Float
+    , showDailyAmount : Bool
     , completenessFraction : Maybe (CompletenessFraction information)
     , nutrientBase : information -> NutrientInformationBase
     }
@@ -135,7 +136,7 @@ nutrientInformationLineWith ps referenceValues information =
             Dict.get (ps.nutrientBase information).nutrientCode referenceValues
 
         dailyValue =
-            ps.dailyAmountOf |> Maybe.andThen (\daily -> daily information)
+            ps.dailyAmountOf information
 
         factor =
             referenceFactor
@@ -174,11 +175,11 @@ nutrientInformationLineWith ps referenceValues information =
             Maybe.Extra.unwrap "" displayFloat >> flip (++) completenessInfo
 
         dailyAverage =
-            dailyValue
-                |> Maybe.Extra.unwrap []
-                    (\value ->
-                        [ td [ Style.classes.numberCell ] [ label completenessStyles [ text <| displayValue <| Just <| value ] ] ]
-                    )
+            if ps.showDailyAmount then
+                [ td [ Style.classes.numberCell ] [ label completenessStyles [ text <| displayValue <| dailyValue ] ] ]
+
+            else
+                []
     in
     tr [ Style.classes.editLine ]
         ([ td [] [ label [] [ text <| .name <| ps.nutrientBase <| information ] ]
@@ -261,7 +262,8 @@ statisticsTable :
     , searchStringOf : model -> String
     , infoListOf : model -> List information
     , amountOf : information -> Maybe Float
-    , dailyAmountOf : Maybe (information -> Maybe Float)
+    , dailyAmountOf : information -> Maybe Float
+    , showDailyAmount : Bool
     , completenessFraction : Maybe (CompletenessFraction information)
     , nutrientBase : information -> NutrientInformationBase
     , referenceTrees : model -> Dict ReferenceMapId ReferenceNutrientTree
@@ -287,7 +289,7 @@ statisticsTable ps model =
             , searchString = ps.searchStringOf model
             }
         , table [ Style.classes.elementsWithControlsTable ]
-            [ nutrientTableHeader { withDailyAverage = ps.dailyAmountOf |> Maybe.Extra.isJust }
+            [ nutrientTableHeader { withDailyAverage = ps.showDailyAmount }
             , tbody []
                 (List.map
                     (model
@@ -296,6 +298,7 @@ statisticsTable ps model =
                         |> nutrientInformationLineWith
                             { amountOf = ps.amountOf
                             , dailyAmountOf = ps.dailyAmountOf
+                            , showDailyAmount = ps.showDailyAmount
                             , completenessFraction = ps.completenessFraction
                             , nutrientBase = ps.nutrientBase
                             }

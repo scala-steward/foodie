@@ -85,7 +85,8 @@ view model =
                         , searchStringOf = .statisticsEvaluation >> .nutrientsSearchString
                         , infoListOf = .stats >> .nutrients
                         , amountOf = .amounts >> .values >> Maybe.map .total
-                        , dailyAmountOf = Just (.amounts >> .values >> Maybe.map .dailyAverage)
+                        , dailyAmountOf = .amounts >> .values >> Maybe.map .dailyAverage
+                        , showDailyAmount = True
                         , completenessFraction =
                             Just
                                 { definedValues = .amounts >> .numberOfDefinedValues
