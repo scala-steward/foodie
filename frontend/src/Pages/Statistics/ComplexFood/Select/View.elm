@@ -44,7 +44,8 @@ view model =
                         , searchStringOf = .statisticsEvaluation >> .nutrientsSearchString
                         , infoListOf = .foodStats >> .nutrients
                         , amountOf = .amount >> .value
-                        , dailyAmountOf = Nothing
+                        , dailyAmountOf = .amount >> .value
+                        , showDailyAmount = False
                         , completenessFraction =
                             Just
                                 { definedValues = .amount >> .numberOfDefinedValues
