@@ -1,5 +1,6 @@
 module Pages.Recipes.Handler exposing (init, update)
 
+import Addresses.Frontend
 import Api.Auxiliary exposing (JWT, RecipeId)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
@@ -15,6 +16,7 @@ import Pages.Recipes.RecipeCreationClientInput as RecipeCreationClientInput expo
 import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
 import Pages.Recipes.Requests as Requests
 import Pages.Recipes.Status as Status
+import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
 import Result.Extra
 import Util.Editing as Editing exposing (Editing)
@@ -103,17 +105,19 @@ createRecipe model =
 
 gotCreateRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.Msg )
 gotCreateRecipeResponse model dataOrError =
-    ( dataOrError
-        |> Result.Extra.unpack (flip setError model)
+    dataOrError
+        |> Result.Extra.unpack (\error -> ( setError error model, Cmd.none ))
             (\recipe ->
-                model
+                ( model
                     |> LensUtil.insertAtId recipe.id
                         Page.lenses.recipes
                         (recipe |> Editing.asView)
                     |> Page.lenses.recipeToAdd.set Nothing
+                , recipe.id
+                    |> Addresses.Frontend.ingredientEditor.address
+                    |> Links.loadFrontendPage model.authorizedAccess.configuration
+                )
             )
-    , Cmd.none
-    )
 
 
 updateRecipe : Page.Model -> RecipeUpdateClientInput -> ( Page.Model, Cmd Page.Msg )

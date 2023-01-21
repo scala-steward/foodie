@@ -1,5 +1,6 @@
 module Pages.Meals.Handler exposing (init, update)
 
+import Addresses.Frontend
 import Api.Auxiliary exposing (JWT, MealId)
 import Api.Types.Meal exposing (Meal)
 import Basics.Extra exposing (flip)
@@ -15,6 +16,7 @@ import Pages.Meals.Page as Page
 import Pages.Meals.Pagination as Pagination exposing (Pagination)
 import Pages.Meals.Requests as Requests
 import Pages.Meals.Status as Status
+import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
 import Result.Extra
 import Util.Editing as Editing exposing (Editing)
@@ -104,15 +106,17 @@ createMeal model =
 
 gotCreateMealResponse : Page.Model -> Result Error Meal -> ( Page.Model, Cmd msg )
 gotCreateMealResponse model dataOrError =
-    ( dataOrError
-        |> Result.Extra.unpack (flip setError model)
+    dataOrError
+        |> Result.Extra.unpack (\error -> ( setError error model, Cmd.none ))
             (\meal ->
-                model
+                ( model
                     |> LensUtil.insertAtId meal.id Page.lenses.meals (meal |> Editing.asView)
                     |> Page.lenses.mealToAdd.set Nothing
+                , meal.id
+                    |> Addresses.Frontend.mealEntryEditor.address
+                    |> Links.loadFrontendPage model.authorizedAccess.configuration
+                )
             )
-    , Cmd.none
-    )
 
 
 updateMeal : Page.Model -> MealUpdateClientInput -> ( Page.Model, Cmd Page.Msg )

@@ -3,6 +3,7 @@ module Pages.Util.Links exposing (..)
 import Addresses.Frontend
 import Basics.Extra exposing (flip)
 import Bootstrap.Button
+import Browser.Navigation
 import Configuration exposing (Configuration)
 import Html exposing (Attribute, Html, text)
 import Html.Attributes exposing (href)
@@ -44,6 +45,11 @@ frontendPage configuration pathSteps =
     [ configuration.mainPageURL, "#" ]
         ++ pathSteps
         |> flip Url.Builder.relative []
+
+
+loadFrontendPage : Configuration -> List String -> Cmd msg
+loadFrontendPage configuration =
+    frontendPage configuration >> Browser.Navigation.load
 
 
 backendPage : Configuration -> List String -> List Url.Builder.QueryParameter -> String

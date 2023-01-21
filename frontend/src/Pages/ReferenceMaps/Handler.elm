@@ -1,5 +1,6 @@
 module Pages.ReferenceMaps.Handler exposing (init, update)
 
+import Addresses.Frontend
 import Api.Auxiliary exposing (JWT, ReferenceMapId)
 import Api.Types.ReferenceMap exposing (ReferenceMap)
 import Basics.Extra exposing (flip)
@@ -15,6 +16,7 @@ import Pages.ReferenceMaps.ReferenceMapCreationClientInput as ReferenceMapCreati
 import Pages.ReferenceMaps.ReferenceMapUpdateClientInput as ReferenceMapUpdateClientInput exposing (ReferenceMapUpdateClientInput)
 import Pages.ReferenceMaps.Requests as Requests
 import Pages.ReferenceMaps.Status as Status
+import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
 import Result.Extra
 import Util.Editing as Editing exposing (Editing)
@@ -103,17 +105,19 @@ createReferenceMap model =
 
 gotCreateReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.Msg )
 gotCreateReferenceMapResponse model dataOrError =
-    ( dataOrError
-        |> Result.Extra.unpack (flip setError model)
+    dataOrError
+        |> Result.Extra.unpack (\error -> ( setError error model, Cmd.none ))
             (\referenceMap ->
-                model
+                ( model
                     |> LensUtil.insertAtId referenceMap.id
                         Page.lenses.referenceMaps
                         (referenceMap |> Editing.asView)
                     |> Page.lenses.referenceMapToAdd.set Nothing
+                , referenceMap.id
+                    |> Addresses.Frontend.referenceEntries.address
+                    |> Links.loadFrontendPage model.authorizedAccess.configuration
+                )
             )
-    , Cmd.none
-    )
 
 
 updateReferenceMap : Page.Model -> ReferenceMapUpdateClientInput -> ( Page.Model, Cmd Page.Msg )
