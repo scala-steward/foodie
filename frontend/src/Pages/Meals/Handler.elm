@@ -138,7 +138,12 @@ saveMealEdit model mealId =
         |> Maybe.andThen MealUpdateClientInput.to
         |> Maybe.Extra.unwrap
             Cmd.none
-            (Requests.saveMeal model.authorizedAccess)
+            (\mealUpdate ->
+                Requests.saveMeal
+                    { authorizedAccess = model.authorizedAccess
+                    , mealUpdate = mealUpdate
+                    }
+            )
     )
 
 
@@ -181,7 +186,10 @@ requestDeleteMeal model mealId =
 confirmDeleteMeal : Page.Model -> MealId -> ( Page.Model, Cmd Page.Msg )
 confirmDeleteMeal model mealId =
     ( model
-    , Requests.deleteMeal model.authorizedAccess mealId
+    , Requests.deleteMeal
+        { authorizedAccess = model.authorizedAccess
+        , mealId = mealId
+        }
     )
 
 

@@ -5,6 +5,7 @@ import Api.Auxiliary exposing (MealId, RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood, decoderComplexFood)
 import Api.Types.Food exposing (Food, decoderFood)
 import Api.Types.Meal exposing (Meal, decoderMeal)
+import Api.Types.MealUpdate exposing (MealUpdate, encoderMealUpdate)
 import Api.Types.Recipe exposing (Recipe, decoderRecipe)
 import Api.Types.RecipeUpdate exposing (RecipeUpdate, encoderRecipeUpdate)
 import Http
@@ -85,6 +86,38 @@ fetchMealWith mkMsg ps =
         (Addresses.Backend.meals.single ps.mealId)
         { body = Http.emptyBody
         , expect = HttpUtil.expectJson mkMsg decoderMeal
+        }
+
+
+saveMealWith :
+    (Result Error Meal -> msg)
+    ->
+        { authorizedAccess : AuthorizedAccess
+        , mealUpdate : MealUpdate
+        }
+    -> Cmd msg
+saveMealWith mkMsg ps =
+    HttpUtil.runPatternWithJwt
+        ps.authorizedAccess
+        Addresses.Backend.meals.update
+        { body = encoderMealUpdate ps.mealUpdate |> Http.jsonBody
+        , expect = HttpUtil.expectJson mkMsg decoderMeal
+        }
+
+
+deleteMealWith :
+    (Result Error () -> msg)
+    ->
+        { authorizedAccess : AuthorizedAccess
+        , mealId : MealId
+        }
+    -> Cmd msg
+deleteMealWith mkMsg ps =
+    HttpUtil.runPatternWithJwt
+        ps.authorizedAccess
+        (Addresses.Backend.meals.delete ps.mealId)
+        { body = Http.emptyBody
+        , expect = HttpUtil.expectWhatever mkMsg
         }
 
 

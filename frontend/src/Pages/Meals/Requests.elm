@@ -4,7 +4,7 @@ import Addresses.Backend
 import Api.Auxiliary exposing (JWT, MealId)
 import Api.Types.Meal exposing (Meal, decoderMeal)
 import Api.Types.MealCreation exposing (MealCreation, encoderMealCreation)
-import Api.Types.MealUpdate exposing (MealUpdate, encoderMealUpdate)
+import Api.Types.MealUpdate exposing (MealUpdate)
 import Http
 import Pages.Meals.Page as Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
@@ -27,21 +27,19 @@ createMeal authorizedAccess mealCreation =
         }
 
 
-saveMeal : AuthorizedAccess -> MealUpdate -> Cmd Page.Msg
-saveMeal authorizedAccess mealUpdate =
-    HttpUtil.runPatternWithJwt
-        authorizedAccess
-        Addresses.Backend.meals.update
-        { body = encoderMealUpdate mealUpdate |> Http.jsonBody
-        , expect = HttpUtil.expectJson Page.GotSaveMealResponse decoderMeal
-        }
+saveMeal :
+    { authorizedAccess : AuthorizedAccess
+    , mealUpdate : MealUpdate
+    }
+    -> Cmd Page.Msg
+saveMeal =
+    Pages.Util.Requests.saveMealWith Page.GotSaveMealResponse
 
 
-deleteMeal : AuthorizedAccess -> MealId -> Cmd Page.Msg
-deleteMeal authorizedAccess mealId =
-    HttpUtil.runPatternWithJwt
-        authorizedAccess
-        (Addresses.Backend.meals.delete mealId)
-        { body = Http.emptyBody
-        , expect = HttpUtil.expectWhatever (Page.GotDeleteMealResponse mealId)
-        }
+deleteMeal :
+    { authorizedAccess : AuthorizedAccess
+    , mealId : MealId
+    }
+    -> Cmd Page.Msg
+deleteMeal ps =
+    Pages.Util.Requests.deleteMealWith (Page.GotDeleteMealResponse ps.mealId) ps
