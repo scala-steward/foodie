@@ -140,7 +140,7 @@ select {
 #addMealView .editable:not(.date, .time),
 #addReferenceMapView .editable,
 #ingredientEditor .editable,
-#mealEntryEditor .editable,
+#mealEntryEditor .editable:not(.date, .time),
 #referenceEntryEditor .editable,
 #statistics .editable:not(.date) {
     white-space: break-spaces;
