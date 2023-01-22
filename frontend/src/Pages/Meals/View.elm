@@ -1,4 +1,4 @@
-module Pages.Meals.View exposing (view)
+module Pages.Meals.View exposing (editMealLineWith, mealLineWith, view, tableHeader)
 
 import Addresses.Frontend
 import Api.Types.Meal exposing (Meal)
@@ -52,7 +52,7 @@ view model =
                 Editing.unpack
                     { onView = viewMealLine model.authorizedAccess.configuration
                     , onUpdate = updateMealLine |> always
-                    , onDelete = deleteMealLine model.authorizedAccess.configuration
+                    , onDelete = deleteMealLine
                     }
 
             filterOn =
@@ -82,28 +82,16 @@ view model =
                         , searchString = model.searchString
                         }
                    , table [ Style.classes.elementsWithControlsTable ]
-                        [ colgroup []
-                            [ col [] []
-                            , col [] []
-                            , col [] []
-                            , col [ stringProperty "span" "3" ] []
-                            ]
-                        , thead []
-                            [ tr [ Style.classes.tableHeader ]
-                                [ th [ scope "col" ] [ label [] [ text "Date" ] ]
-                                , th [ scope "col" ] [ label [] [ text "Time" ] ]
-                                , th [ scope "col" ] [ label [] [ text "Name" ] ]
-                                , th [ colspan 3, scope "colgroup", Style.classes.controlsGroup ] []
-                                ]
-                            ]
-                        , tbody []
-                            (creationLine
-                                ++ (viewMeals
-                                        |> Paginate.page
-                                        |> List.map viewMealState
-                                   )
-                            )
-                        ]
+                        (tableHeader { controlButtons = 4 }
+                            ++ [ tbody []
+                                    (creationLine
+                                        ++ (viewMeals
+                                                |> Paginate.page
+                                                |> List.map viewMealState
+                                           )
+                                    )
+                               ]
+                        )
                    , div [ Style.classes.pagination ]
                         [ ViewUtil.pagerButtons
                             { msg =
@@ -118,6 +106,25 @@ view model =
                         ]
                    ]
             )
+
+
+tableHeader : { controlButtons : Int } -> List (Html msg)
+tableHeader ps =
+    [ colgroup []
+        [ col [] []
+        , col [] []
+        , col [] []
+        , col [ stringProperty "span" <| String.fromInt <| ps.controlButtons ] []
+        ]
+    , thead []
+        [ tr [ Style.classes.tableHeader ]
+            [ th [ scope "col" ] [ label [] [ text "Date" ] ]
+            , th [ scope "col" ] [ label [] [ text "Time" ] ]
+            , th [ scope "col" ] [ label [] [ text "Name" ] ]
+            , th [ colspan ps.controlButtons, scope "colgroup", Style.classes.controlsGroup ] []
+            ]
+        ]
+    ]
 
 
 createMeal : Maybe MealCreationClientInput -> Either (Html Page.Msg) (Html Page.Msg)
@@ -163,37 +170,37 @@ viewMealLine configuration meal =
                 ]
             ]
         , onClick = [ editMsg ]
-        , configuration = configuration
+        , styles = [ Style.classes.editing ]
         }
         meal
 
 
-deleteMealLine : Configuration -> Meal -> Html Page.Msg
-deleteMealLine configuration meal =
+deleteMealLine : Meal -> Html Page.Msg
+deleteMealLine meal =
     mealLineWith
         { controls =
             [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteMeal meal.id) ] [ text "Delete?" ] ]
             , td [ Style.classes.controls ] [ button [ Style.classes.button.confirm, onClick (Page.CancelDeleteMeal meal.id) ] [ text "Cancel" ] ]
             ]
         , onClick = []
-        , configuration = configuration
+        , styles = [ Style.classes.editing ]
         }
         meal
 
 
 mealLineWith :
-    { controls : List (Html Page.Msg)
-    , onClick : List (Attribute Page.Msg)
-    , configuration : Configuration
+    { controls : List (Html msg)
+    , onClick : List (Attribute msg)
+    , styles : List (Attribute msg)
     }
     -> Meal
-    -> Html Page.Msg
+    -> Html msg
 mealLineWith ps meal =
     let
         withOnClick =
             (++) ps.onClick
     in
-    tr [ Style.classes.editing ]
+    tr ps.styles
         ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| DateUtil.dateToString <| meal.date.date ] ]
          , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.Extra.unwrap "" DateUtil.timeToString <| meal.date.time ] ]
          , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.withDefault "" <| meal.name ] ]
@@ -210,10 +217,10 @@ updateMealLine mealUpdateClientInput =
         , setDate = True
         , nameLens = MealUpdateClientInput.lenses.name
         , updateMsg = Page.UpdateMeal
-        , confirmOnClick = Page.SaveMealEdit mealUpdateClientInput.id
         , confirmName = "Save"
         , cancelMsg = Page.ExitEditMealAt mealUpdateClientInput.id
         , cancelName = "Cancel"
+        , rowStyles = [ Style.classes.editLine ]
         }
         mealUpdateClientInput
 
@@ -226,27 +233,27 @@ createMealLine mealCreation =
         , setDate = False
         , nameLens = MealCreationClientInput.lenses.name
         , updateMsg = Just >> Page.UpdateMealCreation
-        , confirmOnClick = Page.CreateMeal
         , confirmName = "Add"
         , cancelMsg = Page.UpdateMealCreation Nothing
         , cancelName = "Cancel"
+        , rowStyles = [ Style.classes.editLine ]
         }
         mealCreation
 
 
 editMealLineWith :
-    { saveMsg : Page.Msg
+    { saveMsg : msg
     , dateLens : Lens editedValue SimpleDateInput
     , setDate : Bool
     , nameLens : Optional editedValue String
-    , updateMsg : editedValue -> Page.Msg
-    , confirmOnClick : Page.Msg
+    , updateMsg : editedValue -> msg
     , confirmName : String
-    , cancelMsg : Page.Msg
+    , cancelMsg : msg
     , cancelName : String
+    , rowStyles : List (Attribute msg)
     }
     -> editedValue
-    -> Html Page.Msg
+    -> Html msg
 editMealLineWith handling editedValue =
     let
         date =
@@ -299,7 +306,7 @@ editMealLineWith handling editedValue =
         validInput =
             Maybe.Extra.isJust <| date.date
     in
-    tr [ Style.classes.editLine ]
+    tr handling.rowStyles
         [ td [ Style.classes.editable, Style.classes.date ]
             [ input
                 ([ type_ "date"
@@ -340,7 +347,7 @@ editMealLineWith handling editedValue =
             [ button
                 ([ MaybeUtil.defined <| Style.classes.button.confirm
                  , MaybeUtil.defined <| disabled <| not <| validInput
-                 , MaybeUtil.optional validInput <| onClick handling.confirmOnClick
+                 , MaybeUtil.optional validInput <| onClick handling.saveMsg
                  ]
                     |> Maybe.Extra.values
                 )

@@ -1,5 +1,6 @@
 module Pages.MealEntries.View exposing (view)
 
+import Addresses.Frontend
 import Api.Types.MealEntry exposing (MealEntry)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
@@ -16,9 +17,11 @@ import Pages.MealEntries.MealEntryUpdateClientInput as MealEntryUpdateClientInpu
 import Pages.MealEntries.Page as Page exposing (RecipeMap)
 import Pages.MealEntries.Pagination as Pagination
 import Pages.MealEntries.Status as Status
-import Pages.Util.DateUtil as DateUtil
+import Pages.Meals.MealUpdateClientInput as MealUpdateClientInput
+import Pages.Meals.View
 import Pages.Util.DictUtil as DictUtil
 import Pages.Util.HtmlUtil as HtmlUtil
+import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput
@@ -80,19 +83,67 @@ view model =
 
                 else
                     ""
+
+            viewMeal =
+                Editing.unpack
+                    { onView =
+                        Pages.Meals.View.mealLineWith
+                            { controls =
+                                [ td [ Style.classes.controls ]
+                                    [ button [ Style.classes.button.edit, Page.EnterEditMeal |> onClick ] [ text "Edit" ] ]
+                                , td [ Style.classes.controls ]
+                                    [ button
+                                        [ Style.classes.button.delete, Page.RequestDeleteMeal |> onClick ]
+                                        [ text "Delete" ]
+                                    ]
+                                , td [ Style.classes.controls ]
+                                    [ Links.linkButton
+                                        { url = Links.frontendPage model.authorizedAccess.configuration <| Addresses.Frontend.statisticsMealSelect.address <| model.meal.original.id
+                                        , attributes = [ Style.classes.button.nutrients ]
+                                        , children = [ text "Nutrients" ]
+                                        }
+                                    ]
+                                ]
+                            , onClick = [ Page.EnterEditMeal |> onClick ]
+                            , styles = []
+                            }
+                    , onUpdate =
+                        Pages.Meals.View.editMealLineWith
+                            { saveMsg = Page.SaveMealEdit
+                            , dateLens = MealUpdateClientInput.lenses.date
+                            , setDate = True
+                            , nameLens = MealUpdateClientInput.lenses.name
+                            , updateMsg = Page.UpdateMeal
+                            , confirmName = "Save"
+                            , cancelMsg = Page.ExitEditMeal
+                            , cancelName = "Cancel"
+                            , rowStyles = []
+                            }
+                            |> always
+                    , onDelete =
+                        Pages.Meals.View.mealLineWith
+                            { controls =
+                                [ td [ Style.classes.controls ]
+                                    [ button [ Style.classes.button.delete, onClick <| Page.ConfirmDeleteMeal ] [ text "Delete?" ] ]
+                                , td [ Style.classes.controls ]
+                                    [ button
+                                        [ Style.classes.button.confirm, onClick <| Page.CancelDeleteMeal ]
+                                        [ text "Cancel" ]
+                                    ]
+                                ]
+                            , onClick = []
+                            , styles = []
+                            }
+                    }
+                    model.meal
         in
         div [ Style.ids.mealEntryEditor ]
             [ div []
-                [ table [ Style.classes.info ]
-                    [ tr []
-                        [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Date" ] ]
-                        , td [] [ label [] [ text <| DateUtil.toString <| .date <| .original <| model.meal ] ]
-                        ]
-                    , tr []
-                        [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Name" ] ]
-                        , td [] [ label [] [ text <| Maybe.withDefault "" <| .name <| .original <| model.meal ] ]
-                        ]
-                    ]
+                [ table [ Style.classes.elementsWithControlsTable ]
+                    (Pages.Meals.View.tableHeader { controlButtons = 3 }
+                        ++ [ tbody [] [ viewMeal ]
+                           ]
+                    )
                 ]
             , div [ Style.classes.elements ] [ label [] [ text "Dishes" ] ]
             , div [ Style.classes.choices ]
