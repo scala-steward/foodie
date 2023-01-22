@@ -9,9 +9,9 @@ import Dict exposing (Dict)
 import Monocle.Lens exposing (Lens)
 import Pages.MealEntries.MealEntryCreationClientInput exposing (MealEntryCreationClientInput)
 import Pages.MealEntries.MealEntryUpdateClientInput exposing (MealEntryUpdateClientInput)
-import Pages.MealEntries.MealInfo exposing (MealInfo)
 import Pages.MealEntries.Pagination exposing (Pagination)
 import Pages.MealEntries.Status exposing (Status)
+import Pages.Meals.MealUpdateClientInput exposing (MealUpdateClientInput)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
@@ -20,8 +20,7 @@ import Util.Initialization exposing (Initialization)
 
 type alias Model =
     { authorizedAccess : AuthorizedAccess
-    , mealId : MealId
-    , mealInfo : Maybe MealInfo
+    , meal : Editing Meal MealUpdateClientInput
     , mealEntries : MealEntryStateMap
     , recipes : RecipeMap
     , recipesSearchString : String
@@ -55,7 +54,7 @@ type alias Flags =
 
 
 lenses :
-    { mealInfo : Lens Model (Maybe MealInfo)
+    { meal : Lens Model (Editing Meal MealUpdateClientInput)
     , mealEntries : Lens Model MealEntryStateMap
     , mealEntriesToAdd : Lens Model AddMealEntriesMap
     , recipes : Lens Model RecipeMap
@@ -65,7 +64,7 @@ lenses :
     , pagination : Lens Model Pagination
     }
 lenses =
-    { mealInfo = Lens .mealInfo (\b a -> { a | mealInfo = b })
+    { meal = Lens .meal (\b a -> { a | meal = b })
     , mealEntries = Lens .mealEntries (\b a -> { a | mealEntries = b })
     , mealEntriesToAdd = Lens .mealEntriesToAdd (\b a -> { a | mealEntriesToAdd = b })
     , recipes = Lens .recipes (\b a -> { a | recipes = b })
@@ -102,3 +101,12 @@ type Msg
     | SetRecipesSearchString String
     | SetEntriesSearchString String
     | SetPagination Pagination
+    | UpdateMeal MealUpdateClientInput
+    | SaveMealEdit
+    | GotSaveMealResponse (Result Error Meal)
+    | EnterEditMeal
+    | ExitEditMeal
+    | RequestDeleteMeal
+    | ConfirmDeleteMeal
+    | CancelDeleteMeal
+    | GotDeleteMealResponse (Result Error ())

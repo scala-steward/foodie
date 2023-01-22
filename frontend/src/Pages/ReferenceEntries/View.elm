@@ -18,6 +18,8 @@ import Pages.ReferenceEntries.Pagination as Pagination
 import Pages.ReferenceEntries.ReferenceEntryCreationClientInput as ReferenceEntryCreationClientInput exposing (ReferenceEntryCreationClientInput)
 import Pages.ReferenceEntries.ReferenceEntryUpdateClientInput as ReferenceEntryUpdateClientInput exposing (ReferenceEntryUpdateClientInput)
 import Pages.ReferenceEntries.Status as Status
+import Pages.ReferenceMaps.ReferenceMapUpdateClientInput as ReferenceMapUpdateClientInput
+import Pages.ReferenceMaps.View
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
@@ -81,9 +83,60 @@ view model =
 
                 else
                     ( "", "" )
+
+            viewReferenceMap =
+                Editing.unpack
+                    { onView =
+                        Pages.ReferenceMaps.View.referenceMapLineWith
+                            { controls =
+                                [ td [ Style.classes.controls ]
+                                    [ button [ Style.classes.button.edit, Page.EnterEditReferenceMap |> onClick ] [ text "Edit" ] ]
+                                , td [ Style.classes.controls ]
+                                    [ button
+                                        [ Style.classes.button.delete, Page.RequestDeleteReferenceMap |> onClick ]
+                                        [ text "Delete" ]
+                                    ]
+                                ]
+                            , onClick = [ Page.EnterEditReferenceMap |> onClick ]
+                            , styles = []
+                            }
+                    , onUpdate =
+                        Pages.ReferenceMaps.View.editReferenceMapLineWith
+                            { saveMsg = Page.SaveReferenceMapEdit
+                            , nameLens = ReferenceMapUpdateClientInput.lenses.name
+                            , updateMsg = Page.UpdateReferenceMap
+                            , confirmName = "Save"
+                            , cancelMsg = Page.ExitEditReferenceMap
+                            , cancelName = "Cancel"
+                            , rowStyles = []
+                            }
+                            |> always
+                    , onDelete =
+                        Pages.ReferenceMaps.View.referenceMapLineWith
+                            { controls =
+                                [ td [ Style.classes.controls ]
+                                    [ button [ Style.classes.button.delete, onClick <| Page.ConfirmDeleteReferenceMap ] [ text "Delete?" ] ]
+                                , td [ Style.classes.controls ]
+                                    [ button
+                                        [ Style.classes.button.confirm, onClick <| Page.CancelDeleteReferenceMap ]
+                                        [ text "Cancel" ]
+                                    ]
+                                ]
+                            , onClick = []
+                            , styles = []
+                            }
+                    }
+                    model.referenceMap
         in
         div [ Style.ids.referenceEntryEditor ]
             [ div []
+                [ table [ Style.classes.elementsWithControlsTable ]
+                    (Pages.ReferenceMaps.View.tableHeader { controlButtons = 2 }
+                        ++ [ tbody [] [ viewReferenceMap ]
+                           ]
+                    )
+                ]
+            , div []
                 [ HtmlUtil.searchAreaWith
                     { msg = Page.SetReferenceEntriesSearchString
                     , searchString = model.referenceEntriesSearchString

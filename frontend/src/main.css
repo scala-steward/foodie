@@ -140,7 +140,7 @@ select {
 #addMealView .editable:not(.date, .time),
 #addReferenceMapView .editable,
 #ingredientEditor .editable,
-#mealEntryEditor .editable,
+#mealEntryEditor .editable:not(.date, .time),
 #referenceEntryEditor .editable,
 #statistics .editable:not(.date) {
     white-space: break-spaces;
@@ -214,7 +214,7 @@ th {
 }
 
 #ingredientEditor th:nth-child(3) {
-    width: 35%;
+    width: 30%;
 }
 
 #statistics .intervalSelection th:first-child,

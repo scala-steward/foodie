@@ -1,5 +1,6 @@
 module Pages.MealEntries.Handler exposing (init, update)
 
+import Addresses.Frontend
 import Api.Auxiliary exposing (JWT, MealEntryId, MealId, RecipeId)
 import Api.Types.Meal exposing (Meal)
 import Api.Types.MealEntry exposing (MealEntry)
@@ -7,18 +8,21 @@ import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Dict
 import Dict.Extra
+import Maybe.Extra
 import Monocle.Compose as Compose
-import Monocle.Lens
+import Monocle.Lens as Lens
 import Monocle.Optional as Optional
 import Pages.MealEntries.MealEntryCreationClientInput as MealEntryCreationClientInput exposing (MealEntryCreationClientInput)
 import Pages.MealEntries.MealEntryUpdateClientInput as MealEntryUpdateClientInput exposing (MealEntryUpdateClientInput)
-import Pages.MealEntries.MealInfo as MealInfo
 import Pages.MealEntries.Page as Page exposing (Msg(..))
 import Pages.MealEntries.Pagination as Pagination exposing (Pagination)
 import Pages.MealEntries.Requests as Requests
 import Pages.MealEntries.Status as Status
+import Pages.Meals.MealUpdateClientInput as MealUpdateClientInput exposing (MealUpdateClientInput)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
+import Pages.Util.Requests
 import Result.Extra
 import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil as HttpUtil exposing (Error)
@@ -29,8 +33,20 @@ import Util.LensUtil as LensUtil
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
     ( { authorizedAccess = flags.authorizedAccess
-      , mealId = flags.mealId
-      , mealInfo = Nothing
+      , meal =
+            -- todo: Extract?
+            Editing.asView
+                { id = flags.mealId
+                , date =
+                    { date =
+                        { year = 2023
+                        , month = 1
+                        , day = 1
+                        }
+                    , time = Nothing
+                    }
+                , name = Nothing
+                }
       , mealEntries = Dict.empty
       , recipes = Dict.empty
       , recipesSearchString = ""
@@ -116,6 +132,33 @@ update msg model =
 
         Page.SetPagination pagination ->
             setPagination model pagination
+
+        Page.UpdateMeal mealUpdateClientInput ->
+            updateMeal model mealUpdateClientInput
+
+        Page.SaveMealEdit ->
+            saveMealEdit model
+
+        Page.GotSaveMealResponse result ->
+            gotSaveMealResponse model result
+
+        Page.EnterEditMeal ->
+            enterEditMeal model
+
+        Page.ExitEditMeal ->
+            exitEditMeal model
+
+        Page.RequestDeleteMeal ->
+            requestDeleteMeal model
+
+        Page.ConfirmDeleteMeal ->
+            confirmDeleteMeal model
+
+        Page.CancelDeleteMeal ->
+            cancelDeleteMeal model
+
+        Page.GotDeleteMealResponse result ->
+            gotDeleteMealResponse model result
 
 
 updateMealEntry : Page.Model -> MealEntryUpdateClientInput -> ( Page.Model, Cmd Page.Msg )
@@ -232,7 +275,7 @@ gotFetchMealResponse model result =
         |> Result.Extra.unpack (flip setError model)
             (\meal ->
                 model
-                    |> Page.lenses.mealInfo.set (meal |> MealInfo.from |> Just)
+                    |> Page.lenses.meal.set (meal |> Editing.asView)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.meal).set True
             )
     , Cmd.none
@@ -244,7 +287,7 @@ selectRecipe model recipeId =
     ( model
         |> LensUtil.insertAtId recipeId
             Page.lenses.mealEntriesToAdd
-            (MealEntryCreationClientInput.default model.mealId recipeId)
+            (MealEntryCreationClientInput.default model.meal.original.id recipeId)
     , Cmd.none
     )
 
@@ -326,6 +369,102 @@ setPagination model pagination =
     ( model |> Page.lenses.pagination.set pagination
     , Cmd.none
     )
+
+
+updateMeal : Page.Model -> MealUpdateClientInput -> ( Page.Model, Cmd Page.Msg )
+updateMeal model mealUpdateClientInput =
+    ( model
+        |> (Page.lenses.meal
+                |> Compose.lensWithOptional Editing.lenses.update
+           ).set
+            mealUpdateClientInput
+    , Cmd.none
+    )
+
+
+saveMealEdit : Page.Model -> ( Page.Model, Cmd Page.Msg )
+saveMealEdit model =
+    ( model
+    , model
+        |> Page.lenses.meal.get
+        |> Editing.extractUpdate
+        |> Maybe.andThen MealUpdateClientInput.to
+        |> Maybe.Extra.unwrap
+            Cmd.none
+            (\mealUpdate ->
+                Pages.Util.Requests.saveMealWith
+                    Page.GotSaveMealResponse
+                    { authorizedAccess = model.authorizedAccess
+                    , mealUpdate = mealUpdate
+                    }
+            )
+    )
+
+
+gotSaveMealResponse : Page.Model -> Result Error Meal -> ( Page.Model, Cmd Page.Msg )
+gotSaveMealResponse model result =
+    ( result
+        |> Result.Extra.unpack (flip setError model)
+            (\meal ->
+                model
+                    |> Page.lenses.meal.set (meal |> Editing.asView)
+            )
+    , Cmd.none
+    )
+
+
+enterEditMeal : Page.Model -> ( Page.Model, Cmd Page.Msg )
+enterEditMeal model =
+    ( model
+        |> Lens.modify Page.lenses.meal (Editing.toUpdate MealUpdateClientInput.from)
+    , Cmd.none
+    )
+
+
+exitEditMeal : Page.Model -> ( Page.Model, Cmd Page.Msg )
+exitEditMeal model =
+    ( model
+        |> Lens.modify Page.lenses.meal Editing.toView
+    , Cmd.none
+    )
+
+
+requestDeleteMeal : Page.Model -> ( Page.Model, Cmd Msg )
+requestDeleteMeal model =
+    ( model |> Lens.modify Page.lenses.meal Editing.toDelete
+    , Cmd.none
+    )
+
+
+confirmDeleteMeal : Page.Model -> ( Page.Model, Cmd Msg )
+confirmDeleteMeal model =
+    ( model
+    , Pages.Util.Requests.deleteMealWith Page.GotDeleteMealResponse
+        { authorizedAccess = model.authorizedAccess
+        , mealId = model.meal.original.id
+        }
+    )
+
+
+cancelDeleteMeal : Page.Model -> ( Page.Model, Cmd Page.Msg )
+cancelDeleteMeal model =
+    ( model
+        |> Lens.modify Page.lenses.meal Editing.toView
+    , Cmd.none
+    )
+
+
+gotDeleteMealResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotDeleteMealResponse model result =
+    result
+        |> Result.Extra.unpack (\error -> ( model |> setError error, Cmd.none ))
+            (\_ ->
+                ( model
+                , Links.loadFrontendPage
+                    model.authorizedAccess.configuration
+                    (() |> Addresses.Frontend.meals.address)
+                )
+            )
 
 
 mapMealEntryStateById : MealEntryId -> (Page.MealEntryState -> Page.MealEntryState) -> Page.Model -> Page.Model

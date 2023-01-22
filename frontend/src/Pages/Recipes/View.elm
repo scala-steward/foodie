@@ -1,4 +1,4 @@
-module Pages.Recipes.View exposing (view)
+module Pages.Recipes.View exposing (editRecipeLineWith, recipeLineWith, tableHeader, view)
 
 import Addresses.Frontend
 import Api.Types.Recipe exposing (Recipe)
@@ -78,25 +78,13 @@ view model =
                         , searchString = model.searchString
                         }
                    , table [ Style.classes.elementsWithControlsTable ]
-                        [ colgroup []
-                            [ col [] []
-                            , col [] []
-                            , col [] []
-                            , col [ stringProperty "span" "4" ] []
-                            ]
-                        , thead []
-                            [ tr [ Style.classes.tableHeader ]
-                                [ th [ scope "col" ] [ label [] [ text "Name" ] ]
-                                , th [ scope "col" ] [ label [] [ text "Description" ] ]
-                                , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Servings" ] ]
-                                , th [ colspan 4, scope "colgroup", Style.classes.controlsGroup ] []
-                                ]
-                            ]
-                        , tbody []
-                            (creationLine
-                                ++ (viewEditRecipes |> Paginate.page |> List.map viewRecipeState)
-                            )
-                        ]
+                        (tableHeader { controlButtons = 4 }
+                            ++ [ tbody []
+                                    (creationLine
+                                        ++ (viewEditRecipes |> Paginate.page |> List.map viewRecipeState)
+                                    )
+                               ]
+                        )
                    , div [ Style.classes.pagination ]
                         [ ViewUtil.pagerButtons
                             { msg =
@@ -111,6 +99,25 @@ view model =
                         ]
                    ]
             )
+
+
+tableHeader : { controlButtons : Int } -> List (Html msg)
+tableHeader ps =
+    [ colgroup []
+        [ col [] []
+        , col [] []
+        , col [] []
+        , col [ stringProperty "span" (ps.controlButtons |> String.fromInt) ] []
+        ]
+    , thead []
+        [ tr [ Style.classes.tableHeader ]
+            [ th [ scope "col" ] [ label [] [ text "Name" ] ]
+            , th [ scope "col" ] [ label [] [ text "Description" ] ]
+            , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Servings" ] ]
+            , th [ colspan ps.controlButtons, scope "colgroup", Style.classes.controlsGroup ] []
+            ]
+        ]
+    ]
 
 
 createRecipe : Maybe RecipeCreationClientInput -> Either (Html Page.Msg) (Html Page.Msg)
@@ -141,16 +148,16 @@ viewRecipeLine configuration recipe =
             [ td [ Style.classes.controls ]
                 [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
             , td [ Style.classes.controls ]
-                [ button
-                    [ Style.classes.button.delete, onClick (Page.RequestDeleteRecipe recipe.id) ]
-                    [ text "Delete" ]
-                ]
-            , td [ Style.classes.controls ]
                 [ Links.linkButton
                     { url = Links.frontendPage configuration <| Addresses.Frontend.ingredientEditor.address <| recipe.id
                     , attributes = [ Style.classes.button.editor ]
                     , children = [ text "Ingredients" ]
                     }
+                ]
+            , td [ Style.classes.controls ]
+                [ button
+                    [ Style.classes.button.delete, onClick (Page.RequestDeleteRecipe recipe.id) ]
+                    [ text "Delete" ]
                 ]
             , td [ Style.classes.controls ]
                 [ Links.linkButton
@@ -161,6 +168,7 @@ viewRecipeLine configuration recipe =
                 ]
             ]
         , onClick = [ editMsg ]
+        , styles = [ Style.classes.editing ]
         }
         recipe
 
@@ -178,22 +186,24 @@ deleteRecipeLine recipe =
                 ]
             ]
         , onClick = []
+        , styles = [ Style.classes.editing ]
         }
         recipe
 
 
 recipeLineWith :
-    { controls : List (Html Page.Msg)
-    , onClick : List (Attribute Page.Msg)
+    { controls : List (Html msg)
+    , onClick : List (Attribute msg)
+    , styles : List (Attribute msg)
     }
     -> Recipe
-    -> Html Page.Msg
+    -> Html msg
 recipeLineWith ps recipe =
     let
         withOnClick =
             (++) ps.onClick
     in
-    tr [ Style.classes.editing ]
+    tr ps.styles
         ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text recipe.name ] ]
          , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
          , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| recipe.numberOfServings ] ]
@@ -213,12 +223,13 @@ updateRecipeLine recipeUpdateClientInput =
         , confirmName = "Save"
         , cancelMsg = Page.ExitEditRecipeAt recipeUpdateClientInput.id
         , cancelName = "Cancel"
+        , rowStyles = [ Style.classes.editLine ]
         }
         recipeUpdateClientInput
 
 
 createRecipeLine : RecipeCreationClientInput -> Html Page.Msg
-createRecipeLine recipeCreationClientInput =
+createRecipeLine =
     editRecipeLineWith
         { saveMsg = Page.CreateRecipe
         , nameLens = RecipeCreationClientInput.lenses.name
@@ -228,22 +239,23 @@ createRecipeLine recipeCreationClientInput =
         , confirmName = "Add"
         , cancelMsg = Page.UpdateRecipeCreation Nothing
         , cancelName = "Cancel"
+        , rowStyles = [ Style.classes.editLine ]
         }
-        recipeCreationClientInput
 
 
 editRecipeLineWith :
-    { saveMsg : Page.Msg
+    { saveMsg : msg
     , nameLens : Lens editedValue (ValidatedInput String)
     , descriptionLens : Lens editedValue (Maybe String)
     , numberOfServingsLens : Lens editedValue (ValidatedInput Float)
-    , updateMsg : editedValue -> Page.Msg
+    , updateMsg : editedValue -> msg
     , confirmName : String
-    , cancelMsg : Page.Msg
+    , cancelMsg : msg
     , cancelName : String
+    , rowStyles : List (Attribute msg)
     }
     -> editedValue
-    -> Html Page.Msg
+    -> Html msg
 editRecipeLineWith handling editedValue =
     let
         validInput =
@@ -255,7 +267,7 @@ editRecipeLineWith handling editedValue =
         validatedSaveAction =
             MaybeUtil.optional validInput <| onEnter handling.saveMsg
     in
-    tr [ Style.classes.editLine ]
+    tr handling.rowStyles
         [ td [ Style.classes.editable ]
             [ input
                 ([ MaybeUtil.defined <| value <| .text <| handling.nameLens.get <| editedValue
@@ -322,6 +334,4 @@ editRecipeLineWith handling editedValue =
             [ button [ Style.classes.button.cancel, onClick handling.cancelMsg ]
                 [ text handling.cancelName ]
             ]
-        , td [] []
-        , td [] []
         ]

@@ -13,17 +13,17 @@ import Pages.Ingredients.FoodGroup as FoodGroup exposing (FoodGroup)
 import Pages.Ingredients.IngredientCreationClientInput exposing (IngredientCreationClientInput)
 import Pages.Ingredients.IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
 import Pages.Ingredients.Pagination exposing (Pagination)
-import Pages.Ingredients.RecipeInfo exposing (RecipeInfo)
 import Pages.Ingredients.Status exposing (Status)
+import Pages.Recipes.RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization)
 
 
 type alias Model =
     { authorizedAccess : AuthorizedAccess
-    , recipeId : RecipeId
-    , recipeInfo : Maybe RecipeInfo
+    , recipe : Editing Recipe RecipeUpdateClientInput
     , ingredientsGroup : FoodGroup IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput
     , complexIngredientsGroup : FoodGroup ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood ComplexIngredientClientInput
     , initialization : Initialization Status
@@ -77,7 +77,7 @@ type FoodsMode
 lenses :
     { ingredientsGroup : Lens Model (FoodGroup IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput)
     , complexIngredientsGroup : Lens Model (FoodGroup ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood ComplexIngredientClientInput)
-    , recipeInfo : Lens Model (Maybe RecipeInfo)
+    , recipe : Lens Model (Editing Recipe RecipeUpdateClientInput)
     , initialization : Lens Model (Initialization Status)
     , foodsMode : Lens Model FoodsMode
     , ingredientsSearchString : Lens Model String
@@ -86,7 +86,7 @@ lenses :
 lenses =
     { ingredientsGroup = Lens .ingredientsGroup (\b a -> { a | ingredientsGroup = b })
     , complexIngredientsGroup = Lens .complexIngredientsGroup (\b a -> { a | complexIngredientsGroup = b })
-    , recipeInfo = Lens .recipeInfo (\b a -> { a | recipeInfo = b })
+    , recipe = Lens .recipe (\b a -> { a | recipe = b })
     , initialization = Lens .initialization (\b a -> { a | initialization = b })
     , foodsMode = Lens .foodsMode (\b a -> { a | foodsMode = b })
     , ingredientsSearchString = Lens .ingredientsSearchString (\b a -> { a | ingredientsSearchString = b })
@@ -136,6 +136,15 @@ type Msg
     | ChangeFoodsMode FoodsMode
     | SetIngredientsSearchString String
     | SetComplexIngredientsSearchString String
+    | UpdateRecipe RecipeUpdateClientInput
+    | SaveRecipeEdit
+    | GotSaveRecipeResponse (Result Error Recipe)
+    | EnterEditRecipe
+    | ExitEditRecipe
+    | RequestDeleteRecipe
+    | ConfirmDeleteRecipe
+    | CancelDeleteRecipe
+    | GotDeleteRecipeResponse (Result Error ())
 
 
 type alias Flags =

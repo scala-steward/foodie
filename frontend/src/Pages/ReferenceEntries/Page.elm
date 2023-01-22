@@ -10,6 +10,7 @@ import Pages.ReferenceEntries.Pagination exposing (Pagination)
 import Pages.ReferenceEntries.ReferenceEntryCreationClientInput exposing (ReferenceEntryCreationClientInput)
 import Pages.ReferenceEntries.ReferenceEntryUpdateClientInput exposing (ReferenceEntryUpdateClientInput)
 import Pages.ReferenceEntries.Status exposing (Status)
+import Pages.ReferenceMaps.ReferenceMapUpdateClientInput exposing (ReferenceMapUpdateClientInput)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
@@ -19,7 +20,7 @@ import Util.Initialization exposing (Initialization)
 type alias Model =
     { authorizedAccess : AuthorizedAccess
     , referenceMapId : ReferenceMapId
-    , referenceMap : Maybe ReferenceMap
+    , referenceMap : Editing ReferenceMap ReferenceMapUpdateClientInput
     , referenceEntries : ReferenceEntryStateMap
     , nutrients : NutrientMap
     , nutrientsSearchString : String
@@ -53,7 +54,7 @@ type alias Flags =
 
 
 lenses :
-    { referenceMap : Lens Model (Maybe ReferenceMap)
+    { referenceMap : Lens Model (Editing ReferenceMap ReferenceMapUpdateClientInput)
     , referenceEntries : Lens Model ReferenceEntryStateMap
     , referenceEntriesToAdd : Lens Model AddNutrientMap
     , nutrients : Lens Model NutrientMap
@@ -72,9 +73,6 @@ lenses =
     , initialization = Lens .initialization (\b a -> { a | initialization = b })
     , pagination = Lens .pagination (\b a -> { a | pagination = b })
     }
-
-
-
 
 
 type Msg
@@ -99,3 +97,12 @@ type Msg
     | SetNutrientsSearchString String
     | SetReferenceEntriesSearchString String
     | SetPagination Pagination
+    | UpdateReferenceMap ReferenceMapUpdateClientInput
+    | SaveReferenceMapEdit
+    | GotSaveReferenceMapResponse (Result Error ReferenceMap)
+    | EnterEditReferenceMap
+    | ExitEditReferenceMap
+    | RequestDeleteReferenceMap
+    | ConfirmDeleteReferenceMap
+    | CancelDeleteReferenceMap
+    | GotDeleteReferenceMapResponse (Result Error ())
