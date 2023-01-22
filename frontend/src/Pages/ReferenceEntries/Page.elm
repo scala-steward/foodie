@@ -101,7 +101,7 @@ type Msg
     | SaveReferenceMapEdit
     | GotSaveReferenceMapResponse (Result Error ReferenceMap)
     | EnterEditReferenceMap
-    | ExitEditReferenceMapAt
+    | ExitEditReferenceMap
     | RequestDeleteReferenceMap
     | ConfirmDeleteReferenceMap
     | CancelDeleteReferenceMap

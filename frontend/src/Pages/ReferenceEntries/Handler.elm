@@ -140,8 +140,8 @@ update msg model =
         Page.EnterEditReferenceMap ->
             enterEditReferenceMap model
 
-        Page.ExitEditReferenceMapAt ->
-            exitEditReferenceMapAt model
+        Page.ExitEditReferenceMap ->
+            exitEditReferenceMap model
 
         Page.RequestDeleteReferenceMap ->
             requestDeleteReferenceMap model
@@ -444,8 +444,8 @@ enterEditReferenceMap model =
     )
 
 
-exitEditReferenceMapAt : Page.Model -> ( Page.Model, Cmd Page.Msg )
-exitEditReferenceMapAt model =
+exitEditReferenceMap : Page.Model -> ( Page.Model, Cmd Page.Msg )
+exitEditReferenceMap model =
     ( model
         |> Lens.modify Page.lenses.referenceMap Editing.toView
     , Cmd.none
