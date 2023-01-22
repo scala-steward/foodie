@@ -1,4 +1,4 @@
-module Pages.ReferenceMaps.View exposing (view)
+module Pages.ReferenceMaps.View exposing (editReferenceMapLineWith, referenceMapLineWith, tableHeader, view)
 
 import Addresses.Frontend
 import Api.Types.ReferenceMap exposing (ReferenceMap)
@@ -48,7 +48,7 @@ view model =
                 Editing.unpack
                     { onView = viewReferenceMapLine model.authorizedAccess.configuration
                     , onUpdate = editReferenceMapLine |> always
-                    , onDelete = deleteReferenceMapLine model.authorizedAccess.configuration
+                    , onDelete = deleteReferenceMapLine
                     }
 
             viewReferenceMaps =
@@ -71,21 +71,13 @@ view model =
                         , searchString = model.searchString
                         }
                    , table [ Style.classes.elementsWithControlsTable ]
-                        [ colgroup []
-                            [ col [] []
-                            , col [ stringProperty "span" "3" ] []
-                            ]
-                        , thead []
-                            [ tr [ Style.classes.tableHeader ]
-                                [ th [ scope "col" ] [ label [] [ text "Name" ] ]
-                                , th [ colspan 3, scope "colgroup", Style.classes.controlsGroup ] []
-                                ]
-                            ]
-                        , tbody []
-                            (creationLine
-                                ++ (viewReferenceMaps |> Paginate.page |> List.map viewReferenceMapState)
-                            )
-                        ]
+                        (tableHeader { controlButtons = 3 }
+                            ++ [ tbody []
+                                    (creationLine
+                                        ++ (viewReferenceMaps |> Paginate.page |> List.map viewReferenceMapState)
+                                    )
+                               ]
+                        )
                    , div [ Style.classes.pagination ]
                         [ ViewUtil.pagerButtons
                             { msg =
@@ -100,6 +92,21 @@ view model =
                         ]
                    ]
             )
+
+
+tableHeader : { controlButtons : Int } -> List (Html msg)
+tableHeader ps =
+    [ colgroup []
+        [ col [] []
+        , col [ stringProperty "span" <| String.fromInt <| ps.controlButtons ] []
+        ]
+    , thead []
+        [ tr [ Style.classes.tableHeader ]
+            [ th [ scope "col" ] [ label [] [ text "Name" ] ]
+            , th [ colspan <| ps.controlButtons, scope "colgroup", Style.classes.controlsGroup ] []
+            ]
+        ]
+    ]
 
 
 createReferenceMap : Maybe ReferenceMapCreationClientInput -> Either (Html Page.Msg) (Html Page.Msg)
@@ -143,13 +150,13 @@ viewReferenceMapLine configuration referenceMap =
                 ]
             ]
         , onClick = [ editMsg ]
-        , configuration = configuration
+        , styles = [ Style.classes.editing ]
         }
         referenceMap
 
 
-deleteReferenceMapLine : Configuration -> ReferenceMap -> Html Page.Msg
-deleteReferenceMapLine configuration referenceMap =
+deleteReferenceMapLine : ReferenceMap -> Html Page.Msg
+deleteReferenceMapLine referenceMap =
     referenceMapLineWith
         { controls =
             [ td [ Style.classes.controls ]
@@ -164,24 +171,24 @@ deleteReferenceMapLine configuration referenceMap =
                 ]
             ]
         , onClick = []
-        , configuration = configuration
+        , styles = [ Style.classes.editing ]
         }
         referenceMap
 
 
 referenceMapLineWith :
-    { controls : List (Html Page.Msg)
-    , onClick : List (Attribute Page.Msg)
-    , configuration : Configuration
+    { controls : List (Html msg)
+    , onClick : List (Attribute msg)
+    , styles : List (Attribute msg)
     }
     -> ReferenceMap
-    -> Html Page.Msg
+    -> Html msg
 referenceMapLineWith ps referenceMap =
     let
         withOnClick =
             (++) ps.onClick
     in
-    tr [ Style.classes.editing ]
+    tr ps.styles
         ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text referenceMap.name ] ]
          ]
             ++ ps.controls
@@ -197,6 +204,7 @@ editReferenceMapLine referenceMapUpdateClientInput =
         , confirmName = "Save"
         , cancelMsg = Page.ExitEditReferenceMapAt referenceMapUpdateClientInput.id
         , cancelName = "Cancel"
+        , rowStyles = [ Style.classes.editLine ]
         }
         referenceMapUpdateClientInput
 
@@ -210,20 +218,22 @@ createReferenceMapLine referenceMapCreationClientInput =
         , confirmName = "Add"
         , cancelMsg = Page.UpdateReferenceMapCreation Nothing
         , cancelName = "Cancel"
+        , rowStyles = [ Style.classes.editLine ]
         }
         referenceMapCreationClientInput
 
 
 editReferenceMapLineWith :
-    { saveMsg : Page.Msg
+    { saveMsg : msg
     , nameLens : Lens editedValue (ValidatedInput String)
-    , updateMsg : editedValue -> Page.Msg
+    , updateMsg : editedValue -> msg
     , confirmName : String
-    , cancelMsg : Page.Msg
+    , cancelMsg : msg
     , cancelName : String
+    , rowStyles : List (Attribute msg)
     }
     -> editedValue
-    -> Html Page.Msg
+    -> Html msg
 editReferenceMapLineWith handling editedValue =
     let
         validInput =
@@ -233,7 +243,7 @@ editReferenceMapLineWith handling editedValue =
         validatedSaveAction =
             MaybeUtil.optional validInput <| onEnter handling.saveMsg
     in
-    tr [ Style.classes.editLine ]
+    tr handling.rowStyles
         [ td [ Style.classes.editable ]
             [ input
                 ([ MaybeUtil.defined <| value <| .text <| handling.nameLens.get <| editedValue
