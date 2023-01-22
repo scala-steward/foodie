@@ -148,16 +148,16 @@ viewRecipeLine configuration recipe =
             [ td [ Style.classes.controls ]
                 [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
             , td [ Style.classes.controls ]
-                [ button
-                    [ Style.classes.button.delete, onClick (Page.RequestDeleteRecipe recipe.id) ]
-                    [ text "Delete" ]
-                ]
-            , td [ Style.classes.controls ]
                 [ Links.linkButton
                     { url = Links.frontendPage configuration <| Addresses.Frontend.ingredientEditor.address <| recipe.id
                     , attributes = [ Style.classes.button.editor ]
                     , children = [ text "Ingredients" ]
                     }
+                ]
+            , td [ Style.classes.controls ]
+                [ button
+                    [ Style.classes.button.delete, onClick (Page.RequestDeleteRecipe recipe.id) ]
+                    [ text "Delete" ]
                 ]
             , td [ Style.classes.controls ]
                 [ Links.linkButton

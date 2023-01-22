@@ -137,16 +137,16 @@ viewReferenceMapLine configuration referenceMap =
             [ td [ Style.classes.controls ]
                 [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
             , td [ Style.classes.controls ]
-                [ button
-                    [ Style.classes.button.delete, onClick (Page.RequestDeleteReferenceMap referenceMap.id) ]
-                    [ text "Delete" ]
-                ]
-            , td [ Style.classes.controls ]
                 [ Links.linkButton
                     { url = Links.frontendPage configuration <| Addresses.Frontend.referenceEntries.address <| referenceMap.id
                     , attributes = [ Style.classes.button.editor ]
                     , children = [ text "Entries" ]
                     }
+                ]
+            , td [ Style.classes.controls ]
+                [ button
+                    [ Style.classes.button.delete, onClick (Page.RequestDeleteReferenceMap referenceMap.id) ]
+                    [ text "Delete" ]
                 ]
             ]
         , onClick = [ editMsg ]

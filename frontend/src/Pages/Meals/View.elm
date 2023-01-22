@@ -1,4 +1,4 @@
-module Pages.Meals.View exposing (editMealLineWith, mealLineWith, view, tableHeader)
+module Pages.Meals.View exposing (editMealLineWith, mealLineWith, tableHeader, view)
 
 import Addresses.Frontend
 import Api.Types.Meal exposing (Meal)
@@ -153,7 +153,6 @@ viewMealLine configuration meal =
     mealLineWith
         { controls =
             [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
-            , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.RequestDeleteMeal meal.id) ] [ text "Delete" ] ]
             , td [ Style.classes.controls ]
                 [ Links.linkButton
                     { url = Links.frontendPage configuration <| Addresses.Frontend.mealEntryEditor.address <| meal.id
@@ -161,6 +160,8 @@ viewMealLine configuration meal =
                     , children = [ text "Entries" ]
                     }
                 ]
+            , td [ Style.classes.controls ]
+                [ button [ Style.classes.button.delete, onClick (Page.RequestDeleteMeal meal.id) ] [ text "Delete" ] ]
             , td [ Style.classes.controls ]
                 [ Links.linkButton
                     { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsMealSelect.address <| meal.id
