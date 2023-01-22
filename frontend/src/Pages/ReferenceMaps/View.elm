@@ -272,5 +272,4 @@ editReferenceMapLineWith handling editedValue =
             [ button [ Style.classes.button.cancel, onClick handling.cancelMsg ]
                 [ text handling.cancelName ]
             ]
-        , td [] []
         ]
