@@ -116,7 +116,7 @@ view model =
                     .complexFoodId
                     model.complexIngredientsGroup.foods
 
-            showRecipe =
+            viewRecipe =
                 Editing.unpack
                     { onView =
                         Pages.Recipes.View.recipeLineWith
@@ -173,7 +173,7 @@ view model =
             [ div []
                 [ table [ Style.classes.elementsWithControlsTable ]
                     (Pages.Recipes.View.tableHeader { controlButtons = 3 }
-                        ++ [ tbody [] [ showRecipe ]
+                        ++ [ tbody [] [ viewRecipe ]
                            ]
                     )
                 ]
