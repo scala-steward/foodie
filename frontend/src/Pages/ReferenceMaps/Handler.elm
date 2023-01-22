@@ -139,7 +139,12 @@ saveReferenceMapEdit model referenceMapId =
         |> Maybe.Extra.unwrap
             Cmd.none
             (ReferenceMapUpdateClientInput.to
-                >> Requests.saveReferenceMap model.authorizedAccess
+                >> (\referenceMapUpdate ->
+                        Requests.saveReferenceMap
+                            { authorizedAccess = model.authorizedAccess
+                            , referenceMapUpdate = referenceMapUpdate
+                            }
+                   )
             )
     )
 
@@ -183,7 +188,10 @@ requestDeleteReferenceMap model referenceMapId =
 confirmDeleteReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
 confirmDeleteReferenceMap model referenceMapId =
     ( model
-    , Requests.deleteReferenceMap model.authorizedAccess referenceMapId
+    , Requests.deleteReferenceMap
+        { authorizedAccess = model.authorizedAccess
+        , referenceMapId = referenceMapId
+        }
     )
 
 

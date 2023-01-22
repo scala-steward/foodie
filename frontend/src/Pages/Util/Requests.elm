@@ -1,13 +1,15 @@
 module Pages.Util.Requests exposing (..)
 
 import Addresses.Backend
-import Api.Auxiliary exposing (MealId, RecipeId)
+import Api.Auxiliary exposing (MealId, RecipeId, ReferenceMapId)
 import Api.Types.ComplexFood exposing (ComplexFood, decoderComplexFood)
 import Api.Types.Food exposing (Food, decoderFood)
 import Api.Types.Meal exposing (Meal, decoderMeal)
 import Api.Types.MealUpdate exposing (MealUpdate, encoderMealUpdate)
 import Api.Types.Recipe exposing (Recipe, decoderRecipe)
 import Api.Types.RecipeUpdate exposing (RecipeUpdate, encoderRecipeUpdate)
+import Api.Types.ReferenceMap exposing (ReferenceMap, decoderReferenceMap)
+import Api.Types.ReferenceMapUpdate exposing (ReferenceMapUpdate, encoderReferenceMapUpdate)
 import Http
 import Json.Decode as Decode
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
@@ -148,6 +150,38 @@ deleteRecipeWith mkMsg ps =
     HttpUtil.runPatternWithJwt
         ps.authorizedAccess
         (Addresses.Backend.recipes.delete ps.recipeId)
+        { body = Http.emptyBody
+        , expect = HttpUtil.expectWhatever mkMsg
+        }
+
+
+saveReferenceMapWith :
+    (Result Error ReferenceMap -> msg)
+    ->
+        { authorizedAccess : AuthorizedAccess
+        , referenceMapUpdate : ReferenceMapUpdate
+        }
+    -> Cmd msg
+saveReferenceMapWith mkMsg ps =
+    HttpUtil.runPatternWithJwt
+        ps.authorizedAccess
+        Addresses.Backend.references.update
+        { body = encoderReferenceMapUpdate ps.referenceMapUpdate |> Http.jsonBody
+        , expect = HttpUtil.expectJson mkMsg decoderReferenceMap
+        }
+
+
+deleteReferenceMapWith :
+    (Result Error () -> msg)
+    ->
+        { authorizedAccess : AuthorizedAccess
+        , referenceMapId : ReferenceMapId
+        }
+    -> Cmd msg
+deleteReferenceMapWith mkMsg ps =
+    HttpUtil.runPatternWithJwt
+        ps.authorizedAccess
+        (Addresses.Backend.references.delete ps.referenceMapId)
         { body = Http.emptyBody
         , expect = HttpUtil.expectWhatever mkMsg
         }

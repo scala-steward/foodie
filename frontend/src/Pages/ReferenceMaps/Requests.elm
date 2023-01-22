@@ -4,11 +4,12 @@ import Addresses.Backend
 import Api.Auxiliary exposing (JWT, ReferenceMapId)
 import Api.Types.ReferenceMap exposing (ReferenceMap, decoderReferenceMap)
 import Api.Types.ReferenceMapCreation exposing (ReferenceMapCreation, encoderReferenceMapCreation)
-import Api.Types.ReferenceMapUpdate exposing (ReferenceMapUpdate, encoderReferenceMapUpdate)
+import Api.Types.ReferenceMapUpdate exposing (ReferenceMapUpdate)
 import Http
 import Json.Decode as Decode
 import Pages.ReferenceMaps.Page as Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.Requests
 import Util.HttpUtil as HttpUtil
 
 
@@ -32,21 +33,19 @@ createReferenceMap authorizedAccess referenceMapCreation =
         }
 
 
-saveReferenceMap : AuthorizedAccess -> ReferenceMapUpdate -> Cmd Page.Msg
-saveReferenceMap authorizedAccess referenceMapUpdate =
-    HttpUtil.runPatternWithJwt
-        authorizedAccess
-        Addresses.Backend.references.update
-        { body = encoderReferenceMapUpdate referenceMapUpdate |> Http.jsonBody
-        , expect = HttpUtil.expectJson Page.GotSaveReferenceMapResponse decoderReferenceMap
-        }
+saveReferenceMap :
+    { authorizedAccess : AuthorizedAccess
+    , referenceMapUpdate : ReferenceMapUpdate
+    }
+    -> Cmd Page.Msg
+saveReferenceMap =
+    Pages.Util.Requests.saveReferenceMapWith Page.GotSaveReferenceMapResponse
 
 
-deleteReferenceMap : AuthorizedAccess -> ReferenceMapId -> Cmd Page.Msg
-deleteReferenceMap authorizedAccess referenceMapId =
-    HttpUtil.runPatternWithJwt
-        authorizedAccess
-        (Addresses.Backend.references.delete referenceMapId)
-        { body = Http.emptyBody
-        , expect = HttpUtil.expectWhatever (Page.GotDeleteReferenceMapResponse referenceMapId)
-        }
+deleteReferenceMap :
+    { authorizedAccess : AuthorizedAccess
+    , referenceMapId : ReferenceMapId
+    }
+    -> Cmd Page.Msg
+deleteReferenceMap ps =
+    Pages.Util.Requests.deleteReferenceMapWith (Page.GotDeleteReferenceMapResponse ps.referenceMapId) ps
