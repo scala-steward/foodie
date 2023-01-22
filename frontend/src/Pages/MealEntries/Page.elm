@@ -101,3 +101,12 @@ type Msg
     | SetRecipesSearchString String
     | SetEntriesSearchString String
     | SetPagination Pagination
+    | UpdateMeal MealUpdateClientInput
+    | SaveMealEdit
+    | GotSaveMealResponse (Result Error Meal)
+    | EnterEditMeal
+    | ExitEditMeal
+    | RequestDeleteMeal
+    | ConfirmDeleteMeal
+    | CancelDeleteMeal
+    | GotDeleteMealResponse (Result Error ())
