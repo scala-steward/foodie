@@ -168,6 +168,7 @@ viewRecipeLine configuration recipe =
                 ]
             ]
         , onClick = [ editMsg ]
+        , styles = [ Style.classes.editing ]
         }
         recipe
 
@@ -185,6 +186,7 @@ deleteRecipeLine recipe =
                 ]
             ]
         , onClick = []
+        , styles = [ Style.classes.editing ]
         }
         recipe
 
@@ -192,6 +194,7 @@ deleteRecipeLine recipe =
 recipeLineWith :
     { controls : List (Html msg)
     , onClick : List (Attribute msg)
+    , styles : List (Attribute msg)
     }
     -> Recipe
     -> Html msg
@@ -200,7 +203,7 @@ recipeLineWith ps recipe =
         withOnClick =
             (++) ps.onClick
     in
-    tr [ Style.classes.editing ]
+    tr ps.styles
         ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text recipe.name ] ]
          , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
          , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| recipe.numberOfServings ] ]
@@ -220,6 +223,7 @@ updateRecipeLine recipeUpdateClientInput =
         , confirmName = "Save"
         , cancelMsg = Page.ExitEditRecipeAt recipeUpdateClientInput.id
         , cancelName = "Cancel"
+        , rowStyles = [ Style.classes.editLine ]
         }
         recipeUpdateClientInput
 
@@ -235,6 +239,7 @@ createRecipeLine =
         , confirmName = "Add"
         , cancelMsg = Page.UpdateRecipeCreation Nothing
         , cancelName = "Cancel"
+        , rowStyles = [ Style.classes.editLine ]
         }
 
 
@@ -247,6 +252,7 @@ editRecipeLineWith :
     , confirmName : String
     , cancelMsg : msg
     , cancelName : String
+    , rowStyles : List (Attribute msg)
     }
     -> editedValue
     -> Html msg
@@ -261,7 +267,7 @@ editRecipeLineWith handling editedValue =
         validatedSaveAction =
             MaybeUtil.optional validInput <| onEnter handling.saveMsg
     in
-    tr [ Style.classes.editLine ]
+    tr handling.rowStyles
         [ td [ Style.classes.editable ]
             [ input
                 ([ MaybeUtil.defined <| value <| .text <| handling.nameLens.get <| editedValue

@@ -137,6 +137,7 @@ view model =
                                     ]
                                 ]
                             , onClick = [ Page.EnterEditRecipe |> onClick ]
+                            , styles = []
                             }
                     , onUpdate =
                         Pages.Recipes.View.editRecipeLineWith
@@ -148,6 +149,7 @@ view model =
                             , confirmName = "Save"
                             , cancelMsg = Page.ExitEditRecipe
                             , cancelName = "Cancel"
+                            , rowStyles = [  ]
                             }
                             |> always
                     , onDelete =
@@ -162,6 +164,7 @@ view model =
                                     ]
                                 ]
                             , onClick = []
+                            , styles = []
                             }
                     }
                     model.recipe
