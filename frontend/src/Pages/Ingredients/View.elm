@@ -30,6 +30,8 @@ import Pages.Ingredients.IngredientUpdateClientInput as IngredientUpdateClientIn
 import Pages.Ingredients.Page as Page
 import Pages.Ingredients.Pagination as Pagination exposing (Pagination)
 import Pages.Ingredients.Status as Status
+import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput
+import Pages.Recipes.View
 import Pages.Util.DictUtil as DictUtil
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Links as Links
@@ -113,23 +115,64 @@ view model =
                     Page.lenses.complexIngredientsGroup
                     .complexFoodId
                     model.complexIngredientsGroup.foods
+
+            showRecipe =
+                Editing.unpack
+                    { onView =
+                        Pages.Recipes.View.recipeLineWith
+                            { controls =
+                                [ td [ Style.classes.controls ]
+                                    [ button [ Style.classes.button.edit, Page.EnterEditRecipe |> onClick ] [ text "Edit" ] ]
+                                , td [ Style.classes.controls ]
+                                    [ button
+                                        [ Style.classes.button.delete, Page.RequestDeleteRecipe |> onClick ]
+                                        [ text "Delete" ]
+                                    ]
+                                , td [ Style.classes.controls ]
+                                    [ Links.linkButton
+                                        { url = Links.frontendPage model.authorizedAccess.configuration <| Addresses.Frontend.statisticsRecipeSelect.address <| model.recipe.original.id
+                                        , attributes = [ Style.classes.button.nutrients ]
+                                        , children = [ text "Nutrients" ]
+                                        }
+                                    ]
+                                ]
+                            , onClick = [ Page.EnterEditRecipe |> onClick ]
+                            }
+                    , onUpdate =
+                        Pages.Recipes.View.editRecipeLineWith
+                            { saveMsg = Page.SaveRecipeEdit
+                            , nameLens = RecipeUpdateClientInput.lenses.name
+                            , descriptionLens = RecipeUpdateClientInput.lenses.description
+                            , numberOfServingsLens = RecipeUpdateClientInput.lenses.numberOfServings
+                            , updateMsg = Page.UpdateRecipe
+                            , confirmName = "Save"
+                            , cancelMsg = Page.ExitEditRecipe
+                            , cancelName = "Cancel"
+                            }
+                            |> always
+                    , onDelete =
+                        Pages.Recipes.View.recipeLineWith
+                            { controls =
+                                [ td [ Style.classes.controls ]
+                                    [ button [ Style.classes.button.delete, onClick <| Page.ConfirmDeleteRecipe ] [ text "Delete?" ] ]
+                                , td [ Style.classes.controls ]
+                                    [ button
+                                        [ Style.classes.button.confirm, onClick <| Page.CancelDeleteRecipe ]
+                                        [ text "Cancel" ]
+                                    ]
+                                ]
+                            , onClick = []
+                            }
+                    }
+                    model.recipe
         in
         div [ Style.ids.ingredientEditor ]
             [ div []
-                [ table [ Style.classes.info ]
-                    [ tr []
-                        [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Recipe" ] ]
-                        , td [] [ label [] [ text <| .name <| .original <| model.recipe ] ]
-                        ]
-                    , tr []
-                        [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Description" ] ]
-                        , td [] [ label [] [ text <| Maybe.withDefault "" <| .description <| .original <| model.recipe ] ]
-                        ]
-                    , tr []
-                        [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Number of servings" ] ]
-                        , td [] [ label [] [ text <| String.fromFloat <| .numberOfServings <| .original <| model.recipe ] ]
-                        ]
-                    ]
+                [ table [ Style.classes.elementsWithControlsTable ]
+                    (Pages.Recipes.View.tableHeader { controlButtons = 3 }
+                        ++ [ tbody [] [ showRecipe ]
+                           ]
+                    )
                 ]
             , div [ Style.classes.elements ] [ label [] [ text "Ingredients" ] ]
             , div [ Style.classes.choices ]
