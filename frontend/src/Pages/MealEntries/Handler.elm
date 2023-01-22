@@ -12,7 +12,6 @@ import Monocle.Lens
 import Monocle.Optional as Optional
 import Pages.MealEntries.MealEntryCreationClientInput as MealEntryCreationClientInput exposing (MealEntryCreationClientInput)
 import Pages.MealEntries.MealEntryUpdateClientInput as MealEntryUpdateClientInput exposing (MealEntryUpdateClientInput)
-import Pages.MealEntries.MealInfo as MealInfo
 import Pages.MealEntries.Page as Page exposing (Msg(..))
 import Pages.MealEntries.Pagination as Pagination exposing (Pagination)
 import Pages.MealEntries.Requests as Requests
@@ -29,8 +28,20 @@ import Util.LensUtil as LensUtil
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
     ( { authorizedAccess = flags.authorizedAccess
-      , mealId = flags.mealId
-      , mealInfo = Nothing
+      , meal =
+            -- todo: Extract?
+            Editing.asView
+                { id = flags.mealId
+                , date =
+                    { date =
+                        { year = 2023
+                        , month = 1
+                        , day = 1
+                        }
+                    , time = Nothing
+                    }
+                , name = Nothing
+                }
       , mealEntries = Dict.empty
       , recipes = Dict.empty
       , recipesSearchString = ""
@@ -232,7 +243,7 @@ gotFetchMealResponse model result =
         |> Result.Extra.unpack (flip setError model)
             (\meal ->
                 model
-                    |> Page.lenses.mealInfo.set (meal |> MealInfo.from |> Just)
+                    |> Page.lenses.meal.set (meal |> Editing.asView)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.meal).set True
             )
     , Cmd.none
@@ -244,7 +255,7 @@ selectRecipe model recipeId =
     ( model
         |> LensUtil.insertAtId recipeId
             Page.lenses.mealEntriesToAdd
-            (MealEntryCreationClientInput.default model.mealId recipeId)
+            (MealEntryCreationClientInput.default model.meal.original.id recipeId)
     , Cmd.none
     )
 
