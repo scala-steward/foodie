@@ -1,5 +1,6 @@
 module Pages.ReferenceEntries.Handler exposing (init, update)
 
+import Addresses.Frontend
 import Api.Auxiliary exposing (JWT, NutrientCode, ReferenceMapId)
 import Api.Types.Nutrient exposing (Nutrient, decoderNutrient, encoderNutrient)
 import Api.Types.ReferenceEntry exposing (ReferenceEntry)
@@ -9,8 +10,9 @@ import Dict
 import Dict.Extra
 import Json.Decode as Decode
 import Json.Encode as Encode
+import Maybe.Extra
 import Monocle.Compose as Compose
-import Monocle.Lens
+import Monocle.Lens as Lens
 import Monocle.Optional
 import Pages.ReferenceEntries.Page as Page exposing (Msg(..))
 import Pages.ReferenceEntries.Pagination as Pagination exposing (Pagination)
@@ -18,7 +20,10 @@ import Pages.ReferenceEntries.ReferenceEntryCreationClientInput as ReferenceEntr
 import Pages.ReferenceEntries.ReferenceEntryUpdateClientInput as ReferenceEntryUpdateClientInput exposing (ReferenceEntryUpdateClientInput)
 import Pages.ReferenceEntries.Requests as Requests
 import Pages.ReferenceEntries.Status as Status
+import Pages.ReferenceMaps.ReferenceMapUpdateClientInput as ReferenceMapUpdateClientInput exposing (ReferenceMapUpdateClientInput)
+import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
+import Pages.Util.Requests
 import Ports
 import Result.Extra
 import Util.Editing as Editing exposing (Editing)
@@ -31,7 +36,11 @@ init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
     ( { authorizedAccess = flags.authorizedAccess
       , referenceMapId = flags.referenceMapId
-      , referenceMap = Nothing
+      , referenceMap =
+            Editing.asView
+                { id = flags.referenceMapId
+                , name = ""
+                }
       , referenceEntries = Dict.empty
       , nutrients = Dict.empty
       , nutrientsSearchString = ""
@@ -118,6 +127,33 @@ update msg model =
 
         Page.SetPagination pagination ->
             setPagination model pagination
+
+        Page.UpdateReferenceMap referenceMapUpdateClientInput ->
+            updateReferenceMap model referenceMapUpdateClientInput
+
+        Page.SaveReferenceMapEdit ->
+            saveReferenceMapEdit model
+
+        Page.GotSaveReferenceMapResponse result ->
+            gotSaveReferenceMapResponse model result
+
+        Page.EnterEditReferenceMap ->
+            enterEditReferenceMap model
+
+        Page.ExitEditReferenceMapAt ->
+            exitEditReferenceMapAt model
+
+        Page.RequestDeleteReferenceMap ->
+            requestDeleteReferenceMap model
+
+        Page.ConfirmDeleteReferenceMap ->
+            confirmDeleteReferenceMap model
+
+        Page.CancelDeleteReferenceMap ->
+            cancelDeleteReferenceMap model
+
+        Page.GotDeleteReferenceMapResponse result ->
+            gotDeleteReferenceMapResponse model result
 
 
 updateReferenceEntry : Page.Model -> ReferenceEntryUpdateClientInput -> ( Page.Model, Cmd Page.Msg )
@@ -221,7 +257,7 @@ gotFetchReferenceMapResponse model result =
         |> Result.Extra.unpack (flip setError model)
             (\referenceMap ->
                 model
-                    |> Page.lenses.referenceMap.set (Just referenceMap)
+                    |> Page.lenses.referenceMap.set (referenceMap |> Editing.asView)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.referenceMap).set True
             )
     , Cmd.none
@@ -355,6 +391,104 @@ setPagination model pagination =
     ( model |> Page.lenses.pagination.set pagination
     , Cmd.none
     )
+
+
+updateReferenceMap : Page.Model -> ReferenceMapUpdateClientInput -> ( Page.Model, Cmd Page.Msg )
+updateReferenceMap model referenceMapUpdateClientInput =
+    ( model
+        |> (Page.lenses.referenceMap
+                |> Compose.lensWithOptional Editing.lenses.update
+           ).set
+            referenceMapUpdateClientInput
+    , Cmd.none
+    )
+
+
+saveReferenceMapEdit : Page.Model -> ( Page.Model, Cmd Page.Msg )
+saveReferenceMapEdit model =
+    ( model
+    , model
+        |> Page.lenses.referenceMap.get
+        |> Editing.extractUpdate
+        |> Maybe.Extra.unwrap
+            Cmd.none
+            (ReferenceMapUpdateClientInput.to
+                >> (\referenceMapUpdate ->
+                        Pages.Util.Requests.saveReferenceMapWith
+                            Page.GotSaveReferenceMapResponse
+                            { authorizedAccess = model.authorizedAccess
+                            , referenceMapUpdate = referenceMapUpdate
+                            }
+                   )
+            )
+    )
+
+
+gotSaveReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.Msg )
+gotSaveReferenceMapResponse model result =
+    ( result
+        |> Result.Extra.unpack (flip setError model)
+            (\referenceMap ->
+                model
+                    |> Page.lenses.referenceMap.set (referenceMap |> Editing.asView)
+            )
+    , Cmd.none
+    )
+
+
+enterEditReferenceMap : Page.Model -> ( Page.Model, Cmd Page.Msg )
+enterEditReferenceMap model =
+    ( model
+        |> Lens.modify Page.lenses.referenceMap (Editing.toUpdate ReferenceMapUpdateClientInput.from)
+    , Cmd.none
+    )
+
+
+exitEditReferenceMapAt : Page.Model -> ( Page.Model, Cmd Page.Msg )
+exitEditReferenceMapAt model =
+    ( model
+        |> Lens.modify Page.lenses.referenceMap Editing.toView
+    , Cmd.none
+    )
+
+
+requestDeleteReferenceMap : Page.Model -> ( Page.Model, Cmd Page.Msg )
+requestDeleteReferenceMap model =
+    ( model
+        |> Lens.modify Page.lenses.referenceMap Editing.toDelete
+    , Cmd.none
+    )
+
+
+confirmDeleteReferenceMap : Page.Model -> ( Page.Model, Cmd Page.Msg )
+confirmDeleteReferenceMap model =
+    ( model
+    , Pages.Util.Requests.deleteReferenceMapWith Page.GotDeleteReferenceMapResponse
+        { authorizedAccess = model.authorizedAccess
+        , referenceMapId = model.referenceMap.original.id
+        }
+    )
+
+
+cancelDeleteReferenceMap : Page.Model -> ( Page.Model, Cmd Page.Msg )
+cancelDeleteReferenceMap model =
+    ( model
+        |> Lens.modify Page.lenses.referenceMap Editing.toView
+    , Cmd.none
+    )
+
+
+gotDeleteReferenceMapResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotDeleteReferenceMapResponse model result =
+    result
+        |> Result.Extra.unpack (\error -> ( model |> setError error, Cmd.none ))
+            (\_ ->
+                ( model
+                , Links.loadFrontendPage
+                    model.authorizedAccess.configuration
+                    (() |> Addresses.Frontend.referenceMaps.address)
+                )
+            )
 
 
 mapReferenceEntryStateById : NutrientCode -> (Page.ReferenceEntryState -> Page.ReferenceEntryState) -> Page.Model -> Page.Model
