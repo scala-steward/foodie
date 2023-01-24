@@ -12,7 +12,9 @@ import Util.Initialization exposing (Initialization)
 
 type alias Model =
     { authorizedAccess : AuthorizedAccess
-    , user : User
+
+    -- todo: This is a temporary workaround - use defined users once the model transitions have been established.
+    , user : Maybe User
     , complementInput : ComplementInput
     , initialization : Initialization Status
     , mode : Mode
@@ -20,7 +22,7 @@ type alias Model =
 
 
 lenses :
-    { user : Lens Model User
+    { user : Lens Model (Maybe User)
     , complementInput : Lens Model ComplementInput
     , initialization : Lens Model (Initialization Status)
     , mode : Lens Model Mode
