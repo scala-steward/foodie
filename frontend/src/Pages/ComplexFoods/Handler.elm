@@ -4,12 +4,11 @@ import Api.Auxiliary exposing (ComplexFoodId, RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
-import Dict
-import Dict.Extra
+import List.Extra
 import Maybe.Extra
 import Monocle.Compose as Compose
-import Monocle.Lens
-import Monocle.Optional as Optional
+import Monocle.Lens as Lens
+import Monocle.Optional
 import Pages.ComplexFoods.ComplexFoodClientInput as ComplexFoodClientInput exposing (ComplexFoodClientInput)
 import Pages.ComplexFoods.Page as Page
 import Pages.ComplexFoods.Pagination as Pagination
@@ -17,6 +16,7 @@ import Pages.ComplexFoods.Requests as Requests
 import Pages.ComplexFoods.Status as Status
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.PaginationSettings as PaginationSettings
+import Paginate
 import Result.Extra
 import Util.Editing as Editing
 import Util.HttpUtil as HttpUtil exposing (Error)
@@ -27,9 +27,9 @@ import Util.LensUtil as LensUtil
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
     ( { authorizedAccess = flags.authorizedAccess
-      , recipes = Dict.empty
-      , complexFoods = Dict.empty
-      , complexFoodsToCreate = Dict.empty
+      , recipes = Paginate.fromList Pagination.initial.recipes.itemsPerPage []
+      , complexFoods = Paginate.fromList Pagination.initial.complexFoods.itemsPerPage []
+      , complexFoodsToCreate = []
       , recipesSearchString = ""
       , complexFoodsSearchString = ""
       , initialization = Initialization.Loading Status.initial
@@ -112,7 +112,7 @@ updateComplexFoodCreation : Page.Model -> ComplexFoodClientInput -> ( Page.Model
 updateComplexFoodCreation model complexFoodClientInput =
     ( model
         |> (Page.lenses.complexFoodsToCreate
-                |> Compose.lensWithOptional (LensUtil.dictByKey complexFoodClientInput.recipeId)
+                |> Compose.lensWithOptional (LensUtil.firstSuch (\input -> input.recipeId == complexFoodClientInput.recipeId))
            ).set
             complexFoodClientInput
     , Cmd.none
@@ -124,7 +124,7 @@ createComplexFood model recipeId =
     ( model
     , model
         |> (Page.lenses.complexFoodsToCreate
-                |> Compose.lensWithOptional (LensUtil.dictByKey recipeId)
+                |> Compose.lensWithOptional (LensUtil.firstSuch (\input -> input.recipeId == recipeId))
            ).getOption
         |> Maybe.Extra.unwrap Cmd.none
             (ComplexFoodClientInput.to
@@ -139,8 +139,8 @@ gotCreateComplexFoodResponse model result =
         |> Result.Extra.unpack (flip setError model)
             (\complexFood ->
                 model
-                    |> LensUtil.insertAtId complexFood.recipeId Page.lenses.complexFoods (complexFood |> Editing.asView)
-                    |> LensUtil.deleteAtId complexFood.recipeId Page.lenses.complexFoodsToCreate
+                    |> Lens.modify Page.lenses.complexFoods (Paginate.map (complexFood |> Editing.asView |> (::)))
+                    |> LensUtil.deleteAtId .recipeId complexFood.recipeId Page.lenses.complexFoodsToCreate
             )
     , Cmd.none
     )
@@ -171,7 +171,7 @@ gotSaveComplexFoodResponse model result =
             (\complexFood ->
                 model
                     |> mapComplexFoodStateByRecipeId complexFood.recipeId (always complexFood >> Editing.asView)
-                    |> LensUtil.deleteAtId complexFood.recipeId Page.lenses.complexFoodsToCreate
+                    |> LensUtil.deleteAtId .recipeId complexFood.recipeId Page.lenses.complexFoodsToCreate
             )
     , Cmd.none
     )
@@ -220,7 +220,12 @@ gotDeleteComplexFoodResponse model complexFoodId result =
         |> Result.Extra.unpack (flip setError model)
             (always
                 (model
-                    |> LensUtil.deleteAtId complexFoodId Page.lenses.complexFoods
+                    |> Lens.modify Page.lenses.complexFoods
+                        (Paginate.map
+                            (List.Extra.filterNot
+                                (\complexFood -> complexFood.original.recipeId == complexFoodId)
+                            )
+                        )
                 )
             )
     , Cmd.none
@@ -233,7 +238,7 @@ gotFetchRecipesResponse model result =
         |> Result.Extra.unpack (flip setError model)
             (\recipes ->
                 model
-                    |> Page.lenses.recipes.set (recipes |> Dict.Extra.fromListBy .id)
+                    |> Page.lenses.recipes.set (recipes |> Paginate.fromList model.pagination.recipes.itemsPerPage)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.recipes).set True
             )
     , Cmd.none
@@ -246,7 +251,7 @@ gotFetchComplexFoodsResponse model result =
         |> Result.Extra.unpack (flip setError model)
             (\complexFoods ->
                 model
-                    |> Page.lenses.complexFoods.set (complexFoods |> List.map Editing.asView |> Dict.Extra.fromListBy (.original >> .recipeId))
+                    |> Page.lenses.complexFoods.set (complexFoods |> List.map Editing.asView |> Paginate.fromList model.pagination.complexFoods.itemsPerPage)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.complexFoods).set True
             )
     , Cmd.none
@@ -256,7 +261,7 @@ gotFetchComplexFoodsResponse model result =
 selectRecipe : Page.Model -> Recipe -> ( Page.Model, Cmd Page.Msg )
 selectRecipe model recipe =
     ( model
-        |> LensUtil.insertAtId recipe.id
+        |> LensUtil.insert
             Page.lenses.complexFoodsToCreate
             (ComplexFoodClientInput.default recipe.id)
     , Cmd.none
@@ -266,7 +271,7 @@ selectRecipe model recipe =
 deselectRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 deselectRecipe model recipeId =
     ( model
-        |> LensUtil.deleteAtId recipeId Page.lenses.complexFoodsToCreate
+        |> LensUtil.deleteAtId .recipeId recipeId Page.lenses.complexFoodsToCreate
     , Cmd.none
     )
 
@@ -308,10 +313,10 @@ setPagination model pagination =
 
 
 mapComplexFoodStateByRecipeId : ComplexFoodId -> (Page.ComplexFoodState -> Page.ComplexFoodState) -> Page.Model -> Page.Model
-mapComplexFoodStateByRecipeId recipeId =
-    Page.lenses.complexFoods
-        |> Compose.lensWithOptional (LensUtil.dictByKey recipeId)
-        |> Optional.modify
+mapComplexFoodStateByRecipeId recipeId f =
+    Lens.modify
+        Page.lenses.complexFoods
+        (Paginate.map (List.Extra.updateIf (\complexFood -> complexFood.original.recipeId == recipeId) f))
 
 
 setError : Error -> Page.Model -> Page.Model

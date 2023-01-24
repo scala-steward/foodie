@@ -3,13 +3,12 @@ module Pages.ComplexFoods.Page exposing (..)
 import Api.Auxiliary exposing (ComplexFoodId, RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.Recipe exposing (Recipe)
-import Dict exposing (Dict)
-import Maybe.Extra
 import Monocle.Lens exposing (Lens)
 import Pages.ComplexFoods.ComplexFoodClientInput exposing (ComplexFoodClientInput)
 import Pages.ComplexFoods.Pagination exposing (Pagination)
 import Pages.ComplexFoods.Status exposing (Status)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Paginate exposing (PaginatedList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization)
@@ -17,9 +16,9 @@ import Util.Initialization exposing (Initialization)
 
 type alias Model =
     { authorizedAccess : AuthorizedAccess
-    , recipes : RecipeMap
-    , complexFoods : ComplexFoodStateMap
-    , complexFoodsToCreate : CreateComplexFoodsMap
+    , recipes : RecipeList
+    , complexFoods : ComplexFoodStateList
+    , complexFoodsToCreate : CreateComplexFoodsList
     , recipesSearchString : String
     , complexFoodsSearchString : String
     , initialization : Initialization Status
@@ -31,22 +30,22 @@ type alias ComplexFoodState =
     Editing ComplexFood ComplexFoodClientInput
 
 
-type alias ComplexFoodStateMap =
-    Dict ComplexFoodId ComplexFoodState
+type alias ComplexFoodStateList =
+    PaginatedList ComplexFoodState
 
 
-type alias CreateComplexFoodsMap =
-    Dict ComplexFoodId ComplexFoodClientInput
+type alias CreateComplexFoodsList =
+    List ComplexFoodClientInput
 
 
-type alias RecipeMap =
-    Dict RecipeId Recipe
+type alias RecipeList =
+    PaginatedList Recipe
 
 
 lenses :
-    { recipes : Lens Model RecipeMap
-    , complexFoods : Lens Model ComplexFoodStateMap
-    , complexFoodsToCreate : Lens Model CreateComplexFoodsMap
+    { recipes : Lens Model RecipeList
+    , complexFoods : Lens Model ComplexFoodStateList
+    , complexFoodsToCreate : Lens Model CreateComplexFoodsList
     , recipesSearchString : Lens Model String
     , complexFoodsSearchString : Lens Model String
     , initialization : Lens Model (Initialization Status)
@@ -88,9 +87,3 @@ type Msg
     | SetRecipesSearchString String
     | SetComplexFoodsSearchString String
     | SetPagination Pagination
-
-
-complexFoodNameOrEmpty : RecipeMap -> ComplexFoodId -> String
-complexFoodNameOrEmpty recipeMap complexFoodId =
-    Dict.get complexFoodId recipeMap
-        |> Maybe.Extra.unwrap "" .name

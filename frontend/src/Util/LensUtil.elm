@@ -1,8 +1,7 @@
 module Util.LensUtil exposing (..)
 
-import Basics.Extra exposing (flip)
 import Dict exposing (Dict)
-import Dict.Extra
+import List.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens as Lens exposing (Lens)
 import Monocle.Optional as Optional exposing (Optional)
@@ -16,11 +15,15 @@ dictByKey k =
     }
 
 
-set : List a -> (a -> comparable) -> Lens model (Dict comparable a) -> model -> model
-set xs idOf lens md =
-    xs
-        |> Dict.Extra.fromListBy idOf
-        |> flip lens.set md
+
+-- todo: The handling is inconsistent - is it sensible to unify the two cases?
+
+
+firstSuch : (a -> Bool) -> Optional (List a) a
+firstSuch p =
+    { getOption = List.Extra.find p
+    , set = List.Extra.setIf p
+    }
 
 
 initializationField : Lens model (Initialization status) -> Lens status Bool -> Optional model Bool
@@ -35,17 +38,17 @@ identityLens =
     Lens identity always
 
 
-updateById : comparable -> Lens a (Dict comparable b) -> (b -> b) -> a -> a
-updateById id =
-    Compose.lensWithOptional (dictByKey id)
+updateById : (b -> Bool) -> Lens a (List b) -> (b -> b) -> a -> a
+updateById p =
+    Compose.lensWithOptional (firstSuch p)
         >> Optional.modify
 
 
-insertAtId : comparable -> Lens a (Dict comparable b) -> b -> a -> a
-insertAtId id lens =
-    Lens.modify lens << Dict.insert id
+insert : Lens a (List b) -> b -> a -> a
+insert lens =
+    Lens.modify lens << (::)
 
 
-deleteAtId : comparable -> Lens a (Dict comparable b) -> a -> a
-deleteAtId id lens =
-    Lens.modify lens <| Dict.remove id
+deleteAtId : (b -> k) -> k -> Lens a (List b) -> a -> a
+deleteAtId keyOf id lens =
+    Lens.modify lens <| List.Extra.filterNot (\b -> keyOf b == id)
