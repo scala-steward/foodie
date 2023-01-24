@@ -5,6 +5,7 @@ import Api.Auxiliary exposing (ComplexFoodId, FoodId, IngredientId, MealEntryId,
 import Maybe.Extra
 import Url.Builder exposing (QueryParameter)
 import Util.HttpUtil as HttpUtil exposing (ResourcePattern)
+import Uuid
 
 
 recipes :
@@ -47,27 +48,27 @@ recipes =
             "complex-ingredients"
 
         complexIngredients recipeId =
-            (::) complexIngredientsWord >> (::) recipeId >> base
+            (::) complexIngredientsWord >> (::) (recipeId |> Uuid.toString) >> base
     in
     { measures = get <| base <| [ "measures" ]
     , foods = get <| base <| [ foodsWord ]
     , food = \foodId -> get <| base <| [ foodsWord, foodId |> String.fromInt ]
     , all = get <| base <| []
-    , single = \recipeId -> get <| base <| [ recipeId ]
+    , single = \recipeId -> get <| base <| [ recipeId |> Uuid.toString ]
     , create = post <| base []
     , update = patch <| base []
-    , delete = \recipeId -> delete <| base <| [ recipeId ]
+    , delete = \recipeId -> delete <| base <| [ recipeId |> Uuid.toString ]
     , ingredients =
-        { allOf = \recipeId -> get <| base <| [ recipeId, ingredientsWord ]
+        { allOf = \recipeId -> get <| base <| [ recipeId |> Uuid.toString, ingredientsWord ]
         , create = post <| ingredients []
         , update = patch <| ingredients []
-        , delete = \ingredientId -> delete <| ingredients <| [ ingredientId ]
+        , delete = \ingredientId -> delete <| ingredients <| [ ingredientId |> Uuid.toString ]
         }
     , complexIngredients =
         { allOf = \recipeId -> get <| complexIngredients recipeId []
         , create = \recipeId -> post <| complexIngredients recipeId []
         , update = \recipeId -> patch <| complexIngredients recipeId []
-        , delete = \recipeId complexIngredientId -> delete <| complexIngredients recipeId <| [ complexIngredientId ]
+        , delete = \recipeId complexIngredientId -> delete <| complexIngredients recipeId <| [ complexIngredientId |> Uuid.toString ]
         }
     }
 
@@ -97,15 +98,15 @@ meals =
             (::) entriesWord >> base
     in
     { all = get <| base <| []
-    , single = \mealId -> get <| base <| [ mealId ]
+    , single = \mealId -> get <| base <| [ mealId |> Uuid.toString ]
     , create = post <| base []
     , update = patch <| base []
-    , delete = \mealId -> delete <| base <| [ mealId ]
+    , delete = \mealId -> delete <| base <| [ mealId |> Uuid.toString ]
     , entries =
-        { allOf = \mealId -> get <| base <| [ mealId, entriesWord ]
+        { allOf = \mealId -> get <| base <| [ mealId |> Uuid.toString, entriesWord ]
         , create = post <| entries []
         , update = patch <| entries []
-        , delete = \mealEntryId -> delete <| entries <| [ mealEntryId ]
+        , delete = \mealEntryId -> delete <| entries <| [ mealEntryId |> Uuid.toString ]
         }
     }
 
@@ -128,10 +129,10 @@ stats =
             (::) "stats"
     in
     { all = \interval -> getQ (base []) (Maybe.Extra.values [ interval.from, interval.to ])
-    , complexFood = \complexFoodId -> get <| base <| [ StatisticsVariant.complexFood, complexFoodId ]
+    , complexFood = \complexFoodId -> get <| base <| [ StatisticsVariant.complexFood, complexFoodId |> Uuid.toString ]
     , food = \foodId -> get <| base <| [ StatisticsVariant.food, foodId |> String.fromInt ]
-    , recipe = \recipeId -> get <| base <| [ StatisticsVariant.recipe, recipeId ]
-    , meal = \mealId -> get <| base <| [ StatisticsVariant.meal, mealId ]
+    , recipe = \recipeId -> get <| base <| [ StatisticsVariant.recipe, recipeId |> Uuid.toString ]
+    , meal = \mealId -> get <| base <| [ StatisticsVariant.meal, mealId |> Uuid.toString ]
     , nutrients = get <| base <| [ "nutrients" ]
     }
 
@@ -221,19 +222,19 @@ references =
     in
     { all = get <| base <| []
     , allTrees = get <| base <| (::) treesWord <| []
-    , single = \referenceMapId -> get <| base <| [ referenceMapId ]
+    , single = \referenceMapId -> get <| base <| [ referenceMapId |> Uuid.toString ]
     , create = post <| base []
     , update = patch <| base []
-    , delete = \referenceMapId -> delete <| base <| [ referenceMapId ]
+    , delete = \referenceMapId -> delete <| base <| [ referenceMapId |> Uuid.toString ]
     , entries =
-        { allOf = \referenceMapId -> get <| base <| [ referenceMapId, entriesWord ]
+        { allOf = \referenceMapId -> get <| base <| [ referenceMapId |> Uuid.toString, entriesWord ]
         , create = post <| entries []
         , update = patch <| entries []
         , delete =
             \referenceMapId nutrientCode ->
                 delete <|
                     base <|
-                        (::) referenceMapId <|
+                        (::) (referenceMapId |> Uuid.toString) <|
                             (::) entriesWord <|
                                 [ String.fromInt nutrientCode ]
         }
@@ -253,10 +254,10 @@ complexFoods =
             (::) "complex-foods"
     in
     { all = get <| base <| []
-    , single = \complexFoodId -> get <| base <| [ complexFoodId ]
+    , single = \complexFoodId -> get <| base <| [ complexFoodId |> Uuid.toString ]
     , create = post <| base []
     , update = patch <| base []
-    , delete = \complexFoodId -> delete <| base <| [ complexFoodId ]
+    , delete = \complexFoodId -> delete <| base <| [ complexFoodId |> Uuid.toString ]
     }
 
 
