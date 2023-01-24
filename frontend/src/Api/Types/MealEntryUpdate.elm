@@ -4,14 +4,14 @@ import Json.Decode as Decode
 import Json.Decode.Pipeline exposing (..)
 import Json.Encode as Encode
 
-import Api.Types.UUID exposing (..)
+import Uuid exposing (Uuid)
 
-type alias MealEntryUpdate = { mealEntryId: UUID, recipeId: UUID, numberOfServings: Float }
+type alias MealEntryUpdate = { mealEntryId: Uuid, recipeId: Uuid, numberOfServings: Float }
 
 
 decoderMealEntryUpdate : Decode.Decoder MealEntryUpdate
-decoderMealEntryUpdate = Decode.succeed MealEntryUpdate |> required "mealEntryId" decoderUUID |> required "recipeId" decoderUUID |> required "numberOfServings" Decode.float
+decoderMealEntryUpdate = Decode.succeed MealEntryUpdate |> required "mealEntryId" Uuid.decoder |> required "recipeId" Uuid.decoder |> required "numberOfServings" Decode.float
 
 
 encoderMealEntryUpdate : MealEntryUpdate -> Encode.Value
-encoderMealEntryUpdate obj = Encode.object [ ("mealEntryId", encoderUUID obj.mealEntryId), ("recipeId", encoderUUID obj.recipeId), ("numberOfServings", Encode.float obj.numberOfServings) ]
+encoderMealEntryUpdate obj = Encode.object [ ("mealEntryId", Uuid.encode obj.mealEntryId), ("recipeId", Uuid.encode obj.recipeId), ("numberOfServings", Encode.float obj.numberOfServings) ]

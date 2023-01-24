@@ -30,10 +30,10 @@ object Bridge {
       customTypeReplacements = Map(
         Ref("UUID")
           -> TypeReplacement(
-            "UUID",
-            imports = s"\nimport $elmModule.UUID exposing (..)",
-            encoder = "encoderUUID",
-            decoder = "decoderUUID"
+            "Uuid",
+            imports = s"\nimport Uuid exposing (Uuid)",
+            encoder = "Uuid.encode",
+            decoder = "Uuid.decoder"
           ),
         Ref("NutrientUnit")
           -> TypeReplacement(

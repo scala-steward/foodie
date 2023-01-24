@@ -4,14 +4,14 @@ import Json.Decode as Decode
 import Json.Decode.Pipeline exposing (..)
 import Json.Encode as Encode
 
-import Api.Types.UUID exposing (..)
+import Uuid exposing (Uuid)
 
-type alias RecoveryRequest = { userId: UUID }
+type alias RecoveryRequest = { userId: Uuid }
 
 
 decoderRecoveryRequest : Decode.Decoder RecoveryRequest
-decoderRecoveryRequest = Decode.succeed RecoveryRequest |> required "userId" decoderUUID
+decoderRecoveryRequest = Decode.succeed RecoveryRequest |> required "userId" Uuid.decoder
 
 
 encoderRecoveryRequest : RecoveryRequest -> Encode.Value
-encoderRecoveryRequest obj = Encode.object [ ("userId", encoderUUID obj.userId) ]
+encoderRecoveryRequest obj = Encode.object [ ("userId", Uuid.encode obj.userId) ]

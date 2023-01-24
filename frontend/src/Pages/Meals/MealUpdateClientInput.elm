@@ -2,15 +2,15 @@ module Pages.Meals.MealUpdateClientInput exposing (..)
 
 import Api.Types.Meal exposing (Meal)
 import Api.Types.MealUpdate exposing (MealUpdate)
-import Api.Types.UUID exposing (UUID)
 import Maybe.Extra
 import Monocle.Lens exposing (Lens)
 import Monocle.Optional exposing (Optional)
 import Pages.Util.SimpleDateInput as SimpleDateInput exposing (SimpleDateInput)
+import Uuid exposing (Uuid)
 
 
 type alias MealUpdateClientInput =
-    { id : UUID
+    { id : Uuid
     , date : SimpleDateInput
     , name : Maybe String
     }

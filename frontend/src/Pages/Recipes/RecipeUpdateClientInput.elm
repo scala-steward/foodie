@@ -2,13 +2,13 @@ module Pages.Recipes.RecipeUpdateClientInput exposing (..)
 
 import Api.Types.Recipe exposing (Recipe)
 import Api.Types.RecipeUpdate exposing (RecipeUpdate)
-import Api.Types.UUID exposing (UUID)
 import Monocle.Lens exposing (Lens)
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
+import Uuid exposing (Uuid)
 
 
 type alias RecipeUpdateClientInput =
-    { id : UUID
+    { id : Uuid
     , name : ValidatedInput String
     , description : Maybe String
     , numberOfServings : ValidatedInput Float

@@ -4,14 +4,14 @@ import Json.Decode as Decode
 import Json.Decode.Pipeline exposing (..)
 import Json.Encode as Encode
 
-import Api.Types.UUID exposing (..)
+import Uuid exposing (Uuid)
 
-type alias ReferenceMap = { id: UUID, name: String }
+type alias ReferenceMap = { id: Uuid, name: String }
 
 
 decoderReferenceMap : Decode.Decoder ReferenceMap
-decoderReferenceMap = Decode.succeed ReferenceMap |> required "id" decoderUUID |> required "name" Decode.string
+decoderReferenceMap = Decode.succeed ReferenceMap |> required "id" Uuid.decoder |> required "name" Decode.string
 
 
 encoderReferenceMap : ReferenceMap -> Encode.Value
-encoderReferenceMap obj = Encode.object [ ("id", encoderUUID obj.id), ("name", Encode.string obj.name) ]
+encoderReferenceMap obj = Encode.object [ ("id", Uuid.encode obj.id), ("name", Encode.string obj.name) ]
