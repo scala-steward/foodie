@@ -5,7 +5,6 @@ import Api.Auxiliary exposing (ReferenceMapId)
 import Api.Types.ReferenceTree exposing (ReferenceTree, decoderReferenceTree)
 import Basics.Extra exposing (flip)
 import Dict
-import Dict.Extra
 import Http
 import Json.Decode as Decode
 import Monocle.Compose as Compose
@@ -45,14 +44,8 @@ gotFetchReferenceTreesResponseWith ps model result =
                                     { map = referenceTree.referenceMap
                                     , values =
                                         referenceTree.nutrients
-                                            |> List.map
-                                                (\referenceValue ->
-                                                    ( referenceValue.nutrientCode, referenceValue.referenceAmount )
-                                                )
-                                            |> Dict.fromList
                                     }
                                 )
-                            |> Dict.Extra.fromListBy (.map >> .id)
                 in
                 model
                     |> (ps.statisticsEvaluationLens

@@ -13,7 +13,7 @@ type alias ReferenceNutrientTree =
 
 
 type alias StatisticsEvaluation =
-    { referenceTrees : Dict ReferenceMapId ReferenceNutrientTree
+    { referenceTrees : List ReferenceNutrientTree
     , referenceTree : Maybe ReferenceNutrientTree
     , nutrientsSearchString : String
     }
@@ -21,14 +21,14 @@ type alias StatisticsEvaluation =
 
 initial : StatisticsEvaluation
 initial =
-    { referenceTrees = Dict.empty
+    { referenceTrees = []
     , referenceTree = Nothing
     , nutrientsSearchString = ""
     }
 
 
 lenses :
-    { referenceTrees : Lens StatisticsEvaluation (Dict ReferenceMapId ReferenceNutrientTree)
+    { referenceTrees : Lens StatisticsEvaluation (List ReferenceNutrientTree)
     , referenceTree : Lens StatisticsEvaluation (Maybe ReferenceNutrientTree)
     , nutrientsSearchString : Lens StatisticsEvaluation String
     }
