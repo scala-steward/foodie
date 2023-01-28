@@ -42,10 +42,8 @@ timeToString time =
         |> String.join ":"
 
 
-
--- todo: Add validation
-
-
+{-| No validation, because the date is checked by the backend.
+-}
 dateParser : Parser Date
 dateParser =
     Parser.succeed Date
@@ -64,10 +62,8 @@ intWithOptionalLeadingZero =
         ]
 
 
-
--- todo: Add validation
-
-
+{-| No validation, because the time is checked by the backend.
+-}
 timeParser : Parser Time
 timeParser =
     Parser.succeed Time
