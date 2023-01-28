@@ -32,7 +32,7 @@ import Pages.Ingredients.Pagination as Pagination exposing (Pagination)
 import Pages.Ingredients.Status as Status
 import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput
 import Pages.Recipes.View
-import Pages.Util.DictUtil as DictUtil
+import Pages.Util.DictListUtil as DictUtil
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings

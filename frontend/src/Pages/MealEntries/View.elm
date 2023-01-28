@@ -19,7 +19,7 @@ import Pages.MealEntries.Pagination as Pagination
 import Pages.MealEntries.Status as Status
 import Pages.Meals.MealUpdateClientInput as MealUpdateClientInput
 import Pages.Meals.View
-import Pages.Util.DictUtil as DictUtil
+import Pages.Util.DictListUtil as DictUtil
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings

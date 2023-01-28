@@ -8,7 +8,7 @@ import Pages.ComplexFoods.ComplexFoodClientInput exposing (ComplexFoodClientInpu
 import Pages.ComplexFoods.Pagination exposing (Pagination)
 import Pages.ComplexFoods.Status exposing (Status)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Paginate exposing (PaginatedList)
+import Util.DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization)
@@ -16,9 +16,9 @@ import Util.Initialization exposing (Initialization)
 
 type alias Model =
     { authorizedAccess : AuthorizedAccess
-    , recipes : RecipeList
-    , complexFoods : ComplexFoodStateList
-    , complexFoodsToCreate : CreateComplexFoodsList
+    , recipes : RecipeMap
+    , complexFoods : ComplexFoodStateMap
+    , complexFoodsToCreate : CreateComplexFoodsMap
     , recipesSearchString : String
     , complexFoodsSearchString : String
     , initialization : Initialization Status
@@ -30,22 +30,22 @@ type alias ComplexFoodState =
     Editing ComplexFood ComplexFoodClientInput
 
 
-type alias ComplexFoodStateList =
-    PaginatedList ComplexFoodState
+type alias ComplexFoodStateMap =
+    DictList ComplexFoodId ComplexFoodState
 
 
-type alias CreateComplexFoodsList =
-    List ComplexFoodClientInput
+type alias CreateComplexFoodsMap =
+    DictList ComplexFoodId ComplexFoodClientInput
 
 
-type alias RecipeList =
-    PaginatedList Recipe
+type alias RecipeMap =
+    DictList RecipeId Recipe
 
 
 lenses :
-    { recipes : Lens Model RecipeList
-    , complexFoods : Lens Model ComplexFoodStateList
-    , complexFoodsToCreate : Lens Model CreateComplexFoodsList
+    { recipes : Lens Model RecipeMap
+    , complexFoods : Lens Model ComplexFoodStateMap
+    , complexFoodsToCreate : Lens Model CreateComplexFoodsMap
     , recipesSearchString : Lens Model String
     , complexFoodsSearchString : Lens Model String
     , initialization : Lens Model (Initialization Status)

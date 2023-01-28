@@ -10,21 +10,22 @@ import Html.Attributes exposing (colspan, disabled, scope, value)
 import Html.Attributes.Extra exposing (stringProperty)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
-import List.Extra
 import Maybe.Extra
+import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
 import Pages.ComplexFoods.ComplexFoodClientInput as ComplexFoodClientInput exposing (ComplexFoodClientInput)
 import Pages.ComplexFoods.Page as Page
 import Pages.ComplexFoods.Pagination as Pagination
 import Pages.ComplexFoods.Status as Status
+import Pages.Util.DictListUtil as DictListUtil
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
 import Pages.Util.ViewUtil as ViewUtil
 import Paginate as Paginate exposing (PaginatedList)
+import Util.DictList as DictList
 import Util.Editing as Editing
-import Util.ListUtil as ListUtil
 import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
@@ -51,21 +52,27 @@ view model =
 
             viewComplexFoods =
                 model.complexFoods
-                    |> Paginate.map
-                        (List.filter (\complexFood -> SearchUtil.search model.complexFoodsSearchString complexFood.original.name)
-                            >> List.sortBy (.original >> .name >> String.toLower)
-                        )
+                    |> DictList.values
+                    |> List.filter (\complexFood -> SearchUtil.search model.complexFoodsSearchString complexFood.original.name)
+                    |> List.sortBy (.original >> .name >> String.toLower)
+                    |> ViewUtil.paginate
+                        { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.complexFoods
+                        }
+                        model
 
             viewRecipes =
                 model.recipes
-                    |> Paginate.map
-                        (List.filter (\v -> SearchUtil.search model.recipesSearchString v.name)
-                            >> List.sortBy .name
-                        )
+                    |> DictList.values
+                    |> List.filter (\v -> SearchUtil.search model.recipesSearchString v.name)
+                    |> List.sortBy .name
+                    |> ViewUtil.paginate
+                        { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.recipes
+                        }
+                        model
 
             anySelection =
                 model.complexFoodsToCreate
-                    |> List.isEmpty
+                    |> DictList.isEmpty
                     |> not
 
             ( amount, unit ) =
@@ -160,7 +167,7 @@ view model =
             ]
 
 
-viewComplexFoodLine : Page.RecipeList -> ComplexFood -> Html Page.Msg
+viewComplexFoodLine : Page.RecipeMap -> ComplexFood -> Html Page.Msg
 viewComplexFoodLine recipeMap complexFood =
     let
         editMsg =
@@ -177,7 +184,7 @@ viewComplexFoodLine recipeMap complexFood =
         complexFood
 
 
-deleteComplexFoodLine : Page.RecipeList -> ComplexFood -> Html Page.Msg
+deleteComplexFoodLine : Page.RecipeMap -> ComplexFood -> Html Page.Msg
 deleteComplexFoodLine recipeMap complexFood =
     complexFoodLineWith
         { controls =
@@ -193,7 +200,7 @@ deleteComplexFoodLine recipeMap complexFood =
 complexFoodLineWith :
     { controls : List (Html Page.Msg)
     , onClick : List (Attribute Page.Msg)
-    , recipeMap : Page.RecipeList
+    , recipeMap : Page.RecipeMap
     }
     -> ComplexFood
     -> Html Page.Msg
@@ -281,7 +288,7 @@ onChangeDropdown ps =
         >> ps.mkMsg
 
 
-viewRecipeLine : Page.CreateComplexFoodsList -> Page.ComplexFoodStateList -> Recipe -> Html Page.Msg
+viewRecipeLine : Page.CreateComplexFoodsMap -> Page.ComplexFoodStateMap -> Recipe -> Html Page.Msg
 viewRecipeLine complexFoodsToCreate complexFoods recipe =
     let
         createMsg =
@@ -294,7 +301,7 @@ viewRecipeLine complexFoodsToCreate complexFoods recipe =
             Page.DeselectRecipe recipe.id
 
         maybeComplexFoodToAdd =
-            List.Extra.find (\complexFood -> complexFood.recipeId == recipe.id) complexFoodsToCreate
+            DictList.get recipe.id complexFoodsToCreate
 
         rowClickAction =
             if Maybe.Extra.isJust maybeComplexFoodToAdd then
@@ -315,8 +322,7 @@ viewRecipeLine complexFoodsToCreate complexFoods recipe =
                 Just complexFoodToAdd ->
                     let
                         exists =
-                            ListUtil.exists (\complexFood -> complexFood.original.recipeId == complexFoodToAdd.recipeId)
-                                (complexFoods |> Paginate.allItems)
+                            DictListUtil.existsValue (\complexFood -> complexFood.original.recipeId == complexFoodToAdd.recipeId) complexFoods
 
                         validInput =
                             List.all identity
