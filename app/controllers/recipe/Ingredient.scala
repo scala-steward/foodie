@@ -20,4 +20,9 @@ object Ingredient {
       .define[services.recipe.Ingredient, Ingredient]
       .buildTransformer
 
+  implicit val toInternal: Transformer[Ingredient, services.recipe.Ingredient] =
+    Transformer
+      .define[Ingredient, services.recipe.Ingredient]
+      .buildTransformer
+
 }

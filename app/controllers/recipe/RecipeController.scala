@@ -131,7 +131,7 @@ class RecipeController @Inject() (
           id.transformInto[RecipeId]
         )
         .map(
-          _.pipe(_.transformInto[IngredientsInfo].asJson)
+          _.pipe(_.map(_.transformInto[Ingredient]).asJson)
             .pipe(Ok(_))
         )
         .recover(errorHandler)
