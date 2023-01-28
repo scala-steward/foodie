@@ -9,13 +9,6 @@ import scala.concurrent.{ ExecutionContext, Future }
 
 trait NutrientService {
 
-  // TODO: Why is this function unused? Can it be removed safely?
-  def nutrientsOfFood(
-      foodId: FoodId,
-      measureId: Option[MeasureId],
-      factor: BigDecimal
-  ): Future[NutrientMap]
-
   def all: Future[Seq[Nutrient]]
 }
 
@@ -27,10 +20,6 @@ object NutrientService {
         foodId: FoodId,
         measureId: Option[MeasureId],
         amount: BigDecimal
-    )(implicit ec: ExecutionContext): DBIO[NutrientMap]
-
-    def nutrientsOfIngredient(
-        ingredient: Ingredient
     )(implicit ec: ExecutionContext): DBIO[NutrientMap]
 
     def nutrientsOfIngredients(
