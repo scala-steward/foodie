@@ -1,10 +1,10 @@
 package services.recipe
 
-import db.{ FoodId, IngredientId, RecipeId, UserId }
+import db.{FoodId, IngredientId, RecipeId, UserId}
 import errors.ServerError
 import slick.dbio.DBIO
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 trait RecipeService {
   def allFoods: Future[Seq[Food]]
@@ -18,7 +18,7 @@ trait RecipeService {
   def updateRecipe(userId: UserId, recipeUpdate: RecipeUpdate): Future[ServerError.Or[Recipe]]
   def deleteRecipe(userId: UserId, id: RecipeId): Future[Boolean]
 
-  def getIngredients(userId: UserId, recipeId: RecipeId): Future[IngredientsInfo]
+  def getIngredients(userId: UserId, recipeId: RecipeId): Future[List[Ingredient]]
   def addIngredient(userId: UserId, ingredientCreation: IngredientCreation): Future[ServerError.Or[Ingredient]]
   def updateIngredient(userId: UserId, ingredientUpdate: IngredientUpdate): Future[ServerError.Or[Ingredient]]
   def removeIngredient(userId: UserId, ingredientId: IngredientId): Future[Boolean]
@@ -62,7 +62,7 @@ object RecipeService {
     def getIngredients(
         userId: UserId,
         recipeId: RecipeId
-    )(implicit ec: ExecutionContext): DBIO[IngredientsInfo]
+    )(implicit ec: ExecutionContext): DBIO[List[Ingredient]]
 
     def addIngredient(
         userId: UserId,
