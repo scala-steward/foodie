@@ -10,7 +10,6 @@ import errors.{ ErrorContext, ServerError }
 import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
-import services.nutrient.NutrientService
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
@@ -73,7 +72,7 @@ class Live @Inject() (
       id: RecipeId
   ): Future[Boolean] = db.run(companion.deleteRecipe(userId, id))
 
-  override def getIngredients(userId: UserId, recipeId: RecipeId): Future[IngredientsInfo] =
+  override def getIngredients(userId: UserId, recipeId: RecipeId): Future[List[Ingredient]] =
     db.run(companion.getIngredients(userId, recipeId))
 
   override def addIngredient(
@@ -110,8 +109,7 @@ object Live {
 
   class Companion @Inject() (
       recipeDao: db.daos.recipe.DAO,
-      ingredientDao: db.daos.ingredient.DAO,
-      nutrientService: NutrientService.Companion
+      ingredientDao: db.daos.ingredient.DAO
   ) extends RecipeService.Companion {
 
     override def allFoods(implicit ec: ExecutionContext): DBIO[Seq[Food]] =
@@ -203,7 +201,7 @@ object Live {
         recipeId: RecipeId
     )(implicit
         ec: ExecutionContext
-    ): DBIO[IngredientsInfo] =
+    ): DBIO[List[Ingredient]] =
       for {
         exists <- recipeDao.exists(RecipeKey(userId, recipeId))
         ingredients <-
@@ -212,23 +210,7 @@ object Live {
               .findAllFor(recipeId)
               .map(_.map(_.transformInto[Ingredient]).toList)
           else Applicative[DBIO].pure(List.empty)
-        // The 'traverse' operation is costly, and only used for abstraction and dependency injection (mocks).
-        // It may be sensible to use a join here to avoid additional overhead.
-        ingredientsWithWeights <- ingredients.traverse { ingredient =>
-          nutrientService
-            .conversionFactor(ingredient.foodId, ingredient.amountUnit.measureId.getOrElse(AmountUnit.hundredGrams))
-            .map { conversionFactor =>
-              val weight = 100 * conversionFactor.conversionFactorValue * ingredient.amountUnit.factor
-              ingredient -> weight
-            }: DBIO[(Ingredient, BigDecimal)]
-        }
-      } yield {
-        val (ingredients, weights) = ingredientsWithWeights.unzip
-        IngredientsInfo(
-          ingredients = ingredients,
-          weightInGrams = weights.sum
-        )
-      }
+      } yield ingredients
 
     override def addIngredient(
         userId: UserId,
