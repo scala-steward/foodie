@@ -6,7 +6,6 @@ import Api.Types.ComplexIngredient exposing (ComplexIngredient)
 import Api.Types.Food exposing (Food)
 import Api.Types.Ingredient exposing (Ingredient)
 import Api.Types.Recipe exposing (Recipe)
-import Dict exposing (Dict)
 import Monocle.Lens exposing (Lens)
 import Pages.Ingredients.ComplexIngredientClientInput exposing (ComplexIngredientClientInput)
 import Pages.Ingredients.FoodGroup as FoodGroup exposing (FoodGroup)
@@ -16,6 +15,7 @@ import Pages.Ingredients.Pagination exposing (Pagination)
 import Pages.Ingredients.Status exposing (Status)
 import Pages.Recipes.RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Util.DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization)
@@ -42,31 +42,31 @@ type alias ComplexIngredientState =
 
 
 type alias FoodMap =
-    Dict FoodId Food
+    DictList FoodId Food
 
 
 type alias ComplexFoodMap =
-    Dict ComplexFoodId ComplexFood
+    DictList ComplexFoodId ComplexFood
 
 
 type alias RecipeMap =
-    Dict RecipeId Recipe
+    DictList RecipeId Recipe
 
 
 type alias AddFoodsMap =
-    Dict FoodId IngredientCreationClientInput
+    DictList FoodId IngredientCreationClientInput
 
 
 type alias AddComplexFoodsMap =
-    Dict ComplexFoodId ComplexIngredientClientInput
+    DictList ComplexFoodId ComplexIngredientClientInput
 
 
 type alias PlainIngredientStateMap =
-    Dict IngredientId PlainIngredientState
+    DictList IngredientId PlainIngredientState
 
 
 type alias ComplexIngredientStateMap =
-    Dict ComplexIngredientId ComplexIngredientState
+    DictList ComplexIngredientId ComplexIngredientState
 
 
 type FoodsMode

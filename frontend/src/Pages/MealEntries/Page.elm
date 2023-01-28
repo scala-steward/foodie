@@ -5,7 +5,6 @@ import Api.Types.Meal exposing (Meal)
 import Api.Types.MealEntry exposing (MealEntry)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
-import Dict exposing (Dict)
 import Monocle.Lens exposing (Lens)
 import Pages.MealEntries.MealEntryCreationClientInput exposing (MealEntryCreationClientInput)
 import Pages.MealEntries.MealEntryUpdateClientInput exposing (MealEntryUpdateClientInput)
@@ -13,6 +12,7 @@ import Pages.MealEntries.Pagination exposing (Pagination)
 import Pages.MealEntries.Status exposing (Status)
 import Pages.Meals.MealUpdateClientInput exposing (MealUpdateClientInput)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Util.DictList as DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization)
@@ -36,15 +36,15 @@ type alias MealEntryState =
 
 
 type alias RecipeMap =
-    Dict RecipeId Recipe
+    DictList RecipeId Recipe
 
 
 type alias AddMealEntriesMap =
-    Dict RecipeId MealEntryCreationClientInput
+    DictList RecipeId MealEntryCreationClientInput
 
 
 type alias MealEntryStateMap =
-    Dict MealEntryId MealEntryState
+    DictList MealEntryId MealEntryState
 
 
 type alias Flags =
@@ -77,7 +77,7 @@ lenses =
 
 descriptionOrEmpty : RecipeMap -> RecipeId -> String
 descriptionOrEmpty recipeMap =
-    flip Dict.get recipeMap >> Maybe.andThen .description >> Maybe.withDefault ""
+    flip DictList.get recipeMap >> Maybe.andThen .description >> Maybe.withDefault ""
 
 
 type Msg

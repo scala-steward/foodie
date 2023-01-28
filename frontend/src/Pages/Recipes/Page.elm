@@ -2,13 +2,13 @@ module Pages.Recipes.Page exposing (..)
 
 import Api.Auxiliary exposing (JWT, RecipeId)
 import Api.Types.Recipe exposing (Recipe)
-import Dict exposing (Dict)
 import Monocle.Lens exposing (Lens)
 import Pages.Recipes.Pagination exposing (Pagination)
 import Pages.Recipes.RecipeCreationClientInput exposing (RecipeCreationClientInput)
 import Pages.Recipes.RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
 import Pages.Recipes.Status exposing (Status)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Util.DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization)
@@ -29,7 +29,7 @@ type alias RecipeState =
 
 
 type alias RecipeStateMap =
-    Dict RecipeId RecipeState
+    DictList RecipeId RecipeState
 
 
 lenses :

@@ -12,6 +12,7 @@ import Monocle.Lens exposing (Lens)
 import Pages.Statistics.StatisticsUtil as StatisticsUtil exposing (StatisticsEvaluation)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Result.Extra
+import Util.DictList as DictList
 import Util.HttpUtil as HttpUtil exposing (Error)
 
 
@@ -44,8 +45,14 @@ gotFetchReferenceTreesResponseWith ps model result =
                                     { map = referenceTree.referenceMap
                                     , values =
                                         referenceTree.nutrients
+                                            |> List.map
+                                                (\referenceValue ->
+                                                    ( referenceValue.nutrientCode, referenceValue.referenceAmount )
+                                                )
+                                            |> Dict.fromList
                                     }
                                 )
+                            |> DictList.fromListWithKey (.map >> .id)
                 in
                 model
                     |> (ps.statisticsEvaluationLens
@@ -65,7 +72,7 @@ selectReferenceMapWith :
     -> ( model, Cmd msg )
 selectReferenceMapWith ps model referenceMapId =
     ( referenceMapId
-        |> Maybe.andThen (flip Dict.get ((ps.statisticsEvaluationLens |> Compose.lensWithLens StatisticsUtil.lenses.referenceTrees).get model))
+        |> Maybe.andThen (flip DictList.get ((ps.statisticsEvaluationLens |> Compose.lensWithLens StatisticsUtil.lenses.referenceTrees).get model))
         |> flip
             (ps.statisticsEvaluationLens
                 |> Compose.lensWithLens StatisticsUtil.lenses.referenceTree

@@ -9,7 +9,6 @@ import Api.Types.Ingredient exposing (Ingredient)
 import Api.Types.Measure exposing (Measure)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
-import Dict.Extra
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Maybe.Extra
@@ -31,6 +30,7 @@ import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Requests
 import Ports exposing (doFetchFoods, storeFoods)
 import Result.Extra
+import Util.DictList as DictList
 import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization(..))
@@ -416,7 +416,7 @@ gotFetchIngredientsResponse model result =
             (\ingredients ->
                 model
                     |> (Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients).set
-                        (ingredients |> List.map Editing.asView |> Dict.Extra.fromListBy (.original >> .id))
+                        (ingredients |> List.map Editing.asView |> DictList.fromListWithKey (.original >> .id))
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.ingredients).set True
             )
     , Cmd.none
@@ -430,7 +430,7 @@ gotFetchComplexIngredientsResponse model result =
             (\complexIngredients ->
                 model
                     |> (Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.ingredients).set
-                        (complexIngredients |> List.map Editing.asView |> Dict.Extra.fromListBy (.original >> .complexFoodId))
+                        (complexIngredients |> List.map Editing.asView |> DictList.fromListWithKey (.original >> .complexFoodId))
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.complexIngredients).set True
             )
     , Cmd.none

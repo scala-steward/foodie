@@ -11,7 +11,6 @@ import Api.Types.Ingredient exposing (Ingredient)
 import Api.Types.Measure exposing (Measure)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
-import Dict exposing (Dict)
 import Dropdown exposing (Item, dropdown)
 import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, disabled, scope, value)
@@ -40,6 +39,7 @@ import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput
 import Pages.Util.ViewUtil as ViewUtil
 import Paginate exposing (PaginatedList)
+import Util.DictList as DictList exposing (DictList)
 import Util.Editing as Editing
 import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
@@ -74,16 +74,16 @@ view model =
 
             viewIngredientsWith :
                 (IngredientState ingredient update -> Bool)
-                -> Lens Page.Model (FoodGroup comparableIngredientId ingredient update comparableFoodId food creation)
-                -> (ingredient -> comparableFoodId)
-                -> Dict comparableFoodId { a | name : String }
+                -> Lens Page.Model (FoodGroup ingredientId ingredient update foodId food creation)
+                -> (ingredient -> foodId)
+                -> DictList foodId { a | name : String }
                 -> PaginatedList (IngredientState ingredient update)
             viewIngredientsWith searchFilter groupLens idOf nameMap =
                 model
                     |> groupLens.get
                     |> .ingredients
-                    |> Dict.filter (\_ v -> searchFilter v)
-                    |> Dict.values
+                    |> DictList.values
+                    |> List.filter searchFilter
                     |> List.sortBy (.original >> idOf >> DictUtil.nameOrEmpty nameMap >> String.toLower)
                     |> ViewUtil.paginate
                         { pagination =
@@ -149,7 +149,7 @@ view model =
                             , confirmName = "Save"
                             , cancelMsg = Page.ExitEditRecipe
                             , cancelName = "Cancel"
-                            , rowStyles = [  ]
+                            , rowStyles = []
                             }
                             |> always
                     , onDelete =
@@ -285,8 +285,8 @@ viewPlain model =
     let
         viewFoods =
             model.ingredientsGroup.foods
-                |> Dict.filter (\_ v -> SearchUtil.search model.ingredientsGroup.foodsSearchString v.name)
-                |> Dict.values
+                |> DictList.values
+                |> List.filter (.name >> SearchUtil.search model.ingredientsGroup.foodsSearchString)
                 |> List.sortBy .name
                 |> ViewUtil.paginate
                     { pagination =
@@ -351,8 +351,8 @@ viewComplex model =
     let
         viewComplexFoods =
             model.complexIngredientsGroup.foods
-                |> Dict.filter (\_ v -> SearchUtil.search model.complexIngredientsGroup.foodsSearchString v.name)
-                |> Dict.values
+                |> DictList.values
+                |> List.filter (.name >> SearchUtil.search model.complexIngredientsGroup.foodsSearchString)
                 |> List.sortBy .name
                 |> ViewUtil.paginate
                     { pagination =
@@ -462,7 +462,7 @@ ingredientLineWith ps ingredient =
             (++) ps.onClick
 
         food =
-            Dict.get ingredient.foodId ps.foodMap
+            DictList.get ingredient.foodId ps.foodMap
     in
     tr [ Style.classes.editing ]
         ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.Extra.unwrap "" .name <| food ] ]
@@ -547,7 +547,7 @@ updateIngredientLine foodMap ingredient ingredientUpdateClientInput =
             ingredientUpdateClientInput.amountUnit.factor |> ValidatedInput.isValid
 
         food =
-            Dict.get ingredient.foodId foodMap
+            DictList.get ingredient.foodId foodMap
 
         maybeMeasure =
             food
@@ -660,7 +660,7 @@ updateComplexIngredientLine complexFoodMap complexIngredient complexIngredientUp
 unitDropdown : Page.FoodMap -> FoodId -> List Dropdown.Item
 unitDropdown fm fId =
     fm
-        |> Dict.get fId
+        |> DictList.get fId
         |> Maybe.Extra.unwrap [] .measures
         |> List.map (\m -> { value = String.fromInt m.id, text = m.name, enabled = True })
 
@@ -698,7 +698,7 @@ complexFoodInfo : ComplexFoodId -> Page.ComplexFoodMap -> ComplexFoodInfo
 complexFoodInfo complexFoodId complexFoodMap =
     let
         complexFood =
-            Dict.get complexFoodId complexFoodMap
+            DictList.get complexFoodId complexFoodMap
     in
     { name = complexFood |> Maybe.Extra.unwrap "" .name
     , amount =
@@ -720,7 +720,7 @@ viewFoodLine configuration foodMap ingredientsToAdd ingredients food =
             Page.DeselectFood food.id
 
         maybeIngredientToAdd =
-            Dict.get food.id ingredientsToAdd
+            DictList.get food.id ingredientsToAdd
 
         rowClickAction =
             if Maybe.Extra.isJust maybeIngredientToAdd then
@@ -828,7 +828,7 @@ viewComplexFoodLine configuration complexFoodMap complexIngredientsToAdd complex
             Page.DeselectComplexFood complexFood.recipeId
 
         maybeComplexIngredientToAdd =
-            Dict.get complexFood.recipeId complexIngredientsToAdd
+            DictList.get complexFood.recipeId complexIngredientsToAdd
 
         rowClickAction =
             if Maybe.Extra.isJust maybeComplexIngredientToAdd then
@@ -917,5 +917,5 @@ viewComplexFoodLine configuration complexFoodMap complexIngredientsToAdd complex
 anySelection : Lens Page.Model (FoodGroup ingredientId ingredient update foodId food creation) -> Page.Model -> Bool
 anySelection foodGroupLens =
     (foodGroupLens |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd).get
-        >> Dict.isEmpty
+        >> DictList.isEmpty
         >> not

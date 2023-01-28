@@ -6,8 +6,6 @@ import Api.Types.Meal exposing (Meal)
 import Api.Types.MealEntry exposing (MealEntry)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
-import Dict
-import Dict.Extra
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens as Lens
@@ -24,6 +22,7 @@ import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Requests
 import Result.Extra
+import Util.DictList as DictList
 import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization(..))
@@ -47,11 +46,11 @@ init flags =
                     }
                 , name = Nothing
                 }
-      , mealEntries = Dict.empty
-      , recipes = Dict.empty
+      , mealEntries = DictList.empty
+      , recipes = DictList.empty
       , recipesSearchString = ""
       , entriesSearchString = ""
-      , mealEntriesToAdd = Dict.empty
+      , mealEntriesToAdd = DictList.empty
       , initialization = Loading Status.initial
       , pagination = Pagination.initial
       }
@@ -249,7 +248,7 @@ gotFetchMealEntriesResponse model result =
         |> Result.Extra.unpack (flip setError model)
             (\mealEntries ->
                 model
-                    |> Page.lenses.mealEntries.set (mealEntries |> List.map Editing.asView |> Dict.Extra.fromListBy (.original >> .id))
+                    |> Page.lenses.mealEntries.set (mealEntries |> List.map Editing.asView |> DictList.fromListWithKey (.original >> .id))
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.mealEntries).set True
             )
     , Cmd.none
@@ -262,7 +261,7 @@ gotFetchRecipesResponse model result =
         |> Result.Extra.unpack (flip setError model)
             (\recipes ->
                 model
-                    |> Page.lenses.recipes.set (recipes |> Dict.Extra.fromListBy .id)
+                    |> Page.lenses.recipes.set (recipes |> DictList.fromListWithKey .id)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.recipes).set True
             )
     , Cmd.none
@@ -303,7 +302,7 @@ deselectRecipe model recipeId =
 addRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 addRecipe model recipeId =
     ( model
-    , Dict.get recipeId model.mealEntriesToAdd
+    , DictList.get recipeId model.mealEntriesToAdd
         |> Maybe.map
             (MealEntryCreationClientInput.toCreation
                 >> Requests.addMealEntry model.authorizedAccess

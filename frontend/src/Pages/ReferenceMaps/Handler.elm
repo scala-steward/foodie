@@ -4,8 +4,6 @@ import Addresses.Frontend
 import Api.Auxiliary exposing (JWT, ReferenceMapId)
 import Api.Types.ReferenceMap exposing (ReferenceMap)
 import Basics.Extra exposing (flip)
-import Dict
-import Dict.Extra
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens
@@ -19,6 +17,7 @@ import Pages.ReferenceMaps.Status as Status
 import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
 import Result.Extra
+import Util.DictList as DictList
 import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization as Initialization exposing (Initialization(..))
@@ -28,7 +27,7 @@ import Util.LensUtil as LensUtil
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
     ( { authorizedAccess = flags.authorizedAccess
-      , referenceMaps = Dict.empty
+      , referenceMaps = DictList.empty
       , referenceMapToAdd = Nothing
       , searchString = ""
       , initialization = Initialization.Loading Status.initial
@@ -134,7 +133,7 @@ saveReferenceMapEdit model referenceMapId =
     ( model
     , model
         |> Page.lenses.referenceMaps.get
-        |> Dict.get referenceMapId
+        |> DictList.get referenceMapId
         |> Maybe.andThen Editing.extractUpdate
         |> Maybe.Extra.unwrap
             Cmd.none
@@ -220,7 +219,7 @@ gotFetchReferenceMapsResponse model dataOrError =
         |> Result.Extra.unpack (flip setError model)
             (\referenceMaps ->
                 model
-                    |> Page.lenses.referenceMaps.set (referenceMaps |> List.map Editing.asView |> Dict.Extra.fromListBy (.original >> .id))
+                    |> Page.lenses.referenceMaps.set (referenceMaps |> List.map Editing.asView |> DictList.fromListWithKey (.original >> .id))
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.referenceMaps).set True
             )
     , Cmd.none

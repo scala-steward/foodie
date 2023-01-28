@@ -4,7 +4,6 @@ import Addresses.Frontend
 import Api.Types.MealEntry exposing (MealEntry)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
-import Dict
 import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, disabled, scope, value)
 import Html.Attributes.Extra exposing (stringProperty)
@@ -27,6 +26,7 @@ import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput
 import Pages.Util.ViewUtil as ViewUtil
 import Paginate
+import Util.DictList as DictList
 import Util.Editing as Editing
 import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
@@ -54,8 +54,8 @@ view model =
 
             viewMealEntries =
                 model.mealEntries
-                    |> Dict.filter (\_ v -> SearchUtil.search model.entriesSearchString (DictUtil.nameOrEmpty model.recipes v.original.recipeId))
-                    |> Dict.values
+                    |> DictList.values
+                    |> List.filter (\v -> SearchUtil.search model.entriesSearchString (DictUtil.nameOrEmpty model.recipes v.original.recipeId))
                     |> List.sortBy (.original >> .recipeId >> DictUtil.nameOrEmpty model.recipes >> String.toLower)
                     |> ViewUtil.paginate
                         { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.mealEntries
@@ -64,8 +64,8 @@ view model =
 
             viewRecipes =
                 model.recipes
-                    |> Dict.filter (\_ v -> SearchUtil.search model.recipesSearchString v.name)
-                    |> Dict.values
+                    |> DictList.values
+                    |> List.filter (.name >> SearchUtil.search model.recipesSearchString)
                     |> List.sortBy .name
                     |> ViewUtil.paginate
                         { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.recipes
@@ -74,7 +74,7 @@ view model =
 
             anySelection =
                 model.mealEntriesToAdd
-                    |> Dict.isEmpty
+                    |> DictList.isEmpty
                     |> not
 
             numberOfServings =
@@ -331,7 +331,7 @@ viewRecipeLine mealEntriesToAdd mealEntries recipe =
             Page.SelectRecipe recipe.id
 
         maybeRecipeToAdd =
-            Dict.get recipe.id mealEntriesToAdd
+            DictList.get recipe.id mealEntriesToAdd
 
         rowClickAction =
             if Maybe.Extra.isJust maybeRecipeToAdd then

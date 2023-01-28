@@ -17,6 +17,7 @@ import Pages.Statistics.StatisticsUtil exposing (ReferenceNutrientTree)
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
+import Util.DictList as DictList exposing (DictList)
 import Util.SearchUtil as SearchUtil
 import Uuid
 
@@ -225,7 +226,7 @@ nutrientTableHeader ps =
 
 
 referenceMapDropdownWith :
-    { referenceTrees : model -> List ReferenceNutrientTree
+    { referenceTrees : model -> DictList ReferenceMapId ReferenceNutrientTree
     , referenceTree : model -> Maybe ReferenceNutrientTree
 
     -- todo: Technically, this should be Maybe ReferenceMapId.
@@ -238,6 +239,7 @@ referenceMapDropdownWith ps model =
         { items =
             model
                 |> ps.referenceTrees
+                |> DictList.values
                 |> List.sortBy (.map >> .name)
                 |> List.map
                     (\referenceTree ->
@@ -268,7 +270,7 @@ statisticsTable :
     , showDailyAmount : Bool
     , completenessFraction : Maybe (CompletenessFraction information)
     , nutrientBase : information -> NutrientInformationBase
-    , referenceTrees : model -> List ReferenceNutrientTree
+    , referenceTrees : model -> DictList ReferenceMapId ReferenceNutrientTree
     , referenceTree : model -> Maybe ReferenceNutrientTree
     , tableLabel : String
     }

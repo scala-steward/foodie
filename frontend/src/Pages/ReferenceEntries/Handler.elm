@@ -6,8 +6,6 @@ import Api.Types.Nutrient exposing (Nutrient, decoderNutrient, encoderNutrient)
 import Api.Types.ReferenceEntry exposing (ReferenceEntry)
 import Api.Types.ReferenceMap exposing (ReferenceMap)
 import Basics.Extra exposing (flip)
-import Dict
-import Dict.Extra
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Maybe.Extra
@@ -26,6 +24,7 @@ import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Requests
 import Ports
 import Result.Extra
+import Util.DictList as DictList
 import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization as Initialization
@@ -41,11 +40,11 @@ init flags =
                 { id = flags.referenceMapId
                 , name = ""
                 }
-      , referenceEntries = Dict.empty
-      , nutrients = Dict.empty
+      , referenceEntries = DictList.empty
+      , nutrients = DictList.empty
       , nutrientsSearchString = ""
       , referenceEntriesSearchString = ""
-      , referenceEntriesToAdd = Dict.empty
+      , referenceEntriesToAdd = DictList.empty
       , initialization = Initialization.Loading Status.initial
       , pagination = Pagination.initial
       }
@@ -244,7 +243,7 @@ gotFetchReferenceEntriesResponse model result =
         |> Result.Extra.unpack (flip setError model)
             (\referenceEntries ->
                 model
-                    |> Page.lenses.referenceEntries.set (referenceEntries |> List.map Editing.asView |> Dict.Extra.fromListBy (.original >> .nutrientCode))
+                    |> Page.lenses.referenceEntries.set (referenceEntries |> List.map Editing.asView |> DictList.fromListWithKey (.original >> .nutrientCode))
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.referenceEntries).set True
             )
     , Cmd.none
@@ -301,7 +300,7 @@ deselectNutrient model nutrientCode =
 addNutrient : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
 addNutrient model nutrientCode =
     ( model
-    , Dict.get nutrientCode model.referenceEntriesToAdd
+    , DictList.get nutrientCode model.referenceEntriesToAdd
         |> Maybe.map
             (ReferenceEntryCreationClientInput.toCreation model.referenceMapId
                 >> Requests.addReferenceEntry model.authorizedAccess

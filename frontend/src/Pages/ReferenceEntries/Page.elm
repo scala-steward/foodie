@@ -4,7 +4,6 @@ import Api.Auxiliary exposing (JWT, NutrientCode, ReferenceMapId)
 import Api.Types.Nutrient exposing (Nutrient)
 import Api.Types.ReferenceEntry exposing (ReferenceEntry)
 import Api.Types.ReferenceMap exposing (ReferenceMap)
-import Dict exposing (Dict)
 import Monocle.Lens exposing (Lens)
 import Pages.ReferenceEntries.Pagination exposing (Pagination)
 import Pages.ReferenceEntries.ReferenceEntryCreationClientInput exposing (ReferenceEntryCreationClientInput)
@@ -12,6 +11,7 @@ import Pages.ReferenceEntries.ReferenceEntryUpdateClientInput exposing (Referenc
 import Pages.ReferenceEntries.Status exposing (Status)
 import Pages.ReferenceMaps.ReferenceMapUpdateClientInput exposing (ReferenceMapUpdateClientInput)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Util.DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization)
@@ -36,15 +36,15 @@ type alias ReferenceEntryState =
 
 
 type alias NutrientMap =
-    Dict NutrientCode Nutrient
+    DictList NutrientCode Nutrient
 
 
 type alias AddNutrientMap =
-    Dict NutrientCode ReferenceEntryCreationClientInput
+    DictList NutrientCode ReferenceEntryCreationClientInput
 
 
 type alias ReferenceEntryStateMap =
-    Dict NutrientCode ReferenceEntryState
+    DictList NutrientCode ReferenceEntryState
 
 
 type alias Flags =

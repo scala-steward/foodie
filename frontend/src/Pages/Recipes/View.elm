@@ -4,7 +4,6 @@ import Addresses.Frontend
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
-import Dict
 import Either exposing (Either(..))
 import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, disabled, scope, value)
@@ -26,6 +25,7 @@ import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
 import Pages.Util.ViewUtil as ViewUtil
 import Paginate
+import Util.DictList as DictList
 import Util.Editing as Editing
 import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
@@ -56,12 +56,12 @@ view model =
 
             viewEditRecipes =
                 model.recipes
-                    |> Dict.filter
+                    |> DictList.filter
                         (\_ v ->
                             filterOn v.original.name
                                 || filterOn (v.original.description |> Maybe.withDefault "")
                         )
-                    |> Dict.values
+                    |> DictList.values
                     |> List.sortBy (.original >> .name >> String.toLower)
                     |> ViewUtil.paginate
                         { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.recipes
