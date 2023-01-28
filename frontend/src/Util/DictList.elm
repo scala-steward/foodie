@@ -1,7 +1,8 @@
-module Util.DictList exposing (DictList, empty, filter, fromList, fromListWithKey, insert, remove, toList, values)
+module Util.DictList exposing (DictList, empty, any, filter, fromList, fromListWithKey, get, insert, isEmpty, remove, toList, values)
 
 import Basics.Extra
 import List.Extra
+import Maybe.Extra
 
 
 type DictList k v
@@ -11,6 +12,19 @@ type DictList k v
 empty : DictList k v
 empty =
     DictList []
+
+
+isEmpty : DictList k v -> Bool
+isEmpty =
+    toList
+        >> List.isEmpty
+
+
+any : (key -> a -> Bool) -> DictList key a -> Bool
+any p =
+    toList
+        >> List.Extra.find (Basics.Extra.uncurry p)
+        >> Maybe.Extra.isJust
 
 
 fromList : List ( k, v ) -> DictList k v
@@ -41,6 +55,13 @@ remove key =
     toList
         >> List.Extra.filterNot (\( k, _ ) -> k == key)
         >> fromList
+
+
+get : k -> DictList k v -> Maybe v
+get key =
+    toList
+        >> List.Extra.find (\( k, _ ) -> k == key)
+        >> Maybe.map Tuple.second
 
 
 filter : (k -> v -> Bool) -> DictList k v -> DictList k v

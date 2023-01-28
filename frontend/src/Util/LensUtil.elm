@@ -1,29 +1,27 @@
 module Util.LensUtil exposing (..)
 
-import Dict exposing (Dict)
+import Basics.Extra exposing (flip)
+
 import List.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens as Lens exposing (Lens)
 import Monocle.Optional as Optional exposing (Optional)
+import Util.DictList as DictList exposing (DictList)
 import Util.Initialization as Initialization exposing (Initialization)
 
 
-dictByKey : comparable -> Optional (Dict comparable a) a
+dictByKey : key -> Optional (DictList key value) value
 dictByKey k =
-    { getOption = Dict.get k
-    , set = Dict.insert k
+    { getOption = DictList.get k
+    , set = DictList.insert k
     }
 
 
-
--- todo: The handling is inconsistent - is it sensible to unify the two cases?
-
-
-firstSuch : (a -> Bool) -> Optional (List a) a
-firstSuch p =
-    { getOption = List.Extra.find p
-    , set = List.Extra.setIf p
-    }
+set : List value -> (value -> key) -> Lens model (DictList key value) -> model -> model
+set xs idOf lens md =
+    xs
+        |> DictList.fromListWithKey idOf
+        |> flip lens.set md
 
 
 initializationField : Lens model (Initialization status) -> Lens status Bool -> Optional model Bool
@@ -38,17 +36,17 @@ identityLens =
     Lens identity always
 
 
-updateById : (b -> Bool) -> Lens a (List b) -> (b -> b) -> a -> a
-updateById p =
-    Compose.lensWithOptional (firstSuch p)
+updateById : key -> Lens a (DictList key value) -> (value -> value) -> a -> a
+updateById id =
+    Compose.lensWithOptional (dictByKey id)
         >> Optional.modify
 
 
-insert : Lens a (List b) -> b -> a -> a
-insert lens =
-    Lens.modify lens << (::)
+insertAtId : key -> Lens a (DictList key value) -> value -> a -> a
+insertAtId id lens =
+    Lens.modify lens << DictList.insert id
 
 
-deleteAtId : (b -> k) -> k -> Lens a (List b) -> a -> a
-deleteAtId keyOf id lens =
-    Lens.modify lens <| List.Extra.filterNot (\b -> keyOf b == id)
+deleteAtId : key -> Lens a (DictList key value) -> a -> a
+deleteAtId id lens =
+    Lens.modify lens <| DictList.remove id
