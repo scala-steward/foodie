@@ -20,8 +20,11 @@ object Date {
 
   implicit val encoder: Encoder[Date] = deriveEncoder[Date]
 
+  // Duplicate work, but considered ok.
   implicit val decoder: Decoder[Date] = deriveDecoder[Date].emap { date =>
-    Try(LocalDate.of(date.year, date.month, date.day)).toEither.left
+    Try(
+      date.transformInto[LocalDate]
+    ).toEither.left
       .map(_.getMessage)
       .map(_ => date)
   }

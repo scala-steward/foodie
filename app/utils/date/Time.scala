@@ -1,19 +1,31 @@
 package utils.date
 
 import cats.Order
+import io.circe.{ Decoder, Encoder }
 
 import java.time.LocalTime
-import io.circe.generic.JsonCodec
+
+import io.circe.generic.semiauto.{ deriveDecoder, deriveEncoder }
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl._
 
-@JsonCodec
+import scala.util.Try
+
 case class Time(
     hour: Int,
     minute: Int
 )
 
 object Time {
+
+  implicit val encoder: Encoder[Time] = deriveEncoder[Time]
+
+  // Duplicate work, but considered ok.
+  implicit val decoder: Decoder[Time] = deriveDecoder[Time].emap { time =>
+    Try(time.transformInto[LocalTime]).toEither.left
+      .map(_.getMessage)
+      .map(_ => time)
+  }
 
   implicit val toJava: Transformer[Time, LocalTime] =
     time => LocalTime.of(time.hour, time.minute)
