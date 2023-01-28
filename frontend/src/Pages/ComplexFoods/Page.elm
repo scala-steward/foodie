@@ -3,13 +3,12 @@ module Pages.ComplexFoods.Page exposing (..)
 import Api.Auxiliary exposing (ComplexFoodId, RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.Recipe exposing (Recipe)
-import Dict exposing (Dict)
-import Maybe.Extra
 import Monocle.Lens exposing (Lens)
 import Pages.ComplexFoods.ComplexFoodClientInput exposing (ComplexFoodClientInput)
 import Pages.ComplexFoods.Pagination exposing (Pagination)
 import Pages.ComplexFoods.Status exposing (Status)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Util.DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization)
@@ -32,15 +31,15 @@ type alias ComplexFoodState =
 
 
 type alias ComplexFoodStateMap =
-    Dict ComplexFoodId ComplexFoodState
+    DictList ComplexFoodId ComplexFoodState
 
 
 type alias CreateComplexFoodsMap =
-    Dict ComplexFoodId ComplexFoodClientInput
+    DictList ComplexFoodId ComplexFoodClientInput
 
 
 type alias RecipeMap =
-    Dict RecipeId Recipe
+    DictList RecipeId Recipe
 
 
 lenses :
@@ -88,9 +87,3 @@ type Msg
     | SetRecipesSearchString String
     | SetComplexFoodsSearchString String
     | SetPagination Pagination
-
-
-complexFoodNameOrEmpty : RecipeMap -> ComplexFoodId -> String
-complexFoodNameOrEmpty recipeMap complexFoodId =
-    Dict.get complexFoodId recipeMap
-        |> Maybe.Extra.unwrap "" .name

@@ -5,7 +5,6 @@ import Api.Types.Nutrient exposing (Nutrient)
 import Api.Types.NutrientUnit as NutrientUnit
 import Api.Types.ReferenceEntry exposing (ReferenceEntry)
 import Basics.Extra exposing (flip)
-import Dict
 import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, disabled, scope, value)
 import Html.Attributes.Extra exposing (stringProperty)
@@ -26,6 +25,7 @@ import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput
 import Pages.Util.ViewUtil as ViewUtil
 import Paginate
+import Util.DictList as DictList
 import Util.Editing as Editing
 import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
@@ -53,8 +53,8 @@ view model =
 
             viewReferenceEntries =
                 model.referenceEntries
-                    |> Dict.filter (\_ v -> SearchUtil.search model.referenceEntriesSearchString (v.original.nutrientCode |> nutrientInfo model.nutrients |> .name))
-                    |> Dict.toList
+                    |> DictList.filter (\_ v -> SearchUtil.search model.referenceEntriesSearchString (v.original.nutrientCode |> nutrientInfo model.nutrients |> .name))
+                    |> DictList.toList
                     |> List.sortBy (\( k, _ ) -> nutrientInfo model.nutrients k |> .unitName |> String.toLower)
                     |> List.map Tuple.second
                     |> ViewUtil.paginate
@@ -64,8 +64,8 @@ view model =
 
             viewNutrients =
                 model.nutrients
-                    |> Dict.filter (\_ v -> SearchUtil.search model.nutrientsSearchString v.name)
-                    |> Dict.values
+                    |> DictList.values
+                    |> List.filter (\v -> SearchUtil.search model.nutrientsSearchString v.name)
                     |> List.sortBy .name
                     |> ViewUtil.paginate
                         { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.nutrients
@@ -74,7 +74,7 @@ view model =
 
             anySelection =
                 model.referenceEntriesToAdd
-                    |> Dict.isEmpty
+                    |> DictList.isEmpty
                     |> not
 
             ( referenceValue, unit ) =
@@ -334,7 +334,7 @@ viewNutrientLine nutrientMap referenceEntries referenceEntriesToAdd nutrient =
             Page.DeselectNutrient nutrient.code
 
         maybeReferenceEntryToAdd =
-            Dict.get nutrient.code referenceEntriesToAdd
+            DictList.get nutrient.code referenceEntriesToAdd
 
         rowClickAction =
             if Maybe.Extra.isJust maybeReferenceEntryToAdd then
@@ -355,7 +355,7 @@ viewNutrientLine nutrientMap referenceEntries referenceEntriesToAdd nutrient =
                 Just referenceNutrientToAdd ->
                     let
                         exists =
-                            Dict.get referenceNutrientToAdd.nutrientCode referenceEntries |> Maybe.Extra.isJust
+                            DictList.get referenceNutrientToAdd.nutrientCode referenceEntries |> Maybe.Extra.isJust
 
                         ( confirmName, confirmStyle ) =
                             if exists then
@@ -411,7 +411,7 @@ viewNutrientLine nutrientMap referenceEntries referenceEntriesToAdd nutrient =
 
 nutrientInfo : NutrientMap -> NutrientCode -> { name : String, unitName : String }
 nutrientInfo nutrientMap =
-    flip Dict.get nutrientMap
+    flip DictList.get nutrientMap
         >> Maybe.Extra.unwrap
             { name = ""
             , unitName = ""

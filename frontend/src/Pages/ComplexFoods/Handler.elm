@@ -4,8 +4,6 @@ import Api.Auxiliary exposing (ComplexFoodId, RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
-import Dict
-import Dict.Extra
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens
@@ -18,6 +16,7 @@ import Pages.ComplexFoods.Status as Status
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.PaginationSettings as PaginationSettings
 import Result.Extra
+import Util.DictList as DictList
 import Util.Editing as Editing
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization as Initialization
@@ -27,9 +26,9 @@ import Util.LensUtil as LensUtil
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
     ( { authorizedAccess = flags.authorizedAccess
-      , recipes = Dict.empty
-      , complexFoods = Dict.empty
-      , complexFoodsToCreate = Dict.empty
+      , recipes = DictList.empty
+      , complexFoods = DictList.empty
+      , complexFoodsToCreate = DictList.empty
       , recipesSearchString = ""
       , complexFoodsSearchString = ""
       , initialization = Initialization.Loading Status.initial
@@ -233,7 +232,7 @@ gotFetchRecipesResponse model result =
         |> Result.Extra.unpack (flip setError model)
             (\recipes ->
                 model
-                    |> Page.lenses.recipes.set (recipes |> Dict.Extra.fromListBy .id)
+                    |> Page.lenses.recipes.set (recipes |> DictList.fromListWithKey .id)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.recipes).set True
             )
     , Cmd.none
@@ -246,7 +245,7 @@ gotFetchComplexFoodsResponse model result =
         |> Result.Extra.unpack (flip setError model)
             (\complexFoods ->
                 model
-                    |> Page.lenses.complexFoods.set (complexFoods |> List.map Editing.asView |> Dict.Extra.fromListBy (.original >> .recipeId))
+                    |> Page.lenses.complexFoods.set (complexFoods |> List.map Editing.asView |> DictList.fromListWithKey (.original >> .recipeId))
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.complexFoods).set True
             )
     , Cmd.none

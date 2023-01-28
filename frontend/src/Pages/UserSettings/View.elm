@@ -24,7 +24,7 @@ view model =
         , initialization = Page.lenses.initialization.get
         , configuration = .authorizedAccess >> .configuration
         , jwt = .authorizedAccess >> .jwt >> Just
-        , currentPage = Just (UserSettings model.user.nickname)
+        , currentPage = Just (UserSettings (model.user |> Maybe.Extra.unwrap "" .nickname))
         , showNavigation = True
         }
         model
@@ -61,15 +61,15 @@ viewRegular model =
                 [ tbody []
                     [ tr []
                         [ td [] [ label [] [ text "Nickname" ] ]
-                        , td [] [ label [] [ text <| model.user.nickname ] ]
+                        , td [] [ label [] [ text <| Maybe.Extra.unwrap "" .nickname <| model.user ] ]
                         ]
                     , tr []
                         [ td [] [ label [] [ text "Email" ] ]
-                        , td [] [ label [] [ text <| model.user.email ] ]
+                        , td [] [ label [] [ text <| Maybe.Extra.unwrap "" .email <| model.user ] ]
                         ]
                     , tr []
                         [ td [] [ label [] [ text "Display name" ] ]
-                        , td [] [ label [] [ text <| Maybe.withDefault "" <| model.user.displayName ] ]
+                        , td [] [ label [] [ text <| Maybe.withDefault "" <| Maybe.andThen .displayName <| model.user ] ]
                         ]
                     , tr []
                         [ td [] [ label [] [ text "New display name" ] ]

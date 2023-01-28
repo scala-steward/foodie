@@ -1,14 +1,14 @@
 module Api.Auxiliary exposing (..)
 
-import Api.Types.UUID exposing (UUID)
+import Uuid exposing (Uuid)
 
 
 type alias RecipeId =
-    UUID
+    Uuid
 
 
 type alias IngredientId =
-    UUID
+    Uuid
 
 
 type alias MeasureId =
@@ -20,11 +20,11 @@ type alias FoodId =
 
 
 type alias MealId =
-    UUID
+    Uuid
 
 
 type alias MealEntryId =
-    UUID
+    Uuid
 
 
 type alias NutrientCode =
@@ -32,7 +32,7 @@ type alias NutrientCode =
 
 
 type alias UserId =
-    UUID
+    Uuid
 
 
 type alias JWT =
@@ -40,7 +40,7 @@ type alias JWT =
 
 
 type alias ReferenceMapId =
-    UUID
+    Uuid
 
 
 type alias ComplexFoodId =

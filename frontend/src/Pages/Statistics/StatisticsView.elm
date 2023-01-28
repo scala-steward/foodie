@@ -17,7 +17,9 @@ import Pages.Statistics.StatisticsUtil exposing (ReferenceNutrientTree)
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
+import Util.DictList as DictList exposing (DictList)
 import Util.SearchUtil as SearchUtil
+import Uuid
 
 
 displayFloat : Float -> String
@@ -224,9 +226,11 @@ nutrientTableHeader ps =
 
 
 referenceMapDropdownWith :
-    { referenceTrees : model -> Dict ReferenceMapId ReferenceNutrientTree
+    { referenceTrees : model -> DictList ReferenceMapId ReferenceNutrientTree
     , referenceTree : model -> Maybe ReferenceNutrientTree
-    , onChange : Maybe ReferenceMapId -> msg
+
+    -- todo: Technically, this should be Maybe ReferenceMapId.
+    , onChange : Maybe String -> msg
     }
     -> model
     -> Html msg
@@ -235,11 +239,11 @@ referenceMapDropdownWith ps model =
         { items =
             model
                 |> ps.referenceTrees
-                |> Dict.toList
-                |> List.sortBy (Tuple.second >> .map >> .name)
+                |> DictList.values
+                |> List.sortBy (.map >> .name)
                 |> List.map
-                    (\( referenceMapId, referenceTree ) ->
-                        { value = referenceMapId
+                    (\referenceTree ->
+                        { value = referenceTree.map.id |> Uuid.toString
                         , text = referenceTree.map.name
                         , enabled = True
                         }
@@ -253,11 +257,11 @@ referenceMapDropdownWith ps model =
         , onChange = ps.onChange
         }
         []
-        (model |> ps.referenceTree |> Maybe.map (.map >> .id))
+        (model |> ps.referenceTree |> Maybe.map (.map >> .id >> Uuid.toString))
 
 
 statisticsTable :
-    { onReferenceMapSelection : Maybe ReferenceMapId -> msg
+    { onReferenceMapSelection : Maybe String -> msg
     , onSearchStringChange : String -> msg
     , searchStringOf : model -> String
     , infoListOf : model -> List information
@@ -266,7 +270,7 @@ statisticsTable :
     , showDailyAmount : Bool
     , completenessFraction : Maybe (CompletenessFraction information)
     , nutrientBase : information -> NutrientInformationBase
-    , referenceTrees : model -> Dict ReferenceMapId ReferenceNutrientTree
+    , referenceTrees : model -> DictList ReferenceMapId ReferenceNutrientTree
     , referenceTree : model -> Maybe ReferenceNutrientTree
     , tableLabel : String
     }

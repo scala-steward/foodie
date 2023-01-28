@@ -1,13 +1,13 @@
 module Pages.Util.ParserUtil exposing (AddressWithParser, foldl1, nicknameEmailParser, uuidParser, with1, with1Multiple, with2)
 
-import Api.Types.UUID exposing (UUID)
 import List.Extra
 import Url.Parser as Parser exposing ((</>), Parser, s)
+import Uuid exposing (Uuid)
 
 
-uuidParser : Parser (UUID -> b) b
+uuidParser : Parser (Uuid -> b) b
 uuidParser =
-    Parser.custom "UUID" matchUuid
+    Parser.custom "UUID" Uuid.fromString
 
 
 nicknameEmailParser : AddressWithParser ( String, String ) (String -> String -> a) a
@@ -80,31 +80,6 @@ with2 ps =
             </> s ps.step2
             </> ps.paramParser2
     }
-
-
-
--- todo: Version 4 UUID have restrictions on two positions - implement these
-
-
-matchUuid : String -> Maybe UUID
-matchUuid str =
-    let
-        gs =
-            splitAt '-' (String.toList str)
-
-        groupsCorrect =
-            -- UUID format
-            List.map List.length gs == [ 8, 4, 4, 4, 12 ]
-
-        symbolsCorrect =
-            -- UUID character set
-            List.all Char.isHexDigit (List.concat gs)
-    in
-    if groupsCorrect && symbolsCorrect then
-        Just str
-
-    else
-        Nothing
 
 
 

@@ -5,6 +5,7 @@ import Pages.Statistics.Food.Select.Page as Page
 import Pages.Statistics.StatisticsView as StatisticsView
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
+import Uuid
 
 
 view : Page.Model -> Html Page.Msg
@@ -34,7 +35,7 @@ view model =
                         ]
                     ]
                     :: StatisticsView.statisticsTable
-                        { onReferenceMapSelection = Page.SelectReferenceMap
+                        { onReferenceMapSelection = Maybe.andThen Uuid.fromString >> Page.SelectReferenceMap
                         , onSearchStringChange = Page.SetNutrientsSearchString
                         , searchStringOf = .statisticsEvaluation >> .nutrientsSearchString
                         , infoListOf = .foodStats >> .nutrients

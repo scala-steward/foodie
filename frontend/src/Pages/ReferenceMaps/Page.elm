@@ -2,13 +2,13 @@ module Pages.ReferenceMaps.Page exposing (..)
 
 import Api.Auxiliary exposing (JWT, ReferenceMapId)
 import Api.Types.ReferenceMap exposing (ReferenceMap)
-import Dict exposing (Dict)
 import Monocle.Lens exposing (Lens)
 import Pages.ReferenceMaps.Pagination exposing (Pagination)
 import Pages.ReferenceMaps.ReferenceMapCreationClientInput exposing (ReferenceMapCreationClientInput)
 import Pages.ReferenceMaps.ReferenceMapUpdateClientInput exposing (ReferenceMapUpdateClientInput)
 import Pages.ReferenceMaps.Status exposing (Status)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Util.DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization)
@@ -29,7 +29,7 @@ type alias ReferenceMapState =
 
 
 type alias ReferenceMapStateMap =
-    Dict ReferenceMapId ReferenceMapState
+    DictList ReferenceMapId ReferenceMapState
 
 
 lenses :

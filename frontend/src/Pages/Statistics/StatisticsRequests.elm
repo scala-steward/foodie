@@ -5,7 +5,6 @@ import Api.Auxiliary exposing (ReferenceMapId)
 import Api.Types.ReferenceTree exposing (ReferenceTree, decoderReferenceTree)
 import Basics.Extra exposing (flip)
 import Dict
-import Dict.Extra
 import Http
 import Json.Decode as Decode
 import Monocle.Compose as Compose
@@ -13,6 +12,7 @@ import Monocle.Lens exposing (Lens)
 import Pages.Statistics.StatisticsUtil as StatisticsUtil exposing (StatisticsEvaluation)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Result.Extra
+import Util.DictList as DictList
 import Util.HttpUtil as HttpUtil exposing (Error)
 
 
@@ -52,7 +52,7 @@ gotFetchReferenceTreesResponseWith ps model result =
                                             |> Dict.fromList
                                     }
                                 )
-                            |> Dict.Extra.fromListBy (.map >> .id)
+                            |> DictList.fromListWithKey (.map >> .id)
                 in
                 model
                     |> (ps.statisticsEvaluationLens
@@ -72,7 +72,7 @@ selectReferenceMapWith :
     -> ( model, Cmd msg )
 selectReferenceMapWith ps model referenceMapId =
     ( referenceMapId
-        |> Maybe.andThen (flip Dict.get ((ps.statisticsEvaluationLens |> Compose.lensWithLens StatisticsUtil.lenses.referenceTrees).get model))
+        |> Maybe.andThen (flip DictList.get ((ps.statisticsEvaluationLens |> Compose.lensWithLens StatisticsUtil.lenses.referenceTrees).get model))
         |> flip
             (ps.statisticsEvaluationLens
                 |> Compose.lensWithLens StatisticsUtil.lenses.referenceTree

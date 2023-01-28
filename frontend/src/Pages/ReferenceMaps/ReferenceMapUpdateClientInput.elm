@@ -2,13 +2,13 @@ module Pages.ReferenceMaps.ReferenceMapUpdateClientInput exposing (..)
 
 import Api.Types.ReferenceMap exposing (ReferenceMap)
 import Api.Types.ReferenceMapUpdate exposing (ReferenceMapUpdate)
-import Api.Types.UUID exposing (UUID)
 import Monocle.Lens exposing (Lens)
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
+import Uuid exposing (Uuid)
 
 
 type alias ReferenceMapUpdateClientInput =
-    { id : UUID
+    { id : Uuid
     , name : ValidatedInput String
     }
 

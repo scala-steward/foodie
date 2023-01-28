@@ -1,25 +1,26 @@
 module Util.LensUtil exposing (..)
 
 import Basics.Extra exposing (flip)
-import Dict exposing (Dict)
-import Dict.Extra
+
+import List.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens as Lens exposing (Lens)
 import Monocle.Optional as Optional exposing (Optional)
+import Util.DictList as DictList exposing (DictList)
 import Util.Initialization as Initialization exposing (Initialization)
 
 
-dictByKey : comparable -> Optional (Dict comparable a) a
+dictByKey : key -> Optional (DictList key value) value
 dictByKey k =
-    { getOption = Dict.get k
-    , set = Dict.insert k
+    { getOption = DictList.get k
+    , set = DictList.insert k
     }
 
 
-set : List a -> (a -> comparable) -> Lens model (Dict comparable a) -> model -> model
+set : List value -> (value -> key) -> Lens model (DictList key value) -> model -> model
 set xs idOf lens md =
     xs
-        |> Dict.Extra.fromListBy idOf
+        |> DictList.fromListWithKey idOf
         |> flip lens.set md
 
 
@@ -35,17 +36,17 @@ identityLens =
     Lens identity always
 
 
-updateById : comparable -> Lens a (Dict comparable b) -> (b -> b) -> a -> a
+updateById : key -> Lens a (DictList key value) -> (value -> value) -> a -> a
 updateById id =
     Compose.lensWithOptional (dictByKey id)
         >> Optional.modify
 
 
-insertAtId : comparable -> Lens a (Dict comparable b) -> b -> a -> a
+insertAtId : key -> Lens a (DictList key value) -> value -> a -> a
 insertAtId id lens =
-    Lens.modify lens << Dict.insert id
+    Lens.modify lens << DictList.insert id
 
 
-deleteAtId : comparable -> Lens a (Dict comparable b) -> a -> a
+deleteAtId : key -> Lens a (DictList key value) -> a -> a
 deleteAtId id lens =
-    Lens.modify lens <| Dict.remove id
+    Lens.modify lens <| DictList.remove id

@@ -27,10 +27,10 @@ module Addresses.Frontend exposing
 
 import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Auxiliary exposing (ComplexFoodId, FoodId, JWT, MealId, RecipeId, ReferenceMapId)
-import Api.Types.UUID exposing (UUID)
 import Api.Types.UserIdentifier exposing (UserIdentifier)
 import Pages.Util.ParserUtil as ParserUtil exposing (AddressWithParser, with1, with1Multiple, with2)
 import Url.Parser as Parser exposing ((</>), (<?>), Parser, s)
+import Uuid exposing (Uuid)
 
 
 requestRegistration : AddressWithParser () a a
@@ -52,7 +52,7 @@ mealEntryEditor : AddressWithParser MealId (MealId -> a) a
 mealEntryEditor =
     with1
         { step1 = "meal-entry-editor"
-        , toString = List.singleton
+        , toString = Uuid.toString >> List.singleton
         , paramParser = ParserUtil.uuidParser
         }
 
@@ -91,11 +91,11 @@ statisticsComplexFoodSearch =
     plainMultiple "statistics" [ StatisticsVariant.complexFood ]
 
 
-statisticsComplexFoodSelect : AddressWithParser UUID (ComplexFoodId -> b) b
+statisticsComplexFoodSelect : AddressWithParser Uuid (ComplexFoodId -> b) b
 statisticsComplexFoodSelect =
     with1Multiple
         { steps = [ "statistics", StatisticsVariant.complexFood ]
-        , toString = List.singleton
+        , toString = Uuid.toString >> List.singleton
         , paramParser = ParserUtil.uuidParser
         }
 
@@ -105,12 +105,12 @@ statisticsRecipeSearch =
     plainMultiple "statistics" [ StatisticsVariant.recipe ]
 
 
-statisticsRecipeSelect : AddressWithParser UUID (RecipeId -> b) b
+statisticsRecipeSelect : AddressWithParser Uuid (RecipeId -> b) b
 statisticsRecipeSelect =
     with1Multiple
         { steps = [ "statistics", StatisticsVariant.recipe ]
-        , toString = List.singleton
-        , paramParser = Parser.string
+        , toString = Uuid.toString >> List.singleton
+        , paramParser = ParserUtil.uuidParser
         }
 
 
@@ -119,12 +119,12 @@ statisticsMealSearch =
     plainMultiple "statistics" [ StatisticsVariant.meal ]
 
 
-statisticsMealSelect : AddressWithParser UUID (MealId -> b) b
+statisticsMealSelect : AddressWithParser Uuid (MealId -> b) b
 statisticsMealSelect =
     with1Multiple
         { steps = [ "statistics", StatisticsVariant.meal ]
-        , toString = List.singleton
-        , paramParser = Parser.string
+        , toString = Uuid.toString >> List.singleton
+        , paramParser = ParserUtil.uuidParser
         }
 
 
@@ -137,7 +137,7 @@ referenceEntries : AddressWithParser ReferenceMapId (ReferenceMapId -> a) a
 referenceEntries =
     with1
         { step1 = "reference-nutrients"
-        , toString = List.singleton
+        , toString = Uuid.toString >> List.singleton
         , paramParser = ParserUtil.uuidParser
         }
 
@@ -151,7 +151,7 @@ ingredientEditor : AddressWithParser RecipeId (RecipeId -> a) a
 ingredientEditor =
     with1
         { step1 = "ingredient-editor"
-        , toString = List.singleton
+        , toString = Uuid.toString >> List.singleton
         , paramParser = ParserUtil.uuidParser
         }
 

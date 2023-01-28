@@ -29,12 +29,7 @@ initialFetch =
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
     ( { authorizedAccess = flags.authorizedAccess
-      , user =
-            { id = ""
-            , nickname = ""
-            , displayName = Nothing
-            , email = ""
-            }
+      , user = Nothing
       , complementInput = ComplementInput.initial
       , initialization = Loading Status.initial
       , mode = Page.Regular
@@ -83,7 +78,7 @@ gotFetchUserResponse model result =
         |> Result.Extra.unpack (flip setError model)
             (\user ->
                 model
-                    |> Page.lenses.user.set user
+                    |> Page.lenses.user.set (Just user)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.user).set True
                     |> (Page.lenses.complementInput |> Compose.lensWithLens ComplementInput.lenses.displayName).set user.displayName
             )
@@ -126,7 +121,7 @@ gotUpdateSettingsResponse : Page.Model -> Result Error User -> ( Page.Model, Cmd
 gotUpdateSettingsResponse model result =
     ( result
         |> Result.Extra.unpack (flip setError model)
-            (flip Page.lenses.user.set model)
+            (\user -> Page.lenses.user.set (Just user) model)
     , Cmd.none
     )
 

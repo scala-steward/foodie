@@ -4,8 +4,6 @@ import Addresses.Frontend
 import Api.Auxiliary exposing (JWT, RecipeId)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
-import Dict
-import Dict.Extra
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens
@@ -19,6 +17,7 @@ import Pages.Recipes.Status as Status
 import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
 import Result.Extra
+import Util.DictList as DictList
 import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization as Initialization exposing (Initialization(..))
@@ -28,7 +27,7 @@ import Util.LensUtil as LensUtil
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
     ( { authorizedAccess = flags.authorizedAccess
-      , recipes = Dict.empty
+      , recipes = DictList.empty
       , recipeToAdd = Nothing
       , searchString = ""
       , initialization = Initialization.Loading Status.initial
@@ -134,7 +133,7 @@ saveRecipeEdit model recipeId =
     ( model
     , model
         |> Page.lenses.recipes.get
-        |> Dict.get recipeId
+        |> DictList.get recipeId
         |> Maybe.andThen Editing.extractUpdate
         |> Maybe.Extra.unwrap
             Cmd.none
@@ -224,7 +223,7 @@ gotFetchRecipesResponse model dataOrError =
                     |> Page.lenses.recipes.set
                         (recipes
                             |> List.map Editing.asView
-                            |> Dict.Extra.fromListBy (.original >> .id)
+                            |> DictList.fromListWithKey (.original >> .id)
                         )
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.recipes).set True
             )

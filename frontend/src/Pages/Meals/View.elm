@@ -30,6 +30,7 @@ import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
 import Paginate
 import Parser
+import Util.DictList as DictList
 import Util.Editing as Editing
 import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
@@ -60,12 +61,12 @@ view model =
 
             viewMeals =
                 model.meals
-                    |> Dict.filter
+                    |> DictList.filter
                         (\_ v ->
                             filterOn (v.original.name |> Maybe.withDefault "")
                                 || filterOn (v.original.date |> DateUtil.toString)
                         )
-                    |> Dict.values
+                    |> DictList.values
                     |> List.sortBy (.original >> .date >> DateUtil.toString)
                     |> List.reverse
                     |> ViewUtil.paginate

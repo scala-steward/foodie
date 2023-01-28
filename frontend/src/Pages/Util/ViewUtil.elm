@@ -116,6 +116,10 @@ navigationPages nickname =
     [ Recipes, Meals, ComplexFoods, Statistics, ReferenceMaps, UserSettings nickname ]
 
 
+
+-- todo: Use real addresses
+
+
 addressSuffix : Page -> String
 addressSuffix page =
     case page of

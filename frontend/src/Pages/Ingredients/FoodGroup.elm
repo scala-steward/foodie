@@ -1,15 +1,15 @@
 module Pages.Ingredients.FoodGroup exposing (..)
 
-import Dict exposing (Dict)
 import Monocle.Lens exposing (Lens)
 import Pages.Ingredients.Pagination as Pagination exposing (Pagination)
+import Util.DictList as DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 
 
 type alias FoodGroup ingredientId ingredient update foodId food creation =
-    { ingredients : Dict ingredientId (IngredientState ingredient update)
-    , foods : Dict foodId food
-    , foodsToAdd : Dict foodId creation
+    { ingredients : DictList ingredientId (IngredientState ingredient update)
+    , foods : DictList foodId food
+    , foodsToAdd : DictList foodId creation
     , pagination : Pagination
     , foodsSearchString : String
     }
@@ -21,18 +21,18 @@ type alias IngredientState ingredient update =
 
 initial : FoodGroup ingredientId ingredient update foodId food creation
 initial =
-    { ingredients = Dict.empty
-    , foods = Dict.empty
-    , foodsToAdd = Dict.empty
+    { ingredients = DictList.empty
+    , foods = DictList.empty
+    , foodsToAdd = DictList.empty
     , pagination = Pagination.initial
     , foodsSearchString = ""
     }
 
 
 lenses :
-    { ingredients : Lens (FoodGroup ingredientId ingredient update foodId food creation) (Dict ingredientId (IngredientState ingredient update))
-    , foods : Lens (FoodGroup ingredientId ingredient update foodId food creation) (Dict foodId food)
-    , foodsToAdd : Lens (FoodGroup ingredientId ingredient update foodId food creation) (Dict foodId creation)
+    { ingredients : Lens (FoodGroup ingredientId ingredient update foodId food creation) (DictList ingredientId (IngredientState ingredient update))
+    , foods : Lens (FoodGroup ingredientId ingredient update foodId food creation) (DictList foodId food)
+    , foodsToAdd : Lens (FoodGroup ingredientId ingredient update foodId food creation) (DictList foodId creation)
     , pagination : Lens (FoodGroup ingredientId ingredient update foodId food creation) Pagination
     , foodsSearchString : Lens (FoodGroup ingredientId ingredient update foodId food creation) String
     }

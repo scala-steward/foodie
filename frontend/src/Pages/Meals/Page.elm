@@ -2,13 +2,13 @@ module Pages.Meals.Page exposing (..)
 
 import Api.Auxiliary exposing (JWT, MealId)
 import Api.Types.Meal exposing (Meal)
-import Dict exposing (Dict)
 import Monocle.Lens exposing (Lens)
 import Pages.Meals.MealCreationClientInput exposing (MealCreationClientInput)
 import Pages.Meals.MealUpdateClientInput exposing (MealUpdateClientInput)
 import Pages.Meals.Pagination exposing (Pagination)
 import Pages.Meals.Status exposing (Status)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Util.DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
 import Util.Initialization exposing (Initialization)
@@ -29,7 +29,7 @@ type alias MealState =
 
 
 type alias MealStateMap =
-    Dict MealId MealState
+    DictList MealId MealState
 
 
 lenses :
