@@ -36,19 +36,19 @@ class Live @Inject() (
   override def nutrientsOverTime(userId: UserId, requestInterval: RequestInterval): Future[Stats] =
     db.run(companion.nutrientsOverTime(userId, requestInterval))
 
-  override def nutrientsOfFood(foodId: FoodId): Future[Option[NutrientAmountMap]] =
+  override def nutrientsOfFood(foodId: FoodId): Future[Option[NutrientAmountInformation]] =
     db.run(companion.nutrientsOfFood(foodId))
 
   override def nutrientsOfComplexFood(
       userId: UserId,
       complexFoodId: ComplexFoodId
-  ): Future[Option[NutrientAmountMap]] =
+  ): Future[Option[NutrientAmountInformation]] =
     db.run(companion.nutrientsOfComplexFood(userId, complexFoodId))
 
-  override def nutrientsOfRecipe(userId: UserId, recipeId: RecipeId): Future[Option[NutrientAmountMap]] =
+  override def nutrientsOfRecipe(userId: UserId, recipeId: RecipeId): Future[Option[NutrientAmountInformation]] =
     db.run(companion.nutrientsOfRecipe(userId, recipeId))
 
-  override def nutrientsOfMeal(userId: UserId, mealId: MealId): Future[NutrientAmountMap] =
+  override def nutrientsOfMeal(userId: UserId, mealId: MealId): Future[NutrientAmountInformation] =
     db.run(companion.nutrientsOfMeal(userId, mealId))
 
 }
@@ -81,14 +81,17 @@ object Live {
           nutrientAmountMapOfMealEntries(mealEntries, nutrientsPerRecipe, allNutrients)
         Stats(
           meals = meals,
-          nutrientAmountMap = nutrientAmountMap
+          nutrientAmountInformation = NutrientAmountInformation(
+            nutrientAmountMap = nutrientAmountMap,
+            weightInGrams = ???
+          )
         )
       }
     }
 
     override def nutrientsOfFood(foodId: FoodId)(implicit
         ec: ExecutionContext
-    ): DBIO[Option[NutrientAmountMap]] = {
+    ): DBIO[Option[NutrientAmountInformation]] = {
       val transformer = for {
         _ <- OptionT(
           Tables.FoodName
@@ -98,10 +101,13 @@ object Live {
         )
         nutrientMap  <- OptionT.liftF(nutrientService.nutrientsOfFood(foodId, None, BigDecimal(1)))
         allNutrients <- OptionT.liftF(nutrientService.all)
-      } yield unifyAndCount(
-        nutrientMap = nutrientMap,
-        totalNumberOfIngredients = 1,
-        allNutrients = allNutrients
+      } yield NutrientAmountInformation(
+        unifyAndCount(
+          nutrientMap = nutrientMap,
+          totalNumberOfIngredients = 1,
+          allNutrients = allNutrients
+        ),
+        weightInGrams = 100
       )
 
       transformer.value
@@ -109,7 +115,7 @@ object Live {
 
     override def nutrientsOfComplexFood(userId: UserId, complexFoodId: ComplexFoodId)(implicit
         ec: ExecutionContext
-    ): DBIO[Option[NutrientAmountMap]] = {
+    ): DBIO[Option[NutrientAmountInformation]] = {
       val transformer = for {
         complexFood <- OptionT(complexFoodService.get(userId, complexFoodId))
         recipeStats <- OptionT(nutrientsOfRecipeWith(userId, complexFoodId, ScaleMode.Unit(complexFood.amount)))
@@ -123,7 +129,7 @@ object Live {
         recipeId: RecipeId
     )(implicit
         ec: ExecutionContext
-    ): DBIO[Option[NutrientAmountMap]] =
+    ): DBIO[Option[NutrientAmountInformation]] =
       nutrientsOfRecipeWith(userId, recipeId, ScaleMode.Serving)
 
     private def nutrientsOfRecipeWith(
