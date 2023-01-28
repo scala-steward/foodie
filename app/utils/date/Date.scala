@@ -1,15 +1,15 @@
 package utils.date
 
 import cats.Order
+import io.circe.{ Decoder, Encoder }
 
 import java.time.LocalDate
-import io.circe.generic.JsonCodec
+import io.circe.generic.semiauto.{ deriveDecoder, deriveEncoder }
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl._
 
 import scala.util.Try
 
-@JsonCodec
 case class Date(
     year: Int,
     month: Int,
@@ -17,6 +17,14 @@ case class Date(
 )
 
 object Date {
+
+  implicit val encoder: Encoder[Date] = deriveEncoder[Date]
+
+  implicit val decoder: Decoder[Date] = deriveDecoder[Date].emap { date =>
+    Try(LocalDate.of(date.year, date.month, date.day)).toEither.left
+      .map(_.getMessage)
+      .map(_ => date)
+  }
 
   def parse(string: String): Option[Date] =
     Try(LocalDate.parse(string))
