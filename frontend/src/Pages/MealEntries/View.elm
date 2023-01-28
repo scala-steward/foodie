@@ -1,6 +1,7 @@
 module Pages.MealEntries.View exposing (view)
 
 import Addresses.Frontend
+import Api.Auxiliary exposing (RecipeId)
 import Api.Types.MealEntry exposing (MealEntry)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
@@ -272,10 +273,9 @@ mealEntryLineWith ps mealEntry =
             (++) ps.onClick
     in
     tr [ Style.classes.editing ]
-        ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| DictUtil.nameOrEmpty ps.recipeMap <| mealEntry.recipeId ] ]
-         , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Page.descriptionOrEmpty ps.recipeMap <| mealEntry.recipeId ] ]
-         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| mealEntry.numberOfServings ] ]
-         ]
+        (recipeInfo ps.recipeMap mealEntry.recipeId ([ Style.classes.editable ] |> withOnClick)
+            ++ [ td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| mealEntry.numberOfServings ] ]
+               ]
             ++ ps.controls
         )
 
@@ -290,35 +290,42 @@ updateEntryLine recipeMap mealEntry mealEntryUpdateClientInput =
             Page.ExitEditMealEntryAt mealEntry.id
     in
     tr [ Style.classes.editLine ]
-        [ td [] [ label [] [ text <| DictUtil.nameOrEmpty recipeMap <| mealEntry.recipeId ] ]
-        , td [] [ label [] [ text <| Page.descriptionOrEmpty recipeMap <| mealEntry.recipeId ] ]
-        , td [ Style.classes.numberCell ]
-            [ input
-                [ value
-                    mealEntryUpdateClientInput.numberOfServings.text
-                , onInput
-                    (flip
-                        (ValidatedInput.lift
-                            MealEntryUpdateClientInput.lenses.numberOfServings
-                        ).set
-                        mealEntryUpdateClientInput
-                        >> Page.UpdateMealEntry
-                    )
-                , onEnter saveMsg
-                , HtmlUtil.onEscape cancelMsg
-                , Style.classes.numberLabel
-                ]
-                []
-            ]
-        , td []
-            [ button [ Style.classes.button.confirm, onClick saveMsg ]
-                [ text "Save" ]
-            ]
-        , td []
-            [ button [ Style.classes.button.cancel, onClick cancelMsg ]
-                [ text "Cancel" ]
-            ]
-        ]
+        (recipeInfo recipeMap mealEntry.recipeId []
+            ++ [ td [ Style.classes.numberCell ]
+                    [ input
+                        [ value
+                            mealEntryUpdateClientInput.numberOfServings.text
+                        , onInput
+                            (flip
+                                (ValidatedInput.lift
+                                    MealEntryUpdateClientInput.lenses.numberOfServings
+                                ).set
+                                mealEntryUpdateClientInput
+                                >> Page.UpdateMealEntry
+                            )
+                        , onEnter saveMsg
+                        , HtmlUtil.onEscape cancelMsg
+                        , Style.classes.numberLabel
+                        ]
+                        []
+                    ]
+               , td []
+                    [ button [ Style.classes.button.confirm, onClick saveMsg ]
+                        [ text "Save" ]
+                    ]
+               , td []
+                    [ button [ Style.classes.button.cancel, onClick cancelMsg ]
+                        [ text "Cancel" ]
+                    ]
+               ]
+        )
+
+
+recipeInfo : Page.RecipeMap -> RecipeId -> List (Attribute Page.Msg) -> List (Html Page.Msg)
+recipeInfo recipeMap recipeId attributes =
+    [ td attributes [ label [] [ text <| DictUtil.nameOrEmpty recipeMap <| recipeId ] ]
+    , td attributes [ label [] [ text <| Page.descriptionOrEmpty recipeMap <| recipeId ] ]
+    ]
 
 
 viewRecipeLine : Page.AddMealEntriesMap -> Page.MealEntryStateMap -> Recipe -> Html Page.Msg
