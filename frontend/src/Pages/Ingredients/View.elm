@@ -523,13 +523,16 @@ complexIngredientLineWith ps complexIngredient =
 
         info =
             complexFoodInfo complexIngredient.complexFoodId ps.complexFoodMap
+
+        amountInfo =
+            Maybe.Extra.unwrap info.amountGrams
+                (\amountMillilitres -> String.concat [ info.amountGrams, " = ", amountMillilitres ])
+                info.amountMilliLitres
     in
     tr [ Style.classes.editing ]
         ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| info.name ] ]
          , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| complexIngredient.factor ] ]
-
-         --todo: Millilitres as well?
-         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| info.amountGrams ] ]
+         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| amountInfo ] ]
          ]
             ++ ps.controls
         )
@@ -645,8 +648,7 @@ updateComplexIngredientLine complexFoodMap complexIngredient complexIngredientUp
                 []
             ]
         , td [ Style.classes.numberCell ]
-            -- todo: Millilitres?
-            [ label [ Style.classes.editable, Style.classes.numberLabel ] [ text <| info.amountGrams ]
+            [ label [ Style.classes.editable, Style.classes.numberLabel ] [ text <| amountInfoOf <| info ]
             ]
         , td []
             [ button [ Style.classes.button.confirm, onClick saveMsg ]
@@ -693,7 +695,7 @@ onChangeDropdown ps =
 type alias ComplexFoodInfo =
     { name : String
     , amountGrams : String
-    , amountMilliLitres : String
+    , amountMilliLitres : Maybe String
     }
 
 
@@ -710,8 +712,19 @@ complexFoodInfo complexFoodId complexFoodMap =
     , amountMilliLitres =
         complexFood
             |> Maybe.andThen .amountMilliLitres
-            |> Maybe.Extra.unwrap "" (\amount -> String.concat [ amount |> String.fromFloat, "ml" ])
+            |> Maybe.map (\amount -> String.concat [ amount |> String.fromFloat, "ml" ])
     }
+
+
+amountInfoOf : ComplexFoodInfo -> String
+amountInfoOf info =
+    let
+        suffix =
+            Maybe.Extra.unwrap ""
+                (\amountMillilitres -> String.concat [ " = ", amountMillilitres ])
+                info.amountMilliLitres
+    in
+    info.amountGrams ++ suffix
 
 
 viewFoodLine : Configuration -> Page.FoodMap -> Page.AddFoodsMap -> Page.PlainIngredientStateMap -> Food -> Html Page.Msg
@@ -899,8 +912,7 @@ viewComplexFoodLine configuration complexFoodMap complexIngredientsToAdd complex
                          ]
                             |> List.filter (exists |> not |> always)
                         )
-                    , td [ Style.classes.editable, Style.classes.numberLabel, onClick selectMsg ] [ label [] [ text <| info.amountGrams ] ]
-                    , td [ Style.classes.editable, Style.classes.numberLabel, onClick selectMsg ] [ label [] [ text <| info.amountMilliLitres ] ]
+                    , td [ Style.classes.editable, Style.classes.numberLabel, onClick selectMsg ] [ label [] [ text <| amountInfoOf <| info ] ]
                     , td [ Style.classes.controls ]
                         [ button
                             ([ MaybeUtil.defined <| confirmStyle
