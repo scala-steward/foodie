@@ -20,26 +20,26 @@ trait Tables {
 
   /** Entity class storing rows of table ComplexFood
    *  @param recipeId Database column recipe_id SqlType(uuid), PrimaryKey
-   *  @param amount Database column amount SqlType(numeric)
-   *  @param unit Database column unit SqlType(text) */
-  case class ComplexFoodRow(recipeId: java.util.UUID, amount: scala.math.BigDecimal, unit: String)
+   *  @param amountGrams Database column amount_grams SqlType(numeric)
+   *  @param amountMilliLitres Database column amount_milli_litres SqlType(numeric), Default(None) */
+  case class ComplexFoodRow(recipeId: java.util.UUID, amountGrams: scala.math.BigDecimal, amountMilliLitres: Option[scala.math.BigDecimal] = None)
   /** GetResult implicit for fetching ComplexFoodRow objects using plain SQL queries */
-  implicit def GetResultComplexFoodRow(implicit e0: GR[java.util.UUID], e1: GR[scala.math.BigDecimal], e2: GR[String]): GR[ComplexFoodRow] = GR{
+  implicit def GetResultComplexFoodRow(implicit e0: GR[java.util.UUID], e1: GR[scala.math.BigDecimal], e2: GR[Option[scala.math.BigDecimal]]): GR[ComplexFoodRow] = GR{
     prs => import prs._
-    ComplexFoodRow.tupled((<<[java.util.UUID], <<[scala.math.BigDecimal], <<[String]))
+    ComplexFoodRow.tupled((<<[java.util.UUID], <<[scala.math.BigDecimal], <<?[scala.math.BigDecimal]))
   }
   /** Table description of table complex_food. Objects of this class serve as prototypes for rows in queries. */
   class ComplexFood(_tableTag: Tag) extends profile.api.Table[ComplexFoodRow](_tableTag, "complex_food") {
-    def * = (recipeId, amount, unit) <> (ComplexFoodRow.tupled, ComplexFoodRow.unapply)
+    def * = (recipeId, amountGrams, amountMilliLitres) <> (ComplexFoodRow.tupled, ComplexFoodRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((Rep.Some(recipeId), Rep.Some(amount), Rep.Some(unit))).shaped.<>({r=>import r._; _1.map(_=> ComplexFoodRow.tupled((_1.get, _2.get, _3.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = ((Rep.Some(recipeId), Rep.Some(amountGrams), amountMilliLitres)).shaped.<>({r=>import r._; _1.map(_=> ComplexFoodRow.tupled((_1.get, _2.get, _3)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column recipe_id SqlType(uuid), PrimaryKey */
     val recipeId: Rep[java.util.UUID] = column[java.util.UUID]("recipe_id", O.PrimaryKey)
-    /** Database column amount SqlType(numeric) */
-    val amount: Rep[scala.math.BigDecimal] = column[scala.math.BigDecimal]("amount")
-    /** Database column unit SqlType(text) */
-    val unit: Rep[String] = column[String]("unit")
+    /** Database column amount_grams SqlType(numeric) */
+    val amountGrams: Rep[scala.math.BigDecimal] = column[scala.math.BigDecimal]("amount_grams")
+    /** Database column amount_milli_litres SqlType(numeric), Default(None) */
+    val amountMilliLitres: Rep[Option[scala.math.BigDecimal]] = column[Option[scala.math.BigDecimal]]("amount_milli_litres", O.Default(None))
 
     /** Foreign key referencing Recipe (database name complex_food_recipe_id_fk) */
     lazy val recipeFk = foreignKey("complex_food_recipe_id_fk", recipeId, Recipe)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
