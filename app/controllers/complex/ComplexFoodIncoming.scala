@@ -9,8 +9,8 @@ import java.util.UUID
 @JsonCodec
 case class ComplexFoodIncoming(
     recipeId: UUID,
-    amount: BigDecimal,
-    unit: ComplexFoodUnit
+    amountGrams: BigDecimal,
+    amountMilliLitres: Option[BigDecimal]
 )
 
 object ComplexFoodIncoming {

@@ -112,7 +112,7 @@ object Live {
     ): DBIO[Option[NutrientAmountMap]] = {
       val transformer = for {
         complexFood <- OptionT(complexFoodService.get(userId, complexFoodId))
-        recipeStats <- OptionT(nutrientsOfRecipeWith(userId, complexFoodId, ScaleMode.Unit(complexFood.amount)))
+        recipeStats <- OptionT(nutrientsOfRecipeWith(userId, complexFoodId, ScaleMode.Unit(complexFood.amountGrams)))
       } yield recipeStats
 
       transformer.value
