@@ -8,7 +8,7 @@ import java.time.LocalDate
 
 case class Stats(
     meals: Seq[Meal],
-    nutrientAmountInformation: NutrientAmountInformation
+    nutrientAmountMap: NutrientAmountMap
 )
 
 object Stats {
@@ -24,7 +24,7 @@ object Stats {
       _ / numberOfDays
     } else _ => 0
 
-    stats.nutrientAmountInformation.nutrientAmountMap.view
+    stats.nutrientAmountMap.view
       .mapValues(a => a.value.map(modifier))
       .toMap
   }
