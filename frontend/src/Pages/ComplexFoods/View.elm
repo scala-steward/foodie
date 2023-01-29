@@ -61,7 +61,7 @@ view model =
             viewRecipes =
                 model.recipes
                     |> DictList.values
-                    |> List.filter (\v -> SearchUtil.search model.recipesSearchString v.name)
+                    |> List.filter (.name >> SearchUtil.search model.recipesSearchString)
                     |> List.sortBy .name
                     |> ViewUtil.paginate
                         { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.recipes
@@ -343,7 +343,7 @@ viewRecipeLine complexFoodsToCreate complexFoods recipe =
                             )
                             []
                          ]
-                            |> List.filter (always validInput)
+                            |> List.filter (exists |> not |> always)
                         )
                     , td [ Style.classes.numberCell ]
                         ([ input
@@ -364,7 +364,7 @@ viewRecipeLine complexFoodsToCreate complexFoods recipe =
                             )
                             []
                          ]
-                            |> List.filter (always validInput)
+                            |> List.filter (exists |> not |> always)
                         )
                     , td [ Style.classes.controls ]
                         [ button
