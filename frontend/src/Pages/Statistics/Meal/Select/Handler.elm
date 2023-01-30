@@ -23,7 +23,10 @@ init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
     ( { authorizedAccess = flags.authorizedAccess
       , meal = Nothing
-      , mealStats = { nutrients = [] }
+      , mealStats =
+            { nutrients = []
+            , weightInGrams = 0
+            }
       , statisticsEvaluation = StatisticsEvaluation.initial
       , initialization = Initialization.Loading Status.initial
       , variant = StatisticsVariant.Meal

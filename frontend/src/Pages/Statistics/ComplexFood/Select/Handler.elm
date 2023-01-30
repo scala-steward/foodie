@@ -29,7 +29,10 @@ init flags =
             , amountGrams = 0
             , amountMilliLitres = Nothing
             }
-      , foodStats = { nutrients = [] }
+      , foodStats =
+            { nutrients = []
+            , weightInGrams = 0
+            }
       , statisticsEvaluation = StatisticsEvaluation.initial
       , initialization = Initialization.Loading Status.initial
       , variant = StatisticsVariant.ComplexFood

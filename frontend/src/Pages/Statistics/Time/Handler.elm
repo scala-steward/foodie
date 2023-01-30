@@ -45,6 +45,7 @@ defaultStats : Stats
 defaultStats =
     { meals = []
     , nutrients = []
+    , weightInGrams = 0
     }
 
 
