@@ -1,5 +1,6 @@
 module Pages.Statistics.ComplexFood.Select.View exposing (view)
 
+import Basics.Extra exposing (flip)
 import Html exposing (Html, div, label, table, td, text, tr)
 import Pages.Statistics.ComplexFood.Select.Page as Page
 import Pages.Statistics.StatisticsView as StatisticsView
@@ -35,6 +36,10 @@ view model =
                         , tr []
                             [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Description" ] ]
                             , td [] [ label [] [ text <| Maybe.withDefault "" <| .description <| model.complexFood ] ]
+                            ]
+                        , tr []
+                            [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Set weight" ] ]
+                            , td [] [ label [] [ text <| flip (++) "g" <| StatisticsView.displayFloat <| .amountGrams <| model.complexFood ] ]
                             ]
                         ]
                     ]

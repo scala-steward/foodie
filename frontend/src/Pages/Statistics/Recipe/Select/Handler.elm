@@ -75,6 +75,7 @@ gotFetchStatsResponse model result =
             (\recipeStats ->
                 model
                     |> (Page.lenses.recipeStats |> Compose.lensWithLens StatisticsLenses.totalOnlyStatsNutrients).set (recipeStats |> .nutrients |> List.sortBy (.base >> .name))
+                    |> (Page.lenses.recipeStats |> Compose.lensWithLens StatisticsLenses.weightInGrams).set (recipeStats |> .weightInGrams)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.recipeStats).set True
             )
     , Cmd.none
