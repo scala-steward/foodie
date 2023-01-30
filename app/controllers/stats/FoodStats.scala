@@ -6,16 +6,19 @@ import io.scalaland.chimney.dsl._
 
 @JsonCodec
 case class FoodStats(
-    nutrients: Seq[FoodNutrientInformation]
+    nutrients: Seq[FoodNutrientInformation],
+    weightInGrams: BigDecimal
 )
 
 object FoodStats {
 
-  implicit val fromDomain: Transformer[services.stats.NutrientAmountMap, FoodStats] = { nutrientMap =>
-    val nutrients = nutrientMap.map(_.transformInto[FoodNutrientInformation]).toSeq
-    FoodStats(
-      nutrients = nutrients
-    )
+  implicit val fromDomain: Transformer[(services.stats.NutrientAmountMap, BigDecimal), FoodStats] = {
+    case (nutrientMap, weightInGrams) =>
+      val nutrients = nutrientMap.map(_.transformInto[FoodNutrientInformation]).toSeq
+      FoodStats(
+        nutrients = nutrients,
+        weightInGrams = weightInGrams
+      )
   }
 
 }
