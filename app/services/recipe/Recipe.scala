@@ -12,7 +12,8 @@ case class Recipe(
     id: RecipeId,
     name: String,
     description: Option[String],
-    numberOfServings: BigDecimal
+    numberOfServings: BigDecimal,
+    servingSize: Option[String]
 )
 
 object Recipe {

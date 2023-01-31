@@ -5,7 +5,8 @@ import db.RecipeId
 case class RecipeCreation(
     name: String,
     description: Option[String],
-    numberOfServings: BigDecimal
+    numberOfServings: BigDecimal,
+    servingSize: Option[String]
 )
 
 object RecipeCreation {
@@ -15,7 +16,8 @@ object RecipeCreation {
       id = id,
       name = recipeCreation.name,
       description = recipeCreation.description,
-      numberOfServings = recipeCreation.numberOfServings
+      numberOfServings = recipeCreation.numberOfServings,
+      servingSize = recipeCreation.servingSize
     )
 
 }
