@@ -23,7 +23,10 @@ init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
     ( { authorizedAccess = flags.authorizedAccess
       , meal = Nothing
-      , mealStats = { nutrients = [] }
+      , mealStats =
+            { nutrients = []
+            , weightInGrams = 0
+            }
       , statisticsEvaluation = StatisticsEvaluation.initial
       , initialization = Initialization.Loading Status.initial
       , variant = StatisticsVariant.Meal
@@ -67,6 +70,7 @@ gotFetchStatsResponse model result =
             (\mealStats ->
                 model
                     |> (Page.lenses.mealStats |> Compose.lensWithLens StatisticsLenses.totalOnlyStatsNutrients).set (mealStats |> .nutrients |> List.sortBy (.base >> .name))
+                    |> (Page.lenses.mealStats |> Compose.lensWithLens StatisticsLenses.weightInGrams).set (mealStats |> .weightInGrams)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.mealStats).set True
             )
     , Cmd.none

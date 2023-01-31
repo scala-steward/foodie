@@ -28,7 +28,10 @@ init flags =
             , description = Nothing
             , numberOfServings = 0
             }
-      , recipeStats = { nutrients = [] }
+      , recipeStats =
+            { nutrients = []
+            , weightInGrams = 0
+            }
       , statisticsEvaluation = StatisticsEvaluation.initial
       , initialization = Initialization.Loading Status.initial
       , variant = StatisticsVariant.Recipe
@@ -72,6 +75,7 @@ gotFetchStatsResponse model result =
             (\recipeStats ->
                 model
                     |> (Page.lenses.recipeStats |> Compose.lensWithLens StatisticsLenses.totalOnlyStatsNutrients).set (recipeStats |> .nutrients |> List.sortBy (.base >> .name))
+                    |> (Page.lenses.recipeStats |> Compose.lensWithLens StatisticsLenses.weightInGrams).set (recipeStats |> .weightInGrams)
                     |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.recipeStats).set True
             )
     , Cmd.none

@@ -3,7 +3,6 @@ module Pages.Statistics.ComplexFood.Select.Handler exposing (init, update)
 import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Auxiliary exposing (ReferenceMapId)
 import Api.Types.ComplexFood exposing (ComplexFood)
-import Api.Types.ComplexFoodUnit as ComplexFoodUnit
 import Api.Types.ReferenceTree exposing (ReferenceTree)
 import Api.Types.TotalOnlyStats exposing (TotalOnlyStats)
 import Basics.Extra exposing (flip)
@@ -27,10 +26,13 @@ init flags =
             { recipeId = flags.complexFoodId
             , name = ""
             , description = Nothing
-            , amount = 0
-            , unit = ComplexFoodUnit.G
+            , amountGrams = 0
+            , amountMilliLitres = Nothing
             }
-      , foodStats = { nutrients = [] }
+      , foodStats =
+            { nutrients = []
+            , weightInGrams = 0
+            }
       , statisticsEvaluation = StatisticsEvaluation.initial
       , initialization = Initialization.Loading Status.initial
       , variant = StatisticsVariant.ComplexFood

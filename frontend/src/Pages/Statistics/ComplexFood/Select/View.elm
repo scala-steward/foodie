@@ -1,6 +1,6 @@
 module Pages.Statistics.ComplexFood.Select.View exposing (view)
 
-import Api.Types.ComplexFoodUnit as ComplexFoodUnit
+import Basics.Extra exposing (flip)
 import Html exposing (Html, div, label, table, td, text, tr)
 import Pages.Statistics.ComplexFood.Select.Page as Page
 import Pages.Statistics.StatisticsView as StatisticsView
@@ -37,6 +37,10 @@ view model =
                             [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Description" ] ]
                             , td [] [ label [] [ text <| Maybe.withDefault "" <| .description <| model.complexFood ] ]
                             ]
+                        , tr []
+                            [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Set weight" ] ]
+                            , td [] [ label [] [ text <| flip (++) "g" <| StatisticsView.displayFloat <| .amountGrams <| model.complexFood ] ]
+                            ]
                         ]
                     ]
                     :: StatisticsView.statisticsTable
@@ -55,7 +59,7 @@ view model =
                         , nutrientBase = .base
                         , referenceTrees = .statisticsEvaluation >> .referenceTrees
                         , referenceTree = .statisticsEvaluation >> .referenceTree
-                        , tableLabel = "Nutrients per 100" ++ (model.complexFood.unit |> ComplexFoodUnit.toPrettyString)
+                        , tableLabel = "Nutrients per 100g"
                         }
                         model
                 )

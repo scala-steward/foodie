@@ -1,10 +1,8 @@
 module Pages.ComplexFoods.View exposing (..)
 
 import Api.Types.ComplexFood exposing (ComplexFood)
-import Api.Types.ComplexFoodUnit as ComplexFoodUnit exposing (ComplexFoodUnit)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
-import Dropdown exposing (Item, dropdown)
 import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, disabled, scope, value)
 import Html.Attributes.Extra exposing (stringProperty)
@@ -63,7 +61,7 @@ view model =
             viewRecipes =
                 model.recipes
                     |> DictList.values
-                    |> List.filter (\v -> SearchUtil.search model.recipesSearchString v.name)
+                    |> List.filter (.name >> SearchUtil.search model.recipesSearchString)
                     |> List.sortBy .name
                     |> ViewUtil.paginate
                         { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.recipes
@@ -75,9 +73,9 @@ view model =
                     |> DictList.isEmpty
                     |> not
 
-            ( amount, unit ) =
+            ( amountGrams, amountMillilitres ) =
                 if anySelection then
-                    ( "Amount", "Unit" )
+                    ( "Amount in g", "Amount in ml (optional)" )
 
                 else
                     ( "", "" )
@@ -99,8 +97,8 @@ view model =
                     , thead []
                         [ tr [ Style.classes.tableHeader ]
                             [ th [ scope "col" ] [ label [] [ text "Name" ] ]
-                            , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Amount" ] ]
-                            , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Unit" ] ]
+                            , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Amount in g" ] ]
+                            , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Amount in ml (optional)" ] ]
                             , th [ colspan 2, scope "colgroup", Style.classes.controlsGroup ] []
                             ]
                         ]
@@ -139,8 +137,8 @@ view model =
                         , thead []
                             [ tr [ Style.classes.tableHeader ]
                                 [ th [ scope "col" ] [ label [] [ text "Name" ] ]
-                                , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text amount ] ]
-                                , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text unit ] ]
+                                , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text amountGrams ] ]
+                                , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text amountMillilitres ] ]
                                 , th [ colspan 2, scope "colgroup", Style.classes.controlsGroup ] []
                                 ]
                             ]
@@ -211,8 +209,8 @@ complexFoodLineWith ps complexFood =
     in
     tr [ Style.classes.editing ]
         ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| .name <| complexFood ] ]
-         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| complexFood.amount ] ]
-         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| ComplexFoodUnit.toPrettyString <| complexFood.unit ] ]
+         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| complexFood.amountGrams ] ]
+         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| Maybe.Extra.unwrap "" String.fromFloat <| complexFood.amountMilliLitres ] ]
          ]
             ++ ps.controls
         )
@@ -232,11 +230,11 @@ updateComplexFoodLine complexFood complexFoodClientInput =
         , td [ Style.classes.numberCell ]
             [ input
                 [ value
-                    complexFoodClientInput.amount.text
+                    complexFoodClientInput.amountGrams.text
                 , onInput
                     (flip
                         (ValidatedInput.lift
-                            ComplexFoodClientInput.lenses.amount
+                            ComplexFoodClientInput.lenses.amountGrams
                         ).set
                         complexFoodClientInput
                         >> Page.UpdateComplexFood
@@ -248,21 +246,22 @@ updateComplexFoodLine complexFood complexFoodClientInput =
                 []
             ]
         , td [ Style.classes.numberCell ]
-            [ dropdown
-                { items = units
-                , emptyItem =
-                    complexFood.unit |> unitToItem |> Just
-                , onChange =
-                    onChangeDropdown
-                        { mkMsg = Page.UpdateComplexFood
-                        , input = complexFoodClientInput
-                        }
-                }
-                [ Style.classes.numberLabel, HtmlUtil.onEscape cancelMsg ]
-                (complexFood.unit
-                    |> ComplexFoodUnit.toString
-                    |> Just
-                )
+            [ input
+                [ value
+                    complexFoodClientInput.amountMilliLitres.text
+                , onInput
+                    (flip
+                        (ValidatedInput.lift
+                            ComplexFoodClientInput.lenses.amountMilliLitres
+                        ).set
+                        complexFoodClientInput
+                        >> Page.UpdateComplexFood
+                    )
+                , onEnter saveMsg
+                , HtmlUtil.onEscape cancelMsg
+                , Style.classes.numberLabel
+                ]
+                []
             ]
         , td []
             [ button [ Style.classes.button.confirm, onClick saveMsg ]
@@ -273,19 +272,6 @@ updateComplexFoodLine complexFood complexFoodClientInput =
                 [ text "Cancel" ]
             ]
         ]
-
-
-onChangeDropdown :
-    { input : ComplexFoodClientInput
-    , mkMsg : ComplexFoodClientInput -> Page.Msg
-    }
-    -> Maybe String
-    -> Page.Msg
-onChangeDropdown ps =
-    Maybe.andThen ComplexFoodUnit.fromString
-        >> Maybe.withDefault ps.input.unit
-        >> flip ComplexFoodClientInput.lenses.unit.set ps.input
-        >> ps.mkMsg
 
 
 viewRecipeLine : Page.CreateComplexFoodsMap -> Page.ComplexFoodStateMap -> Recipe -> Html Page.Msg
@@ -326,7 +312,8 @@ viewRecipeLine complexFoodsToCreate complexFoods recipe =
 
                         validInput =
                             List.all identity
-                                [ complexFoodToAdd.amount |> ValidatedInput.isValid
+                                [ complexFoodToAdd.amountGrams |> ValidatedInput.isValid
+                                , complexFoodToAdd.amountMilliLitres |> ValidatedInput.isValid
                                 , exists |> not
                                 ]
 
@@ -339,12 +326,12 @@ viewRecipeLine complexFoodsToCreate complexFoods recipe =
                     in
                     [ td [ Style.classes.numberCell ]
                         ([ input
-                            ([ MaybeUtil.defined <| value complexFoodToAdd.amount.text
+                            ([ MaybeUtil.defined <| value complexFoodToAdd.amountGrams.text
                              , MaybeUtil.defined <|
                                 onInput <|
                                     flip
                                         (ValidatedInput.lift
-                                            ComplexFoodClientInput.lenses.amount
+                                            ComplexFoodClientInput.lenses.amountGrams
                                         ).set
                                         complexFoodToAdd
                                         >> Page.UpdateComplexFoodCreation
@@ -356,22 +343,26 @@ viewRecipeLine complexFoodsToCreate complexFoods recipe =
                             )
                             []
                          ]
-                            |> List.filter (always validInput)
+                            |> List.filter (exists |> not |> always)
                         )
                     , td [ Style.classes.numberCell ]
-                        ([ dropdown
-                            { items = units
-                            , emptyItem = Nothing
-                            , onChange =
-                                onChangeDropdown
-                                    { mkMsg = Page.UpdateComplexFoodCreation
-                                    , input = complexFoodToAdd
-                                    }
-                            }
-                            [ Style.classes.numberLabel
-                            , HtmlUtil.onEscape cancelMsg
-                            ]
-                            (complexFoodToAdd.unit |> ComplexFoodUnit.toString |> Just)
+                        ([ input
+                            ([ MaybeUtil.defined <| value complexFoodToAdd.amountMilliLitres.text
+                             , MaybeUtil.defined <|
+                                onInput <|
+                                    flip
+                                        (ValidatedInput.lift
+                                            ComplexFoodClientInput.lenses.amountMilliLitres
+                                        ).set
+                                        complexFoodToAdd
+                                        >> Page.UpdateComplexFoodCreation
+                             , MaybeUtil.defined <| Style.classes.numberLabel
+                             , MaybeUtil.defined <| HtmlUtil.onEscape cancelMsg
+                             , MaybeUtil.optional validInput <| onEnter createMsg
+                             ]
+                                |> Maybe.Extra.values
+                            )
+                            []
                          ]
                             |> List.filter (exists |> not |> always)
                         )
@@ -394,17 +385,3 @@ viewRecipeLine complexFoodsToCreate complexFoods recipe =
         (td [ Style.classes.editable ] [ label [] [ text recipe.name ] ]
             :: process
         )
-
-
-unitToItem : ComplexFoodUnit -> Item
-unitToItem complexFoodUnit =
-    { value = complexFoodUnit |> ComplexFoodUnit.toString
-    , text = complexFoodUnit |> ComplexFoodUnit.toPrettyString
-    , enabled = True
-    }
-
-
-units : List Item
-units =
-    [ ComplexFoodUnit.G, ComplexFoodUnit.ML ]
-        |> List.map unitToItem

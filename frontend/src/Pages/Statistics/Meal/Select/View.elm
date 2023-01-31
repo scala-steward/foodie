@@ -1,5 +1,6 @@
 module Pages.Statistics.Meal.Select.View exposing (view)
 
+import Basics.Extra exposing (flip)
 import Html exposing (Html, div, label, table, td, text, tr)
 import Maybe.Extra
 import Pages.Statistics.Meal.Select.Page as Page
@@ -37,6 +38,10 @@ view model =
                         , tr []
                             [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Name" ] ]
                             , td [] [ label [] [ text <| Maybe.withDefault "" <| Maybe.andThen .name <| model.meal ] ]
+                            ]
+                        , tr []
+                            [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Weight of ingredients" ] ]
+                            , td [] [ label [] [ text <| flip (++) "g" <| StatisticsView.displayFloat <| .weightInGrams <| model.mealStats ] ]
                             ]
                         ]
                     ]

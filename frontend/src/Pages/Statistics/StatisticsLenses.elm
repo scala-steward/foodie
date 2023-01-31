@@ -15,3 +15,8 @@ foodStatsNutrients =
 totalOnlyStatsNutrients : Lens TotalOnlyStats (List TotalOnlyNutrientInformation)
 totalOnlyStatsNutrients =
     Lens .nutrients (\b a -> { a | nutrients = b })
+
+
+weightInGrams : Lens { a | weightInGrams : Float } Float
+weightInGrams =
+    Lens .weightInGrams (\b a -> { a | weightInGrams = b })

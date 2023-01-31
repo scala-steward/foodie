@@ -9,15 +9,13 @@ import java.util.UUID
 @JsonCodec
 case class ComplexFood(
     recipeId: UUID,
-    amount: BigDecimal,
+    amountGrams: BigDecimal,
+    amountMilliLitres: Option[BigDecimal],
     name: String,
-    description: Option[String],
-    unit: ComplexFoodUnit
+    description: Option[String]
 )
 
 object ComplexFood {
-
-
 
   implicit val fromInternal: Transformer[services.complex.food.ComplexFood, ComplexFood] =
     Transformer

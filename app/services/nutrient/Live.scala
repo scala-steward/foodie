@@ -9,7 +9,7 @@ import db.{ FoodId, MeasureId }
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
-import services.recipe.Ingredient
+import services.recipe.{ AmountUnit, Ingredient }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
@@ -26,13 +26,6 @@ class Live @Inject() (
 )(implicit ec: ExecutionContext)
     extends NutrientService
     with HasDatabaseConfigProvider[PostgresProfile] {
-
-  override def nutrientsOfFood(
-      foodId: FoodId,
-      measureId: Option[MeasureId],
-      factor: BigDecimal
-  ): Future[NutrientMap] =
-    db.run(companion.nutrientsOfFood(foodId, measureId, factor))
 
   override def all: Future[Seq[Nutrient]] =
     db.run(companion.all)
@@ -78,7 +71,7 @@ object Live {
             )
       } yield factor *: conversionFactor *: nutrientBase
 
-    override def nutrientsOfIngredient(ingredient: Ingredient)(implicit ec: ExecutionContext): DBIO[NutrientMap] =
+    private def nutrientsOfIngredient(ingredient: Ingredient)(implicit ec: ExecutionContext): DBIO[NutrientMap] =
       nutrientsOfFood(
         foodId = ingredient.foodId,
         measureId = ingredient.amountUnit.measureId,
@@ -131,7 +124,7 @@ object Live {
     private def hundredGrams(foodId: Int): Tables.ConversionFactorRow =
       Tables.ConversionFactorRow(
         foodId = foodId,
-        measureId = 1455,
+        measureId = AmountUnit.hundredGrams,
         conversionFactorValue = BigDecimal(1),
         convFactorDateOfEntry = java.sql.Date.valueOf("2022-11-01")
       )

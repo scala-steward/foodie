@@ -135,14 +135,15 @@ select {
     background-color: gray;
     cursor: not-allowed;
 }
-
+/*todo: Add proper styling to complex food tab*/
 #addRecipeView .editable,
 #addMealView .editable:not(.date, .time),
 #addReferenceMapView .editable,
 #ingredientEditor .editable,
 #mealEntryEditor .editable:not(.date, .time),
 #referenceEntryEditor .editable,
-#statistics .editable:not(.date) {
+#statistics .editable:not(.date),
+#complexFoodEditor .editable {
     white-space: break-spaces;
     word-wrap: break-word;
 }
@@ -358,6 +359,7 @@ th {
 #addMealView input:not(.searchField),
 #addReferenceMapView input:not(.searchField),
 #ingredientEditor input:not(.searchField),
+#complexFoodEditor input:not(.searchField),
 #mealEntryEditor input:not(.searchField),
 #referenceEntryEditor input:not(.searchField),
 #statistics input:not(.searchField) {

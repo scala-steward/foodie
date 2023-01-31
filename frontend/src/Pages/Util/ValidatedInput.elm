@@ -3,6 +3,7 @@ module Pages.Util.ValidatedInput exposing
     , isValid
     , lenses
     , lift
+    , maybePositive
     , nonEmptyString
     , positive
     )
@@ -81,8 +82,33 @@ positive =
         String.toFloat
             >> Maybe.Extra.filter (\x -> x > 0)
             >> Result.fromMaybe "Error"
-    , partial = \str -> List.length (String.split "." str) <= 2 && String.all (\c -> c == '.' || Char.isDigit c) str
+    , partial = partialFloat
     }
+
+
+maybePositive : ValidatedInput (Maybe Float)
+maybePositive =
+    { value = Nothing
+    , ifEmptyValue = Nothing
+    , text = ""
+    , parse =
+        \str ->
+            if String.isEmpty str then
+                Ok Nothing
+
+            else
+                str
+                    |> String.toFloat
+                    |> Maybe.Extra.filter (\x -> x > 0)
+                    |> Result.fromMaybe "Error"
+                    |> Result.map Just
+    , partial = partialFloat
+    }
+
+
+partialFloat : String -> Bool
+partialFloat str =
+    List.length (String.split "." str) <= 2 && String.all (\c -> c == '.' || Char.isDigit c) str
 
 
 nonEmptyString : ValidatedInput String

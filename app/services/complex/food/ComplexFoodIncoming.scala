@@ -10,8 +10,8 @@ import java.util.UUID
 
 case class ComplexFoodIncoming(
     recipeId: RecipeId,
-    amount: BigDecimal,
-    unit: ComplexFoodUnit
+    amountGrams: BigDecimal,
+    amountMilliLitres: Option[BigDecimal]
 )
 
 object ComplexFoodIncoming {
@@ -19,8 +19,8 @@ object ComplexFoodIncoming {
   implicit val toDB: Transformer[ComplexFoodIncoming, Tables.ComplexFoodRow] = complexFood =>
     Tables.ComplexFoodRow(
       recipeId = complexFood.recipeId.transformInto[UUID],
-      amount = complexFood.amount,
-      unit = complexFood.unit.entryName
+      amountGrams = complexFood.amountGrams,
+      amountMilliLitres = complexFood.amountMilliLitres
     )
 
 }

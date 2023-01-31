@@ -8,12 +8,12 @@ object Gens {
 
   def complexFood(recipeId: RecipeId): Gen[ComplexFoodIncoming] =
     for {
-      amount <- GenUtils.smallBigDecimalGen
-      unit   <- Gen.oneOf(ComplexFoodUnit.values)
+      amountGrams       <- GenUtils.smallBigDecimalGen
+      amountMilliLitres <- Gen.option(GenUtils.smallBigDecimalGen)
     } yield ComplexFoodIncoming(
       recipeId = recipeId,
-      amount = amount,
-      unit = unit
+      amountGrams = amountGrams,
+      amountMilliLitres = amountMilliLitres
     )
 
 }

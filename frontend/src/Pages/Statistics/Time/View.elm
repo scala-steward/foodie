@@ -3,6 +3,7 @@ module Pages.Statistics.Time.View exposing (view)
 import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.Date exposing (Date)
 import Api.Types.Meal exposing (Meal)
+import Basics.Extra exposing (flip)
 import Html exposing (Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, scope, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -76,7 +77,10 @@ view model =
                                     ]
                                 , td [ Style.classes.controls ]
                                     ([ Links.loadingSymbol ] |> List.filter (always model.fetching))
-                                ]
+                                ],
+                              tr []
+                               [ td [Style.classes.descriptionColumn][ text "Weight of ingredients"],
+                                 td [Style.classes.descriptionColumn] [ text <| flip (++) "g" <| StatisticsView.displayFloat <| .weightInGrams <| model.stats]]
                             ]
                         ]
                     ]

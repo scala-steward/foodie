@@ -26,7 +26,10 @@ init flags =
             { id = flags.foodId
             , name = ""
             }
-      , foodStats = { nutrients = [] }
+      , foodStats =
+            { nutrients = []
+            , weightInGrams = 0
+            }
       , statisticsEvaluation = StatisticsEvaluation.initial
       , initialization = Initialization.Loading Status.initial
       , variant = StatisticsVariant.Food

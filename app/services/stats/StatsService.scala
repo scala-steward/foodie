@@ -15,6 +15,11 @@ trait StatsService {
   def nutrientsOfRecipe(userId: UserId, recipeId: RecipeId): Future[Option[NutrientAmountMap]]
 
   def nutrientsOfMeal(userId: UserId, mealId: MealId): Future[NutrientAmountMap]
+
+  def weightOfRecipe(userId: UserId, recipeId: RecipeId): Future[Option[BigDecimal]]
+  def weightOfMeal(userId: UserId, mealId: MealId): Future[Option[BigDecimal]]
+
+  def weightOfMeals(userId: UserId, mealIds: Seq[MealId]): Future[BigDecimal]
 }
 
 object StatsService {
@@ -33,6 +38,12 @@ object StatsService {
     ): DBIO[Option[NutrientAmountMap]]
 
     def nutrientsOfMeal(userId: UserId, mealId: MealId)(implicit ec: ExecutionContext): DBIO[NutrientAmountMap]
+
+    def weightOfRecipe(userId: UserId, recipeId: RecipeId)(implicit ec: ExecutionContext): DBIO[Option[BigDecimal]]
+
+    def weightOfMeal(userId: UserId, mealId: MealId)(implicit ec: ExecutionContext): DBIO[Option[BigDecimal]]
+
+    def weightOfMeals(userId: UserId, mealIds: Seq[MealId])(implicit ec: ExecutionContext): DBIO[BigDecimal]
   }
 
 }

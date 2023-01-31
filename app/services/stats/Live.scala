@@ -10,7 +10,7 @@ import services.complex.food.ComplexFoodService
 import services.complex.ingredient.ComplexIngredientService
 import services.meal.{ MealEntry, MealService }
 import services.nutrient.{ AmountEvaluation, Nutrient, NutrientMap, NutrientService }
-import services.recipe.RecipeService
+import services.recipe.{ AmountUnit, RecipeService }
 import db._
 import services.common.RequestInterval
 import slick.dbio.DBIO
@@ -50,6 +50,15 @@ class Live @Inject() (
 
   override def nutrientsOfMeal(userId: UserId, mealId: MealId): Future[NutrientAmountMap] =
     db.run(companion.nutrientsOfMeal(userId, mealId))
+
+  override def weightOfRecipe(userId: UserId, recipeId: RecipeId): Future[Option[BigDecimal]] =
+    db.run(companion.weightOfRecipe(userId, recipeId))
+
+  override def weightOfMeal(userId: UserId, mealId: MealId): Future[Option[BigDecimal]] =
+    db.run(companion.weightOfMeal(userId, mealId))
+
+  override def weightOfMeals(userId: UserId, mealIds: Seq[MealId]): Future[BigDecimal] =
+    db.run(companion.weightOfMeals(userId, mealIds))
 
 }
 
@@ -112,7 +121,7 @@ object Live {
     ): DBIO[Option[NutrientAmountMap]] = {
       val transformer = for {
         complexFood <- OptionT(complexFoodService.get(userId, complexFoodId))
-        recipeStats <- OptionT(nutrientsOfRecipeWith(userId, complexFoodId, ScaleMode.Unit(complexFood.amount)))
+        recipeStats <- OptionT(nutrientsOfRecipeWith(userId, complexFoodId, ScaleMode.Unit(complexFood.amountGrams)))
       } yield recipeStats
 
       transformer.value
@@ -156,6 +165,60 @@ object Live {
         nutrientsPerRecipe <- nutrientsOfRecipeIds(userId, mealEntries.map(_.recipeId))
         allNutrients       <- nutrientService.all
       } yield nutrientAmountMapOfMealEntries(mealEntries, nutrientsPerRecipe, allNutrients)
+
+    override def weightOfRecipe(userId: UserId, recipeId: RecipeId)(implicit
+        ec: ExecutionContext
+    ): DBIO[Option[BigDecimal]] = {
+      val transformer = for {
+        _           <- OptionT(recipeService.getRecipe(userId, recipeId))
+        ingredients <- OptionT.liftF(recipeService.getIngredients(userId, recipeId))
+        ingredientWeights <- OptionT.liftF {
+          ingredients.traverse { ingredient =>
+            nutrientService
+              .conversionFactor(ingredient.foodId, ingredient.amountUnit.measureId.getOrElse(AmountUnit.hundredGrams))
+              .map { conversionFactor =>
+                100 * ingredient.amountUnit.factor * conversionFactor.conversionFactorValue
+              }: DBIO[BigDecimal]
+          }
+        }
+        complexIngredients <- OptionT.liftF(complexIngredientService.all(userId, recipeId))
+        // Since 'traverse' is involved, this is quite slow.
+        complexIngredientsWeights <- complexIngredients.traverse { complexIngredient =>
+          OptionT(complexFoodService.get(userId, complexIngredient.recipeId))
+            .map { complexFood =>
+              complexIngredient.factor * complexFood.amountGrams
+            }
+        }
+      } yield ingredientWeights.sum + complexIngredientsWeights.sum
+
+      transformer.value
+    }
+
+    override def weightOfMeal(userId: UserId, mealId: MealId)(implicit
+        ec: ExecutionContext
+    ): DBIO[Option[BigDecimal]] = {
+      val transformer = for {
+        mealEntries <- OptionT.liftF(mealService.getMealEntries(userId, mealId))
+        // Warning: Nested 'traverse' - the performance may be lacking.
+        weights <- mealEntries.traverse { mealEntry =>
+          for {
+            recipe <- OptionT(recipeService.getRecipe(userId, mealEntry.recipeId))
+            weight <- OptionT(weightOfRecipe(userId, mealEntry.recipeId))
+          } yield mealEntry.numberOfServings * weight / recipe.numberOfServings
+        }
+      } yield weights.sum
+
+      transformer.value
+    }
+
+    override def weightOfMeals(userId: UserId, mealIds: Seq[MealId])(implicit ec: ExecutionContext): DBIO[BigDecimal] =
+      mealIds
+      // Doubly nested 'traverse' - this is likely to scale very poorly.
+        .traverse { mealId =>
+          OptionT(weightOfMeal(userId, mealId))
+        }
+        .map(_.sum)
+        .getOrElse(BigDecimal(0))
 
     private def nutrientsOfRecipeIds(
         userId: UserId,

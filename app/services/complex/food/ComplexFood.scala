@@ -11,8 +11,8 @@ case class ComplexFood(
     recipeId: RecipeId,
     name: String,
     description: Option[String],
-    amount: BigDecimal,
-    unit: ComplexFoodUnit
+    amountGrams: BigDecimal,
+    amountMilliLitres: Option[BigDecimal]
 )
 
 object ComplexFood {
@@ -23,8 +23,8 @@ object ComplexFood {
         recipeId = food.recipeId.transformInto[RecipeId],
         name = recipe.name,
         description = recipe.description,
-        amount = food.amount,
-        unit = ComplexFoodUnit.withName(food.unit)
+        amountGrams = food.amountGrams,
+        amountMilliLitres = food.amountMilliLitres
       )
   }
 
