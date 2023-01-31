@@ -144,6 +144,7 @@ view model =
                             , nameLens = RecipeUpdateClientInput.lenses.name
                             , descriptionLens = RecipeUpdateClientInput.lenses.description
                             , numberOfServingsLens = RecipeUpdateClientInput.lenses.numberOfServings
+                            , servingSizeLens = RecipeUpdateClientInput.lenses.servingSize
                             , updateMsg = Page.UpdateRecipe
                             , confirmName = "Save"
                             , cancelMsg = Page.ExitEditRecipe
