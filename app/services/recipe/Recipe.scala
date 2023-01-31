@@ -30,7 +30,8 @@ object Recipe {
         userId = userId.transformInto[UUID],
         name = recipe.name,
         description = recipe.description,
-        numberOfServings = recipe.numberOfServings
+        numberOfServings = recipe.numberOfServings,
+        servingSize = recipe.servingSize
       )
 
   }
