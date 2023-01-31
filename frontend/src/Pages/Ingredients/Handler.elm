@@ -59,6 +59,7 @@ init flags =
                 , name = ""
                 , description = Nothing
                 , numberOfServings = 0
+                , servingSize = Nothing
                 }
       , initialization = Loading Status.initial
       , foodsMode = Page.Plain

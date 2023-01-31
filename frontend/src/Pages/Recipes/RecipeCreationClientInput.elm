@@ -9,6 +9,7 @@ type alias RecipeCreationClientInput =
     { name : ValidatedInput String
     , description : Maybe String
     , numberOfServings : ValidatedInput Float
+    , servingSize : Maybe String
     }
 
 
@@ -17,6 +18,7 @@ default =
     { name = ValidatedInput.nonEmptyString
     , description = Nothing
     , numberOfServings = ValidatedInput.positive
+    , servingSize = Nothing
     }
 
 
@@ -37,4 +39,5 @@ toCreation input =
     { name = input.name.value
     , description = input.description
     , numberOfServings = input.numberOfServings.value
+    , servingSize = input.servingSize
     }
