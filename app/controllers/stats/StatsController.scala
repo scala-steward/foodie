@@ -73,7 +73,9 @@ class StatsController @Inject() (
         .pipe(_.asJson)
         .pipe(Ok(_))
 
-      transformer.getOrElse(NotFound)
+      transformer.getOrElse(
+        NotFound(ErrorContext.Stats.General("Error fetching stats for complex food.").asServerError.asJson)
+      )
     }
 
   def ofRecipe(recipeId: UUID): Action[AnyContent] =
@@ -87,7 +89,9 @@ class StatsController @Inject() (
         .pipe(_.asJson)
         .pipe(Ok(_))
 
-      transformer.getOrElse(NotFound)
+      transformer.getOrElse(
+        NotFound(ErrorContext.Stats.General("Error fetching stats for recipe.").asServerError.asJson)
+      )
     }
 
   def ofMeal(mealId: UUID): Action[AnyContent] =
@@ -102,7 +106,9 @@ class StatsController @Inject() (
         .pipe(_.asJson)
         .pipe(Ok(_))
 
-      transformer.getOrElse(NotFound)
+      transformer.getOrElse(
+        NotFound(ErrorContext.Stats.General(s"Error while fetching stats for meal.").asServerError.asJson)
+      )
     }
 
   def allNutrients: Action[AnyContent] =
