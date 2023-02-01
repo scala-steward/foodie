@@ -191,6 +191,15 @@ object ErrorContext {
 
   }
 
+  object Stats {
+
+    case class General(dbMessage: String)
+        extends ServerErrorInstance(
+          s"Fetching stats failed due to: $dbMessage"
+        )
+
+  }
+
   object Mail {
     case object SendingFailed extends ServerErrorInstance("Sending of message failed")
   }
