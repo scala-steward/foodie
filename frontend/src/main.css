@@ -157,15 +157,19 @@ th {
 }
 
 #addRecipeView th:first-child {
-    width: 25%;
+    width: 20%;
 }
 
 #addRecipeView th:nth-child(2) {
-    width: 20%;
+    width: 15%;
 }
 
 #addRecipeView th:nth-child(3) {
     width: 10%;
+}
+
+#addRecipeView th:nth-child(4) {
+    width: 12%;
 }
 
 #addMealView th:first-child,

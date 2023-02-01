@@ -6,7 +6,8 @@ case class RecipeUpdate(
     id: RecipeId,
     name: String,
     description: Option[String],
-    numberOfServings: BigDecimal
+    numberOfServings: BigDecimal,
+    servingSize: Option[String]
 )
 
 object RecipeUpdate {
@@ -15,7 +16,8 @@ object RecipeUpdate {
     recipe.copy(
       name = recipeUpdate.name,
       description = recipeUpdate.description,
-      numberOfServings = recipeUpdate.numberOfServings
+      numberOfServings = recipeUpdate.numberOfServings,
+      servingSize = recipeUpdate.servingSize
     )
 
 }

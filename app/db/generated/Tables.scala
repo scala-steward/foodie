@@ -441,18 +441,19 @@ trait Tables {
    *  @param userId Database column user_id SqlType(uuid)
    *  @param name Database column name SqlType(text)
    *  @param description Database column description SqlType(text), Default(None)
-   *  @param numberOfServings Database column number_of_servings SqlType(numeric) */
-  case class RecipeRow(id: java.util.UUID, userId: java.util.UUID, name: String, description: Option[String] = None, numberOfServings: scala.math.BigDecimal)
+   *  @param numberOfServings Database column number_of_servings SqlType(numeric)
+   *  @param servingSize Database column serving_size SqlType(text), Default(None) */
+  case class RecipeRow(id: java.util.UUID, userId: java.util.UUID, name: String, description: Option[String] = None, numberOfServings: scala.math.BigDecimal, servingSize: Option[String] = None)
   /** GetResult implicit for fetching RecipeRow objects using plain SQL queries */
   implicit def GetResultRecipeRow(implicit e0: GR[java.util.UUID], e1: GR[String], e2: GR[Option[String]], e3: GR[scala.math.BigDecimal]): GR[RecipeRow] = GR{
     prs => import prs._
-    RecipeRow.tupled((<<[java.util.UUID], <<[java.util.UUID], <<[String], <<?[String], <<[scala.math.BigDecimal]))
+    RecipeRow.tupled((<<[java.util.UUID], <<[java.util.UUID], <<[String], <<?[String], <<[scala.math.BigDecimal], <<?[String]))
   }
   /** Table description of table recipe. Objects of this class serve as prototypes for rows in queries. */
   class Recipe(_tableTag: Tag) extends profile.api.Table[RecipeRow](_tableTag, "recipe") {
-    def * = (id, userId, name, description, numberOfServings) <> (RecipeRow.tupled, RecipeRow.unapply)
+    def * = (id, userId, name, description, numberOfServings, servingSize) <> (RecipeRow.tupled, RecipeRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((Rep.Some(id), Rep.Some(userId), Rep.Some(name), description, Rep.Some(numberOfServings))).shaped.<>({r=>import r._; _1.map(_=> RecipeRow.tupled((_1.get, _2.get, _3.get, _4, _5.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = ((Rep.Some(id), Rep.Some(userId), Rep.Some(name), description, Rep.Some(numberOfServings), servingSize)).shaped.<>({r=>import r._; _1.map(_=> RecipeRow.tupled((_1.get, _2.get, _3.get, _4, _5.get, _6)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column id SqlType(uuid), PrimaryKey */
     val id: Rep[java.util.UUID] = column[java.util.UUID]("id", O.PrimaryKey)
@@ -464,6 +465,8 @@ trait Tables {
     val description: Rep[Option[String]] = column[Option[String]]("description", O.Default(None))
     /** Database column number_of_servings SqlType(numeric) */
     val numberOfServings: Rep[scala.math.BigDecimal] = column[scala.math.BigDecimal]("number_of_servings")
+    /** Database column serving_size SqlType(text), Default(None) */
+    val servingSize: Rep[Option[String]] = column[Option[String]]("serving_size", O.Default(None))
 
     /** Foreign key referencing User (database name recipe_user_id_fk) */
     lazy val userFk = foreignKey("recipe_user_id_fk", userId, User)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)

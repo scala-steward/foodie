@@ -107,6 +107,7 @@ tableHeader ps =
         [ col [] []
         , col [] []
         , col [] []
+        , col [] []
         , col [ stringProperty "span" (ps.controlButtons |> String.fromInt) ] []
         ]
     , thead []
@@ -114,6 +115,7 @@ tableHeader ps =
             [ th [ scope "col" ] [ label [] [ text "Name" ] ]
             , th [ scope "col" ] [ label [] [ text "Description" ] ]
             , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Servings" ] ]
+            , th [ scope "col" ] [ label [] [ text "Serving size" ] ]
             , th [ colspan ps.controlButtons, scope "colgroup", Style.classes.controlsGroup ] []
             ]
         ]
@@ -207,6 +209,7 @@ recipeLineWith ps recipe =
         ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text recipe.name ] ]
          , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
          , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| recipe.numberOfServings ] ]
+         , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.withDefault "" <| recipe.servingSize ] ]
          ]
             ++ ps.controls
         )
@@ -219,6 +222,7 @@ updateRecipeLine recipeUpdateClientInput =
         , nameLens = RecipeUpdateClientInput.lenses.name
         , descriptionLens = RecipeUpdateClientInput.lenses.description
         , numberOfServingsLens = RecipeUpdateClientInput.lenses.numberOfServings
+        , servingSizeLens = RecipeUpdateClientInput.lenses.servingSize
         , updateMsg = Page.UpdateRecipe
         , confirmName = "Save"
         , cancelMsg = Page.ExitEditRecipeAt recipeUpdateClientInput.id
@@ -235,6 +239,7 @@ createRecipeLine =
         , nameLens = RecipeCreationClientInput.lenses.name
         , descriptionLens = RecipeCreationClientInput.lenses.description
         , numberOfServingsLens = RecipeCreationClientInput.lenses.numberOfServings
+        , servingSizeLens = RecipeCreationClientInput.lenses.servingSize
         , updateMsg = Just >> Page.UpdateRecipeCreation
         , confirmName = "Add"
         , cancelMsg = Page.UpdateRecipeCreation Nothing
@@ -248,6 +253,7 @@ editRecipeLineWith :
     , nameLens : Lens editedValue (ValidatedInput String)
     , descriptionLens : Lens editedValue (Maybe String)
     , numberOfServingsLens : Lens editedValue (ValidatedInput Float)
+    , servingSizeLens : Lens editedValue (Maybe String)
     , updateMsg : editedValue -> msg
     , confirmName : String
     , cancelMsg : msg
@@ -314,6 +320,25 @@ editRecipeLineWith handling editedValue =
                             >> handling.updateMsg
                  , MaybeUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
                  , MaybeUtil.defined <| Style.classes.numberLabel
+                 , validatedSaveAction
+                 ]
+                    |> Maybe.Extra.values
+                )
+                []
+            ]
+        , td [ Style.classes.editable ]
+            [ input
+                ([ MaybeUtil.defined <| value <| Maybe.withDefault "" <| handling.servingSizeLens.get <| editedValue
+                 , MaybeUtil.defined <|
+                    onInput <|
+                        flip
+                            (Just
+                                >> Maybe.Extra.filter (String.isEmpty >> not)
+                                >> handling.servingSizeLens.set
+                            )
+                            editedValue
+                            >> handling.updateMsg
+                 , MaybeUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
                  , validatedSaveAction
                  ]
                     |> Maybe.Extra.values

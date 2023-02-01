@@ -13,10 +13,12 @@ object Gens {
     name             <- GenUtils.nonEmptyAsciiString
     description      <- Gen.option(GenUtils.nonEmptyAsciiString)
     numberOfServings <- GenUtils.smallBigDecimalGen
+    servingSize      <- Gen.option(GenUtils.nonEmptyAsciiString)
   } yield RecipeCreation(
     name = name,
     description = description,
-    numberOfServings = numberOfServings
+    numberOfServings = numberOfServings,
+    servingSize = servingSize
   )
 
   val recipeGen: Gen[Recipe] = for {
@@ -29,11 +31,13 @@ object Gens {
       name             <- GenUtils.nonEmptyAsciiString
       description      <- Gen.option(GenUtils.nonEmptyAsciiString)
       numberOfServings <- GenUtils.smallBigDecimalGen
+      servingSize      <- Gen.option(GenUtils.nonEmptyAsciiString)
     } yield RecipeUpdate(
       recipeId,
       name = name,
       description = description,
-      numberOfServings = numberOfServings
+      numberOfServings = numberOfServings,
+      servingSize = servingSize
     )
 
   def amountUnitGen(food: Food): Gen[AmountUnit] = {

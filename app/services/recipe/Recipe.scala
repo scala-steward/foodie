@@ -12,7 +12,8 @@ case class Recipe(
     id: RecipeId,
     name: String,
     description: Option[String],
-    numberOfServings: BigDecimal
+    numberOfServings: BigDecimal,
+    servingSize: Option[String]
 )
 
 object Recipe {
@@ -29,7 +30,8 @@ object Recipe {
         userId = userId.transformInto[UUID],
         name = recipe.name,
         description = recipe.description,
-        numberOfServings = recipe.numberOfServings
+        numberOfServings = recipe.numberOfServings,
+        servingSize = recipe.servingSize
       )
 
   }

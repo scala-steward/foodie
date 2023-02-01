@@ -7,7 +7,8 @@ import io.scalaland.chimney.Transformer
 case class RecipeCreation(
     name: String,
     description: Option[String],
-    numberOfServings: BigDecimal
+    numberOfServings: BigDecimal,
+    servingSize: Option[String]
 )
 
 object RecipeCreation {

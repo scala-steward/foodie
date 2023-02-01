@@ -9,6 +9,7 @@ type alias RecipeCreationClientInput =
     { name : ValidatedInput String
     , description : Maybe String
     , numberOfServings : ValidatedInput Float
+    , servingSize : Maybe String
     }
 
 
@@ -17,6 +18,7 @@ default =
     { name = ValidatedInput.nonEmptyString
     , description = Nothing
     , numberOfServings = ValidatedInput.positive
+    , servingSize = Nothing
     }
 
 
@@ -24,11 +26,13 @@ lenses :
     { name : Lens RecipeCreationClientInput (ValidatedInput String)
     , description : Lens RecipeCreationClientInput (Maybe String)
     , numberOfServings : Lens RecipeCreationClientInput (ValidatedInput Float)
+    , servingSize : Lens RecipeCreationClientInput (Maybe String)
     }
 lenses =
     { name = Lens .name (\b a -> { a | name = b })
     , description = Lens .description (\b a -> { a | description = b })
     , numberOfServings = Lens .numberOfServings (\b a -> { a | numberOfServings = b })
+    , servingSize = Lens .servingSize (\b a -> { a | servingSize = b })
     }
 
 
@@ -37,4 +41,5 @@ toCreation input =
     { name = input.name.value
     , description = input.description
     , numberOfServings = input.numberOfServings.value
+    , servingSize = input.servingSize
     }

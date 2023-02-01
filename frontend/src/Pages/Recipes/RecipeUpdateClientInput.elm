@@ -12,6 +12,7 @@ type alias RecipeUpdateClientInput =
     , name : ValidatedInput String
     , description : Maybe String
     , numberOfServings : ValidatedInput Float
+    , servingSize : Maybe String
     }
 
 
@@ -19,11 +20,13 @@ lenses :
     { name : Lens RecipeUpdateClientInput (ValidatedInput String)
     , description : Lens RecipeUpdateClientInput (Maybe String)
     , numberOfServings : Lens RecipeUpdateClientInput (ValidatedInput Float)
+    , servingSize : Lens RecipeUpdateClientInput (Maybe String)
     }
 lenses =
     { name = Lens .name (\b a -> { a | name = b })
     , description = Lens .description (\b a -> { a | description = b })
     , numberOfServings = Lens .numberOfServings (\b a -> { a | numberOfServings = b })
+    , servingSize = Lens .servingSize (\b a -> { a | servingSize = b })
     }
 
 
@@ -39,6 +42,7 @@ from recipe =
         ValidatedInput.positive
             |> ValidatedInput.lenses.value.set recipe.numberOfServings
             |> ValidatedInput.lenses.text.set (recipe.numberOfServings |> String.fromFloat)
+    , servingSize = recipe.servingSize
     }
 
 
@@ -48,4 +52,5 @@ to input =
     , name = input.name.value
     , description = input.description
     , numberOfServings = input.numberOfServings.value
+    , servingSize = input.servingSize
     }
