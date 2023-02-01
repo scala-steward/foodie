@@ -184,7 +184,7 @@ object Live {
         complexIngredients <- OptionT.liftF(complexIngredientService.all(userId, recipeId))
         // Since 'traverse' is involved, this is quite slow.
         complexIngredientsWeights <- complexIngredients.traverse { complexIngredient =>
-          OptionT(complexFoodService.get(userId, complexIngredient.recipeId))
+          OptionT(complexFoodService.get(userId, complexIngredient.complexFoodId))
             .map { complexFood =>
               complexIngredient.factor * complexFood.amountGrams
             }
