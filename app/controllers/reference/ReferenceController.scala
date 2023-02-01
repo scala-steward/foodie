@@ -58,7 +58,7 @@ class ReferenceController @Inject() (
   def get(id: UUID): Action[AnyContent] =
     userAction.async { request =>
       OptionT(referenceService.getReferenceMap(request.user.id, id.transformInto[ReferenceMapId])).fold(
-        NotFound: Result
+        NotFound(ErrorContext.ReferenceMap.NotFound.asServerError.asJson): Result
       )(
         _.pipe(_.transformInto[ReferenceMap])
           .pipe(_.asJson)

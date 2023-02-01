@@ -45,7 +45,7 @@ class MealController @Inject() (
   def get(id: UUID): Action[AnyContent] =
     userAction.async { request =>
       OptionT(mealService.getMeal(request.user.id, id.transformInto[MealId])).fold(
-        NotFound: Result
+        NotFound(ErrorContext.Meal.NotFound.asServerError.asJson): Result
       )(
         _.pipe(_.transformInto[Meal])
           .pipe(_.asJson)
