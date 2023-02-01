@@ -3,6 +3,7 @@ package controllers.stats
 import action.UserAction
 import cats.data.OptionT
 import controllers.common.RequestInterval
+import errors.ErrorContext
 import io.circe.syntax._
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.libs.circe.Circe
@@ -53,7 +54,7 @@ class StatsController @Inject() (
       statsService
         .nutrientsOfFood(foodId.transformInto[db.FoodId])
         .map(
-          _.fold(NotFound: Result)(
+          _.fold(NotFound(ErrorContext.Stats.General("Nutrient not found").asServerError.asJson): Result)(
             _.pipe(nutrients => (nutrients, BigDecimal(100)).transformInto[FoodStats])
               .pipe(_.asJson)
               .pipe(Ok(_))

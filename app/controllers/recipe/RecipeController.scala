@@ -53,7 +53,7 @@ class RecipeController @Inject() (
         recipeService
           .getFoodInfo(foodId.transformInto[FoodId])
       ).fold(
-        NotFound: Result
+        NotFound(ErrorContext.Recipe.General("Food not found").asServerError.asJson): Result
       )(
         _.pipe(_.transformInto[FoodInfo])
           .pipe(_.asJson)
@@ -75,7 +75,7 @@ class RecipeController @Inject() (
   def get(id: UUID): Action[AnyContent] =
     userAction.async { request =>
       OptionT(recipeService.getRecipe(request.user.id, id.transformInto[RecipeId])).fold(
-        NotFound: Result
+        NotFound(ErrorContext.Recipe.NotFound.asServerError.asJson): Result
       )(
         _.pipe(_.transformInto[Recipe])
           .pipe(_.asJson)

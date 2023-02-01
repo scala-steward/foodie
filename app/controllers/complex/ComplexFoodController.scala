@@ -42,7 +42,7 @@ class ComplexFoodController @Inject() (
       complexFoodService
         .get(request.user.id, recipeId.transformInto[RecipeId])
         .map(
-          _.fold(NotFound: Result)(
+          _.fold(NotFound(ErrorContext.ComplexFood.NotFound.asServerError.asJson): Result)(
             _.transformInto[ComplexFood]
               .pipe(_.asJson)
               .pipe(Ok(_))
