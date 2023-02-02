@@ -136,7 +136,6 @@ select {
     cursor: not-allowed;
 }
 
-/*todo: Add proper styling to complex food tab*/
 #addRecipeView .editable,
 #addMealView .editable:not(.date, .time),
 #addReferenceMapView .editable,
@@ -312,6 +311,22 @@ th {
 
 #statisticsRecipe th:nth-child(2) {
     width: 35%;
+}
+
+#complexFoodEditor th:first-child {
+    width: 30%
+}
+
+#complexFoodEditor th:nth-child(2) {
+    width: 15%
+}
+
+#complexFoodEditor th:nth-child(3) {
+    width: 15%
+}
+
+#complexFoodEditor th:nth-child(4) {
+    width: 20%
 }
 
 .low {
