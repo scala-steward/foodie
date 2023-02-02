@@ -111,7 +111,7 @@ tableHeader ps =
         , col [ stringProperty "span" (ps.controlButtons |> String.fromInt) ] []
         ]
     , thead []
-        [ tr [ Style.classes.tableHeader ]
+        [ tr [ Style.classes.tableHeader, Style.classes.recipeEditTable ]
             [ th [ scope "col" ] [ label [] [ text "Name" ] ]
             , th [ scope "col" ] [ label [] [ text "Description" ] ]
             , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Servings" ] ]

@@ -51,6 +51,7 @@ classes :
         , high : Attribute msg
         }
     , request : Attribute msg
+    , recipeEditTable : Attribute msg
     , search :
         { area : Attribute msg
         , field : Attribute msg
@@ -105,6 +106,7 @@ classes =
         , high = class "high"
         }
     , request = class "request"
+    , recipeEditTable = class "recipeEditTable"
     , search =
         { area = class "searchArea"
         , field = class "searchField"
