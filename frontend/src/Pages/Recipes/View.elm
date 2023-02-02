@@ -115,7 +115,7 @@ tableHeader ps =
             [ th [ scope "col" ] [ label [] [ text "Name" ] ]
             , th [ scope "col" ] [ label [] [ text "Description" ] ]
             , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Servings" ] ]
-            , th [ scope "col" ] [ label [] [ text "Serving size" ] ]
+            , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Serving size" ] ]
             , th [ colspan ps.controlButtons, scope "colgroup", Style.classes.controlsGroup ] []
             ]
         ]
@@ -209,7 +209,7 @@ recipeLineWith ps recipe =
         ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text recipe.name ] ]
          , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
          , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| recipe.numberOfServings ] ]
-         , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.withDefault "" <| recipe.servingSize ] ]
+         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| Maybe.withDefault "" <| recipe.servingSize ] ]
          ]
             ++ ps.controls
         )
@@ -326,7 +326,7 @@ editRecipeLineWith handling editedValue =
                 )
                 []
             ]
-        , td [ Style.classes.editable ]
+        , td [ Style.classes.numberCell ]
             [ input
                 ([ MaybeUtil.defined <| value <| Maybe.withDefault "" <| handling.servingSizeLens.get <| editedValue
                  , MaybeUtil.defined <|
@@ -338,6 +338,7 @@ editRecipeLineWith handling editedValue =
                             )
                             editedValue
                             >> handling.updateMsg
+                 , MaybeUtil.defined <| Style.classes.numberLabel
                  , MaybeUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
                  , validatedSaveAction
                  ]
