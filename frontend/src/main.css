@@ -135,7 +135,7 @@ select {
     background-color: gray;
     cursor: not-allowed;
 }
-/*todo: Add proper styling to complex food tab*/
+
 #addRecipeView .editable,
 #addMealView .editable:not(.date, .time),
 #addReferenceMapView .editable,
@@ -210,16 +210,40 @@ th {
     width: 5%
 }
 
-#ingredientEditor th:first-child {
+#ingredientEditor th:first-child:not(.recipeEditTable) {
     width: 30%
 }
 
-#ingredientEditor th:nth-child(2) {
+#ingredientEditor th:nth-child(2):not(.recipeEditTable) {
     width: 12%;
 }
 
-#ingredientEditor th:nth-child(3) {
+#ingredientEditor th:nth-child(3):not(.recipeEditTable) {
     width: 30%;
+}
+
+#ingredientEditor th:nth-child(4):not(.recipeEditTable) {
+    width: 28%;
+}
+
+#ingredientEditor .recipeEditTable th:first-child {
+    width: 25%
+}
+
+#ingredientEditor .recipeEditTable th:nth-child(2) {
+    width: 21%;
+}
+
+#ingredientEditor .recipeEditTable th:nth-child(3) {
+    width: 12%;
+}
+
+#ingredientEditor .recipeEditTable th:nth-child(4) {
+    width: 14%;
+}
+
+#ingredientEditor .recipeEditTable th:nth-child(5) {
+    width: 28%;
 }
 
 #statistics .intervalSelection th:first-child,
@@ -284,8 +308,25 @@ th {
 #statisticsRecipe th:first-child {
     width: 40%;
 }
+
 #statisticsRecipe th:nth-child(2) {
     width: 35%;
+}
+
+#complexFoodEditor th:first-child {
+    width: 30%
+}
+
+#complexFoodEditor th:nth-child(2) {
+    width: 15%
+}
+
+#complexFoodEditor th:nth-child(3) {
+    width: 15%
+}
+
+#complexFoodEditor th:nth-child(4) {
+    width: 20%
 }
 
 .low {

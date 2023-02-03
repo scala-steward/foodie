@@ -75,7 +75,7 @@ view model =
 
             ( amountGrams, amountMillilitres ) =
                 if anySelection then
-                    ( "Amount in g", "Amount in ml (optional)" )
+                    ( "Amount in g", "Amount in ml" )
 
                 else
                     ( "", "" )
@@ -98,7 +98,7 @@ view model =
                         [ tr [ Style.classes.tableHeader ]
                             [ th [ scope "col" ] [ label [] [ text "Name" ] ]
                             , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Amount in g" ] ]
-                            , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Amount in ml (optional)" ] ]
+                            , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Amount in ml" ] ]
                             , th [ colspan 2, scope "colgroup", Style.classes.controlsGroup ] []
                             ]
                         ]
