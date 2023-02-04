@@ -51,7 +51,7 @@ lazy val root = (project in file("."))
       "org.typelevel"              %% "cats-laws"                 % "2.9.0"  % Test,
       "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.5"  % Test,
       "com.kubukoz"                %% "slick-effect"              % "0.5.0"  % Test,
-      "com.kubukoz"                %% "slick-effect-catsio"       % "0.4.0"  % Test
+      "com.kubukoz"                %% "slick-effect-catsio"       % "0.5.0"  % Test
     ),
     dependencyOverrides ++= Seq(
       "com.google.inject" % "guice" % "5.1.0"
