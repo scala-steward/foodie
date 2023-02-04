@@ -1,10 +1,10 @@
 package services.recipe
 
-import db.{FoodId, IngredientId, RecipeId, UserId}
+import db.{ FoodId, IngredientId, RecipeId, UserId }
 import errors.ServerError
 import slick.dbio.DBIO
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 trait RecipeService {
   def allFoods: Future[Seq[Food]]

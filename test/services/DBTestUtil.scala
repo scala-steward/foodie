@@ -7,8 +7,8 @@ import org.scalacheck.Prop
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
 
-import scala.concurrent.duration.{Duration, _}
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.duration.{ Duration, _ }
+import scala.concurrent.{ Await, ExecutionContext, Future }
 
 object DBTestUtil {
 
