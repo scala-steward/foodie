@@ -1,4 +1,4 @@
-module Pages.Util.ViewUtil exposing (Page(..), navigationBarWith, navigationToPageButtonWith, pagerButtons, paginate, viewWithErrorHandling)
+module Pages.Util.ViewUtil exposing (Page(..), navigationBarWith, navigationToPageButton, navigationToPageButtonWith, pagerButtons, paginate, viewWithErrorHandling)
 
 import Api.Auxiliary exposing (JWT)
 import Api.Types.LoginContent exposing (decoderLoginContent)
