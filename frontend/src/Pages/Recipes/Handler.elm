@@ -7,7 +7,7 @@ import Basics.Extra exposing (flip)
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens
-import Monocle.Optional
+import Monocle.Optional as Optional
 import Pages.Recipes.Page as Page exposing (RecipeState)
 import Pages.Recipes.Pagination as Pagination exposing (Pagination)
 import Pages.Recipes.RecipeCreationClientInput as RecipeCreationClientInput exposing (RecipeCreationClientInput)
@@ -16,6 +16,7 @@ import Pages.Recipes.Requests as Requests
 import Pages.Recipes.Status as Status
 import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
+import Pages.View.Tristate as Tristate
 import Result.Extra
 import Util.DictList as DictList
 import Util.Editing as Editing exposing (Editing)
@@ -26,13 +27,7 @@ import Util.LensUtil as LensUtil
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    ( { authorizedAccess = flags.authorizedAccess
-      , recipes = DictList.empty
-      , recipeToAdd = Nothing
-      , searchString = ""
-      , initialization = Initialization.Loading Status.initial
-      , pagination = Pagination.initial
-      }
+    ( Page.initial flags.authorizedAccess
     , Requests.fetchRecipes flags.authorizedAccess
     )
 
@@ -40,6 +35,9 @@ init flags =
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
 update msg model =
     case msg of
+        Page.GotFetchRecipesResponse dataOrError ->
+            gotFetchRecipesResponse model dataOrError
+
         Page.UpdateRecipeCreation recipeCreationClientInput ->
             updateRecipeCreation model recipeCreationClientInput
 
@@ -76,9 +74,6 @@ update msg model =
         Page.GotDeleteRecipeResponse deletedId dataOrError ->
             gotDeleteRecipeResponse model deletedId dataOrError
 
-        Page.GotFetchRecipesResponse dataOrError ->
-            gotFetchRecipesResponse model dataOrError
-
         Page.SetPagination pagination ->
             setPagination model pagination
 
@@ -86,10 +81,30 @@ update msg model =
             setSearchString model string
 
 
+gotFetchRecipesResponse : Page.Model -> Result Error (List Recipe) -> ( Page.Model, Cmd Page.Msg )
+gotFetchRecipesResponse model dataOrError =
+    ( dataOrError
+        |> Result.Extra.unpack Tristate.toError
+            (\recipes ->
+                model
+                    |> (Tristate.lenses.initial
+                            |> Compose.optionalWithLens Page.lenses.initial.recipes
+                       ).set
+                        (recipes
+                            |> List.map Editing.asView
+                            |> DictList.fromListWithKey (.original >> .id)
+                            |> Just
+                        )
+                    |> Tristate.fromInitToMain Page.initialToMain
+            )
+    , Cmd.none
+    )
+
+
 updateRecipeCreation : Page.Model -> Maybe RecipeCreationClientInput -> ( Page.Model, Cmd Page.Msg )
 updateRecipeCreation model recipeToAdd =
     ( model
-        |> Page.lenses.recipeToAdd.set recipeToAdd
+        |> Tristate.mapMain (Page.lenses.main.recipeToAdd.set recipeToAdd)
     , Cmd.none
     )
 
@@ -97,7 +112,9 @@ updateRecipeCreation model recipeToAdd =
 createRecipe : Page.Model -> ( Page.Model, Cmd Page.Msg )
 createRecipe model =
     ( model
-    , model.recipeToAdd
+    , model
+        |> Tristate.lenses.main.getOption
+        |> Maybe.andThen Page.lenses.main.recipeToAdd.get
         |> Maybe.Extra.unwrap Cmd.none (RecipeCreationClientInput.toCreation >> Requests.createRecipe model.authorizedAccess)
     )
 
@@ -209,23 +226,6 @@ gotDeleteRecipeResponse model deletedId dataOrError =
                 (model
                     |> LensUtil.deleteAtId deletedId Page.lenses.recipes
                 )
-            )
-    , Cmd.none
-    )
-
-
-gotFetchRecipesResponse : Page.Model -> Result Error (List Recipe) -> ( Page.Model, Cmd Page.Msg )
-gotFetchRecipesResponse model dataOrError =
-    ( dataOrError
-        |> Result.Extra.unpack (flip setError model)
-            (\recipes ->
-                model
-                    |> Page.lenses.recipes.set
-                        (recipes
-                            |> List.map Editing.asView
-                            |> DictList.fromListWithKey (.original >> .id)
-                        )
-                    |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.recipes).set True
             )
     , Cmd.none
     )

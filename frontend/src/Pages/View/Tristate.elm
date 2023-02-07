@@ -1,4 +1,4 @@
-module Pages.View.TristateView exposing (TristateView(..), lenses)
+module Pages.View.Tristate exposing (Tristate(..), fromInitToMain, lenses, toError, mapMain)
 
 import Html exposing (Html, button, div, label, td, text, tr)
 import Html.Events exposing (onClick)
@@ -7,26 +7,49 @@ import Monocle.Optional exposing (Optional)
 import Pages.Util.Links as Links
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil exposing (Page(..))
+import Util.HttpUtil as HttpUtil exposing (Error)
+import Util.Initialization exposing (ErrorExplanation)
 
 
-type TristateView model initial
+type Tristate main initial
     = Initial initial
-    | Main model
+    | Main main
     | Error ErrorExplanation
 
 
-type alias ErrorExplanation =
-    { cause : String
-    , possibleSolution : String
-    , redirectToLogin : Bool
-    , suggestReload : Bool
+fold :
+    { onInitial : initial -> a
+    , onMain : main -> a
+    , onError : ErrorExplanation -> a
     }
+    -> Tristate main initial
+    -> a
+fold fs t =
+    case t of
+        Initial initial ->
+            fs.onInitial initial
+
+        Main main ->
+            fs.onMain main
+
+        Error errorExplanation ->
+            fs.onError errorExplanation
+
+
+mapMain : (main -> main) -> Tristate main initial -> Tristate main initial
+mapMain f t =
+    fold
+        { onInitial = always t
+        , onMain = f >> Main
+        , onError = always t
+        }
+        t
 
 
 lenses :
-    { initial : Optional (TristateView model initial) initial
-    , main : Optional (TristateView model initial) model
-    , error : Optional (TristateView model initial) ErrorExplanation
+    { initial : Optional (Tristate main initial) initial
+    , main : Optional (Tristate main initial) main
+    , error : Optional (Tristate main initial) ErrorExplanation
     }
 lenses =
     { initial =
@@ -62,7 +85,7 @@ lenses =
     }
 
 
-asInitial : TristateView model initial -> Maybe initial
+asInitial : Tristate main initial -> Maybe initial
 asInitial t =
     case t of
         Initial initial ->
@@ -72,17 +95,17 @@ asInitial t =
             Nothing
 
 
-asMain : TristateView model initial -> Maybe model
+asMain : Tristate main initial -> Maybe main
 asMain t =
     case t of
-        Main model ->
-            Just model
+        Main main ->
+            Just main
 
         _ ->
             Nothing
 
 
-asError : TristateView model initial -> Maybe ErrorExplanation
+asError : Tristate main initial -> Maybe ErrorExplanation
 asError t =
     case t of
         Error initial ->
@@ -92,33 +115,34 @@ asError t =
             Nothing
 
 
-fromInitToMain : (initial -> model) -> TristateView model initial -> TristateView model initial
+fromInitToMain : (initial -> Maybe main) -> Tristate main initial -> Tristate main initial
 fromInitToMain with t =
     t
         |> asInitial
-        |> Maybe.Extra.unwrap t (with >> Main)
+        |> Maybe.andThen with
+        |> Maybe.Extra.unwrap t Main
 
 
-toError : ErrorExplanation -> TristateView model initial
+toError : HttpUtil.Error -> Tristate main initial
 toError =
-    Error
+    HttpUtil.errorToExplanation >> Error
 
 
 view :
     { title : String
     , mainPageURL : String
-    , viewMain : model -> Html msg
+    , viewMain : main -> Html msg
     , reloadMsg : msg
     }
-    -> TristateView model initial
+    -> Tristate main initial
     -> Html msg
 view ps t =
     case t of
         Initial _ ->
             div [] [ Links.loadingSymbol ]
 
-        Main model ->
-            ps.viewMain model
+        Main main ->
+            ps.viewMain main
 
         Error errorExplanation ->
             let

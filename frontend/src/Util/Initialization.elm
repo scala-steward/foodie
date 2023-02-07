@@ -12,6 +12,7 @@ type alias ErrorExplanation =
     { cause : String
     , possibleSolution : String
     , redirectToLogin : Bool
+    , suggestReload : Bool
     }
 
 

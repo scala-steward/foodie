@@ -85,18 +85,21 @@ errorToExplanation error =
             { cause = "BadUrl: " ++ string
             , possibleSolution = "Check address. If the error persists, please contact an administrator."
             , redirectToLogin = False
+            , suggestReload = True
             }
 
         Timeout ->
             { cause = "Timeout"
             , possibleSolution = "Try again later. If the error persists, please contact an administrator."
             , redirectToLogin = False
+            , suggestReload = True
             }
 
         NetworkError ->
             { cause = "Timeout"
             , possibleSolution = "Try again later. If the error persists, please contact an administrator."
             , redirectToLogin = False
+            , suggestReload = True
             }
 
         BadStatus code explanation ->
@@ -108,12 +111,14 @@ errorToExplanation error =
                 else
                     ""
             , redirectToLogin = code == 401
+            , suggestReload = False
             }
 
         BadBody string ->
             { cause = "Bad body: " ++ string
             , possibleSolution = ""
             , redirectToLogin = False
+            , suggestReload = True
             }
 
 

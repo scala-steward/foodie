@@ -471,7 +471,7 @@ gotFetchComplexFoodsResponse model result =
     , Cmd.none
     )
 
-
+-- todo: Fuse with update function!
 gotFetchRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.Msg )
 gotFetchRecipeResponse model result =
     ( result
