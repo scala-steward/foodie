@@ -152,9 +152,10 @@ view model =
                     { msg = Page.SetEntriesSearchString
                     , searchString = model.entriesSearchString
                     }
-                , table [ Style.classes.elementsWithControlsTable ]
+                , table [ Style.classes.elementsWithControlsTable, Style.classes.recipeEditTable ]
                     [ colgroup []
                         [ col [] []
+                        , col [] []
                         , col [] []
                         , col [] []
                         , col [ stringProperty "span" "2" ] []
@@ -163,6 +164,7 @@ view model =
                         [ tr []
                             [ th [ scope "col" ] [ label [] [ text "Name" ] ]
                             , th [ scope "col" ] [ label [] [ text "Description" ] ]
+                            , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Serving size" ] ]
                             , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Servings" ] ]
                             , th [ colspan 2, scope "colgroup", Style.classes.controlsGroup ] []
                             ]
@@ -192,7 +194,7 @@ view model =
                         { msg = Page.SetRecipesSearchString
                         , searchString = model.recipesSearchString
                         }
-                    , table [ Style.classes.elementsWithControlsTable ]
+                    , table [ Style.classes.elementsWithControlsTable, Style.classes.recipeEditTable ]
                         [ colgroup []
                             [ col [] []
                             , col [] []
@@ -325,8 +327,13 @@ updateEntryLine recipeMap mealEntry mealEntryUpdateClientInput =
 
 recipeInfo : Page.RecipeMap -> RecipeId -> List (Attribute Page.Msg) -> List (Html Page.Msg)
 recipeInfo recipeMap recipeId attributes =
-    [ td attributes [ label [] [ text <| DictUtil.nameOrEmpty recipeMap <| recipeId ] ]
-    , td attributes [ label [] [ text <| Page.descriptionOrEmpty recipeMap <| recipeId ] ]
+    let
+        recipe =
+            DictList.get recipeId recipeMap
+    in
+    [ td attributes [ label [] [ text <| Maybe.Extra.unwrap "" .name <| recipe ] ]
+    , td attributes [ label [] [ text <| Maybe.withDefault "" <| Maybe.andThen .description <| recipe ] ]
+    , td (Style.classes.numberCell :: attributes) [ label [] [ text <| Maybe.withDefault "" <| Maybe.andThen .servingSize <| recipe ] ]
     ]
 
 
