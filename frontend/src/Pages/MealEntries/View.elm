@@ -197,12 +197,14 @@ view model =
                             [ col [] []
                             , col [] []
                             , col [] []
+                            , col [] []
                             , col [ stringProperty "span" "2" ] []
                             ]
                         , thead []
                             [ tr [ Style.classes.tableHeader ]
                                 [ th [ scope "col" ] [ label [] [ text "Name" ] ]
                                 , th [ scope "col" ] [ label [] [ text "Description" ] ]
+                                , th [ scope "col" ] [ label [] [ text "Serving size" ] ]
                                 , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text numberOfServings ] ]
                                 , th [ colspan 2, scope "colgroup", Style.classes.controlsGroup ] []
                                 ]
@@ -401,5 +403,6 @@ viewRecipeLine mealEntriesToAdd mealEntries recipe =
     tr ([ Style.classes.editing ] ++ rowClickAction)
         (td [] [ label [] [ text recipe.name ] ]
             :: td [] [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
+            :: td [] [ label [] [ text <| Maybe.withDefault "" <| recipe.servingSize ] ]
             :: process
         )
