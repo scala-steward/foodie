@@ -213,7 +213,7 @@ object Live {
 
     override def weightOfMeals(userId: UserId, mealIds: Seq[MealId])(implicit ec: ExecutionContext): DBIO[BigDecimal] =
       mealIds
-      // Doubly nested 'traverse' - this is likely to scale very poorly.
+        // Doubly nested 'traverse' - this is likely to scale very poorly.
         .traverse { mealId =>
           OptionT(weightOfMeal(userId, mealId))
         }
