@@ -15,25 +15,23 @@ case class Stats(
 
 object Stats {
 
-  implicit val fromDomain: Transformer[(services.stats.Stats, BigDecimal), Stats] = {
-    case (stats, weightInGrams) =>
-      val daily = services.stats.Stats.dailyAverage(stats)
-      val nutrients = stats.nutrientAmountMap.map {
-        case (nutrient, amount) =>
-          NutrientInformation(
-            nutrient.transformInto[NutrientInformationBase],
-            amounts = Amounts(
-              values = (amount.value, daily(nutrient)).mapN(Values.apply),
-              numberOfIngredients = amount.numberOfIngredients.intValue,
-              numberOfDefinedValues = amount.numberOfDefinedValues.intValue
-            )
-          )
-      }.toSeq
-      Stats(
-        meals = stats.meals.map(_.transformInto[Meal]),
-        nutrients = nutrients,
-        weightInGrams = weightInGrams
+  implicit val fromDomain: Transformer[(services.stats.Stats, BigDecimal), Stats] = { case (stats, weightInGrams) =>
+    val daily = services.stats.Stats.dailyAverage(stats)
+    val nutrients = stats.nutrientAmountMap.map { case (nutrient, amount) =>
+      NutrientInformation(
+        nutrient.transformInto[NutrientInformationBase],
+        amounts = Amounts(
+          values = (amount.value, daily(nutrient)).mapN(Values.apply),
+          numberOfIngredients = amount.numberOfIngredients.intValue,
+          numberOfDefinedValues = amount.numberOfDefinedValues.intValue
+        )
       )
+    }.toSeq
+    Stats(
+      meals = stats.meals.map(_.transformInto[Meal]),
+      nutrients = nutrients,
+      weightInGrams = weightInGrams
+    )
   }
 
 }

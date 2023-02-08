@@ -23,16 +23,15 @@ object Recipe {
       .define[Tables.RecipeRow, Recipe]
       .buildTransformer
 
-  implicit val toDB: Transformer[(Recipe, UserId), Tables.RecipeRow] = {
-    case (recipe, userId) =>
-      Tables.RecipeRow(
-        id = recipe.id.transformInto[UUID],
-        userId = userId.transformInto[UUID],
-        name = recipe.name,
-        description = recipe.description,
-        numberOfServings = recipe.numberOfServings,
-        servingSize = recipe.servingSize
-      )
+  implicit val toDB: Transformer[(Recipe, UserId), Tables.RecipeRow] = { case (recipe, userId) =>
+    Tables.RecipeRow(
+      id = recipe.id.transformInto[UUID],
+      userId = userId.transformInto[UUID],
+      name = recipe.name,
+      description = recipe.description,
+      numberOfServings = recipe.numberOfServings,
+      servingSize = recipe.servingSize
+    )
 
   }
 

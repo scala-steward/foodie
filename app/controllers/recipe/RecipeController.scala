@@ -239,20 +239,19 @@ class RecipeController @Inject() (
         .recover(errorHandler)
     }
 
-  private def errorHandler: PartialFunction[Throwable, Result] = {
-    case error =>
-      val context = error match {
-        case DBError.Recipe.NotFound =>
-          ErrorContext.Recipe.NotFound
-        case DBError.Recipe.IngredientNotFound =>
-          ErrorContext.Recipe.Ingredient.NotFound
-        case DBError.Complex.Ingredient.NotFound =>
-          ErrorContext.Recipe.ComplexIngredient.NotFound
-        case _ =>
-          ErrorContext.Recipe.General(error.getMessage)
-      }
+  private def errorHandler: PartialFunction[Throwable, Result] = { case error =>
+    val context = error match {
+      case DBError.Recipe.NotFound =>
+        ErrorContext.Recipe.NotFound
+      case DBError.Recipe.IngredientNotFound =>
+        ErrorContext.Recipe.Ingredient.NotFound
+      case DBError.Complex.Ingredient.NotFound =>
+        ErrorContext.Recipe.ComplexIngredient.NotFound
+      case _ =>
+        ErrorContext.Recipe.General(error.getMessage)
+    }
 
-      BadRequest(context.asServerError.asJson)
+    BadRequest(context.asServerError.asJson)
   }
 
 }

@@ -334,58 +334,55 @@ object ReferenceServiceProperties extends Properties("Reference service properti
     GenUtils.taggedId[UserTag] :| "userId1",
     GenUtils.taggedId[UserTag] :| "userId2",
     Gens.referenceMapCreationGen :| "reference map creation"
-  ) {
-    case (userId1, userId2, referenceMapCreation) =>
-      val referenceMapService = referenceMapServiceWith(
-        referenceMapContents = Seq.empty,
-        referenceMapEntryContents = Seq.empty
+  ) { case (userId1, userId2, referenceMapCreation) =>
+    val referenceMapService = referenceMapServiceWith(
+      referenceMapContents = Seq.empty,
+      referenceMapEntryContents = Seq.empty
+    )
+    val transformer = for {
+      createdReferenceMap <- EitherT(referenceMapService.createReferenceMap(userId1, referenceMapCreation))
+      fetchedReferenceMap <- EitherT.liftF[Future, ServerError, Option[ReferenceMap]](
+        referenceMapService.getReferenceMap(userId2, createdReferenceMap.id)
       )
-      val transformer = for {
-        createdReferenceMap <- EitherT(referenceMapService.createReferenceMap(userId1, referenceMapCreation))
-        fetchedReferenceMap <- EitherT.liftF[Future, ServerError, Option[ReferenceMap]](
-          referenceMapService.getReferenceMap(userId2, createdReferenceMap.id)
-        )
-      } yield Prop(fetchedReferenceMap.isEmpty) :| "Access denied"
+    } yield Prop(fetchedReferenceMap.isEmpty) :| "Access denied"
 
-      DBTestUtil.awaitProp(transformer)
+    DBTestUtil.awaitProp(transformer)
   }
 
   property("Read single (wrong user)") = Prop.forAll(
     GenUtils.taggedId[UserTag] :| "userId1",
     GenUtils.taggedId[UserTag] :| "userId2",
     Gens.referenceMapGen :| "reference map"
-  ) {
-    case (userId1, userId2, referenceMap) =>
-      val referenceMapService = referenceMapServiceWith(
-        referenceMapContents = ContentsUtil.ReferenceMap.from(userId1, Seq(referenceMap)),
-        referenceMapEntryContents = Seq.empty
+  ) { case (userId1, userId2, referenceMap) =>
+    val referenceMapService = referenceMapServiceWith(
+      referenceMapContents = ContentsUtil.ReferenceMap.from(userId1, Seq(referenceMap)),
+      referenceMapEntryContents = Seq.empty
+    )
+    val transformer = for {
+      fetchedReferenceMap <- EitherT.liftF[Future, ServerError, Option[ReferenceMap]](
+        referenceMapService.getReferenceMap(userId2, referenceMap.id)
       )
-      val transformer = for {
-        fetchedReferenceMap <- EitherT.liftF[Future, ServerError, Option[ReferenceMap]](
-          referenceMapService.getReferenceMap(userId2, referenceMap.id)
-        )
-      } yield Prop(fetchedReferenceMap.isEmpty) :| "Access denied"
+    } yield Prop(fetchedReferenceMap.isEmpty) :| "Access denied"
 
-      DBTestUtil.awaitProp(transformer)
+    DBTestUtil.awaitProp(transformer)
   }
 
   property("Read all (wrong user)") = Prop.forAll(
     GenUtils.taggedId[UserTag] :| "userId1",
     GenUtils.taggedId[UserTag] :| "userId2",
     Gen.listOf(Gens.referenceMapGen) :| "reference maps"
-  ) {
-    case (userId1, userId2, referenceMaps) =>
-      val referenceMapService = referenceMapServiceWith(
-        referenceMapContents = ContentsUtil.ReferenceMap.from(userId1, referenceMaps),
-        referenceMapEntryContents = Seq.empty
+  ) { case (userId1, userId2, referenceMaps) =>
+    val referenceMapService = referenceMapServiceWith(
+      referenceMapContents = ContentsUtil.ReferenceMap.from(userId1, referenceMaps),
+      referenceMapEntryContents = Seq.empty
+    )
+    val transformer = for {
+      fetchedReferenceMaps <- EitherT.liftF[Future, ServerError, Seq[ReferenceMap]](
+        referenceMapService.allReferenceMaps(userId2)
       )
-      val transformer = for {
-        fetchedReferenceMaps <- EitherT.liftF[Future, ServerError, Seq[ReferenceMap]](
-          referenceMapService.allReferenceMaps(userId2)
-        )
-      } yield fetchedReferenceMaps ?= Seq.empty
+    } yield fetchedReferenceMaps ?= Seq.empty
 
-      DBTestUtil.awaitProp(transformer)
+    DBTestUtil.awaitProp(transformer)
   }
 
   property("Update (wrong user)") = Prop.forAll(
@@ -409,17 +406,16 @@ object ReferenceServiceProperties extends Properties("Reference service properti
     GenUtils.taggedId[UserTag] :| "userId1",
     GenUtils.taggedId[UserTag] :| "userId2",
     Gens.referenceMapGen :| "reference map"
-  ) {
-    case (userId1, userId2, referenceMap) =>
-      val referenceMapService = referenceMapServiceWith(
-        referenceMapContents = ContentsUtil.ReferenceMap.from(userId1, Seq(referenceMap)),
-        referenceMapEntryContents = Seq.empty
-      )
-      val transformer = for {
-        result <- EitherT.liftF[Future, ServerError, Boolean](referenceMapService.delete(userId2, referenceMap.id))
-      } yield Prop(!result) :| "Deletion failed"
+  ) { case (userId1, userId2, referenceMap) =>
+    val referenceMapService = referenceMapServiceWith(
+      referenceMapContents = ContentsUtil.ReferenceMap.from(userId1, Seq(referenceMap)),
+      referenceMapEntryContents = Seq.empty
+    )
+    val transformer = for {
+      result <- EitherT.liftF[Future, ServerError, Boolean](referenceMapService.delete(userId2, referenceMap.id))
+    } yield Prop(!result) :| "Deletion failed"
 
-      DBTestUtil.awaitProp(transformer)
+    DBTestUtil.awaitProp(transformer)
   }
 
   property("Add reference entry (wrong user)") = Prop.forAll(
@@ -427,48 +423,46 @@ object ReferenceServiceProperties extends Properties("Reference service properti
     GenUtils.taggedId[UserTag] :| "userId2",
     Gens.fullReferenceMapGen :| "full reference map",
     Gens.referenceEntryGen :| "reference entry"
-  ) {
-    case (userId1, userId2, fullReferenceMap, referenceMapEntry) =>
-      val referenceMapService = referenceMapServiceWith(
-        referenceMapContents = ContentsUtil.ReferenceMap.from(userId1, Seq(fullReferenceMap.referenceMap)),
-        referenceMapEntryContents = ContentsUtil.ReferenceEntry.from(fullReferenceMap)
+  ) { case (userId1, userId2, fullReferenceMap, referenceMapEntry) =>
+    val referenceMapService = referenceMapServiceWith(
+      referenceMapContents = ContentsUtil.ReferenceMap.from(userId1, Seq(fullReferenceMap.referenceMap)),
+      referenceMapEntryContents = ContentsUtil.ReferenceEntry.from(fullReferenceMap)
+    )
+    val referenceMapEntryCreation =
+      ReferenceEntryCreation(
+        fullReferenceMap.referenceMap.id,
+        referenceMapEntry.nutrientCode,
+        referenceMapEntry.amount
       )
-      val referenceMapEntryCreation =
-        ReferenceEntryCreation(
-          fullReferenceMap.referenceMap.id,
-          referenceMapEntry.nutrientCode,
-          referenceMapEntry.amount
-        )
-      val transformer = for {
-        result <- EitherT.liftF(referenceMapService.addReferenceEntry(userId2, referenceMapEntryCreation))
-        referenceMapEntries <- EitherT.liftF[Future, ServerError, List[ReferenceEntry]](
-          referenceMapService.allReferenceEntries(userId1, fullReferenceMap.referenceMap.id)
-        )
-      } yield Prop.all(
-        Prop(result.isLeft) :| "Reference entry addition failed",
-        referenceMapEntries.sortBy(_.nutrientCode) ?= fullReferenceMap.referenceEntries.sortBy(_.nutrientCode)
+    val transformer = for {
+      result <- EitherT.liftF(referenceMapService.addReferenceEntry(userId2, referenceMapEntryCreation))
+      referenceMapEntries <- EitherT.liftF[Future, ServerError, List[ReferenceEntry]](
+        referenceMapService.allReferenceEntries(userId1, fullReferenceMap.referenceMap.id)
       )
+    } yield Prop.all(
+      Prop(result.isLeft) :| "Reference entry addition failed",
+      referenceMapEntries.sortBy(_.nutrientCode) ?= fullReferenceMap.referenceEntries.sortBy(_.nutrientCode)
+    )
 
-      DBTestUtil.awaitProp(transformer)
+    DBTestUtil.awaitProp(transformer)
   }
 
   property("Read reference entries (wrong user)") = Prop.forAll(
     GenUtils.taggedId[UserTag] :| "userId1",
     GenUtils.taggedId[UserTag] :| "userId2",
     Gens.fullReferenceMapGen :| "full reference map"
-  ) {
-    case (userId1, userId2, fullReferenceMap) =>
-      val referenceMapService = referenceMapServiceWith(
-        referenceMapContents = ContentsUtil.ReferenceMap.from(userId1, Seq(fullReferenceMap.referenceMap)),
-        referenceMapEntryContents = ContentsUtil.ReferenceEntry.from(fullReferenceMap)
+  ) { case (userId1, userId2, fullReferenceMap) =>
+    val referenceMapService = referenceMapServiceWith(
+      referenceMapContents = ContentsUtil.ReferenceMap.from(userId1, Seq(fullReferenceMap.referenceMap)),
+      referenceMapEntryContents = ContentsUtil.ReferenceEntry.from(fullReferenceMap)
+    )
+    val transformer = for {
+      referenceMapEntries <- EitherT.liftF[Future, ServerError, List[ReferenceEntry]](
+        referenceMapService.allReferenceEntries(userId2, fullReferenceMap.referenceMap.id)
       )
-      val transformer = for {
-        referenceMapEntries <- EitherT.liftF[Future, ServerError, List[ReferenceEntry]](
-          referenceMapService.allReferenceEntries(userId2, fullReferenceMap.referenceMap.id)
-        )
-      } yield referenceMapEntries.sortBy(_.nutrientCode) ?= List.empty
+    } yield referenceMapEntries.sortBy(_.nutrientCode) ?= List.empty
 
-      DBTestUtil.awaitProp(transformer)
+    DBTestUtil.awaitProp(transformer)
   }
 
   property("Update reference entry (wrong user)") = Prop.forAll(

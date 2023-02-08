@@ -91,18 +91,17 @@ class ComplexFoodController @Inject() (
         .recover(errorHandler)
     }
 
-  private def errorHandler: PartialFunction[Throwable, Result] = {
-    case error =>
-      val context = error match {
-        case DBError.Complex.Food.NotFound =>
-          ErrorContext.ComplexFood.NotFound
-        case DBError.Complex.Food.RecipeNotFound =>
-          ErrorContext.ComplexFood.Reference
-        case _ =>
-          ErrorContext.ComplexFood.General(error.getMessage)
-      }
+  private def errorHandler: PartialFunction[Throwable, Result] = { case error =>
+    val context = error match {
+      case DBError.Complex.Food.NotFound =>
+        ErrorContext.ComplexFood.NotFound
+      case DBError.Complex.Food.RecipeNotFound =>
+        ErrorContext.ComplexFood.Reference
+      case _ =>
+        ErrorContext.ComplexFood.General(error.getMessage)
+    }
 
-      BadRequest(context.asServerError.asJson)
+    BadRequest(context.asServerError.asJson)
   }
 
 }

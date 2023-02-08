@@ -80,9 +80,8 @@ class UserController @Inject() (
       }).map(
         _.pipe(_.asJson)
           .pipe(Ok(_))
-      ).recover {
-        case error =>
-          BadRequest(s"Error during logout: ${error.getMessage}")
+      ).recover { case error =>
+        BadRequest(s"Error during logout: ${error.getMessage}")
       }
     }
 
@@ -151,9 +150,8 @@ class UserController @Inject() (
               )
             )
             .map(Right(_))
-            .recover {
-              case _ =>
-                Left(ErrorContext.Mail.SendingFailed.asServerError)
+            .recover { case _ =>
+              Left(ErrorContext.Mail.SendingFailed.asServerError)
             }
         )
       } yield ()
@@ -196,9 +194,8 @@ class UserController @Inject() (
             .pipe(_.asJson)
             .pipe(Ok(_))
         )
-        .recover {
-          case error =>
-            BadRequest(error.getMessage)
+        .recover { case error =>
+          BadRequest(error.getMessage)
         }
     }
 
@@ -226,9 +223,8 @@ class UserController @Inject() (
               )
             )
             .map(Right(_))
-            .recover {
-              case _ =>
-                Left(ErrorContext.Mail.SendingFailed.asServerError)
+            .recover { case _ =>
+              Left(ErrorContext.Mail.SendingFailed.asServerError)
             }
         )
       } yield ()
@@ -279,9 +275,8 @@ class UserController @Inject() (
               )
             )
             .map(Right(_))
-            .recover {
-              case _ =>
-                Left(ErrorContext.Mail.SendingFailed.asServerError)
+            .recover { case _ =>
+              Left(ErrorContext.Mail.SendingFailed.asServerError)
             }
         )
       } yield ()
@@ -339,9 +334,8 @@ class UserController @Inject() (
         error => BadRequest(error.asJson),
         identity
       )
-      .recover {
-        case ex =>
-          BadRequest(s"$context: ${ex.getMessage}")
+      .recover { case ex =>
+        BadRequest(s"$context: ${ex.getMessage}")
       }
 
 }

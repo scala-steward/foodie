@@ -315,56 +315,53 @@ object MealServiceProperties extends Properties("Meal service") {
     GenUtils.taggedId[UserTag] :| "userId1",
     GenUtils.taggedId[UserTag] :| "userId2",
     Gens.mealCreationGen() :| "meal creation"
-  ) {
-    case (userId1, userId2, mealCreation) =>
-      val mealService = mealServiceWith(
-        mealContents = Seq.empty,
-        mealEntryContents = Seq.empty
-      )
-      val transformer = for {
-        createdMeal <- EitherT(mealService.createMeal(userId1, mealCreation))
-        fetchedMeal <- EitherT.liftF[Future, ServerError, Option[Meal]](mealService.getMeal(userId2, createdMeal.id))
-      } yield Prop(fetchedMeal.isEmpty) :| "Access denied"
+  ) { case (userId1, userId2, mealCreation) =>
+    val mealService = mealServiceWith(
+      mealContents = Seq.empty,
+      mealEntryContents = Seq.empty
+    )
+    val transformer = for {
+      createdMeal <- EitherT(mealService.createMeal(userId1, mealCreation))
+      fetchedMeal <- EitherT.liftF[Future, ServerError, Option[Meal]](mealService.getMeal(userId2, createdMeal.id))
+    } yield Prop(fetchedMeal.isEmpty) :| "Access denied"
 
-      DBTestUtil.awaitProp(transformer)
+    DBTestUtil.awaitProp(transformer)
   }
 
   property("Read single (wrong userId)") = Prop.forAll(
     GenUtils.taggedId[UserTag] :| "userId1",
     GenUtils.taggedId[UserTag] :| "userId2",
     Gens.mealGen() :| "meal"
-  ) {
-    case (userId1, userId2, meal) =>
-      val mealService = mealServiceWith(
-        mealContents = ContentsUtil.Meal.from(userId1, Seq(meal)),
-        mealEntryContents = Seq.empty
+  ) { case (userId1, userId2, meal) =>
+    val mealService = mealServiceWith(
+      mealContents = ContentsUtil.Meal.from(userId1, Seq(meal)),
+      mealEntryContents = Seq.empty
+    )
+    val transformer = for {
+      fetchedMeal <- EitherT.liftF[Future, ServerError, Option[Meal]](
+        mealService.getMeal(userId2, meal.id)
       )
-      val transformer = for {
-        fetchedMeal <- EitherT.liftF[Future, ServerError, Option[Meal]](
-          mealService.getMeal(userId2, meal.id)
-        )
-      } yield Prop(fetchedMeal.isEmpty) :| "Access denied"
+    } yield Prop(fetchedMeal.isEmpty) :| "Access denied"
 
-      DBTestUtil.awaitProp(transformer)
+    DBTestUtil.awaitProp(transformer)
   }
 
   property("Read all (wrong userId)") = Prop.forAll(
     GenUtils.taggedId[UserTag] :| "userId1",
     GenUtils.taggedId[UserTag] :| "userId2",
     Gen.listOf(Gens.mealGen()) :| "meals"
-  ) {
-    case (userId1, userId2, meals) =>
-      val mealService = mealServiceWith(
-        mealContents = ContentsUtil.Meal.from(userId1, meals),
-        mealEntryContents = Seq.empty
+  ) { case (userId1, userId2, meals) =>
+    val mealService = mealServiceWith(
+      mealContents = ContentsUtil.Meal.from(userId1, meals),
+      mealEntryContents = Seq.empty
+    )
+    val transformer = for {
+      fetchedMeals <- EitherT.liftF[Future, ServerError, Seq[Meal]](
+        mealService.allMeals(userId2, RequestInterval(None, None))
       )
-      val transformer = for {
-        fetchedMeals <- EitherT.liftF[Future, ServerError, Seq[Meal]](
-          mealService.allMeals(userId2, RequestInterval(None, None))
-        )
-      } yield fetchedMeals ?= Seq.empty
+    } yield fetchedMeals ?= Seq.empty
 
-      DBTestUtil.awaitProp(transformer)
+    DBTestUtil.awaitProp(transformer)
   }
 
   private case class WrongUpdateSetup(
@@ -407,17 +404,16 @@ object MealServiceProperties extends Properties("Meal service") {
     GenUtils.taggedId[UserTag] :| "userId1",
     GenUtils.taggedId[UserTag] :| "userId2",
     Gens.mealGen() :| "meal"
-  ) {
-    case (userId1, userId2, meal) =>
-      val mealService = mealServiceWith(
-        mealContents = Seq(userId1 -> meal),
-        mealEntryContents = Seq.empty
-      )
-      val transformer = for {
-        result <- EitherT.liftF[Future, ServerError, Boolean](mealService.deleteMeal(userId2, meal.id))
-      } yield Prop(!result) :| "Deletion failed"
+  ) { case (userId1, userId2, meal) =>
+    val mealService = mealServiceWith(
+      mealContents = Seq(userId1 -> meal),
+      mealEntryContents = Seq.empty
+    )
+    val transformer = for {
+      result <- EitherT.liftF[Future, ServerError, Boolean](mealService.deleteMeal(userId2, meal.id))
+    } yield Prop(!result) :| "Deletion failed"
 
-      DBTestUtil.awaitProp(transformer)
+    DBTestUtil.awaitProp(transformer)
   }
 
   property("Add meal entry (wrong userId)") = Prop.forAll(
