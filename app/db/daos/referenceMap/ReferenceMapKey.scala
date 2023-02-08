@@ -1,7 +1,7 @@
 package db.daos.referenceMap
 
 import db.generated.Tables
-import db.{ReferenceMapId, UserId}
+import db.{ ReferenceMapId, UserId }
 import io.scalaland.chimney.dsl._
 import utils.TransformerUtils.Implicits._
 

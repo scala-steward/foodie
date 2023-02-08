@@ -25,7 +25,7 @@ lazy val root = (project in file("."))
       "com.typesafe.slick"         %% "slick"                     % slickVersion,
       "com.typesafe.slick"         %% "slick-hikaricp"            % slickVersion,
       "com.typesafe.slick"         %% "slick-codegen"             % slickVersion,
-      "org.postgresql"              % "postgresql"                % "42.5.1",
+      "org.postgresql"              % "postgresql"                % "42.5.3",
       "ch.qos.logback"              % "logback-classic"           % "1.2.11",
       "io.circe"                   %% "circe-core"                % circeVersion,
       "io.circe"                   %% "circe-generic"             % circeVersion,
@@ -41,7 +41,7 @@ lazy val root = (project in file("."))
       "com.github.jwt-scala"       %% "jwt-core"                  % jwtVersion,
       "com.github.jwt-scala"       %% "jwt-circe"                 % jwtVersion,
       "com.github.pureconfig"      %% "pureconfig"                % "0.17.2",
-      "org.typelevel"              %% "cats-effect"               % "3.4.4",
+      "org.typelevel"              %% "cats-effect"               % "3.4.6",
       "org.typelevel"              %% "cats-core"                 % "2.9.0",
       "com.beachape"               %% "enumeratum-circe"          % "1.7.2",
       "com.typesafe.play"          %% "play-mailer"               % "8.0.1",
@@ -49,9 +49,9 @@ lazy val root = (project in file("."))
       "com.lihaoyi"                %% "pprint"                    % "0.8.1",
       "org.scalacheck"             %% "scalacheck"                % "1.17.0" % Test,
       "org.typelevel"              %% "cats-laws"                 % "2.9.0"  % Test,
-      "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.5"  % Test,
+      "com.github.alexarchambault" %% "scalacheck-shapeless_1.15" % "1.3.0"  % Test,
       "com.kubukoz"                %% "slick-effect"              % "0.5.0"  % Test,
-      "com.kubukoz"                %% "slick-effect-catsio"       % "0.4.0"  % Test
+      "com.kubukoz"                %% "slick-effect-catsio"       % "0.5.0"  % Test
     ),
     dependencyOverrides ++= Seq(
       "com.google.inject" % "guice" % "5.1.0"

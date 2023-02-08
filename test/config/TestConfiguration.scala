@@ -2,7 +2,7 @@ package config
 
 import pureconfig.generic.ProductHint
 import pureconfig.generic.auto._
-import pureconfig.{CamelCase, ConfigFieldMapping, ConfigSource}
+import pureconfig.{ CamelCase, ConfigFieldMapping, ConfigSource }
 
 case class TestConfiguration(
     property: PropertyTestConfiguration

@@ -1,7 +1,7 @@
 package db.daos.meal
 
 import db.generated.Tables
-import db.{MealId, UserId}
+import db.{ MealId, UserId }
 import io.scalaland.chimney.dsl._
 import utils.TransformerUtils.Implicits._
 
