@@ -1,4 +1,4 @@
-module Pages.View.Tristate exposing (Tristate(..), fromInitToMain, lenses, toError, mapMain)
+module Pages.View.Tristate exposing (Tristate(..), fold, foldMain, fromInitToMain, lenses, mapMain, toError)
 
 import Html exposing (Html, button, div, label, td, text, tr)
 import Html.Events exposing (onClick)
@@ -44,6 +44,15 @@ mapMain f t =
         , onError = always t
         }
         t
+
+
+foldMain : c -> (main -> c) -> Tristate main initial -> c
+foldMain c f =
+    fold
+        { onInitial = always c
+        , onMain = f
+        , onError = always c
+        }
 
 
 lenses :
@@ -108,8 +117,8 @@ asMain t =
 asError : Tristate main initial -> Maybe ErrorExplanation
 asError t =
     case t of
-        Error initial ->
-            Just initial
+        Error error ->
+            Just error
 
         _ ->
             Nothing
