@@ -3,25 +3,22 @@ module Pages.Recipes.Handler exposing (init, update)
 import Addresses.Frontend
 import Api.Auxiliary exposing (JWT, RecipeId)
 import Api.Types.Recipe exposing (Recipe)
-import Basics.Extra exposing (flip)
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens
-import Monocle.Optional as Optional
+import Monocle.Optional
 import Pages.Recipes.Page as Page exposing (RecipeState)
 import Pages.Recipes.Pagination as Pagination exposing (Pagination)
 import Pages.Recipes.RecipeCreationClientInput as RecipeCreationClientInput exposing (RecipeCreationClientInput)
 import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
 import Pages.Recipes.Requests as Requests
-import Pages.Recipes.Status as Status
 import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.View.Tristate as Tristate
 import Result.Extra
 import Util.DictList as DictList
 import Util.Editing as Editing exposing (Editing)
-import Util.HttpUtil as HttpUtil exposing (Error)
-import Util.Initialization as Initialization exposing (Initialization(..))
+import Util.HttpUtil exposing (Error)
 import Util.LensUtil as LensUtil
 
 
@@ -114,24 +111,37 @@ createRecipe model =
     ( model
     , model
         |> Tristate.lenses.main.getOption
-        |> Maybe.andThen Page.lenses.main.recipeToAdd.get
-        |> Maybe.Extra.unwrap Cmd.none (RecipeCreationClientInput.toCreation >> Requests.createRecipe model.authorizedAccess)
+        |> Maybe.andThen
+            (\main ->
+                main.recipeToAdd
+                    |> Maybe.map
+                        (RecipeCreationClientInput.toCreation
+                            >> Requests.createRecipe main.authorizedAccess
+                        )
+            )
+        |> Maybe.withDefault Cmd.none
     )
 
 
 gotCreateRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.Msg )
 gotCreateRecipeResponse model dataOrError =
     dataOrError
-        |> Result.Extra.unpack (\error -> ( setError error model, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( Tristate.toError error, Cmd.none ))
             (\recipe ->
                 ( model
-                    |> LensUtil.insertAtId recipe.id
-                        Page.lenses.recipes
-                        (recipe |> Editing.asView)
-                    |> Page.lenses.recipeToAdd.set Nothing
-                , recipe.id
-                    |> Addresses.Frontend.ingredientEditor.address
-                    |> Links.loadFrontendPage model.authorizedAccess.configuration
+                    |> Tristate.mapMain
+                        (LensUtil.insertAtId recipe.id
+                            Page.lenses.main.recipes
+                            (recipe |> Editing.asView)
+                            >> Page.lenses.main.recipeToAdd.set Nothing
+                        )
+                , model
+                    |> Tristate.foldMain Cmd.none
+                        (\main ->
+                            recipe.id
+                                |> Addresses.Frontend.ingredientEditor.address
+                                |> Links.loadFrontendPage main.authorizedAccess.configuration
+                        )
                 )
             )
 
@@ -149,18 +159,22 @@ saveRecipeEdit : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 saveRecipeEdit model recipeId =
     ( model
     , model
-        |> Page.lenses.recipes.get
-        |> DictList.get recipeId
-        |> Maybe.andThen Editing.extractUpdate
-        |> Maybe.Extra.unwrap
-            Cmd.none
-            (RecipeUpdateClientInput.to
-                >> (\recipeUpdate ->
-                        Requests.saveRecipe
-                            { authorizedAccess = model.authorizedAccess
-                            , recipeUpdate = recipeUpdate
-                            }
-                   )
+        |> Tristate.foldMain Cmd.none
+            (\main ->
+                main
+                    |> Page.lenses.main.recipes.get
+                    |> DictList.get recipeId
+                    |> Maybe.andThen Editing.extractUpdate
+                    |> Maybe.Extra.unwrap
+                        Cmd.none
+                        (RecipeUpdateClientInput.to
+                            >> (\recipeUpdate ->
+                                    Requests.saveRecipe
+                                        { authorizedAccess = main.authorizedAccess
+                                        , recipeUpdate = recipeUpdate
+                                        }
+                               )
+                        )
             )
     )
 
@@ -168,7 +182,7 @@ saveRecipeEdit model recipeId =
 gotSaveRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.Msg )
 gotSaveRecipeResponse model dataOrError =
     ( dataOrError
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack Tristate.toError
             (\recipe ->
                 model
                     |> mapRecipeStateById recipe.id
@@ -204,10 +218,14 @@ requestDeleteRecipe model recipeId =
 confirmDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 confirmDeleteRecipe model recipeId =
     ( model
-    , Requests.deleteRecipe
-        { authorizedAccess = model.authorizedAccess
-        , recipeId = recipeId
-        }
+    , model
+        |> Tristate.foldMain Cmd.none
+            (\main ->
+                Requests.deleteRecipe
+                    { authorizedAccess = main.authorizedAccess
+                    , recipeId = recipeId
+                    }
+            )
     )
 
 
@@ -221,10 +239,10 @@ cancelDeleteRecipe model recipeId =
 gotDeleteRecipeResponse : Page.Model -> RecipeId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteRecipeResponse model deletedId dataOrError =
     ( dataOrError
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack Tristate.toError
             (always
                 (model
-                    |> LensUtil.deleteAtId deletedId Page.lenses.recipes
+                    |> LensUtil.deleteAtIdOptional deletedId (Tristate.lenses.main |> Compose.optionalWithLens Page.lenses.main.recipes)
                 )
             )
     , Cmd.none
@@ -233,32 +251,32 @@ gotDeleteRecipeResponse model deletedId dataOrError =
 
 setPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.Msg )
 setPagination model pagination =
-    ( model |> Page.lenses.pagination.set pagination
+    ( model
+        |> Tristate.mapMain (Page.lenses.main.pagination.set pagination)
     , Cmd.none
     )
 
 
 setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 setSearchString model string =
-    ( PaginationSettings.setSearchStringAndReset
-        { searchStringLens =
-            Page.lenses.searchString
-        , paginationSettingsLens =
-            Page.lenses.pagination
-                |> Compose.lensWithLens Pagination.lenses.recipes
-        }
-        model
-        string
+    ( model
+        |> Tristate.mapMain
+            (\main ->
+                PaginationSettings.setSearchStringAndReset
+                    { searchStringLens =
+                        Page.lenses.main.searchString
+                    , paginationSettingsLens =
+                        Page.lenses.main.pagination
+                            |> Compose.lensWithLens Pagination.lenses.recipes
+                    }
+                    main
+                    string
+            )
     , Cmd.none
     )
 
 
 mapRecipeStateById : RecipeId -> (Page.RecipeState -> Page.RecipeState) -> Page.Model -> Page.Model
 mapRecipeStateById recipeId =
-    Page.lenses.recipes
-        |> LensUtil.updateById recipeId
-
-
-setError : Error -> Page.Model -> Page.Model
-setError =
-    HttpUtil.setError Page.lenses.initialization
+    (Tristate.lenses.main |> Compose.optionalWithLens Page.lenses.main.recipes)
+        |> LensUtil.updateByIdOptional recipeId
