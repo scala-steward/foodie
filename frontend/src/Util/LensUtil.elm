@@ -59,7 +59,3 @@ deleteAtId : key -> Lens a (DictList key value) -> a -> a
 deleteAtId id lens =
     DictList.remove id |> Lens.modify lens
 
-
-deleteAtIdOptional : key -> Optional a (DictList key value) -> a -> a
-deleteAtIdOptional id optional =
-    DictList.remove id |> Optional.modify optional
