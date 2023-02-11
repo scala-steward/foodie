@@ -1,29 +1,67 @@
 module Pages.ComplexFoods.Page exposing (..)
 
-import Api.Auxiliary exposing (ComplexFoodId, RecipeId)
+import Api.Auxiliary exposing (ComplexFoodId, JWT, RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.Recipe exposing (Recipe)
 import Monocle.Lens exposing (Lens)
 import Pages.ComplexFoods.ComplexFoodClientInput exposing (ComplexFoodClientInput)
-import Pages.ComplexFoods.Pagination exposing (Pagination)
-import Pages.ComplexFoods.Status exposing (Status)
+import Pages.ComplexFoods.Pagination as Pagination exposing (Pagination)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Util.DictList exposing (DictList)
+import Pages.View.Tristate as Tristate exposing (Tristate)
+import Util.DictList as DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
-import Util.Initialization exposing (Initialization)
 
 
 type alias Model =
-    { authorizedAccess : AuthorizedAccess
+    Tristate Main Initial
+
+
+type alias Main =
+    { jwt : JWT
     , recipes : RecipeMap
     , complexFoods : ComplexFoodStateMap
     , complexFoodsToCreate : CreateComplexFoodsMap
     , recipesSearchString : String
     , complexFoodsSearchString : String
-    , initialization : Initialization Status
     , pagination : Pagination
     }
+
+
+type alias Initial =
+    { recipes : Maybe RecipeMap
+    , complexFoods : Maybe ComplexFoodStateMap
+    , jwt : JWT
+    }
+
+
+initial : AuthorizedAccess -> Model
+initial authorizedAccess =
+    { recipes = Nothing
+    , complexFoods = Nothing
+    , jwt = authorizedAccess.jwt
+    }
+        |> Tristate.createInitial authorizedAccess.configuration
+
+
+initialToMain : Initial -> Maybe Main
+initialToMain i =
+    i.recipes
+        |> Maybe.andThen
+            (\recipes ->
+                i.complexFoods
+                    |> Maybe.map
+                        (\complexFoods ->
+                            { jwt = i.jwt
+                            , recipes = recipes
+                            , complexFoods = complexFoods
+                            , complexFoodsToCreate = DictList.empty
+                            , recipesSearchString = ""
+                            , complexFoodsSearchString = ""
+                            , pagination = Pagination.initial
+                            }
+                        )
+            )
 
 
 type alias ComplexFoodState =
@@ -43,22 +81,32 @@ type alias RecipeMap =
 
 
 lenses :
-    { recipes : Lens Model RecipeMap
-    , complexFoods : Lens Model ComplexFoodStateMap
-    , complexFoodsToCreate : Lens Model CreateComplexFoodsMap
-    , recipesSearchString : Lens Model String
-    , complexFoodsSearchString : Lens Model String
-    , initialization : Lens Model (Initialization Status)
-    , pagination : Lens Model Pagination
+    { initial :
+        { recipes : Lens Initial (Maybe RecipeMap)
+        , complexFoods : Lens Initial (Maybe ComplexFoodStateMap)
+        }
+    , main :
+        { recipes : Lens Main RecipeMap
+        , complexFoods : Lens Main ComplexFoodStateMap
+        , complexFoodsToCreate : Lens Main CreateComplexFoodsMap
+        , recipesSearchString : Lens Main String
+        , complexFoodsSearchString : Lens Main String
+        , pagination : Lens Main Pagination
+        }
     }
 lenses =
-    { recipes = Lens .recipes (\b a -> { a | recipes = b })
-    , complexFoods = Lens .complexFoods (\b a -> { a | complexFoods = b })
-    , complexFoodsToCreate = Lens .complexFoodsToCreate (\b a -> { a | complexFoodsToCreate = b })
-    , recipesSearchString = Lens .recipesSearchString (\b a -> { a | recipesSearchString = b })
-    , complexFoodsSearchString = Lens .complexFoodsSearchString (\b a -> { a | complexFoodsSearchString = b })
-    , initialization = Lens .initialization (\b a -> { a | initialization = b })
-    , pagination = Lens .pagination (\b a -> { a | pagination = b })
+    { initial =
+        { recipes = Lens .recipes (\b a -> { a | recipes = b })
+        , complexFoods = Lens .complexFoods (\b a -> { a | complexFoods = b })
+        }
+    , main =
+        { recipes = Lens .recipes (\b a -> { a | recipes = b })
+        , complexFoods = Lens .complexFoods (\b a -> { a | complexFoods = b })
+        , complexFoodsToCreate = Lens .complexFoodsToCreate (\b a -> { a | complexFoodsToCreate = b })
+        , recipesSearchString = Lens .recipesSearchString (\b a -> { a | recipesSearchString = b })
+        , complexFoodsSearchString = Lens .complexFoodsSearchString (\b a -> { a | complexFoodsSearchString = b })
+        , pagination = Lens .pagination (\b a -> { a | pagination = b })
+        }
     }
 
 

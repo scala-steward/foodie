@@ -3,37 +3,25 @@ module Pages.ComplexFoods.Handler exposing (init, update)
 import Api.Auxiliary exposing (ComplexFoodId, RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.Recipe exposing (Recipe)
-import Basics.Extra exposing (flip)
-import Maybe.Extra
 import Monocle.Compose as Compose
-import Monocle.Lens
-import Monocle.Optional as Optional
+import Monocle.Optional
 import Pages.ComplexFoods.ComplexFoodClientInput as ComplexFoodClientInput exposing (ComplexFoodClientInput)
 import Pages.ComplexFoods.Page as Page
 import Pages.ComplexFoods.Pagination as Pagination
 import Pages.ComplexFoods.Requests as Requests
-import Pages.ComplexFoods.Status as Status
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.PaginationSettings as PaginationSettings
+import Pages.View.Tristate as Tristate
 import Result.Extra
 import Util.DictList as DictList
 import Util.Editing as Editing
-import Util.HttpUtil as HttpUtil exposing (Error)
-import Util.Initialization as Initialization
+import Util.HttpUtil exposing (Error)
 import Util.LensUtil as LensUtil
 
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    ( { authorizedAccess = flags.authorizedAccess
-      , recipes = DictList.empty
-      , complexFoods = DictList.empty
-      , complexFoodsToCreate = DictList.empty
-      , recipesSearchString = ""
-      , complexFoodsSearchString = ""
-      , initialization = Initialization.Loading Status.initial
-      , pagination = Pagination.initial
-      }
+    ( Page.initial flags.authorizedAccess
     , initialFetch flags.authorizedAccess
     )
 
@@ -110,10 +98,12 @@ update msg model =
 updateComplexFoodCreation : Page.Model -> ComplexFoodClientInput -> ( Page.Model, Cmd Page.Msg )
 updateComplexFoodCreation model complexFoodClientInput =
     ( model
-        |> (Page.lenses.complexFoodsToCreate
+        |> Tristate.mapMain
+            ((Page.lenses.main.complexFoodsToCreate
                 |> Compose.lensWithOptional (LensUtil.dictByKey complexFoodClientInput.recipeId)
-           ).set
-            complexFoodClientInput
+             ).set
+                complexFoodClientInput
+            )
     , Cmd.none
     )
 
@@ -122,24 +112,33 @@ createComplexFood : Page.Model -> ComplexFoodId -> ( Page.Model, Cmd Page.Msg )
 createComplexFood model recipeId =
     ( model
     , model
-        |> (Page.lenses.complexFoodsToCreate
-                |> Compose.lensWithOptional (LensUtil.dictByKey recipeId)
-           ).getOption
-        |> Maybe.Extra.unwrap Cmd.none
-            (ComplexFoodClientInput.to
-                >> Requests.createComplexFood model.authorizedAccess
+        |> Tristate.lenses.main.getOption
+        |> Maybe.andThen
+            (\main ->
+                main
+                    |> (Page.lenses.main.complexFoodsToCreate
+                            |> Compose.lensWithOptional (LensUtil.dictByKey recipeId)
+                       ).getOption
+                    |> Maybe.map
+                        (ComplexFoodClientInput.to
+                            >> Requests.createComplexFood
+                                { configuration = model.configuration
+                                , jwt = main.jwt
+                                }
+                        )
             )
+        |> Maybe.withDefault Cmd.none
     )
 
 
 gotCreateComplexFoodResponse : Page.Model -> Result Error ComplexFood -> ( Page.Model, Cmd Page.Msg )
 gotCreateComplexFoodResponse model result =
     ( result
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model.configuration)
             (\complexFood ->
                 model
-                    |> LensUtil.insertAtId complexFood.recipeId Page.lenses.complexFoods (complexFood |> Editing.asView)
-                    |> LensUtil.deleteAtId complexFood.recipeId Page.lenses.complexFoodsToCreate
+                    |> Tristate.mapMain (LensUtil.insertAtId complexFood.recipeId Page.lenses.main.complexFoods (complexFood |> Editing.asView))
+                    |> Tristate.mapMain (LensUtil.deleteAtId complexFood.recipeId Page.lenses.main.complexFoodsToCreate)
             )
     , Cmd.none
     )
@@ -157,20 +156,27 @@ updateComplexFood model complexFoodClientInput =
 saveComplexFoodEdit : Page.Model -> ComplexFoodClientInput -> ( Page.Model, Cmd Page.Msg )
 saveComplexFoodEdit model complexFoodClientInput =
     ( model
-    , complexFoodClientInput
-        |> ComplexFoodClientInput.to
-        |> Requests.updateComplexFood model.authorizedAccess
+    , model
+        |> Tristate.foldMain Cmd.none
+            (\main ->
+                complexFoodClientInput
+                    |> ComplexFoodClientInput.to
+                    |> Requests.updateComplexFood
+                        { configuration = model.configuration
+                        , jwt = main.jwt
+                        }
+            )
     )
 
 
 gotSaveComplexFoodResponse : Page.Model -> Result Error ComplexFood -> ( Page.Model, Cmd Page.Msg )
 gotSaveComplexFoodResponse model result =
     ( result
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model.configuration)
             (\complexFood ->
                 model
                     |> mapComplexFoodStateByRecipeId complexFood.recipeId (always complexFood >> Editing.asView)
-                    |> LensUtil.deleteAtId complexFood.recipeId Page.lenses.complexFoodsToCreate
+                    |> Tristate.mapMain (LensUtil.deleteAtId complexFood.recipeId Page.lenses.main.complexFoodsToCreate)
             )
     , Cmd.none
     )
@@ -202,7 +208,15 @@ requestDeleteComplexFood model complexFoodId =
 confirmDeleteComplexFood : Page.Model -> ComplexFoodId -> ( Page.Model, Cmd Page.Msg )
 confirmDeleteComplexFood model complexFoodId =
     ( model
-    , Requests.deleteComplexFood model.authorizedAccess complexFoodId
+    , model
+        |> Tristate.foldMain Cmd.none
+            (\main ->
+                Requests.deleteComplexFood
+                    { configuration = model.configuration
+                    , jwt = main.jwt
+                    }
+                    complexFoodId
+            )
     )
 
 
@@ -216,10 +230,10 @@ cancelDeleteComplexFood model complexFoodId =
 gotDeleteComplexFoodResponse : Page.Model -> ComplexFoodId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteComplexFoodResponse model complexFoodId result =
     ( result
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model.configuration)
             (always
                 (model
-                    |> LensUtil.deleteAtId complexFoodId Page.lenses.complexFoods
+                    |> Tristate.mapMain (LensUtil.deleteAtId complexFoodId Page.lenses.main.complexFoods)
                 )
             )
     , Cmd.none
@@ -229,11 +243,12 @@ gotDeleteComplexFoodResponse model complexFoodId result =
 gotFetchRecipesResponse : Page.Model -> Result Error (List Recipe) -> ( Page.Model, Cmd Page.Msg )
 gotFetchRecipesResponse model result =
     ( result
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model.configuration)
             (\recipes ->
                 model
-                    |> Page.lenses.recipes.set (recipes |> DictList.fromListWithKey .id)
-                    |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.recipes).set True
+                    |> Tristate.mapInitial
+                        (Page.lenses.initial.recipes.set (recipes |> DictList.fromListWithKey .id |> Just))
+                    |> Tristate.fromInitToMain Page.initialToMain
             )
     , Cmd.none
     )
@@ -242,11 +257,11 @@ gotFetchRecipesResponse model result =
 gotFetchComplexFoodsResponse : Page.Model -> Result Error (List ComplexFood) -> ( Page.Model, Cmd Page.Msg )
 gotFetchComplexFoodsResponse model result =
     ( result
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model.configuration)
             (\complexFoods ->
                 model
-                    |> Page.lenses.complexFoods.set (complexFoods |> List.map Editing.asView |> DictList.fromListWithKey (.original >> .recipeId))
-                    |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.complexFoods).set True
+                    |> Tristate.mapInitial (Page.lenses.initial.complexFoods.set (complexFoods |> List.map Editing.asView |> DictList.fromListWithKey (.original >> .recipeId) |> Just))
+                    |> Tristate.fromInitToMain Page.initialToMain
             )
     , Cmd.none
     )
@@ -255,9 +270,11 @@ gotFetchComplexFoodsResponse model result =
 selectRecipe : Page.Model -> Recipe -> ( Page.Model, Cmd Page.Msg )
 selectRecipe model recipe =
     ( model
-        |> LensUtil.insertAtId recipe.id
-            Page.lenses.complexFoodsToCreate
-            (ComplexFoodClientInput.default recipe.id)
+        |> Tristate.mapMain
+            (LensUtil.insertAtId recipe.id
+                Page.lenses.main.complexFoodsToCreate
+                (ComplexFoodClientInput.default recipe.id)
+            )
     , Cmd.none
     )
 
@@ -265,35 +282,43 @@ selectRecipe model recipe =
 deselectRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
 deselectRecipe model recipeId =
     ( model
-        |> LensUtil.deleteAtId recipeId Page.lenses.complexFoodsToCreate
+        |> Tristate.mapMain (LensUtil.deleteAtId recipeId Page.lenses.main.complexFoodsToCreate)
     , Cmd.none
     )
 
 
 setRecipesSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 setRecipesSearchString model string =
-    ( PaginationSettings.setSearchStringAndReset
-        { searchStringLens = Page.lenses.recipesSearchString
-        , paginationSettingsLens =
-            Page.lenses.pagination
-                |> Compose.lensWithLens Pagination.lenses.recipes
-        }
-        model
-        string
+    ( model
+        |> Tristate.mapMain
+            (\main ->
+                PaginationSettings.setSearchStringAndReset
+                    { searchStringLens = Page.lenses.main.recipesSearchString
+                    , paginationSettingsLens =
+                        Page.lenses.main.pagination
+                            |> Compose.lensWithLens Pagination.lenses.recipes
+                    }
+                    main
+                    string
+            )
     , Cmd.none
     )
 
 
 setComplexFoodsSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 setComplexFoodsSearchString model string =
-    ( PaginationSettings.setSearchStringAndReset
-        { searchStringLens = Page.lenses.complexFoodsSearchString
-        , paginationSettingsLens =
-            Page.lenses.pagination
-                |> Compose.lensWithLens Pagination.lenses.complexFoods
-        }
-        model
-        string
+    ( model
+        |> Tristate.mapMain
+            (\main ->
+                PaginationSettings.setSearchStringAndReset
+                    { searchStringLens = Page.lenses.main.complexFoodsSearchString
+                    , paginationSettingsLens =
+                        Page.lenses.main.pagination
+                            |> Compose.lensWithLens Pagination.lenses.complexFoods
+                    }
+                    main
+                    string
+            )
     , Cmd.none
     )
 
@@ -301,18 +326,13 @@ setComplexFoodsSearchString model string =
 setPagination : Page.Model -> Pagination.Pagination -> ( Page.Model, Cmd Page.Msg )
 setPagination model pagination =
     ( model
-        |> Page.lenses.pagination.set pagination
+        |> Tristate.mapMain (Page.lenses.main.pagination.set pagination)
     , Cmd.none
     )
 
 
 mapComplexFoodStateByRecipeId : ComplexFoodId -> (Page.ComplexFoodState -> Page.ComplexFoodState) -> Page.Model -> Page.Model
 mapComplexFoodStateByRecipeId recipeId =
-    Page.lenses.complexFoods
-        |> Compose.lensWithOptional (LensUtil.dictByKey recipeId)
-        |> Optional.modify
-
-
-setError : Error -> Page.Model -> Page.Model
-setError =
-    HttpUtil.setError Page.lenses.initialization
+    Tristate.lenses.main
+        |> Compose.optionalWithLens Page.lenses.main.complexFoods
+        |> LensUtil.updateByIdOptional recipeId
