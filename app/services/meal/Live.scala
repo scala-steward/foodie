@@ -37,17 +37,15 @@ class Live @Inject() (
   override def createMeal(userId: UserId, mealCreation: MealCreation): Future[ServerError.Or[Meal]] =
     db.run(companion.createMeal(userId, UUID.randomUUID().transformInto[MealId], mealCreation))
       .map(Right(_))
-      .recover {
-        case error =>
-          Left(ErrorContext.Meal.Creation(error.getMessage).asServerError)
+      .recover { case error =>
+        Left(ErrorContext.Meal.Creation(error.getMessage).asServerError)
       }
 
   override def updateMeal(userId: UserId, mealUpdate: MealUpdate): Future[ServerError.Or[Meal]] =
     db.run(companion.updateMeal(userId, mealUpdate))
       .map(Right(_))
-      .recover {
-        case error =>
-          Left(ErrorContext.Meal.Update(error.getMessage).asServerError)
+      .recover { case error =>
+        Left(ErrorContext.Meal.Update(error.getMessage).asServerError)
       }
 
   override def deleteMeal(userId: UserId, id: MealId): Future[Boolean] = db.run(companion.deleteMeal(userId, id))
@@ -58,17 +56,15 @@ class Live @Inject() (
   override def addMealEntry(userId: UserId, mealEntryCreation: MealEntryCreation): Future[ServerError.Or[MealEntry]] =
     db.run(companion.addMealEntry(userId, UUID.randomUUID().transformInto[MealEntryId], mealEntryCreation))
       .map(Right(_))
-      .recover {
-        case error =>
-          Left(ErrorContext.Meal.Entry.Creation(error.getMessage).asServerError)
+      .recover { case error =>
+        Left(ErrorContext.Meal.Entry.Creation(error.getMessage).asServerError)
       }
 
   override def updateMealEntry(userId: UserId, mealEntryUpdate: MealEntryUpdate): Future[ServerError.Or[MealEntry]] =
     db.run(companion.updateMealEntry(userId, mealEntryUpdate))
       .map(Right(_))
-      .recover {
-        case error =>
-          Left(ErrorContext.Meal.Entry.Update(error.getMessage).asServerError)
+      .recover { case error =>
+        Left(ErrorContext.Meal.Entry.Update(error.getMessage).asServerError)
       }
 
   override def removeMealEntry(userId: UserId, mealEntryId: MealEntryId): Future[Boolean] =

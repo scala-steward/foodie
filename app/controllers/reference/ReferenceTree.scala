@@ -16,12 +16,11 @@ object ReferenceTree {
   implicit val fromDB: Transformer[services.reference.ReferenceTree, ReferenceTree] = referenceTree =>
     ReferenceTree(
       referenceTree.referenceMap.transformInto[ReferenceMap],
-      nutrients = referenceTree.nutrientMap.map {
-        case (nutrient, amount) =>
-          ReferenceValue(
-            nutrientCode = nutrient.code.transformInto[Int],
-            referenceAmount = amount
-          )
+      nutrients = referenceTree.nutrientMap.map { case (nutrient, amount) =>
+        ReferenceValue(
+          nutrientCode = nutrient.code.transformInto[Int],
+          referenceAmount = amount
+        )
       }.toSeq
     )
 

@@ -17,15 +17,14 @@ case class ComplexFood(
 
 object ComplexFood {
 
-  implicit val fromDB: Transformer[(Tables.ComplexFoodRow, Recipe), ComplexFood] = {
-    case (food, recipe) =>
-      ComplexFood(
-        recipeId = food.recipeId.transformInto[RecipeId],
-        name = recipe.name,
-        description = recipe.description,
-        amountGrams = food.amountGrams,
-        amountMilliLitres = food.amountMilliLitres
-      )
+  implicit val fromDB: Transformer[(Tables.ComplexFoodRow, Recipe), ComplexFood] = { case (food, recipe) =>
+    ComplexFood(
+      recipeId = food.recipeId.transformInto[RecipeId],
+      name = recipe.name,
+      description = recipe.description,
+      amountGrams = food.amountGrams,
+      amountMilliLitres = food.amountMilliLitres
+    )
   }
 
 }

@@ -171,18 +171,17 @@ class ReferenceController @Inject() (
   private def badRequest(serverError: ServerError): Result =
     BadRequest(serverError.asJson)
 
-  private def referenceMapErrorHandler: PartialFunction[Throwable, Result] = {
-    case error =>
-      val context = error match {
-        case DBError.Reference.MapNotFound =>
-          ErrorContext.ReferenceMap.NotFound
-        case DBError.Reference.EntryNotFound =>
-          ErrorContext.ReferenceMap.Entry.NotFound
-        case _ =>
-          ErrorContext.ReferenceMap.General(error.getMessage)
-      }
+  private def referenceMapErrorHandler: PartialFunction[Throwable, Result] = { case error =>
+    val context = error match {
+      case DBError.Reference.MapNotFound =>
+        ErrorContext.ReferenceMap.NotFound
+      case DBError.Reference.EntryNotFound =>
+        ErrorContext.ReferenceMap.Entry.NotFound
+      case _ =>
+        ErrorContext.ReferenceMap.General(error.getMessage)
+    }
 
-      BadRequest(context.asServerError.asJson)
+    BadRequest(context.asServerError.asJson)
   }
 
 }

@@ -291,57 +291,54 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     GenUtils.taggedId[UserTag] :| "userId1",
     GenUtils.taggedId[UserTag] :| "userId2",
     Gens.recipeCreationGen :| "recipe creation"
-  ) {
-    case (userId1, userId2, recipeCreation) =>
-      val recipeService = recipeServiceWith(
-        recipeContents = Seq.empty,
-        ingredientContents = Seq.empty
-      )
-      val transformer = for {
-        createdRecipe <- EitherT(recipeService.createRecipe(userId1, recipeCreation))
-        fetchedRecipe <-
-          EitherT.liftF[Future, ServerError, Option[Recipe]](recipeService.getRecipe(userId2, createdRecipe.id))
-      } yield Prop(fetchedRecipe.isEmpty) :| "Access denied"
+  ) { case (userId1, userId2, recipeCreation) =>
+    val recipeService = recipeServiceWith(
+      recipeContents = Seq.empty,
+      ingredientContents = Seq.empty
+    )
+    val transformer = for {
+      createdRecipe <- EitherT(recipeService.createRecipe(userId1, recipeCreation))
+      fetchedRecipe <-
+        EitherT.liftF[Future, ServerError, Option[Recipe]](recipeService.getRecipe(userId2, createdRecipe.id))
+    } yield Prop(fetchedRecipe.isEmpty) :| "Access denied"
 
-      DBTestUtil.awaitProp(transformer)
+    DBTestUtil.awaitProp(transformer)
   }
 
   property("Read single (wrong user)") = Prop.forAll(
     GenUtils.taggedId[UserTag] :| "userId1",
     GenUtils.taggedId[UserTag] :| "userId2",
     Gens.recipeGen :| "recipe"
-  ) {
-    case (userId1, userId2, recipe) =>
-      val recipeService = recipeServiceWith(
-        recipeContents = ContentsUtil.Recipe.from(userId1, Seq(recipe)),
-        ingredientContents = Seq.empty
+  ) { case (userId1, userId2, recipe) =>
+    val recipeService = recipeServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(userId1, Seq(recipe)),
+      ingredientContents = Seq.empty
+    )
+    val transformer = for {
+      fetchedRecipe <- EitherT.liftF[Future, ServerError, Option[Recipe]](
+        recipeService.getRecipe(userId2, recipe.id)
       )
-      val transformer = for {
-        fetchedRecipe <- EitherT.liftF[Future, ServerError, Option[Recipe]](
-          recipeService.getRecipe(userId2, recipe.id)
-        )
-      } yield Prop(fetchedRecipe.isEmpty) :| "Access denied"
+    } yield Prop(fetchedRecipe.isEmpty) :| "Access denied"
 
-      DBTestUtil.awaitProp(transformer)
+    DBTestUtil.awaitProp(transformer)
   }
 
   property("Read all (wrong user)") = Prop.forAll(
     GenUtils.taggedId[UserTag] :| "userId1",
     GenUtils.taggedId[UserTag] :| "userId2",
     Gen.listOf(Gens.recipeGen) :| "recipes"
-  ) {
-    case (userId1, userId2, recipes) =>
-      val recipeService = recipeServiceWith(
-        recipeContents = ContentsUtil.Recipe.from(userId1, recipes),
-        ingredientContents = Seq.empty
+  ) { case (userId1, userId2, recipes) =>
+    val recipeService = recipeServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(userId1, recipes),
+      ingredientContents = Seq.empty
+    )
+    val transformer = for {
+      fetchedRecipes <- EitherT.liftF[Future, ServerError, Seq[Recipe]](
+        recipeService.allRecipes(userId2)
       )
-      val transformer = for {
-        fetchedRecipes <- EitherT.liftF[Future, ServerError, Seq[Recipe]](
-          recipeService.allRecipes(userId2)
-        )
-      } yield fetchedRecipes ?= Seq.empty
+    } yield fetchedRecipes ?= Seq.empty
 
-      DBTestUtil.awaitProp(transformer)
+    DBTestUtil.awaitProp(transformer)
   }
 
   property("Update (wrong user)") = Prop.forAll(
@@ -365,17 +362,16 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     GenUtils.taggedId[UserTag] :| "userId1",
     GenUtils.taggedId[UserTag] :| "userId2",
     Gens.recipeGen :| "recipe"
-  ) {
-    case (userId1, userId2, recipe) =>
-      val recipeService = recipeServiceWith(
-        recipeContents = ContentsUtil.Recipe.from(userId1, Seq(recipe)),
-        ingredientContents = Seq.empty
-      )
-      val transformer = for {
-        result <- EitherT.liftF[Future, ServerError, Boolean](recipeService.deleteRecipe(userId2, recipe.id))
-      } yield Prop(!result) :| "Deletion failed"
+  ) { case (userId1, userId2, recipe) =>
+    val recipeService = recipeServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(userId1, Seq(recipe)),
+      ingredientContents = Seq.empty
+    )
+    val transformer = for {
+      result <- EitherT.liftF[Future, ServerError, Boolean](recipeService.deleteRecipe(userId2, recipe.id))
+    } yield Prop(!result) :| "Deletion failed"
 
-      DBTestUtil.awaitProp(transformer)
+    DBTestUtil.awaitProp(transformer)
   }
 
   property("Add ingredient (wrong user)") = Prop.forAll(
@@ -383,43 +379,41 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     GenUtils.taggedId[UserTag] :| "userId2",
     Gens.fullRecipeGen() :| "full recipe",
     Gens.ingredientGen :| "ingredient"
-  ) {
-    case (userId1, userId2, fullRecipe, ingredient) =>
-      val recipeService = recipeServiceWith(
-        recipeContents = ContentsUtil.Recipe.from(userId1, Seq(fullRecipe.recipe)),
-        ingredientContents = ContentsUtil.Ingredient.from(fullRecipe)
+  ) { case (userId1, userId2, fullRecipe, ingredient) =>
+    val recipeService = recipeServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(userId1, Seq(fullRecipe.recipe)),
+      ingredientContents = ContentsUtil.Ingredient.from(fullRecipe)
+    )
+    val ingredientCreation = IngredientCreation(fullRecipe.recipe.id, ingredient.foodId, ingredient.amountUnit)
+    val transformer = for {
+      result <- EitherT.liftF(recipeService.addIngredient(userId2, ingredientCreation))
+      ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
+        recipeService.getIngredients(userId1, fullRecipe.recipe.id)
       )
-      val ingredientCreation = IngredientCreation(fullRecipe.recipe.id, ingredient.foodId, ingredient.amountUnit)
-      val transformer = for {
-        result <- EitherT.liftF(recipeService.addIngredient(userId2, ingredientCreation))
-        ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
-          recipeService.getIngredients(userId1, fullRecipe.recipe.id)
-        )
-      } yield Prop.all(
-        Prop(result.isLeft) :| "Ingredient addition failed",
-        ingredients.sortBy(_.id) ?= fullRecipe.ingredients.sortBy(_.id)
-      )
+    } yield Prop.all(
+      Prop(result.isLeft) :| "Ingredient addition failed",
+      ingredients.sortBy(_.id) ?= fullRecipe.ingredients.sortBy(_.id)
+    )
 
-      DBTestUtil.awaitProp(transformer)
+    DBTestUtil.awaitProp(transformer)
   }
 
   property("Read ingredients (wrong user)") = Prop.forAll(
     GenUtils.taggedId[UserTag] :| "userId1",
     GenUtils.taggedId[UserTag] :| "userId2",
     Gens.fullRecipeGen() :| "full recipe"
-  ) {
-    case (userId1, userId2, fullRecipe) =>
-      val recipeService = recipeServiceWith(
-        recipeContents = ContentsUtil.Recipe.from(userId1, Seq(fullRecipe.recipe)),
-        ingredientContents = ContentsUtil.Ingredient.from(fullRecipe)
+  ) { case (userId1, userId2, fullRecipe) =>
+    val recipeService = recipeServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(userId1, Seq(fullRecipe.recipe)),
+      ingredientContents = ContentsUtil.Ingredient.from(fullRecipe)
+    )
+    val transformer = for {
+      ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
+        recipeService.getIngredients(userId2, fullRecipe.recipe.id)
       )
-      val transformer = for {
-        ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
-          recipeService.getIngredients(userId2, fullRecipe.recipe.id)
-        )
-      } yield ingredients.sortBy(_.id) ?= List.empty
+    } yield ingredients.sortBy(_.id) ?= List.empty
 
-      DBTestUtil.awaitProp(transformer)
+    DBTestUtil.awaitProp(transformer)
   }
 
   property("Update ingredient (wrong user)") = Prop.forAll(

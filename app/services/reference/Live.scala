@@ -65,9 +65,8 @@ class Live @Inject() (
     db.run(
       companion.createReferenceMap(userId, UUID.randomUUID().transformInto[ReferenceMapId], referenceMapCreation)
     ).map(Right(_))
-      .recover {
-        case error =>
-          Left(ErrorContext.ReferenceMap.Creation(error.getMessage).asServerError)
+      .recover { case error =>
+        Left(ErrorContext.ReferenceMap.Creation(error.getMessage).asServerError)
       }
 
   override def updateReferenceMap(
@@ -76,9 +75,8 @@ class Live @Inject() (
   ): Future[ServerError.Or[ReferenceMap]] =
     db.run(companion.updateReferenceMap(userId, referenceMapUpdate))
       .map(Right(_))
-      .recover {
-        case error =>
-          Left(ErrorContext.ReferenceMap.Update(error.getMessage).asServerError)
+      .recover { case error =>
+        Left(ErrorContext.ReferenceMap.Update(error.getMessage).asServerError)
       }
 
   override def delete(userId: UserId, referenceMapId: ReferenceMapId): Future[Boolean] =
@@ -93,9 +91,8 @@ class Live @Inject() (
   ): Future[ServerError.Or[ReferenceEntry]] =
     db.run(companion.addReferenceEntry(userId, referenceEntryCreation))
       .map(Right(_))
-      .recover {
-        case error =>
-          Left(ErrorContext.ReferenceMap.Entry.Creation(error.getMessage).asServerError)
+      .recover { case error =>
+        Left(ErrorContext.ReferenceMap.Entry.Creation(error.getMessage).asServerError)
       }
 
   override def updateReferenceEntry(
@@ -104,9 +101,8 @@ class Live @Inject() (
   ): Future[ServerError.Or[ReferenceEntry]] =
     db.run(companion.updateReferenceEntry(userId, referenceEntryUpdate))
       .map(Right(_))
-      .recover {
-        case error =>
-          Left(ErrorContext.ReferenceMap.Entry.Update(error.getMessage).asServerError)
+      .recover { case error =>
+        Left(ErrorContext.ReferenceMap.Entry.Update(error.getMessage).asServerError)
       }
 
   override def deleteReferenceEntry(

@@ -20,13 +20,12 @@ object ReferenceMap {
       .define[Tables.ReferenceMapRow, ReferenceMap]
       .buildTransformer
 
-  implicit val toDB: Transformer[(ReferenceMap, UserId), Tables.ReferenceMapRow] = {
-    case (referenceMap, userId) =>
-      Tables.ReferenceMapRow(
-        id = referenceMap.id.transformInto[UUID],
-        userId = userId.transformInto[UUID],
-        name = referenceMap.name
-      )
+  implicit val toDB: Transformer[(ReferenceMap, UserId), Tables.ReferenceMapRow] = { case (referenceMap, userId) =>
+    Tables.ReferenceMapRow(
+      id = referenceMap.id.transformInto[UUID],
+      userId = userId.transformInto[UUID],
+      name = referenceMap.name
+    )
   }
 
 }

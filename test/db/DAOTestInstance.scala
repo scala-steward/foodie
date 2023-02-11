@@ -89,9 +89,8 @@ object DAOTestInstance {
 
     def instanceFrom(contents: Seq[(RecipeId, ComplexFoodIncoming)]): db.daos.complexFood.DAO =
       instance(
-        contents.map {
-          case (recipeId, complexFoodIncoming) =>
-            recipeId -> complexFoodIncoming.transformInto[Tables.ComplexFoodRow]
+        contents.map { case (recipeId, complexFoodIncoming) =>
+          recipeId -> complexFoodIncoming.transformInto[Tables.ComplexFoodRow]
         }
       )
 
@@ -116,10 +115,9 @@ object DAOTestInstance {
 
     def instanceFrom(contents: Seq[(RecipeId, ComplexIngredient)]): db.daos.complexIngredient.DAO =
       instance(
-        contents.map {
-          case (recipeId, complexIngredient) =>
-            ComplexIngredientKey(recipeId, complexIngredient.complexFoodId) ->
-              complexIngredient.transformInto[Tables.ComplexIngredientRow]
+        contents.map { case (recipeId, complexIngredient) =>
+          ComplexIngredientKey(recipeId, complexIngredient.complexFoodId) ->
+            complexIngredient.transformInto[Tables.ComplexIngredientRow]
         }
       )
 
@@ -143,9 +141,8 @@ object DAOTestInstance {
 
     def instanceFrom(contents: Seq[(RecipeId, Ingredient)]): db.daos.ingredient.DAO =
       instance(
-        contents.map {
-          case (recipeId, ingredient) =>
-            ingredient.id -> (ingredient, recipeId).transformInto[Tables.RecipeIngredientRow]
+        contents.map { case (recipeId, ingredient) =>
+          ingredient.id -> (ingredient, recipeId).transformInto[Tables.RecipeIngredientRow]
         }
       )
 
@@ -161,15 +158,14 @@ object DAOTestInstance {
         override def allInInterval(userId: UserId, requestInterval: RequestInterval): DBIO[Seq[Tables.MealRow]] =
           fromIO {
             map
-              .filter {
-                case (key, meal) =>
-                  val interval = DateUtil.toInterval(
-                    requestInterval.from.map(_.transformInto[Date]),
-                    requestInterval.to.map(_.transformInto[Date])
-                  )
+              .filter { case (key, meal) =>
+                val interval = DateUtil.toInterval(
+                  requestInterval.from.map(_.transformInto[Date]),
+                  requestInterval.to.map(_.transformInto[Date])
+                )
 
-                  key.userId == userId &&
-                  interval.contains(meal.consumedOnDate.toLocalDate.transformInto[Date])
+                key.userId == userId &&
+                interval.contains(meal.consumedOnDate.toLocalDate.transformInto[Date])
               }
               .values
               .toList
@@ -202,8 +198,8 @@ object DAOTestInstance {
 
     def instanceFrom(contents: Seq[(MealId, MealEntry)]): db.daos.mealEntry.DAO =
       instance(
-        contents.map {
-          case (mealId, mealEntry) => mealEntry.id -> (mealEntry, mealId).transformInto[Tables.MealEntryRow]
+        contents.map { case (mealId, mealEntry) =>
+          mealEntry.id -> (mealEntry, mealId).transformInto[Tables.MealEntryRow]
         }
       )
 
@@ -227,8 +223,8 @@ object DAOTestInstance {
 
     def instanceFrom(contents: Seq[(UserId, Recipe)]): db.daos.recipe.DAO =
       instance(
-        contents.map {
-          case (userId, recipe) => RecipeKey(userId, recipe.id) -> (recipe, userId).transformInto[Tables.RecipeRow]
+        contents.map { case (userId, recipe) =>
+          RecipeKey(userId, recipe.id) -> (recipe, userId).transformInto[Tables.RecipeRow]
         }
       )
 
@@ -253,9 +249,8 @@ object DAOTestInstance {
 
     def instanceFrom(contents: Seq[(UserId, ReferenceMap)]): db.daos.referenceMap.DAO =
       instance(
-        contents.map {
-          case (userId, referenceMap) =>
-            ReferenceMapKey(userId, referenceMap.id) -> (referenceMap, userId).transformInto[Tables.ReferenceMapRow]
+        contents.map { case (userId, referenceMap) =>
+          ReferenceMapKey(userId, referenceMap.id) -> (referenceMap, userId).transformInto[Tables.ReferenceMapRow]
         }
       )
 
@@ -280,10 +275,9 @@ object DAOTestInstance {
 
     def instanceFrom(contents: Seq[(ReferenceMapId, ReferenceEntry)]): db.daos.referenceMapEntry.DAO =
       instance(
-        contents.map {
-          case (referenceMapId, referenceEntry) =>
-            ReferenceMapEntryKey(referenceMapId, referenceEntry.nutrientCode) -> (referenceEntry, referenceMapId)
-              .transformInto[Tables.ReferenceEntryRow]
+        contents.map { case (referenceMapId, referenceEntry) =>
+          ReferenceMapEntryKey(referenceMapId, referenceEntry.nutrientCode) -> (referenceEntry, referenceMapId)
+            .transformInto[Tables.ReferenceEntryRow]
         }
       )
 

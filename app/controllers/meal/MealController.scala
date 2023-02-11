@@ -154,18 +154,17 @@ class MealController @Inject() (
   private def badRequest(serverError: ServerError): Result =
     BadRequest(serverError.asJson)
 
-  private def mealErrorHandler: PartialFunction[Throwable, Result] = {
-    case error =>
-      val context = error match {
-        case DBError.Meal.NotFound =>
-          ErrorContext.Meal.NotFound
-        case DBError.Meal.EntryNotFound =>
-          ErrorContext.Meal.Entry.NotFound
-        case _ =>
-          ErrorContext.Meal.General(error.getMessage)
-      }
+  private def mealErrorHandler: PartialFunction[Throwable, Result] = { case error =>
+    val context = error match {
+      case DBError.Meal.NotFound =>
+        ErrorContext.Meal.NotFound
+      case DBError.Meal.EntryNotFound =>
+        ErrorContext.Meal.Entry.NotFound
+      case _ =>
+        ErrorContext.Meal.General(error.getMessage)
+    }
 
-      BadRequest(context.asServerError.asJson)
+    BadRequest(context.asServerError.asJson)
   }
 
 }

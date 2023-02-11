@@ -50,9 +50,8 @@ class Live @Inject() (
   ): Future[ServerError.Or[Recipe]] = {
     db.run(companion.createRecipe(userId, UUID.randomUUID().transformInto[RecipeId], recipeCreation))
       .map(Right(_))
-      .recover {
-        case error =>
-          Left(ErrorContext.Recipe.Creation(error.getMessage).asServerError)
+      .recover { case error =>
+        Left(ErrorContext.Recipe.Creation(error.getMessage).asServerError)
       }
   }
 
@@ -62,9 +61,8 @@ class Live @Inject() (
   ): Future[ServerError.Or[Recipe]] =
     db.run(companion.updateRecipe(userId, recipeUpdate))
       .map(Right(_))
-      .recover {
-        case error =>
-          Left(ErrorContext.Recipe.Update(error.getMessage).asServerError)
+      .recover { case error =>
+        Left(ErrorContext.Recipe.Update(error.getMessage).asServerError)
       }
 
   override def deleteRecipe(
@@ -81,9 +79,8 @@ class Live @Inject() (
   ): Future[ServerError.Or[Ingredient]] =
     db.run(companion.addIngredient(userId, UUID.randomUUID().transformInto[IngredientId], ingredientCreation))
       .map(Right(_))
-      .recover {
-        case error =>
-          Left(ErrorContext.Recipe.Ingredient.Creation(error.getMessage).asServerError)
+      .recover { case error =>
+        Left(ErrorContext.Recipe.Ingredient.Creation(error.getMessage).asServerError)
       }
 
   override def updateIngredient(
@@ -92,9 +89,8 @@ class Live @Inject() (
   ): Future[ServerError.Or[Ingredient]] =
     db.run(companion.updateIngredient(userId, ingredientUpdate))
       .map(Right(_))
-      .recover {
-        case error =>
-          Left(ErrorContext.Recipe.Ingredient.Update(error.getMessage).asServerError)
+      .recover { case error =>
+        Left(ErrorContext.Recipe.Ingredient.Update(error.getMessage).asServerError)
       }
 
   override def removeIngredient(userId: UserId, ingredientId: IngredientId): Future[Boolean] =
