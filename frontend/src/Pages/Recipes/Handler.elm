@@ -84,13 +84,13 @@ gotFetchRecipesResponse model dataOrError =
         |> Result.Extra.unpack (Tristate.toError model.configuration)
             (\recipes ->
                 model
-                    |> (Tristate.lenses.initial
-                            |> Compose.optionalWithLens Page.lenses.initial.recipes
-                       ).set
-                        (recipes
-                            |> List.map Editing.asView
-                            |> DictList.fromListWithKey (.original >> .id)
-                            |> Just
+                    |> Tristate.mapInitial
+                        (Page.lenses.initial.recipes.set
+                            (recipes
+                                |> List.map Editing.asView
+                                |> DictList.fromListWithKey (.original >> .id)
+                                |> Just
+                            )
                         )
                     |> Tristate.fromInitToMain Page.initialToMain
             )
@@ -251,7 +251,7 @@ gotDeleteRecipeResponse model deletedId dataOrError =
         |> Result.Extra.unpack (Tristate.toError model.configuration)
             (always
                 (model
-                    |> LensUtil.deleteAtIdOptional deletedId (Tristate.lenses.main |> Compose.optionalWithLens Page.lenses.main.recipes)
+                    |> Tristate.mapMain (LensUtil.deleteAtId deletedId Page.lenses.main.recipes)
                 )
             )
     , Cmd.none
