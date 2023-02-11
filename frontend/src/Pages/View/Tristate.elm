@@ -1,4 +1,4 @@
-module Pages.View.Tristate exposing (Status(..), Tristate, createError, createInitial, createMain, fold, foldMain, fromInitToMain, lenses, mapMain, toError, view)
+module Pages.View.Tristate exposing (Status(..), Tristate, createError, createInitial, createMain, fold, foldMain, fromInitToMain, lenses, mapInitial, mapMain, toError, view)
 
 import Configuration exposing (Configuration)
 import Html exposing (Html, div, label, td, text, tr)
@@ -61,7 +61,17 @@ mapMain : (main -> main) -> Tristate main initial -> Tristate main initial
 mapMain f t =
     fold
         { onInitial = always t
-        , onMain = f >> Main >> Tristate t.configuration
+        , onMain = f >> createMain t.configuration
+        , onError = always t
+        }
+        t
+
+
+mapInitial : (initial -> initial) -> Tristate main initial -> Tristate main initial
+mapInitial f t =
+    fold
+        { onInitial = f >> createInitial t.configuration
+        , onMain = always t
         , onError = always t
         }
         t
