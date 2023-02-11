@@ -18,7 +18,7 @@ type alias Model =
 
 
 type alias Main =
-    { authorizedAccess : AuthorizedAccess
+    { jwt : JWT
     , recipes : RecipeStateMap
     , recipeToAdd : Maybe RecipeCreationClientInput
     , searchString : String
@@ -28,16 +28,16 @@ type alias Main =
 
 type alias Initial =
     { recipes : Maybe RecipeStateMap
-    , authorizedAccess : AuthorizedAccess
+    , jwt : JWT
     }
 
 
 initial : AuthorizedAccess -> Model
 initial authorizedAccess =
     { recipes = Nothing
-    , authorizedAccess = authorizedAccess
+    , jwt = authorizedAccess.jwt
     }
-        |> Tristate.Initial
+        |> Tristate.createInitial authorizedAccess.configuration
 
 
 initialToMain : Initial -> Maybe Main
@@ -45,7 +45,7 @@ initialToMain i =
     i.recipes
         |> Maybe.map
             (\recipes ->
-                { authorizedAccess = i.authorizedAccess
+                { jwt = i.jwt
                 , recipes = recipes
                 , recipeToAdd = Nothing
                 , searchString = ""

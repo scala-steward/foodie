@@ -1,4 +1,4 @@
-module Pages.Util.ViewUtil exposing (Page(..), navigationBarWith, navigationToPageButton, navigationToPageButtonWith, pagerButtons, paginate, viewWithErrorHandling)
+module Pages.Util.ViewUtil exposing (Page(..), navigationBarWith, navigationToPageButton, navigationToPageButtonWith, pagerButtons, paginate, viewWithErrorHandling, viewWithErrorHandlingSimple)
 
 import Api.Auxiliary exposing (JWT)
 import Api.Types.LoginContent exposing (decoderLoginContent)
@@ -98,6 +98,42 @@ viewWithErrorHandling params model html =
 
             else
                 div [] [ Links.loadingSymbol ]
+
+
+viewWithErrorHandlingSimple :
+    { configuration : Configuration
+    , jwt : main -> Maybe JWT
+    , currentPage : Maybe Page
+    , showNavigation : Bool
+    }
+    -> main
+    -> Html msg
+    -> Html msg
+viewWithErrorHandlingSimple params model html =
+    let
+        unknown =
+            "<unknown>"
+
+        navigation =
+            [ navigationBar
+                { mainPageURL = params.configuration |> .mainPageURL
+                , currentPage = params.currentPage
+                , nickname =
+                    model
+                        |> params.jwt
+                        |> Maybe.andThen
+                            (Jwt.decodeToken decoderLoginContent
+                                >> Result.toMaybe
+                            )
+                        |> Maybe.Extra.unwrap unknown .nickname
+                }
+            ]
+                |> List.filter (always params.showNavigation)
+    in
+    div []
+        (navigation
+            ++ [ html ]
+        )
 
 
 type Page

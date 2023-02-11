@@ -81,7 +81,7 @@ update msg model =
 gotFetchRecipesResponse : Page.Model -> Result Error (List Recipe) -> ( Page.Model, Cmd Page.Msg )
 gotFetchRecipesResponse model dataOrError =
     ( dataOrError
-        |> Result.Extra.unpack Tristate.toError
+        |> Result.Extra.unpack (Tristate.toError model.configuration)
             (\recipes ->
                 model
                     |> (Tristate.lenses.initial
@@ -116,7 +116,10 @@ createRecipe model =
                 main.recipeToAdd
                     |> Maybe.map
                         (RecipeCreationClientInput.toCreation
-                            >> Requests.createRecipe main.authorizedAccess
+                            >> Requests.createRecipe
+                                { configuration = model.configuration
+                                , jwt = main.jwt
+                                }
                         )
             )
         |> Maybe.withDefault Cmd.none
@@ -126,7 +129,7 @@ createRecipe model =
 gotCreateRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.Msg )
 gotCreateRecipeResponse model dataOrError =
     dataOrError
-        |> Result.Extra.unpack (\error -> ( Tristate.toError error, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( Tristate.toError model.configuration error, Cmd.none ))
             (\recipe ->
                 ( model
                     |> Tristate.mapMain
@@ -137,10 +140,10 @@ gotCreateRecipeResponse model dataOrError =
                         )
                 , model
                     |> Tristate.foldMain Cmd.none
-                        (\main ->
+                        (\_ ->
                             recipe.id
                                 |> Addresses.Frontend.ingredientEditor.address
-                                |> Links.loadFrontendPage main.authorizedAccess.configuration
+                                |> Links.loadFrontendPage model.configuration
                         )
                 )
             )
@@ -170,7 +173,10 @@ saveRecipeEdit model recipeId =
                         (RecipeUpdateClientInput.to
                             >> (\recipeUpdate ->
                                     Requests.saveRecipe
-                                        { authorizedAccess = main.authorizedAccess
+                                        { authorizedAccess =
+                                            { configuration = model.configuration
+                                            , jwt = main.jwt
+                                            }
                                         , recipeUpdate = recipeUpdate
                                         }
                                )
@@ -182,7 +188,7 @@ saveRecipeEdit model recipeId =
 gotSaveRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.Msg )
 gotSaveRecipeResponse model dataOrError =
     ( dataOrError
-        |> Result.Extra.unpack Tristate.toError
+        |> Result.Extra.unpack (Tristate.toError model.configuration)
             (\recipe ->
                 model
                     |> mapRecipeStateById recipe.id
@@ -222,7 +228,10 @@ confirmDeleteRecipe model recipeId =
         |> Tristate.foldMain Cmd.none
             (\main ->
                 Requests.deleteRecipe
-                    { authorizedAccess = main.authorizedAccess
+                    { authorizedAccess =
+                        { configuration = model.configuration
+                        , jwt = main.jwt
+                        }
                     , recipeId = recipeId
                     }
             )
@@ -239,7 +248,7 @@ cancelDeleteRecipe model recipeId =
 gotDeleteRecipeResponse : Page.Model -> RecipeId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteRecipeResponse model deletedId dataOrError =
     ( dataOrError
-        |> Result.Extra.unpack Tristate.toError
+        |> Result.Extra.unpack (Tristate.toError model.configuration)
             (always
                 (model
                     |> LensUtil.deleteAtIdOptional deletedId (Tristate.lenses.main |> Compose.optionalWithLens Page.lenses.main.recipes)

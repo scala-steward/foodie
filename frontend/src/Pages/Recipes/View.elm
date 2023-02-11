@@ -17,13 +17,13 @@ import Pages.Recipes.Page as Page
 import Pages.Recipes.Pagination as Pagination
 import Pages.Recipes.RecipeCreationClientInput as RecipeCreationClientInput exposing (RecipeCreationClientInput)
 import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
-import Pages.Recipes.Status as Status
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
 import Pages.Util.ViewUtil as ViewUtil
+import Pages.View.Tristate as Tristate
 import Paginate
 import Util.DictList as DictList
 import Util.Editing as Editing
@@ -33,29 +33,37 @@ import Util.SearchUtil as SearchUtil
 
 view : Page.Model -> Html Page.Msg
 view model =
-    ViewUtil.viewWithErrorHandling
-        { isFinished = Status.isFinished
-        , initialization = Page.lenses.initialization.get
-        , configuration = .authorizedAccess >> .configuration
-        , jwt = .authorizedAccess >> .jwt >> Just
+    Tristate.view
+        { viewMain = viewMain model.configuration
+        , mainPageURLForLoginSuggestion =
+            model |> .configuration |> .mainPageURL |> Just
+        }
+        model
+
+
+viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain configuration main =
+    ViewUtil.viewWithErrorHandlingSimple
+        { configuration = configuration
+        , jwt = .jwt >> Just
         , currentPage = Just ViewUtil.Recipes
         , showNavigation = True
         }
-        model
+        main
     <|
         let
             viewRecipeState =
                 Editing.unpack
-                    { onView = viewRecipeLine model.authorizedAccess.configuration
+                    { onView = viewRecipeLine configuration
                     , onUpdate = always updateRecipeLine
                     , onDelete = deleteRecipeLine
                     }
 
             filterOn =
-                SearchUtil.search model.searchString
+                SearchUtil.search main.searchString
 
             viewEditRecipes =
-                model.recipes
+                main.recipes
                     |> DictList.filter
                         (\_ v ->
                             filterOn v.original.name
@@ -64,18 +72,18 @@ view model =
                     |> DictList.values
                     |> List.sortBy (.original >> .name >> String.toLower)
                     |> ViewUtil.paginate
-                        { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.recipes
+                        { pagination = Page.lenses.main.pagination |> Compose.lensWithLens Pagination.lenses.recipes
                         }
-                        model
+                        main
 
             ( button, creationLine ) =
-                createRecipe model.recipeToAdd |> Either.unpack (\l -> ( [ l ], [] )) (\r -> ( [], [ r ] ))
+                createRecipe main.recipeToAdd |> Either.unpack (\l -> ( [ l ], [] )) (\r -> ( [], [ r ] ))
         in
         div [ Style.ids.addRecipeView ]
             (button
                 ++ [ HtmlUtil.searchAreaWith
                         { msg = Page.SetSearchString
-                        , searchString = model.searchString
+                        , searchString = main.searchString
                         }
                    , table [ Style.classes.elementsWithControlsTable ]
                         (tableHeader { controlButtons = 4 }
@@ -89,10 +97,10 @@ view model =
                         [ ViewUtil.pagerButtons
                             { msg =
                                 PaginationSettings.updateCurrentPage
-                                    { pagination = Page.lenses.pagination
+                                    { pagination = Page.lenses.main.pagination
                                     , items = Pagination.lenses.recipes
                                     }
-                                    model
+                                    main
                                     >> Page.SetPagination
                             , elements = viewEditRecipes
                             }
