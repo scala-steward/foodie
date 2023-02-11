@@ -35,7 +35,7 @@ lazy val root = (project in file("."))
       "com.typesafe.play"          %% "play-slick"                % "5.1.0",
       "com.dripower"               %% "play-circe"                % "2814.2",
       "com.davegurnell"            %% "bridges"                   % "0.24.0",
-      "com.github.pathikrit"       %% "better-files"              % "3.9.1",
+      "com.github.pathikrit"       %% "better-files"              % "3.9.2",
       "com.typesafe"                % "config"                    % "1.4.2",
       "io.scalaland"               %% "chimney"                   % "0.6.2",
       "com.github.jwt-scala"       %% "jwt-core"                  % jwtVersion,
