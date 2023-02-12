@@ -46,22 +46,19 @@ initial authorizedAccess =
 
 initialToMain : Initial -> Maybe Main
 initialToMain i =
-    i.recipes
-        |> Maybe.andThen
-            (\recipes ->
-                i.complexFoods
-                    |> Maybe.map
-                        (\complexFoods ->
-                            { jwt = i.jwt
-                            , recipes = recipes
-                            , complexFoods = complexFoods
-                            , complexFoodsToCreate = DictList.empty
-                            , recipesSearchString = ""
-                            , complexFoodsSearchString = ""
-                            , pagination = Pagination.initial
-                            }
-                        )
-            )
+    Maybe.map2
+        (\recipes complexFoods ->
+            { jwt = i.jwt
+            , recipes = recipes
+            , complexFoods = complexFoods
+            , complexFoodsToCreate = DictList.empty
+            , recipesSearchString = ""
+            , complexFoodsSearchString = ""
+            , pagination = Pagination.initial
+            }
+        )
+        i.recipes
+        i.complexFoods
 
 
 type alias ComplexFoodState =

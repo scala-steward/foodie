@@ -30,20 +30,17 @@ initial =
 
 initialToMain : Initial ingredientId ingredient update foodId food -> Maybe (Main ingredientId ingredient update foodId food creation)
 initialToMain i =
-    i.ingredients
-        |> Maybe.andThen
-            (\ingredients ->
-                i.foods
-                    |> Maybe.map
-                        (\foods ->
-                            { ingredients = ingredients
-                            , foods = foods
-                            , foodsToAdd = DictList.empty
-                            , pagination = Pagination.initial
-                            , foodsSearchString = ""
-                            }
-                        )
-            )
+    Maybe.map2
+        (\ingredients foods ->
+            { ingredients = ingredients
+            , foods = foods
+            , foodsToAdd = DictList.empty
+            , pagination = Pagination.initial
+            , foodsSearchString = ""
+            }
+        )
+        i.ingredients
+        i.foods
 
 
 type alias IngredientState ingredient update =
