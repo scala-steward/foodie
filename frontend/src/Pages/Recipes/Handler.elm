@@ -138,13 +138,9 @@ gotCreateRecipeResponse model dataOrError =
                             (recipe |> Editing.asView)
                             >> Page.lenses.main.recipeToAdd.set Nothing
                         )
-                , model
-                    |> Tristate.foldMain Cmd.none
-                        (\_ ->
-                            recipe.id
-                                |> Addresses.Frontend.ingredientEditor.address
-                                |> Links.loadFrontendPage model.configuration
-                        )
+                , recipe.id
+                    |> Addresses.Frontend.ingredientEditor.address
+                    |> Links.loadFrontendPage model.configuration
                 )
             )
 
