@@ -18,7 +18,7 @@ dictByKey k =
     , set = DictList.insert k
     }
 
-
+-- todo : Check use
 set : List value -> (value -> key) -> Lens model (DictList key value) -> model -> model
 set xs idOf lens md =
     xs
