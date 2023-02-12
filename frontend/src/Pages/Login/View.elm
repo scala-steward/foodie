@@ -1,6 +1,7 @@
 module Pages.Login.View exposing (..)
 
 import Addresses.Frontend
+import Configuration exposing (Configuration)
 import Html exposing (Html, button, div, input, label, text)
 import Html.Attributes exposing (autocomplete, type_)
 import Html.Events exposing (onClick, onInput)
@@ -9,14 +10,21 @@ import Pages.Login.Page as Page
 import Pages.Util.Links as Links
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
+import Pages.View.Tristate as Tristate
 
 
 view : Page.Model -> Html Page.Msg
-view model =
-    ViewUtil.viewWithErrorHandling
-        { isFinished = always True
-        , initialization = .initialization
-        , configuration = .configuration
+view =
+    Tristate.view
+        { viewMain = viewMain
+        , showLoginRedirect = False
+        }
+
+
+viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain configuration model =
+    ViewUtil.viewWithErrorHandlingSimple
+        { configuration = configuration
         , jwt = always Nothing
         , currentPage = Just ViewUtil.Login
         , showNavigation = False
@@ -49,14 +57,14 @@ view model =
                 [ button [ onClick Page.Login, Style.classes.button.confirm ] [ text "Log In" ] ]
             , div []
                 [ Links.linkButton
-                    { url = Links.frontendPage model.configuration <| Addresses.Frontend.requestRegistration.address ()
+                    { url = Links.frontendPage configuration <| Addresses.Frontend.requestRegistration.address ()
                     , attributes = [ Style.classes.button.navigation ]
                     , children = [ text "Create account" ]
                     }
                 ]
             , div []
                 [ Links.linkButton
-                    { url = Links.frontendPage model.configuration <| Addresses.Frontend.requestRecovery.address ()
+                    { url = Links.frontendPage configuration <| Addresses.Frontend.requestRecovery.address ()
                     , attributes = [ Style.classes.button.navigation ]
                     , children = [ text "Recover account" ]
                     }

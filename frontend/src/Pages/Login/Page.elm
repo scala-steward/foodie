@@ -4,24 +4,28 @@ import Api.Auxiliary exposing (JWT)
 import Api.Types.Credentials exposing (Credentials)
 import Configuration exposing (Configuration)
 import Monocle.Lens exposing (Lens)
+import Pages.View.Tristate exposing (Tristate)
 import Util.HttpUtil exposing (Error)
-import Util.Initialization exposing (Initialization)
 
 
 type alias Model =
+    Tristate Main ()
+
+
+type alias Main =
     { credentials : Credentials
-    , initialization : Initialization ()
-    , configuration : Configuration
     }
 
 
 lenses :
-    { credentials : Lens Model Credentials
-    , initialization : Lens Model (Initialization ())
+    { main :
+        { credentials : Lens Main Credentials
+        }
     }
 lenses =
-    { credentials = Lens .credentials (\b a -> { a | credentials = b })
-    , initialization = Lens .initialization (\b a -> { a | initialization = b })
+    { main =
+        { credentials = Lens .credentials (\b a -> { a | credentials = b })
+        }
     }
 
 

@@ -1,17 +1,16 @@
 module Pages.Login.Handler exposing (init, update)
 
 import Addresses.Frontend
-import Basics.Extra exposing (flip)
 import Browser.Navigation
 import Monocle.Compose as Compose
 import Pages.Login.Page as Page
 import Pages.Login.Requests as Requests
 import Pages.Util.Links as Links
+import Pages.View.Tristate as Tristate
 import Ports
 import Result.Extra
 import Util.CredentialsUtil as CredentialsUtil
-import Util.HttpUtil as HttpUtil exposing (Error)
-import Util.Initialization exposing (Initialization(..))
+import Util.HttpUtil exposing (Error)
 
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
@@ -20,9 +19,8 @@ init flags =
             { nickname = ""
             , password = ""
             }
-      , initialization = Loading ()
-      , configuration = flags.configuration
       }
+        |> Tristate.createMain flags.configuration
     , Cmd.none
     )
 
@@ -45,22 +43,26 @@ update msg model =
 
 setNickname : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 setNickname model nickname =
-    ( (Page.lenses.credentials
-        |> Compose.lensWithLens CredentialsUtil.nickname
-      ).set
-        nickname
-        model
+    ( model
+        |> Tristate.mapMain
+            ((Page.lenses.main.credentials
+                |> Compose.lensWithLens CredentialsUtil.nickname
+             ).set
+                nickname
+            )
     , Cmd.none
     )
 
 
 setPassword : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 setPassword model password =
-    ( (Page.lenses.credentials
-        |> Compose.lensWithLens CredentialsUtil.password
-      ).set
-        password
-        model
+    ( model
+        |> Tristate.mapMain
+            ((Page.lenses.main.credentials
+                |> Compose.lensWithLens CredentialsUtil.password
+             ).set
+                password
+            )
     , Cmd.none
     )
 
@@ -68,7 +70,11 @@ setPassword model password =
 login : Page.Model -> ( Page.Model, Cmd Page.Msg )
 login model =
     ( model
-    , Requests.login model.configuration model.credentials
+    , model
+        |> Tristate.foldMain Cmd.none
+            (\main ->
+                Requests.login model.configuration main.credentials
+            )
     )
 
 
@@ -77,10 +83,7 @@ gotResponse model remoteData =
     remoteData
         |> Result.Extra.unpack
             (\error ->
-                ( error
-                    |> HttpUtil.errorToExplanation
-                    |> Failure
-                    |> flip Page.lenses.initialization.set model
+                ( Tristate.toError model.configuration error
                 , Cmd.none
                 )
             )
