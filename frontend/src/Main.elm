@@ -556,7 +556,7 @@ followRoute model =
                     Pages.Login.Handler.init { configuration = model.configuration } |> stepThrough steps.login model
 
                 OverviewRoute ->
-                    Pages.Overview.Handler.init flags |> stepThrough steps.overview model
+                    Pages.Overview.Handler.init { configuration = model.configuration } |> stepThrough steps.overview model
 
                 RecipesRoute ->
                     Pages.Recipes.Handler.init flags |> stepThrough steps.recipes model

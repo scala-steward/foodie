@@ -1,14 +1,11 @@
 module Pages.Overview.Handler exposing (init, update)
 
 import Pages.Overview.Page as Page
-import Util.Initialization as Initialization
 
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    ( { authorizedAccess = flags.authorizedAccess
-      , initialization = Initialization.Loading ()
-      }
+    ( Page.initial flags.configuration
     , Cmd.none
     )
 
