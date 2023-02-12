@@ -138,10 +138,19 @@ setError initializationLens =
         >> (initializationLens |> Compose.lensWithOptional Initialization.lenses.failure).set
 
 
-setJsonError : Lens model (Initialization status) -> Decode.Error -> model -> model
-setJsonError initializationLens =
+jsonErrorToError : Decode.Error -> Error
+jsonErrorToError =
     Decode.errorToString
         >> BadBody
+
+
+
+-- todo: Check use
+
+
+setJsonError : Lens model (Initialization status) -> Decode.Error -> model -> model
+setJsonError initializationLens =
+    jsonErrorToError
         >> setError initializationLens
 
 
