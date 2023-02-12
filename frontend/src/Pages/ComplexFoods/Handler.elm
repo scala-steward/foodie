@@ -333,6 +333,5 @@ setPagination model pagination =
 
 mapComplexFoodStateByRecipeId : ComplexFoodId -> (Page.ComplexFoodState -> Page.ComplexFoodState) -> Page.Model -> Page.Model
 mapComplexFoodStateByRecipeId recipeId =
-    Tristate.lenses.main
-        |> Compose.optionalWithLens Page.lenses.main.complexFoods
-        |> LensUtil.updateByIdOptional recipeId
+    LensUtil.updateById recipeId Page.lenses.main.complexFoods
+        >> Tristate.mapMain

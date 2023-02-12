@@ -287,6 +287,5 @@ setSearchString model string =
 
 mapRecipeStateById : RecipeId -> (Page.RecipeState -> Page.RecipeState) -> Page.Model -> Page.Model
 mapRecipeStateById recipeId =
-    Tristate.lenses.main
-        |> Compose.optionalWithLens Page.lenses.main.recipes
-        |> LensUtil.updateByIdOptional recipeId
+    LensUtil.updateById recipeId Page.lenses.main.recipes
+        >> Tristate.mapMain

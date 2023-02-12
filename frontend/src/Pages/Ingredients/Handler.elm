@@ -211,18 +211,20 @@ update msg model =
 
 mapIngredientStateById : IngredientId -> (Page.PlainIngredientState -> Page.PlainIngredientState) -> Page.Model -> Page.Model
 mapIngredientStateById ingredientId =
-    Tristate.lenses.main
-        |> Compose.optionalWithLens Page.lenses.main.ingredientsGroup
-        |> Compose.optionalWithLens FoodGroup.lenses.main.ingredients
-        |> LensUtil.updateByIdOptional ingredientId
+    (Page.lenses.main.ingredientsGroup
+        |> Compose.lensWithLens FoodGroup.lenses.main.ingredients
+        |> LensUtil.updateById ingredientId
+    )
+        >> Tristate.mapMain
 
 
 mapComplexIngredientStateById : ComplexIngredientId -> (Page.ComplexIngredientState -> Page.ComplexIngredientState) -> Page.Model -> Page.Model
 mapComplexIngredientStateById complexIngredientId =
-    Tristate.lenses.main
-        |> Compose.optionalWithLens Page.lenses.main.complexIngredientsGroup
-        |> Compose.optionalWithLens FoodGroup.lenses.main.ingredients
-        |> LensUtil.updateByIdOptional complexIngredientId
+    (Page.lenses.main.complexIngredientsGroup
+        |> Compose.lensWithLens FoodGroup.lenses.main.ingredients
+        |> LensUtil.updateById complexIngredientId
+    )
+        >> Tristate.mapMain
 
 
 updateIngredient : Page.Model -> IngredientUpdateClientInput -> ( Page.Model, Cmd msg )
