@@ -5,23 +5,53 @@ import Api.Types.Meal exposing (Meal)
 import Monocle.Lens exposing (Lens)
 import Pages.Meals.MealCreationClientInput exposing (MealCreationClientInput)
 import Pages.Meals.MealUpdateClientInput exposing (MealUpdateClientInput)
-import Pages.Meals.Pagination exposing (Pagination)
-import Pages.Meals.Status exposing (Status)
+import Pages.Meals.Pagination as Pagination exposing (Pagination)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.View.Tristate as Tristate exposing (Tristate)
 import Util.DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
-import Util.Initialization exposing (Initialization)
 
 
 type alias Model =
-    { authorizedAccess : AuthorizedAccess
+    Tristate Main Initial
+
+
+type alias Main =
+    { jwt : JWT
     , meals : MealStateMap
     , mealToAdd : Maybe MealCreationClientInput
     , searchString : String
-    , initialization : Initialization Status
     , pagination : Pagination
     }
+
+
+type alias Initial =
+    { jwt : JWT
+    , meals : Maybe MealStateMap
+    }
+
+
+initial : AuthorizedAccess -> Model
+initial authorizedAccess =
+    { meals = Nothing
+    , jwt = authorizedAccess.jwt
+    }
+        |> Tristate.createInitial authorizedAccess.configuration
+
+
+initialToMain : Initial -> Maybe Main
+initialToMain i =
+    i.meals
+        |> Maybe.map
+            (\meals ->
+                { jwt = i.jwt
+                , meals = meals
+                , mealToAdd = Nothing
+                , searchString = ""
+                , pagination = Pagination.initial
+                }
+            )
 
 
 type alias MealState =
@@ -33,18 +63,22 @@ type alias MealStateMap =
 
 
 lenses :
-    { meals : Lens Model MealStateMap
-    , mealToAdd : Lens Model (Maybe MealCreationClientInput)
-    , searchString : Lens Model String
-    , initialization : Lens Model (Initialization Status)
-    , pagination : Lens Model Pagination
+    { initial : { meals : Lens Initial (Maybe MealStateMap) }
+    , main :
+        { meals : Lens Main MealStateMap
+        , mealToAdd : Lens Main (Maybe MealCreationClientInput)
+        , searchString : Lens Main String
+        , pagination : Lens Main Pagination
+        }
     }
 lenses =
-    { meals = Lens .meals (\b a -> { a | meals = b })
-    , mealToAdd = Lens .mealToAdd (\b a -> { a | mealToAdd = b })
-    , searchString = Lens .searchString (\b a -> { a | searchString = b })
-    , initialization = Lens .initialization (\b a -> { a | initialization = b })
-    , pagination = Lens .pagination (\b a -> { a | pagination = b })
+    { initial = { meals = Lens .meals (\b a -> { a | meals = b }) }
+    , main =
+        { meals = Lens .meals (\b a -> { a | meals = b })
+        , mealToAdd = Lens .mealToAdd (\b a -> { a | mealToAdd = b })
+        , searchString = Lens .searchString (\b a -> { a | searchString = b })
+        , pagination = Lens .pagination (\b a -> { a | pagination = b })
+        }
     }
 
 

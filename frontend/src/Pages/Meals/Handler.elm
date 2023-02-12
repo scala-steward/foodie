@@ -3,36 +3,26 @@ module Pages.Meals.Handler exposing (init, update)
 import Addresses.Frontend
 import Api.Auxiliary exposing (JWT, MealId)
 import Api.Types.Meal exposing (Meal)
-import Basics.Extra exposing (flip)
-import Maybe.Extra
 import Monocle.Compose as Compose
-import Monocle.Lens
 import Monocle.Optional
 import Pages.Meals.MealCreationClientInput as MealCreationClientInput exposing (MealCreationClientInput)
 import Pages.Meals.MealUpdateClientInput as MealUpdateClientInput exposing (MealUpdateClientInput)
 import Pages.Meals.Page as Page
 import Pages.Meals.Pagination as Pagination exposing (Pagination)
 import Pages.Meals.Requests as Requests
-import Pages.Meals.Status as Status
 import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
+import Pages.View.Tristate as Tristate
 import Result.Extra
 import Util.DictList as DictList
 import Util.Editing as Editing exposing (Editing)
-import Util.HttpUtil as HttpUtil exposing (Error)
-import Util.Initialization as Initialization
+import Util.HttpUtil exposing (Error)
 import Util.LensUtil as LensUtil
 
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    ( { authorizedAccess = flags.authorizedAccess
-      , meals = DictList.empty
-      , mealToAdd = Nothing
-      , searchString = ""
-      , initialization = Initialization.Loading Status.initial
-      , pagination = Pagination.initial
-      }
+    ( Page.initial flags.authorizedAccess
     , Requests.fetchMeals flags.authorizedAccess
     )
 
@@ -89,7 +79,7 @@ update msg model =
 updateMealCreation : Page.Model -> Maybe MealCreationClientInput -> ( Page.Model, Cmd Page.Msg )
 updateMealCreation model mealToAdd =
     ( model
-        |> Page.lenses.mealToAdd.set mealToAdd
+        |> Tristate.mapMain (Page.lenses.main.mealToAdd.set mealToAdd)
     , Cmd.none
     )
 
@@ -97,23 +87,36 @@ updateMealCreation model mealToAdd =
 createMeal : Page.Model -> ( Page.Model, Cmd Page.Msg )
 createMeal model =
     ( model
-    , model.mealToAdd
-        |> Maybe.andThen MealCreationClientInput.toCreation
-        |> Maybe.Extra.unwrap Cmd.none (Requests.createMeal model.authorizedAccess)
+    , model
+        |> Tristate.lenses.main.getOption
+        |> Maybe.andThen
+            (\main ->
+                main.mealToAdd
+                    |> Maybe.andThen MealCreationClientInput.toCreation
+                    |> Maybe.map
+                        (Requests.createMeal
+                            { configuration = model.configuration
+                            , jwt = main.jwt
+                            }
+                        )
+            )
+        |> Maybe.withDefault Cmd.none
     )
 
 
 gotCreateMealResponse : Page.Model -> Result Error Meal -> ( Page.Model, Cmd msg )
 gotCreateMealResponse model dataOrError =
     dataOrError
-        |> Result.Extra.unpack (\error -> ( setError error model, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( Tristate.toError model.configuration error, Cmd.none ))
             (\meal ->
                 ( model
-                    |> LensUtil.insertAtId meal.id Page.lenses.meals (meal |> Editing.asView)
-                    |> Page.lenses.mealToAdd.set Nothing
+                    |> Tristate.mapMain
+                        (LensUtil.insertAtId meal.id Page.lenses.main.meals (meal |> Editing.asView)
+                            >> Page.lenses.main.mealToAdd.set Nothing
+                        )
                 , meal.id
                     |> Addresses.Frontend.mealEntryEditor.address
-                    |> Links.loadFrontendPage model.authorizedAccess.configuration
+                    |> Links.loadFrontendPage model.configuration
                 )
             )
 
@@ -131,25 +134,33 @@ saveMealEdit : Page.Model -> MealId -> ( Page.Model, Cmd Page.Msg )
 saveMealEdit model mealId =
     ( model
     , model
-        |> Page.lenses.meals.get
-        |> DictList.get mealId
-        |> Maybe.andThen Editing.extractUpdate
-        |> Maybe.andThen MealUpdateClientInput.to
-        |> Maybe.Extra.unwrap
-            Cmd.none
-            (\mealUpdate ->
-                Requests.saveMeal
-                    { authorizedAccess = model.authorizedAccess
-                    , mealUpdate = mealUpdate
-                    }
+        |> Tristate.lenses.main.getOption
+        |> Maybe.andThen
+            (\main ->
+                main
+                    |> Page.lenses.main.meals.get
+                    |> DictList.get mealId
+                    |> Maybe.andThen Editing.extractUpdate
+                    |> Maybe.andThen MealUpdateClientInput.to
+                    |> Maybe.map
+                        (\mealUpdate ->
+                            Requests.saveMeal
+                                { authorizedAccess =
+                                    { configuration = model.configuration
+                                    , jwt = main.jwt
+                                    }
+                                , mealUpdate = mealUpdate
+                                }
+                        )
             )
+        |> Maybe.withDefault Cmd.none
     )
 
 
 gotSaveMealResponse : Page.Model -> Result Error Meal -> ( Page.Model, Cmd Page.Msg )
 gotSaveMealResponse model dataOrError =
     ( dataOrError
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model.configuration)
             (\meal ->
                 model
                     |> mapMealStateById meal.id
@@ -185,10 +196,17 @@ requestDeleteMeal model mealId =
 confirmDeleteMeal : Page.Model -> MealId -> ( Page.Model, Cmd Page.Msg )
 confirmDeleteMeal model mealId =
     ( model
-    , Requests.deleteMeal
-        { authorizedAccess = model.authorizedAccess
-        , mealId = mealId
-        }
+    , model
+        |> Tristate.foldMain Cmd.none
+            (\main ->
+                Requests.deleteMeal
+                    { authorizedAccess =
+                        { configuration = model.configuration
+                        , jwt = main.jwt
+                        }
+                    , mealId = mealId
+                    }
+            )
     )
 
 
@@ -202,10 +220,10 @@ cancelDeleteMeal model mealId =
 gotDeleteMealResponse : Page.Model -> MealId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteMealResponse model deletedId dataOrError =
     ( dataOrError
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model.configuration)
             (\_ ->
                 model
-                    |> LensUtil.deleteAtId deletedId Page.lenses.meals
+                    |> Tristate.mapMain (LensUtil.deleteAtId deletedId Page.lenses.main.meals)
             )
     , Cmd.none
     )
@@ -214,15 +232,18 @@ gotDeleteMealResponse model deletedId dataOrError =
 gotFetchMealsResponse : Page.Model -> Result Error (List Meal) -> ( Page.Model, Cmd Page.Msg )
 gotFetchMealsResponse model dataOrError =
     ( dataOrError
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model.configuration)
             (\meals ->
                 model
-                    |> Page.lenses.meals.set
-                        (meals
-                            |> List.map Editing.asView
-                            |> DictList.fromListWithKey (.original >> .id)
+                    |> Tristate.mapInitial
+                        (Page.lenses.initial.meals.set
+                            (meals
+                                |> List.map Editing.asView
+                                |> DictList.fromListWithKey (.original >> .id)
+                                |> Just
+                            )
                         )
-                    |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.meals).set True
+                    |> Tristate.fromInitToMain Page.initialToMain
             )
     , Cmd.none
     )
@@ -230,32 +251,31 @@ gotFetchMealsResponse model dataOrError =
 
 setPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.Msg )
 setPagination model pagination =
-    ( model |> Page.lenses.pagination.set pagination
+    ( model |> Tristate.mapMain (Page.lenses.main.pagination.set pagination)
     , Cmd.none
     )
 
 
 setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 setSearchString model string =
-    ( PaginationSettings.setSearchStringAndReset
-        { searchStringLens =
-            Page.lenses.searchString
-        , paginationSettingsLens =
-            Page.lenses.pagination
-                |> Compose.lensWithLens Pagination.lenses.meals
-        }
-        model
-        string
+    ( model
+        |> Tristate.mapMain
+            (\main ->
+                PaginationSettings.setSearchStringAndReset
+                    { searchStringLens =
+                        Page.lenses.main.searchString
+                    , paginationSettingsLens =
+                        Page.lenses.main.pagination
+                            |> Compose.lensWithLens Pagination.lenses.meals
+                    }
+                    main
+                    string
+            )
     , Cmd.none
     )
 
 
 mapMealStateById : MealId -> (Page.MealState -> Page.MealState) -> Page.Model -> Page.Model
 mapMealStateById mealId =
-    Page.lenses.meals
-        |> LensUtil.updateById mealId
-
-
-setError : Error -> Page.Model -> Page.Model
-setError =
-    HttpUtil.setError Page.lenses.initialization
+    LensUtil.updateById mealId Page.lenses.main.meals
+        >> Tristate.mapMain
