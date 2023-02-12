@@ -170,8 +170,8 @@ toError configuration =
 
 
 view :
-    { mainPageURLForLoginSuggestion : Maybe String
-    , viewMain : main -> Html msg
+    { showLoginRedirect : Bool
+    , viewMain : Configuration -> main -> Html msg
     }
     -> Tristate main initial
     -> Html msg
@@ -181,7 +181,7 @@ view ps t =
             div [] [ Links.loadingSymbol ]
 
         Main main ->
-            ps.viewMain main
+            ps.viewMain t.configuration main
 
         Error errorExplanation ->
             let
@@ -195,14 +195,16 @@ view ps t =
                         ]
 
                 redirectRow =
-                    ps.mainPageURLForLoginSuggestion
+                    t.configuration
+                        |> Just
+                        |> Maybe.Extra.filter (always ps.showLoginRedirect)
                         |> Maybe.Extra.unwrap []
-                            (\address ->
+                            (\configuration ->
                                 [ tr []
                                     [ td []
                                         [ ViewUtil.navigationToPageButton
                                             { page = Login
-                                            , mainPageURL = address
+                                            , mainPageURL = configuration.mainPageURL
                                             , currentPage = Nothing
                                             }
                                         ]
