@@ -8,27 +8,66 @@ import Basics.Extra exposing (flip)
 import Monocle.Lens exposing (Lens)
 import Pages.MealEntries.MealEntryCreationClientInput exposing (MealEntryCreationClientInput)
 import Pages.MealEntries.MealEntryUpdateClientInput exposing (MealEntryUpdateClientInput)
-import Pages.MealEntries.Pagination exposing (Pagination)
-import Pages.MealEntries.Status exposing (Status)
+import Pages.MealEntries.Pagination as Pagination exposing (Pagination)
 import Pages.Meals.MealUpdateClientInput exposing (MealUpdateClientInput)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.View.Tristate as Tristate exposing (Tristate)
 import Util.DictList as DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
-import Util.Initialization exposing (Initialization)
 
 
 type alias Model =
-    { authorizedAccess : AuthorizedAccess
+    Tristate Main Initial
+
+
+type alias Main =
+    { jwt : JWT
     , meal : Editing Meal MealUpdateClientInput
     , mealEntries : MealEntryStateMap
     , recipes : RecipeMap
     , recipesSearchString : String
     , entriesSearchString : String
     , mealEntriesToAdd : AddMealEntriesMap
-    , initialization : Initialization Status
     , pagination : Pagination
     }
+
+
+type alias Initial =
+    { jwt : JWT
+    , meal : Maybe (Editing Meal MealUpdateClientInput)
+    , mealEntries : Maybe MealEntryStateMap
+    , recipes : Maybe RecipeMap
+    }
+
+
+initial : AuthorizedAccess -> Model
+initial authorizedAccess =
+    { jwt = authorizedAccess.jwt
+    , meal = Nothing
+    , mealEntries = Nothing
+    , recipes = Nothing
+    }
+        |> Tristate.createInitial authorizedAccess.configuration
+
+
+initialToMain : Initial -> Maybe Main
+initialToMain i =
+    Maybe.map3
+        (\meal mealEntries recipes ->
+            { jwt = i.jwt
+            , meal = meal
+            , mealEntries = mealEntries
+            , recipes = recipes
+            , recipesSearchString = ""
+            , entriesSearchString = ""
+            , mealEntriesToAdd = DictList.empty
+            , pagination = Pagination.initial
+            }
+        )
+        i.meal
+        i.mealEntries
+        i.recipes
 
 
 type alias MealEntryState =
@@ -54,24 +93,36 @@ type alias Flags =
 
 
 lenses :
-    { meal : Lens Model (Editing Meal MealUpdateClientInput)
-    , mealEntries : Lens Model MealEntryStateMap
-    , mealEntriesToAdd : Lens Model AddMealEntriesMap
-    , recipes : Lens Model RecipeMap
-    , recipesSearchString : Lens Model String
-    , entriesSearchString : Lens Model String
-    , initialization : Lens Model (Initialization Status)
-    , pagination : Lens Model Pagination
+    { initial :
+        { meal : Lens Initial (Maybe (Editing Meal MealUpdateClientInput))
+        , mealEntries : Lens Initial (Maybe MealEntryStateMap)
+        , recipes : Lens Initial (Maybe RecipeMap)
+        }
+    , main :
+        { meal : Lens Main (Editing Meal MealUpdateClientInput)
+        , mealEntries : Lens Main MealEntryStateMap
+        , mealEntriesToAdd : Lens Main AddMealEntriesMap
+        , recipes : Lens Main RecipeMap
+        , recipesSearchString : Lens Main String
+        , entriesSearchString : Lens Main String
+        , pagination : Lens Main Pagination
+        }
     }
 lenses =
-    { meal = Lens .meal (\b a -> { a | meal = b })
-    , mealEntries = Lens .mealEntries (\b a -> { a | mealEntries = b })
-    , mealEntriesToAdd = Lens .mealEntriesToAdd (\b a -> { a | mealEntriesToAdd = b })
-    , recipes = Lens .recipes (\b a -> { a | recipes = b })
-    , recipesSearchString = Lens .recipesSearchString (\b a -> { a | recipesSearchString = b })
-    , entriesSearchString = Lens .entriesSearchString (\b a -> { a | entriesSearchString = b })
-    , initialization = Lens .initialization (\b a -> { a | initialization = b })
-    , pagination = Lens .pagination (\b a -> { a | pagination = b })
+    { initial =
+        { meal = Lens .meal (\b a -> { a | meal = b })
+        , mealEntries = Lens .mealEntries (\b a -> { a | mealEntries = b })
+        , recipes = Lens .recipes (\b a -> { a | recipes = b })
+        }
+    , main =
+        { meal = Lens .meal (\b a -> { a | meal = b })
+        , mealEntries = Lens .mealEntries (\b a -> { a | mealEntries = b })
+        , mealEntriesToAdd = Lens .mealEntriesToAdd (\b a -> { a | mealEntriesToAdd = b })
+        , recipes = Lens .recipes (\b a -> { a | recipes = b })
+        , recipesSearchString = Lens .recipesSearchString (\b a -> { a | recipesSearchString = b })
+        , entriesSearchString = Lens .entriesSearchString (\b a -> { a | entriesSearchString = b })
+        , pagination = Lens .pagination (\b a -> { a | pagination = b })
+        }
     }
 
 
