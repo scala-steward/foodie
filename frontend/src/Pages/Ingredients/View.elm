@@ -22,12 +22,11 @@ import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
 import Pages.Ingredients.AmountUnitClientInput as AmountUnitClientInput
 import Pages.Ingredients.ComplexIngredientClientInput as ComplexIngredientClientInput exposing (ComplexIngredientClientInput)
-import Pages.Ingredients.FoodGroup as FoodGroup exposing (FoodGroup, IngredientState)
+import Pages.Ingredients.FoodGroup as FoodGroup exposing (IngredientState)
 import Pages.Ingredients.IngredientCreationClientInput as IngredientCreationClientInput exposing (IngredientCreationClientInput)
 import Pages.Ingredients.IngredientUpdateClientInput as IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
 import Pages.Ingredients.Page as Page
 import Pages.Ingredients.Pagination as Pagination exposing (Pagination)
-import Pages.Ingredients.Status as Status
 import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput
 import Pages.Recipes.View
 import Pages.Util.DictListUtil as DictUtil
@@ -37,6 +36,7 @@ import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput
 import Pages.Util.ViewUtil as ViewUtil
+import Pages.View.Tristate as Tristate
 import Paginate exposing (PaginatedList)
 import Util.DictList as DictList exposing (DictList)
 import Util.Editing as Editing
@@ -46,39 +46,47 @@ import Util.SearchUtil as SearchUtil
 
 view : Page.Model -> Html Page.Msg
 view model =
-    ViewUtil.viewWithErrorHandling
-        { isFinished = Status.isFinished
-        , initialization = .initialization
-        , configuration = .authorizedAccess >> .configuration
-        , jwt = .authorizedAccess >> .jwt >> Just
+    Tristate.view
+        { viewMain = viewMain model.configuration
+        , mainPageURLForLoginSuggestion =
+            model |> .configuration |> .mainPageURL |> Just
+        }
+        model
+
+
+viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain configuration main =
+    ViewUtil.viewWithErrorHandlingSimple
+        { configuration = configuration
+        , jwt = .jwt >> Just
         , currentPage = Nothing
         , showNavigation = True
         }
-        model
+        main
     <|
         let
             viewIngredientState =
                 Editing.unpack
-                    { onView = viewIngredientLine model.ingredientsGroup.foods
-                    , onUpdate = updateIngredientLine model.ingredientsGroup.foods
-                    , onDelete = deleteIngredientLine model.ingredientsGroup.foods
+                    { onView = viewIngredientLine main.ingredientsGroup.foods
+                    , onUpdate = updateIngredientLine main.ingredientsGroup.foods
+                    , onDelete = deleteIngredientLine main.ingredientsGroup.foods
                     }
 
             viewComplexIngredientState =
                 Editing.unpack
-                    { onView = viewComplexIngredientLine model.complexIngredientsGroup.foods
-                    , onUpdate = updateComplexIngredientLine model.complexIngredientsGroup.foods
-                    , onDelete = deleteComplexIngredientLine model.complexIngredientsGroup.foods
+                    { onView = viewComplexIngredientLine main.complexIngredientsGroup.foods
+                    , onUpdate = updateComplexIngredientLine main.complexIngredientsGroup.foods
+                    , onDelete = deleteComplexIngredientLine main.complexIngredientsGroup.foods
                     }
 
             viewIngredientsWith :
                 (IngredientState ingredient update -> Bool)
-                -> Lens Page.Model (FoodGroup ingredientId ingredient update foodId food creation)
+                -> Lens Page.Main (FoodGroup.Main ingredientId ingredient update foodId food creation)
                 -> (ingredient -> foodId)
                 -> DictList foodId { a | name : String }
                 -> PaginatedList (IngredientState ingredient update)
             viewIngredientsWith searchFilter groupLens idOf nameMap =
-                model
+                main
                     |> groupLens.get
                     |> .ingredients
                     |> DictList.values
@@ -87,33 +95,33 @@ view model =
                     |> ViewUtil.paginate
                         { pagination =
                             groupLens
-                                |> Compose.lensWithLens FoodGroup.lenses.pagination
+                                |> Compose.lensWithLens FoodGroup.lenses.main.pagination
                                 |> Compose.lensWithLens Pagination.lenses.ingredients
                         }
-                        model
+                        main
 
             viewIngredients =
                 viewIngredientsWith
                     (.original
                         >> .foodId
-                        >> DictUtil.nameOrEmpty model.ingredientsGroup.foods
-                        >> SearchUtil.search model.ingredientsSearchString
+                        >> DictUtil.nameOrEmpty main.ingredientsGroup.foods
+                        >> SearchUtil.search main.ingredientsSearchString
                     )
-                    Page.lenses.ingredientsGroup
+                    Page.lenses.main.ingredientsGroup
                     .foodId
-                    model.ingredientsGroup.foods
+                    main.ingredientsGroup.foods
 
             viewComplexIngredients =
                 viewIngredientsWith
                     (.original
                         >> .complexFoodId
-                        >> (\id -> complexFoodInfo id model.complexIngredientsGroup.foods)
+                        >> (\id -> complexFoodInfo id main.complexIngredientsGroup.foods)
                         >> .name
-                        >> SearchUtil.search model.complexIngredientsSearchString
+                        >> SearchUtil.search main.complexIngredientsSearchString
                     )
-                    Page.lenses.complexIngredientsGroup
+                    Page.lenses.main.complexIngredientsGroup
                     .complexFoodId
-                    model.complexIngredientsGroup.foods
+                    main.complexIngredientsGroup.foods
 
             viewRecipe =
                 Editing.unpack
@@ -129,7 +137,7 @@ view model =
                                     ]
                                 , td [ Style.classes.controls ]
                                     [ Links.linkButton
-                                        { url = Links.frontendPage model.authorizedAccess.configuration <| Addresses.Frontend.statisticsRecipeSelect.address <| model.recipe.original.id
+                                        { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsRecipeSelect.address <| main.recipe.original.id
                                         , attributes = [ Style.classes.button.nutrients ]
                                         , children = [ text "Nutrients" ]
                                         }
@@ -167,7 +175,7 @@ view model =
                             , styles = []
                             }
                     }
-                    model.recipe
+                    main.recipe
         in
         div [ Style.ids.ingredientEditor ]
             [ div []
@@ -181,7 +189,7 @@ view model =
             , div [ Style.classes.choices ]
                 [ HtmlUtil.searchAreaWith
                     { msg = Page.SetIngredientsSearchString
-                    , searchString = model.ingredientsSearchString
+                    , searchString = main.ingredientsSearchString
                     }
                 , table [ Style.classes.elementsWithControlsTable ]
                     [ colgroup []
@@ -208,10 +216,10 @@ view model =
                     [ ViewUtil.pagerButtons
                         { msg =
                             PaginationSettings.updateCurrentPage
-                                { pagination = Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.pagination
+                                { pagination = Page.lenses.main.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.pagination
                                 , items = Pagination.lenses.ingredients
                                 }
-                                model
+                                main
                                 >> Page.SetIngredientsPagination
                         , elements = viewIngredients
                         }
@@ -221,7 +229,7 @@ view model =
             , div [ Style.classes.choices ]
                 [ HtmlUtil.searchAreaWith
                     { msg = Page.SetComplexIngredientsSearchString
-                    , searchString = model.complexIngredientsSearchString
+                    , searchString = main.complexIngredientsSearchString
                     }
                 , table [ Style.classes.elementsWithControlsTable ]
                     [ colgroup []
@@ -248,10 +256,10 @@ view model =
                     [ ViewUtil.pagerButtons
                         { msg =
                             PaginationSettings.updateCurrentPage
-                                { pagination = Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.pagination
+                                { pagination = Page.lenses.main.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.pagination
                                 , items = Pagination.lenses.ingredients
                                 }
-                                model
+                                main
                                 >> Page.SetComplexIngredientsPagination
                         , elements = viewComplexIngredients
                         }
@@ -259,45 +267,45 @@ view model =
                 ]
             , div []
                 [ button
-                    [ disabled <| model.foodsMode == Page.Plain
+                    [ disabled <| main.foodsMode == Page.Plain
                     , onClick <| Page.ChangeFoodsMode Page.Plain
                     , Style.classes.button.alternative
                     ]
                     [ text "Ingredients" ]
                 , button
-                    [ disabled <| model.foodsMode == Page.Complex
+                    [ disabled <| main.foodsMode == Page.Complex
                     , onClick <| Page.ChangeFoodsMode Page.Complex
                     , Style.classes.button.alternative
                     ]
                     [ text "Complex ingredients" ]
                 ]
-            , case model.foodsMode of
+            , case main.foodsMode of
                 Page.Plain ->
-                    viewPlain model
+                    viewPlain configuration main
 
                 Page.Complex ->
-                    viewComplex model
+                    viewComplex configuration main
             ]
 
 
-viewPlain : Page.Model -> Html Page.Msg
-viewPlain model =
+viewPlain : Configuration -> Page.Main -> Html Page.Msg
+viewPlain configuration main =
     let
         viewFoods =
-            model.ingredientsGroup.foods
+            main.ingredientsGroup.foods
                 |> DictList.values
-                |> List.filter (.name >> SearchUtil.search model.ingredientsGroup.foodsSearchString)
+                |> List.filter (.name >> SearchUtil.search main.ingredientsGroup.foodsSearchString)
                 |> List.sortBy .name
                 |> ViewUtil.paginate
                     { pagination =
-                        Page.lenses.ingredientsGroup
-                            |> Compose.lensWithLens FoodGroup.lenses.pagination
+                        Page.lenses.main.ingredientsGroup
+                            |> Compose.lensWithLens FoodGroup.lenses.main.pagination
                             |> Compose.lensWithLens Pagination.lenses.foods
                     }
-                    model
+                    main
 
         ( amount, unit ) =
-            if anySelection Page.lenses.ingredientsGroup model then
+            if anySelection Page.lenses.main.ingredientsGroup main then
                 ( "Amount", "Unit" )
 
             else
@@ -307,7 +315,7 @@ viewPlain model =
         [ div [ Style.classes.addElement ]
             [ HtmlUtil.searchAreaWith
                 { msg = Page.SetFoodsSearchString
-                , searchString = model.ingredientsGroup.foodsSearchString
+                , searchString = main.ingredientsGroup.foodsSearchString
                 }
             , table [ Style.classes.elementsWithControlsTable ]
                 [ colgroup []
@@ -327,17 +335,17 @@ viewPlain model =
                 , tbody []
                     (viewFoods
                         |> Paginate.page
-                        |> List.map (viewFoodLine model.authorizedAccess.configuration model.ingredientsGroup.foods model.ingredientsGroup.foodsToAdd model.ingredientsGroup.ingredients)
+                        |> List.map (viewFoodLine configuration main.ingredientsGroup.foods main.ingredientsGroup.foodsToAdd main.ingredientsGroup.ingredients)
                     )
                 ]
             , div [ Style.classes.pagination ]
                 [ ViewUtil.pagerButtons
                     { msg =
                         PaginationSettings.updateCurrentPage
-                            { pagination = Page.lenses.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.pagination
+                            { pagination = Page.lenses.main.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.pagination
                             , items = Pagination.lenses.foods
                             }
-                            model
+                            main
                             >> Page.SetIngredientsPagination
                     , elements = viewFoods
                     }
@@ -346,24 +354,24 @@ viewPlain model =
         ]
 
 
-viewComplex : Page.Model -> Html Page.Msg
-viewComplex model =
+viewComplex : Configuration -> Page.Main -> Html Page.Msg
+viewComplex configuration main =
     let
         viewComplexFoods =
-            model.complexIngredientsGroup.foods
+            main.complexIngredientsGroup.foods
                 |> DictList.values
-                |> List.filter (.name >> SearchUtil.search model.complexIngredientsGroup.foodsSearchString)
+                |> List.filter (.name >> SearchUtil.search main.complexIngredientsGroup.foodsSearchString)
                 |> List.sortBy .name
                 |> ViewUtil.paginate
                     { pagination =
-                        Page.lenses.complexIngredientsGroup
-                            |> Compose.lensWithLens FoodGroup.lenses.pagination
+                        Page.lenses.main.complexIngredientsGroup
+                            |> Compose.lensWithLens FoodGroup.lenses.main.pagination
                             |> Compose.lensWithLens Pagination.lenses.foods
                     }
-                    model
+                    main
 
         ( amount, unit ) =
-            if anySelection Page.lenses.complexIngredientsGroup model then
+            if anySelection Page.lenses.main.complexIngredientsGroup main then
                 ( "Factor", "Amount" )
 
             else
@@ -373,7 +381,7 @@ viewComplex model =
         [ div [ Style.classes.addElement ]
             [ HtmlUtil.searchAreaWith
                 { msg = Page.SetComplexFoodsSearchString
-                , searchString = model.complexIngredientsGroup.foodsSearchString
+                , searchString = main.complexIngredientsGroup.foodsSearchString
                 }
             , table [ Style.classes.elementsWithControlsTable ]
                 [ colgroup []
@@ -393,17 +401,17 @@ viewComplex model =
                 , tbody []
                     (viewComplexFoods
                         |> Paginate.page
-                        |> List.map (viewComplexFoodLine model.authorizedAccess.configuration model.complexIngredientsGroup.foods model.complexIngredientsGroup.foodsToAdd model.complexIngredientsGroup.ingredients)
+                        |> List.map (viewComplexFoodLine configuration main.complexIngredientsGroup.foods main.complexIngredientsGroup.foodsToAdd main.complexIngredientsGroup.ingredients)
                     )
                 ]
             , div [ Style.classes.pagination ]
                 [ ViewUtil.pagerButtons
                     { msg =
                         PaginationSettings.updateCurrentPage
-                            { pagination = Page.lenses.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.pagination
+                            { pagination = Page.lenses.main.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.pagination
                             , items = Pagination.lenses.foods
                             }
-                            model
+                            main
                             >> Page.SetComplexIngredientsPagination
                     , elements = viewComplexFoods
                     }
@@ -935,8 +943,8 @@ viewComplexFoodLine configuration complexFoodMap complexIngredientsToAdd complex
         )
 
 
-anySelection : Lens Page.Model (FoodGroup ingredientId ingredient update foodId food creation) -> Page.Model -> Bool
+anySelection : Lens Page.Main (FoodGroup.Main ingredientId ingredient update foodId food creation) -> Page.Main -> Bool
 anySelection foodGroupLens =
-    (foodGroupLens |> Compose.lensWithLens FoodGroup.lenses.foodsToAdd).get
+    (foodGroupLens |> Compose.lensWithLens FoodGroup.lenses.main.foodsToAdd).get
         >> DictList.isEmpty
         >> not
