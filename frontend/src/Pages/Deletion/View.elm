@@ -11,13 +11,11 @@ import Pages.View.Tristate as Tristate
 
 
 view : Page.Model -> Html Page.Msg
-view model =
+view =
     Tristate.view
-        { viewMain = viewMain model.configuration
-        , mainPageURLForLoginSuggestion =
-            model |> .configuration |> .mainPageURL |> Just
+        { viewMain = viewMain
+        , showLoginRedirect = True
         }
-        model
 
 
 viewMain : Configuration -> Page.Main -> Html Page.Msg
