@@ -17,13 +17,13 @@ import Pages.ReferenceMaps.Page as Page
 import Pages.ReferenceMaps.Pagination as Pagination
 import Pages.ReferenceMaps.ReferenceMapCreationClientInput as ReferenceMapCreationClientInput exposing (ReferenceMapCreationClientInput)
 import Pages.ReferenceMaps.ReferenceMapUpdateClientInput as ReferenceMapUpdateClientInput exposing (ReferenceMapUpdateClientInput)
-import Pages.ReferenceMaps.Status as Status
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
 import Pages.Util.ViewUtil as ViewUtil
+import Pages.View.Tristate as Tristate
 import Paginate
 import Util.DictList as DictList
 import Util.Editing as Editing
@@ -32,43 +32,49 @@ import Util.SearchUtil as SearchUtil
 
 
 view : Page.Model -> Html Page.Msg
-view model =
-    ViewUtil.viewWithErrorHandling
-        { isFinished = Status.isFinished
-        , initialization = Page.lenses.initialization.get
-        , configuration = .authorizedAccess >> .configuration
-        , jwt = .authorizedAccess >> .jwt >> Just
+view =
+    Tristate.view
+        { viewMain = viewMain
+        , showLoginRedirect = True
+        }
+
+
+viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain configuration main =
+    ViewUtil.viewWithErrorHandlingSimple
+        { configuration = configuration
+        , jwt = .jwt >> Just
         , currentPage = Just ViewUtil.ReferenceMaps
         , showNavigation = True
         }
-        model
+        main
     <|
         let
             viewReferenceMapState =
                 Editing.unpack
-                    { onView = viewReferenceMapLine model.authorizedAccess.configuration
+                    { onView = viewReferenceMapLine configuration
                     , onUpdate = editReferenceMapLine |> always
                     , onDelete = deleteReferenceMapLine
                     }
 
             viewReferenceMaps =
-                model.referenceMaps
-                    |> DictList.filter (\_ v -> SearchUtil.search model.searchString v.original.name)
+                main.referenceMaps
+                    |> DictList.filter (\_ v -> SearchUtil.search main.searchString v.original.name)
                     |> DictList.values
                     |> List.sortBy (.original >> .name >> String.toLower)
                     |> ViewUtil.paginate
-                        { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.referenceMaps
+                        { pagination = Page.lenses.main.pagination |> Compose.lensWithLens Pagination.lenses.referenceMaps
                         }
-                        model
+                        main
 
             ( button, creationLine ) =
-                createReferenceMap model.referenceMapToAdd |> Either.unpack (\l -> ( [ l ], [] )) (\r -> ( [], [ r ] ))
+                createReferenceMap main.referenceMapToAdd |> Either.unpack (\l -> ( [ l ], [] )) (\r -> ( [], [ r ] ))
         in
         div [ Style.ids.addReferenceMapView ]
             (button
                 ++ [ HtmlUtil.searchAreaWith
                         { msg = Page.SetSearchString
-                        , searchString = model.searchString
+                        , searchString = main.searchString
                         }
                    , table [ Style.classes.elementsWithControlsTable ]
                         (tableHeader { controlButtons = 3 }
@@ -82,10 +88,10 @@ view model =
                         [ ViewUtil.pagerButtons
                             { msg =
                                 PaginationSettings.updateCurrentPage
-                                    { pagination = Page.lenses.pagination
+                                    { pagination = Page.lenses.main.pagination
                                     , items = Pagination.lenses.referenceMaps
                                     }
-                                    model
+                                    main
                                     >> Page.SetPagination
                             , elements = viewReferenceMaps
                             }
