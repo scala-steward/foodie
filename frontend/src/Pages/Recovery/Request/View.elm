@@ -24,7 +24,7 @@ view =
 
 viewMain : Configuration -> Page.Main -> Html Page.Msg
 viewMain configuration main =
-    ViewUtil.viewWithErrorHandlingSimple
+    ViewUtil.viewMainWith
         { configuration = configuration
         , jwt = always Nothing
         , currentPage = Nothing

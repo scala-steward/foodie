@@ -41,7 +41,7 @@ view =
 
 viewMain : Configuration -> Page.Main -> Html Page.Msg
 viewMain configuration main =
-    ViewUtil.viewWithErrorHandlingSimple
+    ViewUtil.viewMainWith
         { configuration = configuration
         , jwt = .jwt >> Just
         , currentPage = Just ViewUtil.ReferenceMaps

@@ -23,7 +23,7 @@ view =
 
 viewMain : Configuration -> Page.Main -> Html Page.Msg
 viewMain configuration model =
-    ViewUtil.viewWithErrorHandlingSimple
+    ViewUtil.viewMainWith
         { configuration = configuration
         , jwt = always Nothing
         , currentPage = Just ViewUtil.Login

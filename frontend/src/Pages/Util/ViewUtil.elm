@@ -1,4 +1,4 @@
-module Pages.Util.ViewUtil exposing (Page(..), navigationBarWith, navigationToPageButton, navigationToPageButtonWith, pagerButtons, paginate, viewWithErrorHandling, viewWithErrorHandlingSimple)
+module Pages.Util.ViewUtil exposing (Page(..), navigationBarWith, navigationToPageButton, navigationToPageButtonWith, pagerButtons, paginate, viewWithErrorHandling, viewMainWith)
 
 import Api.Auxiliary exposing (JWT)
 import Api.Types.LoginContent exposing (decoderLoginContent)
@@ -100,7 +100,7 @@ viewWithErrorHandling params model html =
                 div [] [ Links.loadingSymbol ]
 
 
-viewWithErrorHandlingSimple :
+viewMainWith :
     { configuration : Configuration
     , jwt : main -> Maybe JWT
     , currentPage : Maybe Page
@@ -109,7 +109,7 @@ viewWithErrorHandlingSimple :
     -> main
     -> Html msg
     -> Html msg
-viewWithErrorHandlingSimple params model html =
+viewMainWith params model html =
     let
         unknown =
             "<unknown>"
