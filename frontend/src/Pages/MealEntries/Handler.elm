@@ -340,16 +340,14 @@ setRecipesSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 setRecipesSearchString model string =
     ( model
         |> Tristate.mapMain
-            (\main ->
-                PaginationSettings.setSearchStringAndReset
-                    { searchStringLens =
-                        Page.lenses.main.recipesSearchString
-                    , paginationSettingsLens =
-                        Page.lenses.main.pagination
-                            |> Compose.lensWithLens Pagination.lenses.recipes
-                    }
-                    main
-                    string
+            (PaginationSettings.setSearchStringAndReset
+                { searchStringLens =
+                    Page.lenses.main.recipesSearchString
+                , paginationSettingsLens =
+                    Page.lenses.main.pagination
+                        |> Compose.lensWithLens Pagination.lenses.recipes
+                }
+                string
             )
     , Cmd.none
     )
@@ -359,16 +357,14 @@ setEntriesSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 setEntriesSearchString model string =
     ( model
         |> Tristate.mapMain
-            (\main ->
-                PaginationSettings.setSearchStringAndReset
-                    { searchStringLens =
-                        Page.lenses.main.entriesSearchString
-                    , paginationSettingsLens =
-                        Page.lenses.main.pagination
-                            |> Compose.lensWithLens Pagination.lenses.mealEntries
-                    }
-                    main
-                    string
+            (PaginationSettings.setSearchStringAndReset
+                { searchStringLens =
+                    Page.lenses.main.entriesSearchString
+                , paginationSettingsLens =
+                    Page.lenses.main.pagination
+                        |> Compose.lensWithLens Pagination.lenses.mealEntries
+                }
+                string
             )
     , Cmd.none
     )

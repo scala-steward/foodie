@@ -291,15 +291,13 @@ setRecipesSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 setRecipesSearchString model string =
     ( model
         |> Tristate.mapMain
-            (\main ->
-                PaginationSettings.setSearchStringAndReset
-                    { searchStringLens = Page.lenses.main.recipesSearchString
-                    , paginationSettingsLens =
-                        Page.lenses.main.pagination
-                            |> Compose.lensWithLens Pagination.lenses.recipes
-                    }
-                    main
-                    string
+            (PaginationSettings.setSearchStringAndReset
+                { searchStringLens = Page.lenses.main.recipesSearchString
+                , paginationSettingsLens =
+                    Page.lenses.main.pagination
+                        |> Compose.lensWithLens Pagination.lenses.recipes
+                }
+                string
             )
     , Cmd.none
     )
@@ -309,15 +307,13 @@ setComplexFoodsSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg
 setComplexFoodsSearchString model string =
     ( model
         |> Tristate.mapMain
-            (\main ->
-                PaginationSettings.setSearchStringAndReset
-                    { searchStringLens = Page.lenses.main.complexFoodsSearchString
-                    , paginationSettingsLens =
-                        Page.lenses.main.pagination
-                            |> Compose.lensWithLens Pagination.lenses.complexFoods
-                    }
-                    main
-                    string
+            (PaginationSettings.setSearchStringAndReset
+                { searchStringLens = Page.lenses.main.complexFoodsSearchString
+                , paginationSettingsLens =
+                    Page.lenses.main.pagination
+                        |> Compose.lensWithLens Pagination.lenses.complexFoods
+                }
+                string
             )
     , Cmd.none
     )

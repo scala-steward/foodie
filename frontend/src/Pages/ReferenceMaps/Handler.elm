@@ -257,16 +257,14 @@ setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 setSearchString model string =
     ( model
         |> Tristate.mapMain
-            (\main ->
-                PaginationSettings.setSearchStringAndReset
-                    { searchStringLens =
-                        Page.lenses.main.searchString
-                    , paginationSettingsLens =
-                        Page.lenses.main.pagination
-                            |> Compose.lensWithLens Pagination.lenses.referenceMaps
-                    }
-                    main
-                    string
+            (PaginationSettings.setSearchStringAndReset
+                { searchStringLens =
+                    Page.lenses.main.searchString
+                , paginationSettingsLens =
+                    Page.lenses.main.pagination
+                        |> Compose.lensWithLens Pagination.lenses.referenceMaps
+                }
+                string
             )
     , Cmd.none
     )

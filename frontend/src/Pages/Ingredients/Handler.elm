@@ -553,18 +553,16 @@ setFoodsSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 setFoodsSearchString model string =
     ( model
         |> Tristate.mapMain
-            (\main ->
-                PaginationSettings.setSearchStringAndReset
-                    { searchStringLens =
-                        Page.lenses.main.ingredientsGroup
-                            |> Compose.lensWithLens FoodGroup.lenses.main.foodsSearchString
-                    , paginationSettingsLens =
-                        Page.lenses.main.ingredientsGroup
-                            |> Compose.lensWithLens FoodGroup.lenses.main.pagination
-                            |> Compose.lensWithLens Pagination.lenses.foods
-                    }
-                    main
-                    string
+            (PaginationSettings.setSearchStringAndReset
+                { searchStringLens =
+                    Page.lenses.main.ingredientsGroup
+                        |> Compose.lensWithLens FoodGroup.lenses.main.foodsSearchString
+                , paginationSettingsLens =
+                    Page.lenses.main.ingredientsGroup
+                        |> Compose.lensWithLens FoodGroup.lenses.main.pagination
+                        |> Compose.lensWithLens Pagination.lenses.foods
+                }
+                string
             )
     , Cmd.none
     )
@@ -574,18 +572,16 @@ setComplexFoodsSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg
 setComplexFoodsSearchString model string =
     ( model
         |> Tristate.mapMain
-            (\main ->
-                PaginationSettings.setSearchStringAndReset
-                    { searchStringLens =
-                        Page.lenses.main.complexIngredientsGroup
-                            |> Compose.lensWithLens FoodGroup.lenses.main.foodsSearchString
-                    , paginationSettingsLens =
-                        Page.lenses.main.complexIngredientsGroup
-                            |> Compose.lensWithLens FoodGroup.lenses.main.pagination
-                            |> Compose.lensWithLens Pagination.lenses.foods
-                    }
-                    main
-                    string
+            (PaginationSettings.setSearchStringAndReset
+                { searchStringLens =
+                    Page.lenses.main.complexIngredientsGroup
+                        |> Compose.lensWithLens FoodGroup.lenses.main.foodsSearchString
+                , paginationSettingsLens =
+                    Page.lenses.main.complexIngredientsGroup
+                        |> Compose.lensWithLens FoodGroup.lenses.main.pagination
+                        |> Compose.lensWithLens Pagination.lenses.foods
+                }
+                string
             )
     , Cmd.none
     )
@@ -910,17 +906,15 @@ setSearchString :
 setSearchString lenses model string =
     ( model
         |> Tristate.mapMain
-            (\main ->
-                PaginationSettings.setSearchStringAndReset
-                    { searchStringLens =
-                        lenses.searchStringLens
-                    , paginationSettingsLens =
-                        lenses.foodGroupLens
-                            |> Compose.lensWithLens FoodGroup.lenses.main.pagination
-                            |> Compose.lensWithLens Pagination.lenses.ingredients
-                    }
-                    main
-                    string
+            (PaginationSettings.setSearchStringAndReset
+                { searchStringLens =
+                    lenses.searchStringLens
+                , paginationSettingsLens =
+                    lenses.foodGroupLens
+                        |> Compose.lensWithLens FoodGroup.lenses.main.pagination
+                        |> Compose.lensWithLens Pagination.lenses.ingredients
+                }
+                string
             )
     , Cmd.none
     )

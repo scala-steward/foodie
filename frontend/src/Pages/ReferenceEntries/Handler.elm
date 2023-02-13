@@ -381,16 +381,14 @@ setNutrientsSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 setNutrientsSearchString model string =
     ( model
         |> Tristate.mapMain
-            (\main ->
-                PaginationSettings.setSearchStringAndReset
-                    { searchStringLens =
-                        Page.lenses.main.nutrientsSearchString
-                    , paginationSettingsLens =
-                        Page.lenses.main.pagination
-                            |> Compose.lensWithLens Pagination.lenses.nutrients
-                    }
-                    main
-                    string
+            (PaginationSettings.setSearchStringAndReset
+                { searchStringLens =
+                    Page.lenses.main.nutrientsSearchString
+                , paginationSettingsLens =
+                    Page.lenses.main.pagination
+                        |> Compose.lensWithLens Pagination.lenses.nutrients
+                }
+                string
             )
     , Cmd.none
     )
@@ -400,16 +398,14 @@ setReferenceEntriesSearchString : Page.Model -> String -> ( Page.Model, Cmd Page
 setReferenceEntriesSearchString model string =
     ( model
         |> Tristate.mapMain
-            (\main ->
-                PaginationSettings.setSearchStringAndReset
-                    { searchStringLens =
-                        Page.lenses.main.referenceEntriesSearchString
-                    , paginationSettingsLens =
-                        Page.lenses.main.pagination
-                            |> Compose.lensWithLens Pagination.lenses.referenceEntries
-                    }
-                    main
-                    string
+            (PaginationSettings.setSearchStringAndReset
+                { searchStringLens =
+                    Page.lenses.main.referenceEntriesSearchString
+                , paginationSettingsLens =
+                    Page.lenses.main.pagination
+                        |> Compose.lensWithLens Pagination.lenses.referenceEntries
+                }
+                string
             )
     , Cmd.none
     )
