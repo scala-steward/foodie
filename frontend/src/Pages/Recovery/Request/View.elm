@@ -1,5 +1,6 @@
 module Pages.Recovery.Request.View exposing (view)
 
+import Configuration exposing (Configuration)
 import Html exposing (Html, button, div, input, label, table, tbody, td, text, tr)
 import Html.Attributes exposing (disabled, value)
 import Html.Events exposing (onClick, onInput)
@@ -9,48 +10,55 @@ import Pages.Recovery.Request.Page as Page
 import Pages.Util.Links as Links
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
+import Pages.View.Tristate as Tristate
 import Util.MaybeUtil as MaybeUtil
 
 
 view : Page.Model -> Html Page.Msg
-view model =
-    ViewUtil.viewWithErrorHandling
-        { isFinished = always True
-        , initialization = Page.lenses.initialization.get
-        , configuration = .configuration
+view =
+    Tristate.view
+        { viewMain = viewMain
+        , showLoginRedirect = True
+        }
+
+
+viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain configuration main =
+    ViewUtil.viewWithErrorHandlingSimple
+        { configuration = configuration
         , jwt = always Nothing
         , currentPage = Nothing
         , showNavigation = False
         }
-        model
+        main
     <|
-        case model.mode of
+        case main.mode of
             Page.Initial ->
-                viewInitial model
+                viewInitial main
 
             Page.Requesting ->
-                viewRequesting model
+                viewRequesting main
 
             Page.Requested ->
-                viewRequested model
+                viewRequested configuration
 
 
-viewInitial : Page.Model -> Html Page.Msg
+viewInitial : Page.Main -> Html Page.Msg
 viewInitial =
     div [ Style.classes.request ] << searchComponents
 
 
-viewRequesting : Page.Model -> Html Page.Msg
-viewRequesting model =
+viewRequesting : Page.Main -> Html Page.Msg
+viewRequesting main =
     let
         remainder =
-            if List.isEmpty model.users then
+            if List.isEmpty main.users then
                 [ label [] [ text "No matching user found" ] ]
 
             else
                 [ label [] [ text "Multiple users found. Please choose one." ]
                 , div []
-                    (List.map chooseUser model.users)
+                    (List.map chooseUser main.users)
                 ]
 
         chooseUser user =
@@ -62,26 +70,27 @@ viewRequesting model =
                     [ text user.nickname ]
                 ]
     in
-    div [ Style.classes.request ] (searchComponents model ++ remainder)
+    div [ Style.classes.request ] (searchComponents main ++ remainder)
 
 
-viewRequested : Page.Model -> Html Page.Msg
-viewRequested model =
+viewRequested : Configuration -> Html Page.Msg
+viewRequested configuration =
     div [ Style.classes.confirm ]
         [ div [] [ label [] [ text "Requested user recovery. Please check your email" ] ]
         , div []
             [ Links.toLoginButton
-                { configuration = model.configuration
+                { configuration = configuration
                 , buttonText = "Main page"
                 }
             ]
         ]
 
 
-searchComponents model =
+searchComponents : Page.Main -> List (Html Page.Msg)
+searchComponents main =
     let
         isValid =
-            model.searchString |> String.isEmpty |> not
+            main.searchString |> String.isEmpty |> not
 
         enterAction =
             MaybeUtil.optional isValid <| onEnter Page.Find
@@ -95,7 +104,7 @@ searchComponents model =
                     [ input
                         ([ MaybeUtil.defined <| onInput Page.SetSearchString
                          , MaybeUtil.defined <| Style.classes.editable
-                         , MaybeUtil.defined <| value <| model.searchString
+                         , MaybeUtil.defined <| value <| main.searchString
                          , enterAction
                          ]
                             |> Maybe.Extra.values

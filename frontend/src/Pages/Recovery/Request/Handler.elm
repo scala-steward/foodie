@@ -2,22 +2,16 @@ module Pages.Recovery.Request.Handler exposing (init, update)
 
 import Api.Auxiliary exposing (UserId)
 import Api.Types.User exposing (User)
-import Basics.Extra exposing (flip)
 import Pages.Recovery.Request.Page as Page
 import Pages.Recovery.Request.Requests as Requests
+import Pages.View.Tristate as Tristate
 import Result.Extra
-import Util.HttpUtil as HttpUtil exposing (Error)
-import Util.Initialization as Initialization
+import Util.HttpUtil exposing (Error)
 
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    ( { configuration = flags.configuration
-      , users = []
-      , searchString = ""
-      , initialization = Initialization.Loading ()
-      , mode = Page.Initial
-      }
+    ( Page.initial flags.configuration
     , Cmd.none
     )
 
@@ -44,14 +38,16 @@ update msg model =
 find : Page.Model -> ( Page.Model, Cmd Page.Msg )
 find model =
     ( model
-    , Requests.find model.configuration model.searchString
+    , model
+        |> Tristate.foldMain Cmd.none
+            (.searchString >> Requests.find model.configuration)
     )
 
 
 gotFindResponse : Page.Model -> Result Error (List User) -> ( Page.Model, Cmd Page.Msg )
 gotFindResponse model result =
     result
-        |> Result.Extra.unpack (\error -> ( setError error model, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( Tristate.toError model.configuration error, Cmd.none ))
             (\users ->
                 case users of
                     user :: [] ->
@@ -59,8 +55,10 @@ gotFindResponse model result =
 
                     _ ->
                         ( model
-                            |> Page.lenses.users.set users
-                            |> Page.lenses.mode.set Page.Requesting
+                            |> Tristate.mapMain
+                                (Page.lenses.main.users.set users
+                                    >> Page.lenses.main.mode.set Page.Requesting
+                                )
                         , Cmd.none
                         )
             )
@@ -69,8 +67,10 @@ gotFindResponse model result =
 setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 setSearchString model string =
     ( model
-        |> Page.lenses.searchString.set string
-        |> Page.lenses.mode.set Page.Initial
+        |> Tristate.mapMain
+            (Page.lenses.main.searchString.set string
+                >> Page.lenses.main.mode.set Page.Initial
+            )
     , Cmd.none
     )
 
@@ -85,12 +85,7 @@ requestRecovery model userId =
 gotRequestRecoveryResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotRequestRecoveryResponse model result =
     ( result
-        |> Result.Extra.unpack (flip setError model)
-            (\_ -> model |> Page.lenses.mode.set Page.Requested)
+        |> Result.Extra.unpack (Tristate.toError model.configuration)
+            (\_ -> model |> Tristate.mapMain (Page.lenses.main.mode.set Page.Requested))
     , Cmd.none
     )
-
-
-setError : Error -> Page.Model -> Page.Model
-setError =
-    HttpUtil.setError Page.lenses.initialization
