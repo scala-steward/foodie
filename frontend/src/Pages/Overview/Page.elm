@@ -19,7 +19,7 @@ type alias Initial =
 
 initial : Configuration -> Model
 initial =
-    flip Tristate.createInitial ()
+    flip Tristate.createMain ()
 
 
 type alias Msg =
