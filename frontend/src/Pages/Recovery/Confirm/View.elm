@@ -1,6 +1,7 @@
 module Pages.Recovery.Confirm.View exposing (view)
 
 import Basics.Extra exposing (flip)
+import Configuration exposing (Configuration)
 import Html exposing (Html, button, div, input, label, table, tbody, td, text, tr)
 import Html.Attributes exposing (disabled, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -11,15 +12,22 @@ import Pages.Util.Links as Links
 import Pages.Util.PasswordInput as PasswordInput
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
+import Pages.View.Tristate as Tristate
 import Util.MaybeUtil as MaybeUtil
 
 
 view : Page.Model -> Html Page.Msg
-view model =
-    ViewUtil.viewWithErrorHandling
-        { isFinished = always True
-        , initialization = Page.lenses.initialization.get
-        , configuration = .configuration
+view =
+    Tristate.view
+        { viewMain = viewMain
+        , showLoginRedirect = True
+        }
+
+
+viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain configuration model =
+    ViewUtil.viewWithErrorHandlingSimple
+        { configuration = configuration
         , jwt = always Nothing
         , currentPage = Nothing
         , showNavigation = False
@@ -31,10 +39,10 @@ view model =
                 viewResetting model
 
             Page.Confirmed ->
-                viewConfirmed model
+                viewConfirmed configuration
 
 
-viewResetting : Page.Model -> Html Page.Msg
+viewResetting : Page.Main -> Html Page.Msg
 viewResetting model =
     let
         isValidPassword =
@@ -100,13 +108,13 @@ viewResetting model =
         ]
 
 
-viewConfirmed : Page.Model -> Html Page.Msg
-viewConfirmed model =
+viewConfirmed : Configuration -> Html Page.Msg
+viewConfirmed configuration =
     div [ Style.classes.confirm ]
         [ div [] [ label [] [ text "Successfully reset password." ] ]
         , div []
             [ Links.toLoginButton
-                { configuration = model.configuration
+                { configuration = configuration
                 , buttonText = "Main page"
                 }
             ]

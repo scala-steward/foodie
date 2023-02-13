@@ -1,23 +1,16 @@
 module Pages.Recovery.Confirm.Handler exposing (init, update)
 
-import Basics.Extra exposing (flip)
 import Pages.Recovery.Confirm.Page as Page
 import Pages.Recovery.Confirm.Requests as Requests
 import Pages.Util.PasswordInput as PasswordInput exposing (PasswordInput)
+import Pages.View.Tristate as Tristate
 import Result.Extra
-import Util.HttpUtil as HttpUtil exposing (Error)
-import Util.Initialization as Initialization
+import Util.HttpUtil exposing (Error)
 
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    ( { configuration = flags.configuration
-      , recoveryJwt = flags.recoveryJwt
-      , userIdentifier = flags.userIdentifier
-      , passwordInput = PasswordInput.initial
-      , initialization = Initialization.Loading ()
-      , mode = Page.Resetting
-      }
+    ( Page.initial flags
     , Cmd.none
     )
 
@@ -37,7 +30,7 @@ update msg model =
 
 setPasswordInput : Page.Model -> PasswordInput -> ( Page.Model, Cmd Page.Msg )
 setPasswordInput model passwordInput =
-    ( model |> Page.lenses.passwordInput.set passwordInput
+    ( model |> Tristate.mapMain (Page.lenses.main.passwordInput.set passwordInput)
     , Cmd.none
     )
 
@@ -45,27 +38,28 @@ setPasswordInput model passwordInput =
 confirm : Page.Model -> ( Page.Model, Cmd Page.Msg )
 confirm model =
     ( model
-    , Requests.confirm
-        { configuration = model.configuration
-        , recoveryJwt = model.recoveryJwt
-        , password = model.passwordInput.password1
-        }
+    , model
+        |> Tristate.foldMain Cmd.none
+            (\main ->
+                Requests.confirm
+                    { configuration = model.configuration
+                    , recoveryJwt = main.recoveryJwt
+                    , password = main.passwordInput.password1
+                    }
+            )
     )
 
 
 gotConfirmResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotConfirmResponse model result =
     ( result
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model.configuration)
             (\_ ->
                 model
-                    |> Page.lenses.mode.set Page.Confirmed
-                    |> Page.lenses.passwordInput.set PasswordInput.initial
+                    |> Tristate.mapMain
+                        (Page.lenses.main.mode.set Page.Confirmed
+                            >> Page.lenses.main.passwordInput.set PasswordInput.initial
+                        )
             )
     , Cmd.none
     )
-
-
-setError : Error -> Page.Model -> Page.Model
-setError =
-    HttpUtil.setError Page.lenses.initialization
