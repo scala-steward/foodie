@@ -5,12 +5,12 @@ import Api.Types.UserIdentifier exposing (UserIdentifier)
 import Configuration exposing (Configuration)
 import Monocle.Lens exposing (Lens)
 import Pages.Util.PasswordInput as PasswordInput exposing (PasswordInput)
-import Pages.View.Tristate as Tristate exposing (Tristate)
+import Pages.View.Tristate as Tristate
 import Util.HttpUtil exposing (Error)
 
 
 type alias Model =
-    Tristate Main Initial
+    Tristate.Model Main Initial
 
 
 type alias Main =

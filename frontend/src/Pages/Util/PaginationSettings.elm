@@ -41,8 +41,7 @@ updateCurrentPage ps model currentPage =
                 |> Compose.lensWithLens lenses.currentPage
            ).set
             currentPage
-
-
+-- todo: switch arguments: model + string!
 setSearchStringAndReset :
     { searchStringLens : Lens model String
     , paginationSettingsLens : Lens model PaginationSettings

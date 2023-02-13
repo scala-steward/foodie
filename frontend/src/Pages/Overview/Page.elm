@@ -2,11 +2,11 @@ module Pages.Overview.Page exposing (..)
 
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
-import Pages.View.Tristate as Tristate exposing (Tristate)
+import Pages.View.Tristate as Tristate
 
 
 type alias Model =
-    Tristate () ()
+    Tristate.Model () ()
 
 
 type alias Main =

@@ -10,14 +10,14 @@ import Pages.ReferenceEntries.ReferenceEntryCreationClientInput exposing (Refere
 import Pages.ReferenceEntries.ReferenceEntryUpdateClientInput exposing (ReferenceEntryUpdateClientInput)
 import Pages.ReferenceMaps.ReferenceMapUpdateClientInput exposing (ReferenceMapUpdateClientInput)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Pages.View.Tristate as Tristate exposing (Tristate)
+import Pages.View.Tristate as Tristate
 import Util.DictList as DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
 
 
 type alias Model =
-    Tristate Main Initial
+    Tristate.Model Main Initial
 
 
 type alias Main =

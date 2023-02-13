@@ -7,14 +7,14 @@ import Monocle.Lens exposing (Lens)
 import Pages.ComplexFoods.ComplexFoodClientInput exposing (ComplexFoodClientInput)
 import Pages.ComplexFoods.Pagination as Pagination exposing (Pagination)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Pages.View.Tristate as Tristate exposing (Tristate)
+import Pages.View.Tristate as Tristate
 import Util.DictList as DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
 
 
 type alias Model =
-    Tristate Main Initial
+    Tristate.Model Main Initial
 
 
 type alias Main =

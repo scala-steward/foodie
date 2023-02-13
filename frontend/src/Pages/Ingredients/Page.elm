@@ -14,14 +14,14 @@ import Pages.Ingredients.IngredientUpdateClientInput exposing (IngredientUpdateC
 import Pages.Ingredients.Pagination exposing (Pagination)
 import Pages.Recipes.RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Pages.View.Tristate as Tristate exposing (Tristate)
+import Pages.View.Tristate as Tristate
 import Util.DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
 
 
 type alias Model =
-    Tristate Main Initial
+    Tristate.Model Main Initial
 
 
 type alias Main =

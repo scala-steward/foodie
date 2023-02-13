@@ -4,13 +4,12 @@ import Api.Auxiliary exposing (UserId)
 import Api.Types.User exposing (User)
 import Configuration exposing (Configuration)
 import Monocle.Lens exposing (Lens)
-import Pages.View.Tristate as Tristate exposing (Tristate)
+import Pages.View.Tristate as Tristate
 import Util.HttpUtil exposing (Error)
-import Util.Initialization exposing (Initialization)
 
 
 type alias Model =
-    Tristate Main Initial
+    Tristate.Model Main Initial
 
 
 type alias Main =

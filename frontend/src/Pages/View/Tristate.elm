@@ -1,4 +1,4 @@
-module Pages.View.Tristate exposing (Status(..), Tristate, createError, createInitial, createMain, fold, foldMain, fromInitToMain, lenses, mapInitial, mapMain, toError, view)
+module Pages.View.Tristate exposing (Model, Status(..), createError, createInitial, createMain, fold, foldMain, fromInitToMain, lenses, mapInitial, mapMain, toError, view)
 
 import Configuration exposing (Configuration)
 import Html exposing (Html, div, label, td, text, tr)
@@ -11,7 +11,7 @@ import Util.HttpUtil as HttpUtil exposing (Error)
 import Util.Initialization exposing (ErrorExplanation)
 
 
-type alias Tristate main initial =
+type alias Model main initial =
     { configuration : Configuration
     , status : Status main initial
     }
@@ -23,19 +23,19 @@ type Status main initial
     | Error ErrorExplanation
 
 
-createInitial : Configuration -> initial -> Tristate main initial
+createInitial : Configuration -> initial -> Model main initial
 createInitial configuration =
-    Initial >> Tristate configuration
+    Initial >> Model configuration
 
 
-createMain : Configuration -> main -> Tristate main initial
+createMain : Configuration -> main -> Model main initial
 createMain configuration =
-    Main >> Tristate configuration
+    Main >> Model configuration
 
 
-createError : Configuration -> ErrorExplanation -> Tristate main initial
+createError : Configuration -> ErrorExplanation -> Model main initial
 createError configuration =
-    Error >> Tristate configuration
+    Error >> Model configuration
 
 
 fold :
@@ -43,7 +43,7 @@ fold :
     , onMain : main -> a
     , onError : ErrorExplanation -> a
     }
-    -> Tristate main initial
+    -> Model main initial
     -> a
 fold fs t =
     case t.status of
@@ -57,7 +57,7 @@ fold fs t =
             fs.onError errorExplanation
 
 
-mapMain : (main -> main) -> Tristate main initial -> Tristate main initial
+mapMain : (main -> main) -> Model main initial -> Model main initial
 mapMain f t =
     fold
         { onInitial = always t
@@ -67,7 +67,7 @@ mapMain f t =
         t
 
 
-mapInitial : (initial -> initial) -> Tristate main initial -> Tristate main initial
+mapInitial : (initial -> initial) -> Model main initial -> Model main initial
 mapInitial f t =
     fold
         { onInitial = f >> createInitial t.configuration
@@ -77,7 +77,7 @@ mapInitial f t =
         t
 
 
-foldMain : c -> (main -> c) -> Tristate main initial -> c
+foldMain : c -> (main -> c) -> Model main initial -> c
 foldMain c f =
     fold
         { onInitial = always c
@@ -87,9 +87,9 @@ foldMain c f =
 
 
 lenses :
-    { initial : Optional (Tristate main initial) initial
-    , main : Optional (Tristate main initial) main
-    , error : Optional (Tristate main initial) ErrorExplanation
+    { initial : Optional (Model main initial) initial
+    , main : Optional (Model main initial) main
+    , error : Optional (Model main initial) ErrorExplanation
     }
 lenses =
     { initial =
@@ -97,7 +97,7 @@ lenses =
             (\b a ->
                 case a.status of
                     Initial _ ->
-                        Initial b |> Tristate a.configuration
+                        Initial b |> Model a.configuration
 
                     _ ->
                         a
@@ -107,7 +107,7 @@ lenses =
             (\b a ->
                 case a.status of
                     Main _ ->
-                        Main b |> Tristate a.configuration
+                        Main b |> Model a.configuration
 
                     _ ->
                         a
@@ -117,7 +117,7 @@ lenses =
             (\b a ->
                 case a.status of
                     Error _ ->
-                        Error b |> Tristate a.configuration
+                        Error b |> Model a.configuration
 
                     _ ->
                         a
@@ -125,7 +125,7 @@ lenses =
     }
 
 
-asInitial : Tristate main initial -> Maybe initial
+asInitial : Model main initial -> Maybe initial
 asInitial t =
     case t.status of
         Initial initial ->
@@ -135,7 +135,7 @@ asInitial t =
             Nothing
 
 
-asMain : Tristate main initial -> Maybe main
+asMain : Model main initial -> Maybe main
 asMain t =
     case t.status of
         Main main ->
@@ -145,7 +145,7 @@ asMain t =
             Nothing
 
 
-asError : Tristate main initial -> Maybe ErrorExplanation
+asError : Model main initial -> Maybe ErrorExplanation
 asError t =
     case t.status of
         Error error ->
@@ -155,15 +155,15 @@ asError t =
             Nothing
 
 
-fromInitToMain : (initial -> Maybe main) -> Tristate main initial -> Tristate main initial
+fromInitToMain : (initial -> Maybe main) -> Model main initial -> Model main initial
 fromInitToMain with t =
     t
         |> asInitial
         |> Maybe.andThen with
-        |> Maybe.Extra.unwrap t (Main >> Tristate t.configuration)
+        |> Maybe.Extra.unwrap t (Main >> Model t.configuration)
 
 
-toError : Configuration -> HttpUtil.Error -> Tristate main initial
+toError : Configuration -> HttpUtil.Error -> Model main initial
 toError configuration =
     HttpUtil.errorToExplanation
         >> createError configuration
@@ -173,7 +173,7 @@ view :
     { showLoginRedirect : Bool
     , viewMain : Configuration -> main -> Html msg
     }
-    -> Tristate main initial
+    -> Model main initial
     -> Html msg
 view ps t =
     case t.status of

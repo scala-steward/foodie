@@ -11,14 +11,14 @@ import Pages.MealEntries.MealEntryUpdateClientInput exposing (MealEntryUpdateCli
 import Pages.MealEntries.Pagination as Pagination exposing (Pagination)
 import Pages.Meals.MealUpdateClientInput exposing (MealUpdateClientInput)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Pages.View.Tristate as Tristate exposing (Tristate)
+import Pages.View.Tristate as Tristate
 import Util.DictList as DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
 
 
 type alias Model =
-    Tristate Main Initial
+    Tristate.Model Main Initial
 
 
 type alias Main =

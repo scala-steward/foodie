@@ -4,12 +4,12 @@ import Api.Auxiliary exposing (JWT)
 import Api.Types.Credentials exposing (Credentials)
 import Configuration exposing (Configuration)
 import Monocle.Lens exposing (Lens)
-import Pages.View.Tristate exposing (Tristate)
+import Pages.View.Tristate as Tristate
 import Util.HttpUtil exposing (Error)
 
 
 type alias Model =
-    Tristate Main ()
+    Tristate.Model Main ()
 
 
 type alias Main =

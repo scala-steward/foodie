@@ -7,14 +7,14 @@ import Pages.Meals.MealCreationClientInput exposing (MealCreationClientInput)
 import Pages.Meals.MealUpdateClientInput exposing (MealUpdateClientInput)
 import Pages.Meals.Pagination as Pagination exposing (Pagination)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Pages.View.Tristate as Tristate exposing (Tristate)
+import Pages.View.Tristate as Tristate
 import Util.DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
 
 
 type alias Model =
-    Tristate Main Initial
+    Tristate.Model Main Initial
 
 
 type alias Main =
