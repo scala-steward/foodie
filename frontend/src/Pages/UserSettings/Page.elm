@@ -1,37 +1,71 @@
 module Pages.UserSettings.Page exposing (..)
 
+import Api.Auxiliary exposing (JWT)
 import Api.Types.Mode exposing (Mode)
 import Api.Types.User exposing (User)
 import Monocle.Lens exposing (Lens)
-import Pages.UserSettings.Status exposing (Status)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Pages.Util.ComplementInput exposing (ComplementInput)
+import Pages.Util.ComplementInput as ComplementInput exposing (ComplementInput)
+import Pages.View.Tristate as Tristate
 import Util.HttpUtil exposing (Error)
-import Util.Initialization exposing (Initialization)
 
 
 type alias Model =
-    { authorizedAccess : AuthorizedAccess
+    Tristate.Model Main Initial
 
-    -- todo: This is a temporary workaround - use defined users once the model transitions have been established.
-    , user : Maybe User
+
+type alias Main =
+    { jwt : JWT
+    , user : User
     , complementInput : ComplementInput
-    , initialization : Initialization Status
     , mode : Mode
     }
 
 
+type alias Initial =
+    { jwt : JWT
+    , user : Maybe User
+    }
+
+
+initial : AuthorizedAccess -> Model
+initial authorizedAccess =
+    { jwt = authorizedAccess.jwt
+    , user = Nothing
+    }
+        |> Tristate.createInitial authorizedAccess.configuration
+
+
+initialToMain : Initial -> Maybe Main
+initialToMain i =
+    Maybe.map
+        (\user ->
+            { jwt = i.jwt
+            , user = user
+            , complementInput = ComplementInput.initial
+            , mode = Regular
+            }
+        )
+        i.user
+
+
 lenses :
-    { user : Lens Model (Maybe User)
-    , complementInput : Lens Model ComplementInput
-    , initialization : Lens Model (Initialization Status)
-    , mode : Lens Model Mode
+    { initial :
+        { user : Lens Initial (Maybe User)
+        }
+    , main :
+        { user : Lens Main User
+        , complementInput : Lens Main ComplementInput
+        , mode : Lens Main Mode
+        }
     }
 lenses =
-    { user = Lens .user (\b a -> { a | user = b })
-    , complementInput = Lens .complementInput (\b a -> { a | complementInput = b })
-    , initialization = Lens .initialization (\b a -> { a | initialization = b })
-    , mode = Lens .mode (\b a -> { a | mode = b })
+    { initial = { user = Lens .user (\b a -> { a | user = b }) }
+    , main =
+        { user = Lens .user (\b a -> { a | user = b })
+        , complementInput = Lens .complementInput (\b a -> { a | complementInput = b })
+        , mode = Lens .mode (\b a -> { a | mode = b })
+        }
     }
 
 

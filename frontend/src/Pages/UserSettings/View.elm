@@ -2,6 +2,7 @@ module Pages.UserSettings.View exposing (view)
 
 import Api.Types.Mode exposing (Mode(..))
 import Basics.Extra exposing (flip)
+import Configuration exposing (Configuration)
 import Html exposing (Html, button, div, input, label, table, tbody, td, text, tr)
 import Html.Attributes exposing (disabled, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -9,22 +10,28 @@ import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Pages.UserSettings.Page as Page
-import Pages.UserSettings.Status as Status
 import Pages.Util.ComplementInput as ComplementInput
 import Pages.Util.PasswordInput as PasswordInput
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil exposing (Page(..))
+import Pages.View.Tristate as Tristate
 import Util.MaybeUtil as MaybeUtil
 
 
 view : Page.Model -> Html Page.Msg
-view model =
-    ViewUtil.viewWithErrorHandling
-        { isFinished = Status.isFinished
-        , initialization = Page.lenses.initialization.get
-        , configuration = .authorizedAccess >> .configuration
-        , jwt = .authorizedAccess >> .jwt >> Just
-        , currentPage = Just (UserSettings (model.user |> Maybe.Extra.unwrap "" .nickname))
+view =
+    Tristate.view
+        { viewMain = viewMain
+        , showLoginRedirect = True
+        }
+
+
+viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain configuration model =
+    ViewUtil.viewMainWith
+        { configuration = configuration
+        , jwt = .jwt >> Just
+        , currentPage = Just (UserSettings model.user.nickname)
         , showNavigation = True
         }
         model
@@ -37,11 +44,11 @@ view model =
                 viewRequestedDeletion model
 
 
-viewRegular : Page.Model -> Html Page.Msg
-viewRegular model =
+viewRegular : Page.Main -> Html Page.Msg
+viewRegular main =
     let
         isValidPassword =
-            PasswordInput.isValidPassword model.complementInput.passwordInput
+            PasswordInput.isValidPassword main.complementInput.passwordInput
 
         enterPasswordAction =
             MaybeUtil.optional isValidPassword <| onEnter Page.UpdatePassword
@@ -61,15 +68,15 @@ viewRegular model =
                 [ tbody []
                     [ tr []
                         [ td [] [ label [] [ text "Nickname" ] ]
-                        , td [] [ label [] [ text <| Maybe.Extra.unwrap "" .nickname <| model.user ] ]
+                        , td [] [ label [] [ text <| .nickname <| main.user ] ]
                         ]
                     , tr []
                         [ td [] [ label [] [ text "Email" ] ]
-                        , td [] [ label [] [ text <| Maybe.Extra.unwrap "" .email <| model.user ] ]
+                        , td [] [ label [] [ text <| .email <| main.user ] ]
                         ]
                     , tr []
                         [ td [] [ label [] [ text "Display name" ] ]
-                        , td [] [ label [] [ text <| Maybe.withDefault "" <| Maybe.andThen .displayName <| model.user ] ]
+                        , td [] [ label [] [ text <| Maybe.withDefault "" <| .displayName <| main.user ] ]
                         ]
                     , tr []
                         [ td [] [ label [] [ text "New display name" ] ]
@@ -79,11 +86,11 @@ viewRegular model =
                                     (Just
                                         >> Maybe.Extra.filter (String.isEmpty >> not)
                                         >> (flip ComplementInput.lenses.displayName.set
-                                                model.complementInput
+                                                main.complementInput
                                                 >> Page.SetComplementInput
                                            )
                                     )
-                                , value <| Maybe.withDefault "" <| model.complementInput.displayName
+                                , value <| Maybe.withDefault "" <| main.complementInput.displayName
                                 , Style.classes.editable
                                 , onEnter Page.UpdateSettings
                                 ]
@@ -110,10 +117,10 @@ viewRegular model =
                                 ([ MaybeUtil.defined <|
                                     onInput <|
                                         flip password1Lens.set
-                                            model.complementInput
+                                            main.complementInput
                                             >> Page.SetComplementInput
                                  , MaybeUtil.defined <| type_ "password"
-                                 , MaybeUtil.defined <| value <| password1Lens.get <| model.complementInput
+                                 , MaybeUtil.defined <| value <| password1Lens.get <| main.complementInput
                                  , MaybeUtil.defined <| Style.classes.editable
                                  , enterPasswordAction
                                  ]
@@ -129,10 +136,10 @@ viewRegular model =
                                 ([ MaybeUtil.defined <|
                                     onInput <|
                                         flip password2Lens.set
-                                            model.complementInput
+                                            main.complementInput
                                             >> Page.SetComplementInput
                                  , MaybeUtil.defined <| type_ "password"
-                                 , MaybeUtil.defined <| value <| password2Lens.get <| model.complementInput
+                                 , MaybeUtil.defined <| value <| password2Lens.get <| main.complementInput
                                  , MaybeUtil.defined <| Style.classes.editable
                                  , enterPasswordAction
                                  ]
@@ -176,7 +183,7 @@ viewRegular model =
         ]
 
 
-viewRequestedDeletion : Page.Model -> Html Page.Msg
+viewRequestedDeletion : Page.Main -> Html Page.Msg
 viewRequestedDeletion _ =
     div [ Style.classes.confirm ]
         [ div [] [ label [] [ text "Account deletion requested. Please check your email to continue." ] ]
