@@ -8,40 +8,46 @@ import Html exposing (Html, col, colgroup, div, label, table, tbody, td, text, t
 import Monocle.Compose as Compose
 import Pages.Statistics.ComplexFood.Search.Page as Page
 import Pages.Statistics.ComplexFood.Search.Pagination as Pagination
-import Pages.Statistics.ComplexFood.Search.Status as Status
 import Pages.Statistics.StatisticsView as StatisticsView
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil exposing (Page(..))
+import Pages.View.Tristate as Tristate
 import Paginate
 import Util.SearchUtil as SearchUtil
 
 
 view : Page.Model -> Html Page.Msg
-view model =
-    ViewUtil.viewWithErrorHandling
-        { isFinished = Status.isFinished
-        , initialization = .initialization
-        , configuration = .authorizedAccess >> .configuration
-        , jwt = .authorizedAccess >> .jwt >> Just
+view =
+    Tristate.view
+        { viewMain = viewMain
+        , showLoginRedirect = True
+        }
+
+
+viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain configuration main =
+    ViewUtil.viewMainWith
+        { configuration = configuration
+        , jwt = .jwt >> Just
         , currentPage = Just Statistics
         , showNavigation = True
         }
-        model
+        main
     <|
         StatisticsView.withNavigationBar
-            { mainPageURL = model.authorizedAccess.configuration.mainPageURL
+            { mainPageURL = configuration.mainPageURL
             , currentPage = Just StatisticsVariant.ComplexFood
             }
         <|
             let
                 filterOn =
-                    SearchUtil.search model.complexFoodsSearchString
+                    SearchUtil.search main.complexFoodsSearchString
 
                 viewComplexFoods =
-                    model.complexFoods
+                    main.complexFoods
                         |> List.filter
                             (\v ->
                                 filterOn v.name
@@ -50,16 +56,16 @@ view model =
                         |> List.sortBy .name
                         |> ViewUtil.paginate
                             { pagination =
-                                Page.lenses.pagination
+                                Page.lenses.main.pagination
                                     |> Compose.lensWithLens Pagination.lenses.complexFoods
                             }
-                            model
+                            main
             in
             div [ Style.ids.statistics.complexFood ]
                 [ div []
                     [ HtmlUtil.searchAreaWith
                         { msg = Page.SetSearchString
-                        , searchString = model.complexFoodsSearchString
+                        , searchString = main.complexFoodsSearchString
                         }
                     , table [ Style.classes.elementsWithControlsTable ]
                         [ colgroup []
@@ -75,17 +81,17 @@ view model =
                         , tbody []
                             (viewComplexFoods
                                 |> Paginate.page
-                                |> List.map (viewComplexFoodLine model.authorizedAccess.configuration)
+                                |> List.map (viewComplexFoodLine configuration)
                             )
                         ]
                     , div [ Style.classes.pagination ]
                         [ ViewUtil.pagerButtons
                             { msg =
                                 PaginationSettings.updateCurrentPage
-                                    { pagination = Page.lenses.pagination
+                                    { pagination = Page.lenses.main.pagination
                                     , items = Pagination.lenses.complexFoods
                                     }
-                                    model
+                                    main
                                     >> Page.SetComplexFoodsPagination
                             , elements = viewComplexFoods
                             }
