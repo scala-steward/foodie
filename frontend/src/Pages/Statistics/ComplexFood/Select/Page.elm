@@ -1,39 +1,88 @@
 module Pages.Statistics.ComplexFood.Select.Page exposing (..)
 
-import Addresses.StatisticsVariant exposing (Page)
-import Api.Auxiliary exposing (ComplexFoodId, ReferenceMapId)
+import Addresses.StatisticsVariant as StatisticsVariant exposing (Page)
+import Api.Auxiliary exposing (ComplexFoodId, JWT, ReferenceMapId)
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.ReferenceTree exposing (ReferenceTree)
 import Api.Types.TotalOnlyStats exposing (TotalOnlyStats)
 import Monocle.Lens exposing (Lens)
-import Pages.Statistics.ComplexFood.Select.Status exposing (Status)
-import Pages.Statistics.StatisticsUtil exposing (StatisticsEvaluation)
+import Pages.Statistics.StatisticsUtil as StatisticsEvaluation exposing (ReferenceNutrientTree, StatisticsEvaluation)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.View.Tristate as Tristate
+import Util.DictList exposing (DictList)
 import Util.HttpUtil exposing (Error)
-import Util.Initialization exposing (Initialization)
 
 
 type alias Model =
-    { authorizedAccess : AuthorizedAccess
+    Tristate.Model Main Initial
+
+
+type alias Main =
+    { jwt : JWT
     , complexFood : ComplexFood
     , foodStats : TotalOnlyStats
     , statisticsEvaluation : StatisticsEvaluation
-    , initialization : Initialization Status
     , variant : Page
     }
 
 
+type alias Initial =
+    { jwt : JWT
+    , referenceTrees : Maybe (DictList ReferenceMapId ReferenceNutrientTree)
+    , complexFood : Maybe ComplexFood
+    , complexFoodStats : Maybe TotalOnlyStats
+    }
+
+
+initial : AuthorizedAccess -> Model
+initial authorizedAccess =
+    { jwt = authorizedAccess.jwt
+    , referenceTrees = Nothing
+    , complexFood = Nothing
+    , complexFoodStats = Nothing
+    }
+        |> Tristate.createInitial authorizedAccess.configuration
+
+
+initialToMain : Initial -> Maybe Main
+initialToMain i =
+    Maybe.map3
+        (\referenceTrees complexFood complexFoodStats ->
+            { jwt = i.jwt
+            , complexFood = complexFood
+            , foodStats = complexFoodStats
+            , statisticsEvaluation = StatisticsEvaluation.initialWith referenceTrees
+            , variant = StatisticsVariant.ComplexFood
+            }
+        )
+        i.referenceTrees
+        i.complexFood
+        i.complexFoodStats
+
+
 lenses :
-    { complexFood : Lens Model ComplexFood
-    , foodStats : Lens Model TotalOnlyStats
-    , statisticsEvaluation : Lens Model StatisticsEvaluation
-    , initialization : Lens Model (Initialization Status)
+    { initial :
+        { referenceTrees : Lens Initial (Maybe (DictList ReferenceMapId ReferenceNutrientTree))
+        , complexFood : Lens Initial (Maybe ComplexFood)
+        , complexFoodStats : Lens Initial (Maybe TotalOnlyStats)
+        }
+    , main :
+        { complexFood : Lens Main ComplexFood
+        , foodStats : Lens Main TotalOnlyStats
+        , statisticsEvaluation : Lens Main StatisticsEvaluation
+        }
     }
 lenses =
-    { complexFood = Lens .complexFood (\b a -> { a | complexFood = b })
-    , foodStats = Lens .foodStats (\b a -> { a | foodStats = b })
-    , statisticsEvaluation = Lens .statisticsEvaluation (\b a -> { a | statisticsEvaluation = b })
-    , initialization = Lens .initialization (\b a -> { a | initialization = b })
+    { initial =
+        { referenceTrees = Lens .referenceTrees (\b a -> { a | referenceTrees = b })
+        , complexFood = Lens .complexFood (\b a -> { a | complexFood = b })
+        , complexFoodStats = Lens .complexFoodStats (\b a -> { a | complexFoodStats = b })
+        }
+    , main =
+        { complexFood = Lens .complexFood (\b a -> { a | complexFood = b })
+        , foodStats = Lens .foodStats (\b a -> { a | foodStats = b })
+        , statisticsEvaluation = Lens .statisticsEvaluation (\b a -> { a | statisticsEvaluation = b })
+        }
     }
 
 
