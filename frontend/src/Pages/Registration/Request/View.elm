@@ -1,6 +1,7 @@
 module Pages.Registration.Request.View exposing (..)
 
 import Basics.Extra exposing (flip)
+import Configuration exposing (Configuration)
 import Html exposing (Html, button, div, input, label, table, tbody, td, text, tr)
 import Html.Attributes exposing (disabled)
 import Html.Events exposing (onClick, onInput)
@@ -12,35 +13,42 @@ import Pages.Util.Links as Links
 import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput
 import Pages.Util.ViewUtil as ViewUtil
+import Pages.View.Tristate as Tristate
 import Util.LensUtil as LensUtil
 import Util.MaybeUtil as MaybeUtil
 
 
 view : Page.Model -> Html Page.Msg
-view model =
-    ViewUtil.viewWithErrorHandling
-        { isFinished = always True
-        , initialization = Page.lenses.initialization.get
-        , configuration = .configuration
+view =
+    Tristate.view
+        { viewMain = viewMain
+        , showLoginRedirect = True
+        }
+
+
+viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain configuration main =
+    ViewUtil.viewMainWith
+        { configuration = configuration
         , jwt = always Nothing
         , currentPage = Nothing
         , showNavigation = False
         }
-        model
+        main
     <|
-        case model.mode of
+        case main.mode of
             Page.Editing ->
-                viewEditing model
+                viewEditing main
 
             Page.Confirmed ->
-                viewConfirmed model
+                viewConfirmed configuration
 
 
-viewEditing : Page.Model -> Html Page.Msg
-viewEditing model =
+viewEditing : Page.Main -> Html Page.Msg
+viewEditing main =
     let
         isValid =
-            ValidatedInput.isValid model.nickname && ValidatedInput.isValid model.email
+            ValidatedInput.isValid main.nickname && ValidatedInput.isValid main.email
 
         enterAction =
             MaybeUtil.optional isValid <| onEnter Page.Request
@@ -55,7 +63,7 @@ viewEditing model =
                         [ input
                             ([ MaybeUtil.defined <|
                                 onInput <|
-                                    flip (ValidatedInput.lift LensUtil.identityLens).set model.nickname
+                                    flip (ValidatedInput.lift LensUtil.identityLens).set main.nickname
                                         >> Page.SetNickname
                              , MaybeUtil.defined <| Style.classes.editable
                              , enterAction
@@ -71,7 +79,7 @@ viewEditing model =
                         [ input
                             ([ MaybeUtil.defined <|
                                 onInput <|
-                                    flip (ValidatedInput.lift LensUtil.identityLens).set model.email
+                                    flip (ValidatedInput.lift LensUtil.identityLens).set main.email
                                         >> Page.SetEmail
                              , MaybeUtil.defined <| Style.classes.editable
                              , enterAction
@@ -94,13 +102,13 @@ viewEditing model =
         ]
 
 
-viewConfirmed : Page.Model -> Html Page.Msg
-viewConfirmed model =
+viewConfirmed : Configuration -> Html Page.Msg
+viewConfirmed configuration =
     div [ Style.classes.confirm ]
         [ div [] [ label [] [ text "Registration requested. Please check your email to continue." ] ]
         , div []
             [ Links.toLoginButton
-                { configuration = model.configuration
+                { configuration = configuration
                 , buttonText = "Main page"
                 }
             ]

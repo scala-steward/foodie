@@ -1,22 +1,16 @@
 module Pages.Registration.Request.Handler exposing (init, update)
 
-import Basics.Extra exposing (flip)
 import Pages.Registration.Request.Page as Page
 import Pages.Registration.Request.Requests as Requests
-import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
+import Pages.Util.ValidatedInput exposing (ValidatedInput)
+import Pages.View.Tristate as Tristate
 import Result.Extra
-import Util.HttpUtil as HttpUtil exposing (Error)
-import Util.Initialization exposing (Initialization(..))
+import Util.HttpUtil exposing (Error)
 
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    ( { nickname = ValidatedInput.nonEmptyString
-      , email = ValidatedInput.nonEmptyString
-      , configuration = flags.configuration
-      , initialization = Loading ()
-      , mode = Page.Editing
-      }
+    ( Page.initial flags.configuration
     , Cmd.none
     )
 
@@ -39,14 +33,14 @@ update msg model =
 
 setNickname : Page.Model -> ValidatedInput String -> ( Page.Model, Cmd Page.Msg )
 setNickname model nickname =
-    ( model |> Page.lenses.nickname.set nickname
+    ( model |> Tristate.mapMain (Page.lenses.main.nickname.set nickname)
     , Cmd.none
     )
 
 
 setEmail : Page.Model -> ValidatedInput String -> ( Page.Model, Cmd Page.Msg )
 setEmail model email =
-    ( model |> Page.lenses.email.set email
+    ( model |> Tristate.mapMain (Page.lenses.main.email.set email)
     , Cmd.none
     )
 
@@ -54,24 +48,22 @@ setEmail model email =
 request : Page.Model -> ( Page.Model, Cmd Page.Msg )
 request model =
     ( model
-    , Requests.request
-        model.configuration
-        { nickname = model.nickname.value
-        , email = model.email.value
-        }
+    , model
+        |> Tristate.foldMain Cmd.none
+            (\main ->
+                Requests.request
+                    model.configuration
+                    { nickname = main.nickname.value
+                    , email = main.email.value
+                    }
+            )
     )
 
 
 gotRequestResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotRequestResponse model result =
     ( result
-        |> Result.Extra.unpack
-            (flip setError model)
-            (\_ -> model |> Page.lenses.mode.set Page.Confirmed)
+        |> Result.Extra.unpack (Tristate.toError model.configuration)
+            (\_ -> model |> Tristate.mapMain (Page.lenses.main.mode.set Page.Confirmed))
     , Cmd.none
     )
-
-
-setError : Error -> Page.Model -> Page.Model
-setError =
-    HttpUtil.setError Page.lenses.initialization
