@@ -1,6 +1,7 @@
 module Pages.Registration.Confirm.View exposing (view)
 
 import Basics.Extra exposing (flip)
+import Configuration exposing (Configuration)
 import Html exposing (Html, button, div, input, label, table, tbody, td, text, tr)
 import Html.Attributes exposing (disabled, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -13,34 +14,41 @@ import Pages.Util.Links as Links
 import Pages.Util.PasswordInput as PasswordInput
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
+import Pages.View.Tristate as Tristate
 import Util.MaybeUtil as MaybeUtil
 
 
 view : Page.Model -> Html Page.Msg
-view model =
-    ViewUtil.viewWithErrorHandling
-        { isFinished = always True
-        , initialization = Page.lenses.initialization.get
-        , configuration = .configuration
+view =
+    Tristate.view
+        { viewMain = viewMain
+        , showLoginRedirect = True
+        }
+
+
+viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain configuration main =
+    ViewUtil.viewMainWith
+        { configuration = configuration
         , jwt = always Nothing
         , currentPage = Nothing
         , showNavigation = False
         }
-        model
+        main
     <|
-        case model.mode of
+        case main.mode of
             Page.Editing ->
-                viewEditing model
+                viewEditing main
 
             Page.Confirmed ->
-                viewConfirmed model
+                viewConfirmed configuration
 
 
-viewEditing : Page.Model -> Html Page.Msg
-viewEditing model =
+viewEditing : Page.Main -> Html Page.Msg
+viewEditing main =
     let
         isValid =
-            PasswordInput.isValidPassword model.complementInput.passwordInput
+            PasswordInput.isValidPassword main.complementInput.passwordInput
 
         enterAction =
             MaybeUtil.optional isValid <| onEnter Page.Request
@@ -59,11 +67,11 @@ viewEditing model =
             [ tbody []
                 [ tr []
                     [ td [] [ label [] [ text "Nickname" ] ]
-                    , td [] [ label [] [ text <| model.userIdentifier.nickname ] ]
+                    , td [] [ label [] [ text <| main.userIdentifier.nickname ] ]
                     ]
                 , tr []
                     [ td [] [ label [] [ text "Email" ] ]
-                    , td [] [ label [] [ text <| model.userIdentifier.email ] ]
+                    , td [] [ label [] [ text <| main.userIdentifier.email ] ]
                     ]
                 , tr []
                     [ td [] [ label [] [ text "Display name (optional)" ] ]
@@ -74,7 +82,7 @@ viewEditing model =
                                     Just
                                         >> Maybe.Extra.filter (String.isEmpty >> not)
                                         >> (flip ComplementInput.lenses.displayName.set
-                                                model.complementInput
+                                                main.complementInput
                                                 >> Page.SetComplementInput
                                            )
                              , MaybeUtil.defined <| Style.classes.editable
@@ -92,9 +100,9 @@ viewEditing model =
                             ([ MaybeUtil.defined <|
                                 onInput <|
                                     flip password1Lens.set
-                                        model.complementInput
+                                        main.complementInput
                                         >> Page.SetComplementInput
-                             , MaybeUtil.defined <| value <| password1Lens.get <| model.complementInput
+                             , MaybeUtil.defined <| value <| password1Lens.get <| main.complementInput
                              , MaybeUtil.defined <| type_ "password"
                              , MaybeUtil.defined <| Style.classes.editable
                              , enterAction
@@ -111,9 +119,9 @@ viewEditing model =
                             ([ MaybeUtil.defined <|
                                 onInput <|
                                     flip password2Lens.set
-                                        model.complementInput
+                                        main.complementInput
                                         >> Page.SetComplementInput
-                             , MaybeUtil.defined <| value <| password2Lens.get <| model.complementInput
+                             , MaybeUtil.defined <| value <| password2Lens.get <| main.complementInput
                              , MaybeUtil.defined <| type_ "password"
                              , MaybeUtil.defined <| Style.classes.editable
                              , enterAction
@@ -136,13 +144,13 @@ viewEditing model =
         ]
 
 
-viewConfirmed : Page.Model -> Html Page.Msg
-viewConfirmed model =
+viewConfirmed : Configuration -> Html Page.Msg
+viewConfirmed configuration =
     div [ Style.classes.confirm ]
         [ div [] [ label [] [ text "User creation successful." ] ]
         , div []
             [ Links.toLoginButton
-                { configuration = model.configuration
+                { configuration = configuration
                 , buttonText = "Main page"
                 }
             ]
