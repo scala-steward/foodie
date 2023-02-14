@@ -20,9 +20,25 @@ type alias StatisticsEvaluation =
     }
 
 
+
+--todo: Remove?
+
+
 initial : StatisticsEvaluation
 initial =
     { referenceTrees = DictList.empty
+    , referenceTree = Nothing
+    , nutrientsSearchString = ""
+    }
+
+
+
+-- todo: Check back later
+
+
+initialWith : DictList ReferenceMapId ReferenceNutrientTree -> StatisticsEvaluation
+initialWith referenceTrees =
+    { referenceTrees = referenceTrees
     , referenceTree = Nothing
     , nutrientsSearchString = ""
     }

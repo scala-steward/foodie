@@ -4,15 +4,17 @@ import Addresses.Backend
 import Api.Auxiliary exposing (ReferenceMapId)
 import Api.Types.ReferenceTree exposing (ReferenceTree, decoderReferenceTree)
 import Basics.Extra exposing (flip)
+import Configuration exposing (Configuration)
 import Dict
 import Http
 import Json.Decode as Decode
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
-import Pages.Statistics.StatisticsUtil as StatisticsUtil exposing (StatisticsEvaluation)
+import Pages.Statistics.StatisticsUtil as StatisticsUtil exposing (ReferenceNutrientTree, StatisticsEvaluation)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.View.Tristate as Tristate
 import Result.Extra
-import Util.DictList as DictList
+import Util.DictList as DictList exposing (DictList)
 import Util.HttpUtil as HttpUtil exposing (Error)
 
 
@@ -64,6 +66,48 @@ gotFetchReferenceTreesResponseWith ps model result =
     )
 
 
+
+--todo: Clean up functions
+
+
+gotFetchReferenceTreesResponseWith2 :
+    { setError : Configuration -> Error -> Tristate.Model main initial
+    , referenceTreesLens : Lens initial (Maybe (DictList ReferenceMapId ReferenceNutrientTree))
+    }
+    -> Tristate.Model main initial
+    -> Result Error (List ReferenceTree)
+    -> Tristate.Model main initial
+gotFetchReferenceTreesResponseWith2 ps model result =
+    result
+        |> Result.Extra.unpack (ps.setError model.configuration)
+            (\referenceTrees ->
+                let
+                    referenceNutrientTrees =
+                        referenceTrees
+                            |> List.map
+                                (\referenceTree ->
+                                    { map = referenceTree.referenceMap
+                                    , values =
+                                        referenceTree.nutrients
+                                            |> List.map
+                                                (\referenceValue ->
+                                                    ( referenceValue.nutrientCode, referenceValue.referenceAmount )
+                                                )
+                                            |> Dict.fromList
+                                    }
+                                )
+                            |> DictList.fromListWithKey (.map >> .id)
+                in
+                model
+                    |> Tristate.mapInitial
+                        (ps.referenceTreesLens.set (referenceNutrientTrees |> Just))
+            )
+
+
+
+--todo: Clean up functions
+
+
 selectReferenceMapWith :
     { statisticsEvaluationLens : Lens model StatisticsEvaluation
     }
@@ -82,6 +126,32 @@ selectReferenceMapWith ps model referenceMapId =
     )
 
 
+
+--todo: Clean up functions
+
+
+selectReferenceMapWith2 :
+    { statisticsEvaluationLens : Lens main StatisticsEvaluation
+    }
+    -> Tristate.Model main initial
+    -> Maybe ReferenceMapId
+    -> ( Tristate.Model main initial, Cmd msg )
+selectReferenceMapWith2 ps model referenceMapId =
+    ( model
+        |> Tristate.mapMain
+            (\main ->
+                main
+                    |> (referenceMapId
+                            |> Maybe.andThen (flip DictList.get ((ps.statisticsEvaluationLens |> Compose.lensWithLens StatisticsUtil.lenses.referenceTrees).get main))
+                            |> (ps.statisticsEvaluationLens
+                                    |> Compose.lensWithLens StatisticsUtil.lenses.referenceTree
+                               ).set
+                       )
+            )
+    , Cmd.none
+    )
+
+
 setNutrientsSearchStringWith :
     { statisticsEvaluationLens : Lens model StatisticsEvaluation
     }
@@ -94,5 +164,27 @@ setNutrientsSearchStringWith ps model string =
                 |> Compose.lensWithLens StatisticsUtil.lenses.nutrientsSearchString
            ).set
             string
+    , Cmd.none
+    )
+
+
+
+--todo: Clean up functions
+
+
+setNutrientsSearchStringWith2 :
+    { statisticsEvaluationLens : Lens main StatisticsEvaluation
+    }
+    -> Tristate.Model main initial
+    -> String
+    -> ( Tristate.Model main initial, Cmd msg )
+setNutrientsSearchStringWith2 ps model string =
+    ( model
+        |> Tristate.mapMain
+            ((ps.statisticsEvaluationLens
+                |> Compose.lensWithLens StatisticsUtil.lenses.nutrientsSearchString
+             ).set
+                string
+            )
     , Cmd.none
     )
