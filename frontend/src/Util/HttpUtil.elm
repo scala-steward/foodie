@@ -144,16 +144,6 @@ jsonErrorToError =
         >> BadBody
 
 
-
--- todo: Check use
-
-
-setJsonError : Lens model (Initialization status) -> Decode.Error -> model -> model
-setJsonError initializationLens =
-    jsonErrorToError
-        >> setError initializationLens
-
-
 type Verb
     = GET
     | POST
