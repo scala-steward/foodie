@@ -6,7 +6,7 @@ import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.ReferenceTree exposing (ReferenceTree)
 import Api.Types.TotalOnlyStats exposing (TotalOnlyStats)
 import Monocle.Lens exposing (Lens)
-import Pages.Statistics.StatisticsUtil as StatisticsEvaluation exposing (ReferenceNutrientTree, StatisticsEvaluation)
+import Pages.Statistics.StatisticsUtil as StatisticsUtil exposing (ReferenceNutrientTree, StatisticsEvaluation)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.View.Tristate as Tristate
 import Util.DictList exposing (DictList)
@@ -51,7 +51,7 @@ initialToMain i =
             { jwt = i.jwt
             , complexFood = complexFood
             , foodStats = complexFoodStats
-            , statisticsEvaluation = StatisticsEvaluation.initialWith referenceTrees
+            , statisticsEvaluation = StatisticsUtil.initialWith referenceTrees
             , variant = StatisticsVariant.ComplexFood
             }
         )
