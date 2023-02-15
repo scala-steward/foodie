@@ -71,15 +71,15 @@ gotFetchReferenceTreesResponseWith ps model result =
 
 
 gotFetchReferenceTreesResponseWith2 :
-    { setError : Configuration -> Error -> Tristate.Model main initial
-    , referenceTreesLens : Lens initial (Maybe (DictList ReferenceMapId ReferenceNutrientTree))
+    { referenceTreesLens : Lens initial (Maybe (DictList ReferenceMapId ReferenceNutrientTree))
+    , initialToMain : initial -> Maybe main
     }
     -> Tristate.Model main initial
     -> Result Error (List ReferenceTree)
-    -> Tristate.Model main initial
+    -> ( Tristate.Model main initial, Cmd msg )
 gotFetchReferenceTreesResponseWith2 ps model result =
-    result
-        |> Result.Extra.unpack (ps.setError model.configuration)
+    ( result
+        |> Result.Extra.unpack (Tristate.toError model.configuration)
             (\referenceTrees ->
                 let
                     referenceNutrientTrees =
@@ -101,7 +101,10 @@ gotFetchReferenceTreesResponseWith2 ps model result =
                 model
                     |> Tristate.mapInitial
                         (ps.referenceTreesLens.set (referenceNutrientTrees |> Just))
+                    |> Tristate.fromInitToMain ps.initialToMain
             )
+    , Cmd.none
+    )
 
 
 

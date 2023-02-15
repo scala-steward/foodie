@@ -68,21 +68,12 @@ gotFetchStatsResponse model result =
     )
 
 
-
--- todo: extract
-
-
 gotFetchReferenceTreesResponse : Page.Model -> Result Error (List ReferenceTree) -> ( Page.Model, Cmd Page.Msg )
-gotFetchReferenceTreesResponse model result =
-    ( StatisticsRequests.gotFetchReferenceTreesResponseWith2
-        { setError = Tristate.toError
-        , referenceTreesLens = Page.lenses.initial.referenceTrees
+gotFetchReferenceTreesResponse =
+    StatisticsRequests.gotFetchReferenceTreesResponseWith2
+        { referenceTreesLens = Page.lenses.initial.referenceTrees
+        , initialToMain = Page.initialToMain
         }
-        model
-        result
-        |> Tristate.fromInitToMain Page.initialToMain
-    , Cmd.none
-    )
 
 
 gotFetchRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.Msg )
