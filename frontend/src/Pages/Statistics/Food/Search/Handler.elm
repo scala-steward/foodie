@@ -1,29 +1,21 @@
 module Pages.Statistics.Food.Search.Handler exposing (init, update)
 
-import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.Food exposing (Food, decoderFood, encoderFood)
 import Json.Decode as Decode
 import Json.Encode as Encode
+import Maybe.Extra
 import Pages.Statistics.Food.Search.Page as Page
-import Pages.Statistics.Food.Search.Pagination as Pagination exposing (Pagination)
+import Pages.Statistics.Food.Search.Pagination exposing (Pagination)
 import Pages.Statistics.Food.Search.Requests as Requests
-import Pages.Statistics.Food.Search.Status as Status
+import Pages.View.Tristate as Tristate
 import Ports
 import Result.Extra
 import Util.HttpUtil as HttpUtil exposing (Error)
-import Util.Initialization as Initialization exposing (Initialization)
-import Util.LensUtil as LensUtil
 
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    ( { authorizedAccess = flags.authorizedAccess
-      , foods = []
-      , foodsSearchString = ""
-      , initialization = Initialization.Loading Status.initial
-      , pagination = Pagination.initial
-      , variant = StatisticsVariant.Food
-      }
+    ( Page.initial flags.authorizedAccess
     , initialFetch
     )
 
@@ -51,14 +43,14 @@ update msg model =
 
 setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 setSearchString model string =
-    ( model |> Page.lenses.foodsSearchString.set string
+    ( model |> Tristate.mapMain (Page.lenses.main.foodsSearchString.set string)
     , Cmd.none
     )
 
 
 setFoodsPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.Msg )
 setFoodsPagination model pagination =
-    ( model |> Page.lenses.pagination.set pagination
+    ( model |> Tristate.mapMain (Page.lenses.main.pagination.set pagination)
     , Cmd.none
     )
 
@@ -66,9 +58,9 @@ setFoodsPagination model pagination =
 gotFetchFoodsResponse : Page.Model -> Result Error (List Food) -> ( Page.Model, Cmd Page.Msg )
 gotFetchFoodsResponse model result =
     result
-        |> Result.Extra.unpack (\error -> ( setError error model, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( Tristate.toError model.configuration error, Cmd.none ))
             (\foods ->
-                ( model |> Page.lenses.foods.set foods
+                ( model |> Tristate.mapInitial (Page.lenses.initial.foods.set (foods |> Just))
                 , foods
                     |> Encode.list encoderFood
                     |> Encode.encode 0
@@ -80,29 +72,20 @@ gotFetchFoodsResponse model result =
 updateFoods : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 updateFoods model =
     Decode.decodeString (Decode.list decoderFood)
-        >> Result.Extra.unpack (\error -> ( setJsonError error model, Cmd.none ))
+        >> Result.Extra.unpack (\error -> ( error |> HttpUtil.jsonErrorToError |> Tristate.toError model.configuration, Cmd.none ))
             (\foods ->
                 ( model
-                    |> Page.lenses.foods.set foods
-                    |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.foods).set
-                        (foods
-                            |> List.isEmpty
-                            |> not
+                    |> Tristate.mapInitial (Page.lenses.initial.foods.set (foods |> Just |> Maybe.Extra.filter (List.isEmpty >> not)))
+                    |> Tristate.fromInitToMain Page.initialToMain
+                , model
+                    |> Tristate.lenses.initial.getOption
+                    |> Maybe.Extra.filter (always (foods |> List.isEmpty))
+                    |> Maybe.Extra.unwrap Cmd.none
+                        (\initial ->
+                            Requests.fetchFoods
+                                { configuration = model.configuration
+                                , jwt = initial.jwt
+                                }
                         )
-                , if List.isEmpty foods then
-                    Requests.fetchFoods model.authorizedAccess
-
-                  else
-                    Cmd.none
                 )
             )
-
-
-setError : Error -> Page.Model -> Page.Model
-setError =
-    HttpUtil.setError Page.lenses.initialization
-
-
-setJsonError : Decode.Error -> Page.Model -> Page.Model
-setJsonError =
-    HttpUtil.setJsonError Page.lenses.initialization
