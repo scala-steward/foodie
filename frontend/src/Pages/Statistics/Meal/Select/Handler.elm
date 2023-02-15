@@ -1,36 +1,22 @@
 module Pages.Statistics.Meal.Select.Handler exposing (init, update)
 
-import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Auxiliary exposing (ReferenceMapId)
 import Api.Types.Meal exposing (Meal)
 import Api.Types.ReferenceTree exposing (ReferenceTree)
 import Api.Types.TotalOnlyStats exposing (TotalOnlyStats)
-import Basics.Extra exposing (flip)
-import Monocle.Compose as Compose
+import Monocle.Lens as Lens
 import Pages.Statistics.Meal.Select.Page as Page
 import Pages.Statistics.Meal.Select.Requests as Requests
-import Pages.Statistics.Meal.Select.Status as Status
 import Pages.Statistics.StatisticsLenses as StatisticsLenses
 import Pages.Statistics.StatisticsRequests as StatisticsRequests
-import Pages.Statistics.StatisticsUtil as StatisticsEvaluation
+import Pages.View.Tristate as Tristate
 import Result.Extra
-import Util.HttpUtil as HttpUtil exposing (Error)
-import Util.Initialization as Initialization
-import Util.LensUtil as LensUtil
+import Util.HttpUtil exposing (Error)
 
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    ( { authorizedAccess = flags.authorizedAccess
-      , meal = Nothing
-      , mealStats =
-            { nutrients = []
-            , weightInGrams = 0
-            }
-      , statisticsEvaluation = StatisticsEvaluation.initial
-      , initialization = Initialization.Loading Status.initial
-      , variant = StatisticsVariant.Meal
-      }
+    ( Page.initial flags.authorizedAccess
     , initialFetch flags
     )
 
@@ -66,33 +52,47 @@ update msg model =
 gotFetchStatsResponse : Page.Model -> Result Error TotalOnlyStats -> ( Page.Model, Cmd Page.Msg )
 gotFetchStatsResponse model result =
     ( result
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model.configuration)
             (\mealStats ->
                 model
-                    |> (Page.lenses.mealStats |> Compose.lensWithLens StatisticsLenses.totalOnlyStatsNutrients).set (mealStats |> .nutrients |> List.sortBy (.base >> .name))
-                    |> (Page.lenses.mealStats |> Compose.lensWithLens StatisticsLenses.weightInGrams).set (mealStats |> .weightInGrams)
-                    |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.mealStats).set True
+                    |> Tristate.mapInitial
+                        (Page.lenses.initial.mealStats.set
+                            (mealStats
+                                |> Lens.modify StatisticsLenses.totalOnlyStatsNutrients (List.sortBy (.base >> .name))
+                                |> Just
+                            )
+                        )
+                    |> Tristate.fromInitToMain Page.initialToMain
             )
     , Cmd.none
     )
 
 
+
+--todo: extract
+
+
 gotFetchReferenceTreesResponse : Page.Model -> Result Error (List ReferenceTree) -> ( Page.Model, Cmd Page.Msg )
-gotFetchReferenceTreesResponse =
-    StatisticsRequests.gotFetchReferenceTreesResponseWith
-        { setError = setError
-        , statisticsEvaluationLens = Page.lenses.statisticsEvaluation
+gotFetchReferenceTreesResponse model result =
+    ( StatisticsRequests.gotFetchReferenceTreesResponseWith2
+        { setError = Tristate.toError
+        , referenceTreesLens = Page.lenses.initial.referenceTrees
         }
+        model
+        result
+        |> Tristate.fromInitToMain Page.initialToMain
+    , Cmd.none
+    )
 
 
 gotFetchMealResponse : Page.Model -> Result Error Meal -> ( Page.Model, Cmd Page.Msg )
 gotFetchMealResponse model result =
     ( result
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model.configuration)
             (\meal ->
                 model
-                    |> Page.lenses.meal.set (meal |> Just)
-                    |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.meal).set True
+                    |> Tristate.mapInitial (Page.lenses.initial.meal.set (meal |> Just))
+                    |> Tristate.fromInitToMain Page.initialToMain
             )
     , Cmd.none
     )
@@ -100,18 +100,13 @@ gotFetchMealResponse model result =
 
 selectReferenceMap : Page.Model -> Maybe ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
 selectReferenceMap =
-    StatisticsRequests.selectReferenceMapWith
-        { statisticsEvaluationLens = Page.lenses.statisticsEvaluation
+    StatisticsRequests.selectReferenceMapWith2
+        { statisticsEvaluationLens = Page.lenses.main.statisticsEvaluation
         }
 
 
 setNutrientsSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 setNutrientsSearchString =
-    StatisticsRequests.setNutrientsSearchStringWith
-        { statisticsEvaluationLens = Page.lenses.statisticsEvaluation
+    StatisticsRequests.setNutrientsSearchStringWith2
+        { statisticsEvaluationLens = Page.lenses.main.statisticsEvaluation
         }
-
-
-setError : Error -> Page.Model -> Page.Model
-setError =
-    HttpUtil.setError Page.lenses.initialization
