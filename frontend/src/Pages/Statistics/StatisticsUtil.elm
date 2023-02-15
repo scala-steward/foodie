@@ -4,7 +4,7 @@ import Api.Auxiliary exposing (NutrientCode, ReferenceMapId)
 import Api.Types.ReferenceMap exposing (ReferenceMap)
 import Dict exposing (Dict)
 import Monocle.Lens exposing (Lens)
-import Util.DictList as DictList exposing (DictList)
+import Util.DictList exposing (DictList)
 
 
 type alias ReferenceNutrientTree =
@@ -18,22 +18,6 @@ type alias StatisticsEvaluation =
     , referenceTree : Maybe ReferenceNutrientTree
     , nutrientsSearchString : String
     }
-
-
-
---todo: Remove?
-
-
-initial : StatisticsEvaluation
-initial =
-    { referenceTrees = DictList.empty
-    , referenceTree = Nothing
-    , nutrientsSearchString = ""
-    }
-
-
-
--- todo: Check back later
 
 
 initialWith : DictList ReferenceMapId ReferenceNutrientTree -> StatisticsEvaluation

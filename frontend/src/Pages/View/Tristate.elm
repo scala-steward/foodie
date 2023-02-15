@@ -7,8 +7,7 @@ import Monocle.Optional exposing (Optional)
 import Pages.Util.Links as Links
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil exposing (Page(..))
-import Util.HttpUtil as HttpUtil exposing (Error)
-import Util.Initialization exposing (ErrorExplanation)
+import Util.HttpUtil as HttpUtil exposing (Error, ErrorExplanation)
 
 
 type alias Model main initial =

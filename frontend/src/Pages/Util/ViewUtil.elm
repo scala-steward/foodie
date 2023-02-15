@@ -1,9 +1,9 @@
-module Pages.Util.ViewUtil exposing (Page(..), navigationBarWith, navigationToPageButton, navigationToPageButtonWith, pagerButtons, paginate, viewWithErrorHandling, viewMainWith)
+module Pages.Util.ViewUtil exposing (Page(..), navigationBarWith, navigationToPageButton, navigationToPageButtonWith, pagerButtons, paginate, viewMainWith)
 
 import Api.Auxiliary exposing (JWT)
 import Api.Types.LoginContent exposing (decoderLoginContent)
 import Configuration exposing (Configuration)
-import Html exposing (Html, button, div, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Html, button, div, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (disabled)
 import Html.Events exposing (onClick)
 import Jwt
@@ -15,89 +15,7 @@ import Pages.Util.PaginationSettings as PaginationSettings exposing (PaginationS
 import Pages.Util.Style as Style
 import Paginate exposing (PaginatedList)
 import Url.Builder
-import Util.Initialization exposing (Initialization(..))
 import Util.MaybeUtil as MaybeUtil
-
-
-viewWithErrorHandling :
-    { isFinished : status -> Bool
-    , initialization : model -> Initialization status
-    , configuration : model -> Configuration
-    , jwt : model -> Maybe JWT
-    , currentPage : Maybe Page
-    , showNavigation : Bool
-    }
-    -> model
-    -> Html msg
-    -> Html msg
-viewWithErrorHandling params model html =
-    let
-        mainPageURL =
-            model |> params.configuration |> .mainPageURL
-    in
-    case params.initialization model of
-        Failure explanation ->
-            let
-                solutionBlock =
-                    if explanation.possibleSolution |> String.isEmpty then
-                        []
-
-                    else
-                        [ td [] [ label [] [ text "Try the following:" ] ]
-                        , td [] [ label [] [ text <| explanation.possibleSolution ] ]
-                        ]
-
-                redirectBlock =
-                    [ td []
-                        [ navigationToPageButton
-                            { page = Login
-                            , mainPageURL = mainPageURL
-                            , currentPage = Nothing
-                            }
-                        ]
-                    ]
-                        |> List.filter (always explanation.redirectToLogin)
-            in
-            div [ Style.ids.error ]
-                [ tr []
-                    [ td [] [ label [] [ text "An error occurred:" ] ]
-                    , td [] [ label [] [ text <| explanation.cause ] ]
-                    ]
-                , tr [] solutionBlock
-                , tr [] redirectBlock
-                ]
-
-        Loading status ->
-            if params.isFinished status then
-                let
-                    unknown =
-                        "<unknown>"
-
-                    nickname =
-                        model
-                            |> params.jwt
-                            |> Maybe.andThen
-                                (Jwt.decodeToken decoderLoginContent
-                                    >> Result.toMaybe
-                                )
-                            |> Maybe.Extra.unwrap unknown .nickname
-
-                    navigation =
-                        [ navigationBar
-                            { mainPageURL = mainPageURL
-                            , currentPage = params.currentPage
-                            , nickname = nickname
-                            }
-                        ]
-                            |> List.filter (always params.showNavigation)
-                in
-                div []
-                    (navigation
-                        ++ [ html ]
-                    )
-
-            else
-                div [] [ Links.loadingSymbol ]
 
 
 viewMainWith :

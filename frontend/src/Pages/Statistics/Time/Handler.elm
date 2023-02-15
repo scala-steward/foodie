@@ -106,7 +106,7 @@ gotFetchStatsResponse model result =
 
 gotFetchReferenceTreesResponse : Page.Model -> Result Error (List ReferenceTree) -> ( Page.Model, Cmd Page.Msg )
 gotFetchReferenceTreesResponse =
-    StatisticsRequests.gotFetchReferenceTreesResponseWith2
+    StatisticsRequests.gotFetchReferenceTreesResponseWith
         { referenceTreesLens = Page.lenses.initial.referenceTrees
         , initialToMain = Page.initialToMain
         }
@@ -121,13 +121,13 @@ setPagination model pagination =
 
 selectReferenceMap : Page.Model -> Maybe ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
 selectReferenceMap =
-    StatisticsRequests.selectReferenceMapWith2
+    StatisticsRequests.selectReferenceMapWith
         { statisticsEvaluationLens = Page.lenses.main.statisticsEvaluation
         }
 
 
 setNutrientsSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 setNutrientsSearchString =
-    StatisticsRequests.setNutrientsSearchStringWith2
+    StatisticsRequests.setNutrientsSearchStringWith
         { statisticsEvaluationLens = Page.lenses.main.statisticsEvaluation
         }

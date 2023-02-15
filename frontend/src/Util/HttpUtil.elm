@@ -6,12 +6,17 @@ import Http exposing (Body, Error(..), Expect, expectStringResponse)
 import Json.Decode as Decode
 import Json.Decode.Pipeline exposing (..)
 import Maybe.Extra
-import Monocle.Compose as Compose
-import Monocle.Lens exposing (Lens)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.Links as Links
 import Url.Builder exposing (QueryParameter)
-import Util.Initialization as Initialization exposing (ErrorExplanation, Initialization)
+
+
+type alias ErrorExplanation =
+    { cause : String
+    , possibleSolution : String
+    , redirectToLogin : Bool
+    , suggestReload : Bool
+    }
 
 
 type Error
@@ -130,12 +135,6 @@ userTokenHeader =
 jwtHeader : JWT -> Http.Header
 jwtHeader =
     Http.header userTokenHeader
-
-
-setError : Lens model (Initialization status) -> Error -> model -> model
-setError initializationLens =
-    errorToExplanation
-        >> (initializationLens |> Compose.lensWithOptional Initialization.lenses.failure).set
 
 
 jsonErrorToError : Decode.Error -> Error

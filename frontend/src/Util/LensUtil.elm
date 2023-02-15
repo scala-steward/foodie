@@ -4,11 +4,6 @@ import Monocle.Compose as Compose
 import Monocle.Lens as Lens exposing (Lens)
 import Monocle.Optional as Optional exposing (Optional)
 import Util.DictList as DictList exposing (DictList)
-import Util.Initialization as Initialization exposing (Initialization)
-
-
-
--- todo: Tidy up functions
 
 
 dictByKey : key -> Optional (DictList key value) value
@@ -16,13 +11,6 @@ dictByKey k =
     { getOption = DictList.get k
     , set = DictList.insert k
     }
-
-
-initializationField : Lens model (Initialization status) -> Lens status Bool -> Optional model Bool
-initializationField initializationLens subLens =
-    initializationLens
-        |> Compose.lensWithOptional Initialization.lenses.loading
-        |> Compose.optionalWithLens subLens
 
 
 identityLens : Lens a a
