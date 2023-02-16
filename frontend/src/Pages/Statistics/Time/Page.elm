@@ -52,10 +52,12 @@ initial authorizedAccess =
         |> Tristate.createInitial authorizedAccess.configuration
 
 
-
--- todo: remove later
-
-
+{-| Following the Tristate logic this value should not be necessary.
+However, stats are loaded _after_ the initialization, which would need nested Tristate logic.
+Another alternative is to incorporate the "Initial" approach directly, and make the stats value
+optional in the model. This option results in the default values being distributed over
+various files, rather than be defined in one place once.
+-}
 defaultStats : Stats
 defaultStats =
     { meals = []
