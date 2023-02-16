@@ -260,23 +260,14 @@ referenceMapDropdownWith ps model =
         (model |> ps.referenceTree |> Maybe.map (.map >> .id >> Uuid.toString))
 
 
-statisticsTable :
+referenceMapSelection :
     { onReferenceMapSelection : Maybe String -> msg
-    , onSearchStringChange : String -> msg
-    , searchStringOf : model -> String
-    , infoListOf : model -> List information
-    , amountOf : information -> Maybe Float
-    , dailyAmountOf : information -> Maybe Float
-    , showDailyAmount : Bool
-    , completenessFraction : Maybe (CompletenessFraction information)
-    , nutrientBase : information -> NutrientInformationBase
     , referenceTrees : model -> DictList ReferenceMapId ReferenceNutrientTree
     , referenceTree : model -> Maybe ReferenceNutrientTree
-    , tableLabel : String
     }
     -> model
     -> List (Html msg)
-statisticsTable ps model =
+referenceMapSelection ps model =
     [ div [ Style.classes.elements ] [ text "Reference map" ]
     , div [ Style.classes.info ]
         [ referenceMapDropdownWith
@@ -286,7 +277,25 @@ statisticsTable ps model =
             }
             model
         ]
-    , div [ Style.classes.elements ] [ text <| ps.tableLabel ]
+    ]
+
+
+statisticsTable :
+    { onSearchStringChange : String -> msg
+    , searchStringOf : model -> String
+    , infoListOf : model -> List information
+    , amountOf : information -> Maybe Float
+    , dailyAmountOf : information -> Maybe Float
+    , showDailyAmount : Bool
+    , completenessFraction : Maybe (CompletenessFraction information)
+    , nutrientBase : information -> NutrientInformationBase
+    , referenceTree : model -> Maybe ReferenceNutrientTree
+    , tableLabel : String
+    }
+    -> model
+    -> List (Html msg)
+statisticsTable ps model =
+    [ div [ Style.classes.elements ] [ text <| ps.tableLabel ]
     , div [ Style.classes.info, Style.classes.nutrients ]
         [ HtmlUtil.searchAreaWith
             { msg = ps.onSearchStringChange

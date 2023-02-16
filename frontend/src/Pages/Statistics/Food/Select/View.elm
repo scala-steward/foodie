@@ -42,9 +42,14 @@ viewMain configuration main =
                             ]
                         ]
                     ]
-                    :: StatisticsView.statisticsTable
+                    :: StatisticsView.referenceMapSelection
                         { onReferenceMapSelection = Maybe.andThen Uuid.fromString >> Page.SelectReferenceMap
-                        , onSearchStringChange = Page.SetNutrientsSearchString
+                        , referenceTrees = .statisticsEvaluation >> .referenceTrees
+                        , referenceTree = .statisticsEvaluation >> .referenceTree
+                        }
+                        main
+                    ++ StatisticsView.statisticsTable
+                        { onSearchStringChange = Page.SetNutrientsSearchString
                         , searchStringOf = .statisticsEvaluation >> .nutrientsSearchString
                         , infoListOf = .foodStats >> .nutrients
                         , amountOf = .amount
@@ -52,7 +57,6 @@ viewMain configuration main =
                         , showDailyAmount = False
                         , completenessFraction = Nothing
                         , nutrientBase = .base
-                        , referenceTrees = .statisticsEvaluation >> .referenceTrees
                         , referenceTree = .statisticsEvaluation >> .referenceTree
                         , tableLabel = "Nutrients per 100g"
                         }
