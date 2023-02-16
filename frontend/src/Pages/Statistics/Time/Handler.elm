@@ -59,7 +59,10 @@ update msg model =
 setFromDate : Page.Model -> Maybe Date -> ( Page.Model, Cmd Page.Msg )
 setFromDate model maybeDate =
     ( model
-        |> Tristate.mapMain (Page.lenses.main.from.set maybeDate)
+        |> Tristate.mapMain
+            (Page.lenses.main.from.set maybeDate
+                >> Page.lenses.main.status.set Page.Select
+            )
     , Cmd.none
     )
 
@@ -67,7 +70,10 @@ setFromDate model maybeDate =
 setToDate : Page.Model -> Maybe Date -> ( Page.Model, Cmd Page.Msg )
 setToDate model maybeDate =
     ( model
-        |> Tristate.mapMain (Page.lenses.main.to.set maybeDate)
+        |> Tristate.mapMain
+            (Page.lenses.main.to.set maybeDate
+                >> Page.lenses.main.status.set Page.Select
+            )
     , Cmd.none
     )
 
@@ -75,7 +81,7 @@ setToDate model maybeDate =
 fetchStats : Page.Model -> ( Page.Model, Cmd Page.Msg )
 fetchStats model =
     ( model
-        |> Tristate.mapMain (Page.lenses.main.fetching.set True)
+        |> Tristate.mapMain (Page.lenses.main.status.set Page.Fetch)
     , model
         |> Tristate.foldMain Cmd.none
             (\main ->
@@ -97,7 +103,7 @@ gotFetchStatsResponse model result =
                     |> Tristate.mapMain
                         (Page.lenses.main.stats.set
                             (stats |> Lens.modify StatsLens.nutrients (List.sortBy (.base >> .name)))
-                            >> Page.lenses.main.fetching.set False
+                            >> Page.lenses.main.status.set Page.Display
                         )
             )
     , Cmd.none

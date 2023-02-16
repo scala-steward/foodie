@@ -27,9 +27,15 @@ type alias Main =
     , stats : Stats
     , statisticsEvaluation : StatisticsEvaluation
     , pagination : Pagination
-    , fetching : Bool
+    , status : Status
     , variant : Page
     }
+
+
+type Status
+    = Select
+    | Fetch
+    | Display
 
 
 type alias Initial =
@@ -67,7 +73,7 @@ initialToMain i =
             , stats = defaultStats
             , statisticsEvaluation = StatisticsUtil.initialWith referenceTrees
             , pagination = Pagination.initial
-            , fetching = False
+            , status = Select
             , variant = StatisticsVariant.Time
             }
         )
@@ -83,7 +89,7 @@ lenses :
         , stats : Lens Main Stats
         , statisticsEvaluation : Lens Main StatisticsEvaluation
         , pagination : Lens Main Pagination
-        , fetching : Lens Main Bool
+        , status : Lens Main Status
         }
     }
 lenses =
@@ -100,7 +106,7 @@ lenses =
         , stats = Lens .stats (\b a -> { a | stats = b })
         , statisticsEvaluation = Lens .statisticsEvaluation (\b a -> { a | statisticsEvaluation = b })
         , pagination = Lens .pagination (\b a -> { a | pagination = b })
-        , fetching = Lens .fetching (\b a -> { a | fetching = b })
+        , status = Lens .status (\b a -> { a | status = b })
         }
     }
 
