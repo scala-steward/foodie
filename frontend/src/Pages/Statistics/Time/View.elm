@@ -48,9 +48,10 @@ viewMain configuration main =
         weightRow =
             case main.status of
                 Page.Display ->
-                    [ tr []
-                        [ td [ Style.classes.descriptionColumn ] [ text "Weight of ingredients" ]
-                        , td [ Style.classes.descriptionColumn ] [ text <| flip (++) "g" <| StatisticsView.displayFloat <| .weightInGrams <| main.stats ]
+                    [ div [ Style.classes.elements ]
+                        [ label
+                            []
+                            [ text <| (++) "Weight of ingredients: " <| flip (++) "g" <| StatisticsView.displayFloat <| .weightInGrams <| main.stats ]
                         ]
                     ]
 
@@ -61,8 +62,7 @@ viewMain configuration main =
             case main.status of
                 Page.Display ->
                     StatisticsView.statisticsTable
-                        { onReferenceMapSelection = Maybe.andThen Uuid.fromString >> Page.SelectReferenceMap
-                        , onSearchStringChange = Page.SetNutrientsSearchString
+                        { onSearchStringChange = Page.SetNutrientsSearchString
                         , searchStringOf = .statisticsEvaluation >> .nutrientsSearchString
                         , infoListOf = .stats >> .nutrients
                         , amountOf = .amounts >> .values >> Maybe.map .total
@@ -74,7 +74,6 @@ viewMain configuration main =
                                 , totalValues = .amounts >> .numberOfIngredients
                                 }
                         , nutrientBase = .base
-                        , referenceTrees = .statisticsEvaluation >> .referenceTrees
                         , referenceTree = .statisticsEvaluation >> .referenceTree
                         , tableLabel = "Nutrients in all meals in the interval"
                         }
@@ -144,7 +143,7 @@ viewMain configuration main =
                                 ]
                             ]
                         , tbody []
-                            (tr []
+                            [ tr []
                                 [ td [ Style.classes.editable, Style.classes.date ] [ dateInput main Page.SetFromDate Page.lenses.main.from ]
                                 , td [ Style.classes.editable, Style.classes.date ] [ dateInput main Page.SetToDate Page.lenses.main.to ]
                                 , td [ Style.classes.controls ]
@@ -155,11 +154,17 @@ viewMain configuration main =
                                 , td [ Style.classes.controls ]
                                     ([ Links.loadingSymbol ] |> List.filter (always (main.status == Page.Fetch)))
                                 ]
-                                :: weightRow
-                            )
+                            ]
                         ]
                     ]
-                    :: stats
+                    :: StatisticsView.referenceMapSelection
+                        { onReferenceMapSelection = Maybe.andThen Uuid.fromString >> Page.SelectReferenceMap
+                        , referenceTrees = .statisticsEvaluation >> .referenceTrees
+                        , referenceTree = .statisticsEvaluation >> .referenceTree
+                        }
+                        main
+                    ++ weightRow
+                    ++ stats
                 )
 
 
