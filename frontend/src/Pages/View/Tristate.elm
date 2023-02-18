@@ -1,8 +1,9 @@
-module Pages.View.Tristate exposing (Model, Status(..), back, createInitial, createMain, fold, foldMain, fromInitToMain, lenses, mapInitial, mapMain, toError, view)
+module Pages.View.Tristate exposing (Model, Msg(..), Status(..), createInitial, createMain, fold, foldMain, fromInitToMain, lenses, mapInitial, mapMain, toError, updateWith, view)
 
+import Browser.Navigation
 import Configuration exposing (Configuration)
-import Either exposing (Either(..))
-import Html exposing (Html, div, label, td, text, tr)
+import Html exposing (Html, button, div, label, td, text, tr)
+import Html.Events exposing (onClick)
 import Maybe.Extra
 import Monocle.Optional exposing (Optional)
 import Pages.Util.Links as Links
@@ -17,16 +18,16 @@ type alias Model main initial =
     }
 
 
-type alias ErrorState main initial =
+type alias ErrorState main =
     { errorExplanation : ErrorExplanation
-    , previousState : Either main initial
+    , previousMain : Maybe main
     }
 
 
 type Status main initial
     = Initial initial
     | Main main
-    | Error (ErrorState main initial)
+    | Error (ErrorState main)
 
 
 createInitial : Configuration -> initial -> Model main initial
@@ -42,7 +43,7 @@ createMain configuration =
 fold :
     { onInitial : initial -> a
     , onMain : main -> a
-    , onError : ErrorState main initial -> a
+    , onError : ErrorState main -> a
     }
     -> Model main initial
     -> a
@@ -172,8 +173,8 @@ toError model error =
     in
     fold
         { onError = \errorState -> Model model.configuration (Error { errorState | errorExplanation = errorExplanation })
-        , onMain = \main -> Model model.configuration (Error { errorExplanation = errorExplanation, previousState = Left main })
-        , onInitial = \initial -> Model model.configuration (Error { errorExplanation = errorExplanation, previousState = Right initial })
+        , onMain = \main -> Model model.configuration (Error { errorExplanation = errorExplanation, previousMain = Just main })
+        , onInitial = \_ -> Model model.configuration (Error { errorExplanation = errorExplanation, previousMain = Nothing })
         }
         model
 
@@ -183,14 +184,14 @@ view :
     , viewMain : Configuration -> main -> Html msg
     }
     -> Model main initial
-    -> Html msg
+    -> Html (Msg msg)
 view ps t =
     case t.status of
         Initial _ ->
             div [] [ Links.loadingSymbol ]
 
         Main main ->
-            ps.viewMain t.configuration main
+            ps.viewMain t.configuration main |> Html.map Logic
 
         Error errorState ->
             let
@@ -224,11 +225,7 @@ view ps t =
                 reloadRow =
                     [ tr []
                         [ td []
-                            [ Links.linkButton
-                                { url = "."
-                                , attributes = []
-                                , children = [ text "Reload" ]
-                                }
+                            [ button [ onClick HandleError ] [ text "Retry" ]
                             ]
                         ]
                     ]
@@ -246,11 +243,30 @@ view ps t =
                 )
 
 
-back : Model main initial -> Model main initial
-back t =
-    fold
-        { onInitial = always t
-        , onMain = always t
-        , onError = .previousState >> Either.unpack (Main >> Model t.configuration) (Initial >> Model t.configuration)
-        }
-        t
+type Msg msg
+    = Logic msg
+    | HandleError
+
+
+updateWith : (msg -> Model main initial -> ( Model main initial, Cmd msg )) -> Msg msg -> Model main initial -> ( Model main initial, Cmd (Msg msg) )
+updateWith update msg model =
+    case msg of
+        HandleError ->
+            model
+                |> fold
+                    { onInitial = \_ -> ( model, Browser.Navigation.reload )
+                    , onMain = \_ -> ( model, Cmd.none )
+                    , onError =
+                        \errorState ->
+                            errorState.previousMain
+                                |> Maybe.Extra.unwrap
+                                    ( model, Browser.Navigation.reload )
+                                    (\main -> ( lenses.main.set main model, Cmd.none ))
+                    }
+
+        Logic message ->
+            let
+                ( newModel, cmd ) =
+                    update message model
+            in
+            ( newModel, Cmd.map Logic cmd )
