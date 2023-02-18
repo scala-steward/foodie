@@ -1,6 +1,7 @@
-module Pages.View.Tristate exposing (Model, Status(..), createError, createInitial, createMain, fold, foldMain, fromInitToMain, lenses, mapInitial, mapMain, toError, view)
+module Pages.View.Tristate exposing (Model, Status(..), back, createInitial, createMain, fold, foldMain, fromInitToMain, lenses, mapInitial, mapMain, toError, view)
 
 import Configuration exposing (Configuration)
+import Either exposing (Either(..))
 import Html exposing (Html, div, label, td, text, tr)
 import Maybe.Extra
 import Monocle.Optional exposing (Optional)
@@ -16,10 +17,16 @@ type alias Model main initial =
     }
 
 
+type alias ErrorState main initial =
+    { errorExplanation : ErrorExplanation
+    , previousState : Either main initial
+    }
+
+
 type Status main initial
     = Initial initial
     | Main main
-    | Error ErrorExplanation
+    | Error (ErrorState main initial)
 
 
 createInitial : Configuration -> initial -> Model main initial
@@ -32,15 +39,10 @@ createMain configuration =
     Main >> Model configuration
 
 
-createError : Configuration -> ErrorExplanation -> Model main initial
-createError configuration =
-    Error >> Model configuration
-
-
 fold :
     { onInitial : initial -> a
     , onMain : main -> a
-    , onError : ErrorExplanation -> a
+    , onError : ErrorState main initial -> a
     }
     -> Model main initial
     -> a
@@ -52,8 +54,8 @@ fold fs t =
         Main main ->
             fs.onMain main
 
-        Error errorExplanation ->
-            fs.onError errorExplanation
+        Error errorState ->
+            fs.onError errorState
 
 
 mapMain : (main -> main) -> Model main initial -> Model main initial
@@ -115,8 +117,8 @@ lenses =
         Optional asError
             (\b a ->
                 case a.status of
-                    Error _ ->
-                        Error b |> Model a.configuration
+                    Error errorState ->
+                        Error { errorState | errorExplanation = b } |> Model a.configuration
 
                     _ ->
                         a
@@ -147,8 +149,8 @@ asMain t =
 asError : Model main initial -> Maybe ErrorExplanation
 asError t =
     case t.status of
-        Error error ->
-            Just error
+        Error errorState ->
+            Just errorState.errorExplanation
 
         _ ->
             Nothing
@@ -162,10 +164,18 @@ fromInitToMain with t =
         |> Maybe.Extra.unwrap t (Main >> Model t.configuration)
 
 
-toError : Configuration -> HttpUtil.Error -> Model main initial
-toError configuration =
-    HttpUtil.errorToExplanation
-        >> createError configuration
+toError : Model main initial -> HttpUtil.Error -> Model main initial
+toError model error =
+    let
+        errorExplanation =
+            error |> HttpUtil.errorToExplanation
+    in
+    fold
+        { onError = \errorState -> Model model.configuration (Error { errorState | errorExplanation = errorExplanation })
+        , onMain = \main -> Model model.configuration (Error { errorExplanation = errorExplanation, previousState = Left main })
+        , onInitial = \initial -> Model model.configuration (Error { errorExplanation = errorExplanation, previousState = Right initial })
+        }
+        model
 
 
 view :
@@ -182,15 +192,15 @@ view ps t =
         Main main ->
             ps.viewMain t.configuration main
 
-        Error errorExplanation ->
+        Error errorState ->
             let
                 solutionBlock =
-                    if errorExplanation.possibleSolution |> String.isEmpty then
+                    if errorState.errorExplanation.possibleSolution |> String.isEmpty then
                         []
 
                     else
                         [ td [] [ label [] [ text "Try the following:" ] ]
-                        , td [] [ label [] [ text <| errorExplanation.possibleSolution ] ]
+                        , td [] [ label [] [ text <| errorState.errorExplanation.possibleSolution ] ]
                         ]
 
                 redirectRow =
@@ -222,15 +232,25 @@ view ps t =
                             ]
                         ]
                     ]
-                        |> List.filter (always errorExplanation.suggestReload)
+                        |> List.filter (always errorState.errorExplanation.suggestReload)
             in
             div [ Style.ids.error ]
                 ([ tr []
                     [ td [] [ label [] [ text "An error occurred:" ] ]
-                    , td [] [ label [] [ text <| errorExplanation.cause ] ]
+                    , td [] [ label [] [ text <| errorState.errorExplanation.cause ] ]
                     ]
                  , tr [] solutionBlock
                  ]
                     ++ redirectRow
                     ++ reloadRow
                 )
+
+
+back : Model main initial -> Model main initial
+back t =
+    fold
+        { onInitial = always t
+        , onMain = always t
+        , onError = .previousState >> Either.unpack (Main >> Model t.configuration) (Initial >> Model t.configuration)
+        }
+        t
