@@ -83,7 +83,7 @@ gotResponse model remoteData =
     remoteData
         |> Result.Extra.unpack
             (\error ->
-                ( Tristate.toError model.configuration error
+                ( Tristate.toError model error
                 , Cmd.none
                 )
             )

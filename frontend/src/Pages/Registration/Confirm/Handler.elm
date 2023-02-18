@@ -54,7 +54,7 @@ gotResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotResponse model result =
     ( result
         |> Result.Extra.unpack
-            (Tristate.toError model.configuration)
+            (Tristate.toError model)
             (\_ -> model |> Tristate.mapMain (Page.lenses.main.mode.set Page.Confirmed))
     , Cmd.none
     )

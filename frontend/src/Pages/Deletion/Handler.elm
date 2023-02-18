@@ -45,7 +45,7 @@ gotConfirmResponse model result =
     result
         |> Result.Extra.unpack
             (\error ->
-                ( error |> Tristate.toError model.configuration
+                ( error |> Tristate.toError model
                 , Cmd.none
                 )
             )

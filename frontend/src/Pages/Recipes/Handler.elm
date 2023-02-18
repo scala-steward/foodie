@@ -81,7 +81,7 @@ update msg model =
 gotFetchRecipesResponse : Page.Model -> Result Error (List Recipe) -> ( Page.Model, Cmd Page.Msg )
 gotFetchRecipesResponse model dataOrError =
     ( dataOrError
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\recipes ->
                 model
                     |> Tristate.mapInitial
@@ -129,7 +129,7 @@ createRecipe model =
 gotCreateRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.Msg )
 gotCreateRecipeResponse model dataOrError =
     dataOrError
-        |> Result.Extra.unpack (\error -> ( Tristate.toError model.configuration error, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
             (\recipe ->
                 ( model
                     |> Tristate.mapMain
@@ -184,7 +184,7 @@ saveRecipeEdit model recipeId =
 gotSaveRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.Msg )
 gotSaveRecipeResponse model dataOrError =
     ( dataOrError
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\recipe ->
                 model
                     |> mapRecipeStateById recipe.id
@@ -244,7 +244,7 @@ cancelDeleteRecipe model recipeId =
 gotDeleteRecipeResponse : Page.Model -> RecipeId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteRecipeResponse model deletedId dataOrError =
     ( dataOrError
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (always
                 (model
                     |> Tristate.mapMain (LensUtil.deleteAtId deletedId Page.lenses.main.recipes)

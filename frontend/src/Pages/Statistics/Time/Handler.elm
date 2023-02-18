@@ -97,7 +97,7 @@ fetchStats model =
 gotFetchStatsResponse : Page.Model -> Result Error Stats -> ( Page.Model, Cmd Page.Msg )
 gotFetchStatsResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\stats ->
                 model
                     |> Tristate.mapMain

@@ -36,7 +36,7 @@ gotFetchReferenceTreesResponseWith :
     -> ( Tristate.Model main initial, Cmd msg )
 gotFetchReferenceTreesResponseWith ps model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\referenceTrees ->
                 let
                     referenceNutrientTrees =

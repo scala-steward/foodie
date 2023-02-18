@@ -67,7 +67,7 @@ update msg model =
 gotFetchUserResponse : Page.Model -> Result Error User -> ( Page.Model, Cmd Page.Msg )
 gotFetchUserResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\user ->
                 model
                     |> Tristate.mapInitial (Page.lenses.initial.user.set (Just user))
@@ -96,7 +96,7 @@ updatePassword model =
 gotUpdatePasswordResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotUpdatePasswordResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\_ ->
                 model
                     |> Tristate.mapMain
@@ -126,7 +126,7 @@ updateSettings model =
 gotUpdateSettingsResponse : Page.Model -> Result Error User -> ( Page.Model, Cmd Page.Msg )
 gotUpdateSettingsResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\user -> model |> Tristate.mapMain (Page.lenses.main.user.set user))
     , Cmd.none
     )
@@ -149,7 +149,7 @@ requestDeletion model =
 gotRequestDeletionResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotRequestDeletionResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\_ -> model |> Tristate.mapMain (Page.lenses.main.mode.set Page.RequestedDeletion))
     , Cmd.none
     )
@@ -180,7 +180,7 @@ logout model mode =
 gotLogoutResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotLogoutResponse model result =
     result
-        |> Result.Extra.unpack (\error -> ( Tristate.toError model.configuration error, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
             (\_ ->
                 ( model
                 , Cmd.batch

@@ -52,7 +52,7 @@ setComplexFoodsPagination model pagination =
 gotFetchComplexFoodsResponse : Page.Model -> Result Error (List ComplexFood) -> ( Page.Model, Cmd Page.Msg )
 gotFetchComplexFoodsResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\complexFoods ->
                 model
                     |> Tristate.mapInitial (Page.lenses.initial.complexFoods.set (complexFoods |> Just))

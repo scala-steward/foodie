@@ -108,7 +108,7 @@ createReferenceMap model =
 gotCreateReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.Msg )
 gotCreateReferenceMapResponse model dataOrError =
     dataOrError
-        |> Result.Extra.unpack (\error -> ( Tristate.toError model.configuration error, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
             (\referenceMap ->
                 ( model
                     |> Tristate.mapMain
@@ -164,7 +164,7 @@ saveReferenceMapEdit model referenceMapId =
 gotSaveReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.Msg )
 gotSaveReferenceMapResponse model dataOrError =
     ( dataOrError
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\referenceMap ->
                 model
                     |> mapReferenceMapStateById referenceMap.id
@@ -224,7 +224,7 @@ cancelDeleteReferenceMap model referenceMapId =
 gotDeleteReferenceMapResponse : Page.Model -> ReferenceMapId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteReferenceMapResponse model deletedId dataOrError =
     ( dataOrError
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\_ ->
                 model
                     |> Tristate.mapMain (LensUtil.deleteAtId deletedId Page.lenses.main.referenceMaps)
@@ -236,7 +236,7 @@ gotDeleteReferenceMapResponse model deletedId dataOrError =
 gotFetchReferenceMapsResponse : Page.Model -> Result Error (List ReferenceMap) -> ( Page.Model, Cmd Page.Msg )
 gotFetchReferenceMapsResponse model dataOrError =
     ( dataOrError
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\referenceMaps ->
                 model
                     |> Tristate.mapInitial (Page.lenses.initial.referenceMaps.set (referenceMaps |> List.map Editing.asView |> DictList.fromListWithKey (.original >> .id) |> Just))

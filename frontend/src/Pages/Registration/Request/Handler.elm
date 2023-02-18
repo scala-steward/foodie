@@ -63,7 +63,7 @@ request model =
 gotRequestResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotRequestResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\_ -> model |> Tristate.mapMain (Page.lenses.main.mode.set Page.Confirmed))
     , Cmd.none
     )

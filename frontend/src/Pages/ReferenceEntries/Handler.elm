@@ -167,7 +167,7 @@ saveReferenceEntryEdit model referenceEntryUpdateClientInput =
 gotSaveReferenceEntryResponse : Page.Model -> Result Error ReferenceEntry -> ( Page.Model, Cmd Page.Msg )
 gotSaveReferenceEntryResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\referenceEntry ->
                 model
                     |> mapReferenceEntryStateById referenceEntry.nutrientCode
@@ -228,7 +228,7 @@ cancelDeleteReferenceEntry model nutrientCode =
 gotDeleteReferenceEntryResponse : Page.Model -> NutrientCode -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteReferenceEntryResponse model nutrientCode result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\_ ->
                 model
                     |> Tristate.mapMain (LensUtil.deleteAtId nutrientCode Page.lenses.main.referenceEntries)
@@ -240,7 +240,7 @@ gotDeleteReferenceEntryResponse model nutrientCode result =
 gotFetchReferenceEntriesResponse : Page.Model -> Result Error (List ReferenceEntry) -> ( Page.Model, Cmd Page.Msg )
 gotFetchReferenceEntriesResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\referenceEntries ->
                 model
                     |> Tristate.mapInitial (Page.lenses.initial.referenceEntries.set (referenceEntries |> List.map Editing.asView |> DictList.fromListWithKey (.original >> .nutrientCode) |> Just))
@@ -253,7 +253,7 @@ gotFetchReferenceEntriesResponse model result =
 gotFetchReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.Msg )
 gotFetchReferenceMapResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\referenceMap ->
                 model
                     |> Tristate.mapInitial (Page.lenses.initial.referenceMap.set (referenceMap |> Editing.asView |> Just))
@@ -266,7 +266,7 @@ gotFetchReferenceMapResponse model result =
 gotFetchNutrientsResponse : Page.Model -> Result Error (List Nutrient) -> ( Page.Model, Cmd Page.Msg )
 gotFetchNutrientsResponse model result =
     result
-        |> Result.Extra.unpack (\error -> ( Tristate.toError model.configuration error, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
             (\nutrients ->
                 ( model
                     |> Tristate.mapInitial (Page.lenses.initial.nutrients.set (nutrients |> DictList.fromListWithKey .code |> Just))
@@ -322,7 +322,7 @@ addNutrient model nutrientCode =
 gotAddReferenceEntryResponse : Page.Model -> Result Error ReferenceEntry -> ( Page.Model, Cmd Page.Msg )
 gotAddReferenceEntryResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\referenceEntry ->
                 model
                     |> Tristate.mapMain
@@ -351,7 +351,7 @@ updateAddNutrient model referenceEntryCreationClientInput =
 updateNutrients : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 updateNutrients model =
     Decode.decodeString (Decode.list decoderNutrient)
-        >> Result.Extra.unpack (\error -> ( error |> HttpUtil.jsonErrorToError |> Tristate.toError model.configuration, Cmd.none ))
+        >> Result.Extra.unpack (\error -> ( error |> HttpUtil.jsonErrorToError |> Tristate.toError model, Cmd.none ))
             (\nutrients ->
                 ( model
                     |> Tristate.mapInitial
@@ -462,7 +462,7 @@ saveReferenceMapEdit model =
 gotSaveReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.Msg )
 gotSaveReferenceMapResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\referenceMap ->
                 model
                     |> Tristate.mapMain (Page.lenses.main.referenceMap.set (referenceMap |> Editing.asView))
@@ -523,7 +523,7 @@ cancelDeleteReferenceMap model =
 gotDeleteReferenceMapResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteReferenceMapResponse model result =
     result
-        |> Result.Extra.unpack (\error -> ( Tristate.toError model.configuration error, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
             (\_ ->
                 ( model
                 , Links.loadFrontendPage

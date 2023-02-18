@@ -107,7 +107,7 @@ createMeal model =
 gotCreateMealResponse : Page.Model -> Result Error Meal -> ( Page.Model, Cmd msg )
 gotCreateMealResponse model dataOrError =
     dataOrError
-        |> Result.Extra.unpack (\error -> ( Tristate.toError model.configuration error, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
             (\meal ->
                 ( model
                     |> Tristate.mapMain
@@ -160,7 +160,7 @@ saveMealEdit model mealId =
 gotSaveMealResponse : Page.Model -> Result Error Meal -> ( Page.Model, Cmd Page.Msg )
 gotSaveMealResponse model dataOrError =
     ( dataOrError
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\meal ->
                 model
                     |> mapMealStateById meal.id
@@ -220,7 +220,7 @@ cancelDeleteMeal model mealId =
 gotDeleteMealResponse : Page.Model -> MealId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteMealResponse model deletedId dataOrError =
     ( dataOrError
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\_ ->
                 model
                     |> Tristate.mapMain (LensUtil.deleteAtId deletedId Page.lenses.main.meals)
@@ -232,7 +232,7 @@ gotDeleteMealResponse model deletedId dataOrError =
 gotFetchMealsResponse : Page.Model -> Result Error (List Meal) -> ( Page.Model, Cmd Page.Msg )
 gotFetchMealsResponse model dataOrError =
     ( dataOrError
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\meals ->
                 model
                     |> Tristate.mapInitial

@@ -52,7 +52,7 @@ update msg model =
 gotFetchStatsResponse : Page.Model -> Result Error TotalOnlyStats -> ( Page.Model, Cmd Page.Msg )
 gotFetchStatsResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\complexFoodStats ->
                 model
                     |> Tristate.mapInitial
@@ -79,7 +79,7 @@ gotFetchReferenceTreesResponse =
 gotFetchComplexFoodResponse : Page.Model -> Result Error ComplexFood -> ( Page.Model, Cmd Page.Msg )
 gotFetchComplexFoodResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\complexFood ->
                 model
                     |> Tristate.mapInitial (Page.lenses.initial.complexFood.set (complexFood |> Just))

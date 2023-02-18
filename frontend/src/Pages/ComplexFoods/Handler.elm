@@ -134,7 +134,7 @@ createComplexFood model recipeId =
 gotCreateComplexFoodResponse : Page.Model -> Result Error ComplexFood -> ( Page.Model, Cmd Page.Msg )
 gotCreateComplexFoodResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\complexFood ->
                 model
                     |> Tristate.mapMain (LensUtil.insertAtId complexFood.recipeId Page.lenses.main.complexFoods (complexFood |> Editing.asView))
@@ -172,7 +172,7 @@ saveComplexFoodEdit model complexFoodClientInput =
 gotSaveComplexFoodResponse : Page.Model -> Result Error ComplexFood -> ( Page.Model, Cmd Page.Msg )
 gotSaveComplexFoodResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\complexFood ->
                 model
                     |> mapComplexFoodStateByRecipeId complexFood.recipeId (always complexFood >> Editing.asView)
@@ -230,7 +230,7 @@ cancelDeleteComplexFood model complexFoodId =
 gotDeleteComplexFoodResponse : Page.Model -> ComplexFoodId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteComplexFoodResponse model complexFoodId result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (always
                 (model
                     |> Tristate.mapMain (LensUtil.deleteAtId complexFoodId Page.lenses.main.complexFoods)
@@ -243,7 +243,7 @@ gotDeleteComplexFoodResponse model complexFoodId result =
 gotFetchRecipesResponse : Page.Model -> Result Error (List Recipe) -> ( Page.Model, Cmd Page.Msg )
 gotFetchRecipesResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\recipes ->
                 model
                     |> Tristate.mapInitial
@@ -257,7 +257,7 @@ gotFetchRecipesResponse model result =
 gotFetchComplexFoodsResponse : Page.Model -> Result Error (List ComplexFood) -> ( Page.Model, Cmd Page.Msg )
 gotFetchComplexFoodsResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\complexFoods ->
                 model
                     |> Tristate.mapInitial (Page.lenses.initial.complexFoods.set (complexFoods |> List.map Editing.asView |> DictList.fromListWithKey (.original >> .recipeId) |> Just))

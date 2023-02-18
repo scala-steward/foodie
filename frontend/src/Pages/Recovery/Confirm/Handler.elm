@@ -53,7 +53,7 @@ confirm model =
 gotConfirmResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotConfirmResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\_ ->
                 model
                     |> Tristate.mapMain

@@ -58,7 +58,7 @@ setFoodsPagination model pagination =
 gotFetchFoodsResponse : Page.Model -> Result Error (List Food) -> ( Page.Model, Cmd Page.Msg )
 gotFetchFoodsResponse model result =
     result
-        |> Result.Extra.unpack (\error -> ( Tristate.toError model.configuration error, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
             (\foods ->
                 ( model |> Tristate.mapInitial (Page.lenses.initial.foods.set (foods |> Just))
                 , foods
@@ -72,7 +72,7 @@ gotFetchFoodsResponse model result =
 updateFoods : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 updateFoods model =
     Decode.decodeString (Decode.list decoderFood)
-        >> Result.Extra.unpack (\error -> ( error |> HttpUtil.jsonErrorToError |> Tristate.toError model.configuration, Cmd.none ))
+        >> Result.Extra.unpack (\error -> ( error |> HttpUtil.jsonErrorToError |> Tristate.toError model, Cmd.none ))
             (\foods ->
                 ( model
                     |> Tristate.mapInitial (Page.lenses.initial.foods.set (foods |> Just |> Maybe.Extra.filter (List.isEmpty >> not)))

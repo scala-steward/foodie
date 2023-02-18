@@ -163,7 +163,7 @@ saveMealEntryEdit model mealEntryUpdateClientInput =
 gotSaveMealEntryResponse : Page.Model -> Result Error MealEntry -> ( Page.Model, Cmd Page.Msg )
 gotSaveMealEntryResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\mealEntry ->
                 model
                     |> mapMealEntryStateById mealEntry.id
@@ -223,7 +223,7 @@ cancelDeleteMealEntry model mealEntryId =
 gotDeleteMealEntryResponse : Page.Model -> MealEntryId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteMealEntryResponse model mealEntryId result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\_ ->
                 model
                     |> Tristate.mapMain (LensUtil.deleteAtId mealEntryId Page.lenses.main.mealEntries)
@@ -235,7 +235,7 @@ gotDeleteMealEntryResponse model mealEntryId result =
 gotFetchMealEntriesResponse : Page.Model -> Result Error (List MealEntry) -> ( Page.Model, Cmd Page.Msg )
 gotFetchMealEntriesResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\mealEntries ->
                 model
                     |> Tristate.mapInitial (Page.lenses.initial.mealEntries.set (mealEntries |> List.map Editing.asView |> DictList.fromListWithKey (.original >> .id) |> Just))
@@ -248,7 +248,7 @@ gotFetchMealEntriesResponse model result =
 gotFetchRecipesResponse : Page.Model -> Result Error (List Recipe) -> ( Page.Model, Cmd Page.Msg )
 gotFetchRecipesResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\recipes ->
                 model
                     |> Tristate.mapInitial (Page.lenses.initial.recipes.set (recipes |> DictList.fromListWithKey .id |> Just))
@@ -261,7 +261,7 @@ gotFetchRecipesResponse model result =
 gotFetchMealResponse : Page.Model -> Result Error Meal -> ( Page.Model, Cmd Page.Msg )
 gotFetchMealResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\meal ->
                 model
                     |> Tristate.mapInitial (Page.lenses.initial.meal.set (meal |> Editing.asView |> Just))
@@ -316,7 +316,7 @@ addRecipe model recipeId =
 gotAddMealEntryResponse : Page.Model -> Result Error MealEntry -> ( Page.Model, Cmd Page.Msg )
 gotAddMealEntryResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\mealEntry ->
                 model
                     |> Tristate.mapMain
@@ -420,7 +420,7 @@ saveMealEdit model =
 gotSaveMealResponse : Page.Model -> Result Error Meal -> ( Page.Model, Cmd Page.Msg )
 gotSaveMealResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\meal ->
                 model
                     |> Tristate.mapMain (Page.lenses.main.meal.set (meal |> Editing.asView))
@@ -480,7 +480,7 @@ cancelDeleteMeal model =
 gotDeleteMealResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteMealResponse model result =
     result
-        |> Result.Extra.unpack (\error -> ( Tristate.toError model.configuration error, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
             (\_ ->
                 ( model
                 , Links.loadFrontendPage

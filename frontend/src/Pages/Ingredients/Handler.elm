@@ -281,7 +281,7 @@ saveComplexIngredientEdit model complexIngredientClientInput =
 gotSaveIngredientResponse : Page.Model -> Result Error Ingredient -> ( Page.Model, Cmd msg )
 gotSaveIngredientResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\ingredient ->
                 model
                     |> mapIngredientStateById ingredient.id
@@ -298,7 +298,7 @@ gotSaveIngredientResponse model result =
 gotSaveComplexIngredientResponse : Page.Model -> Result Error ComplexIngredient -> ( Page.Model, Cmd msg )
 gotSaveComplexIngredientResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\complexIngredient ->
                 model
                     |> mapComplexIngredientStateById complexIngredient.complexFoodId
@@ -410,7 +410,7 @@ cancelDeleteComplexIngredient model complexIngredientId =
 gotDeleteIngredientResponse : Page.Model -> IngredientId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteIngredientResponse model ingredientId result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (model
                 |> Tristate.mapMain
                     (LensUtil.deleteAtId ingredientId
@@ -425,7 +425,7 @@ gotDeleteIngredientResponse model ingredientId result =
 gotDeleteComplexIngredientResponse : Page.Model -> ComplexIngredientId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteComplexIngredientResponse model complexIngredientId result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (model
                 |> Tristate.mapMain
                     (LensUtil.deleteAtId complexIngredientId
@@ -440,7 +440,7 @@ gotDeleteComplexIngredientResponse model complexIngredientId result =
 gotFetchIngredientsResponse : Page.Model -> Result Error (List Ingredient) -> ( Page.Model, Cmd Page.Msg )
 gotFetchIngredientsResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\ingredients ->
                 model
                     |> Tristate.mapInitial
@@ -458,7 +458,7 @@ gotFetchIngredientsResponse model result =
 gotFetchComplexIngredientsResponse : Page.Model -> Result Error (List ComplexIngredient) -> ( Page.Model, Cmd Page.Msg )
 gotFetchComplexIngredientsResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\complexIngredients ->
                 model
                     |> Tristate.mapInitial
@@ -476,7 +476,7 @@ gotFetchComplexIngredientsResponse model result =
 gotFetchFoodsResponse : Page.Model -> Result Error (List Food) -> ( Page.Model, Cmd Page.Msg )
 gotFetchFoodsResponse model result =
     result
-        |> Result.Extra.unpack (\error -> ( Tristate.toError model.configuration error, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
             (\foods ->
                 ( model
                     |> Tristate.mapInitial
@@ -496,7 +496,7 @@ gotFetchFoodsResponse model result =
 gotFetchComplexFoodsResponse : Page.Model -> Result Error (List ComplexFood) -> ( Page.Model, Cmd Page.Msg )
 gotFetchComplexFoodsResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\complexFoods ->
                 model
                     |> Tristate.mapInitial
@@ -514,7 +514,7 @@ gotFetchComplexFoodsResponse model result =
 gotFetchRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.Msg )
 gotFetchRecipeResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\recipe ->
                 model
                     |> Tristate.mapInitial (Page.lenses.initial.recipe.set (recipe |> Editing.asView |> Just))
@@ -527,7 +527,7 @@ gotFetchRecipeResponse model result =
 updateFoods : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
 updateFoods model =
     Decode.decodeString (Decode.list decoderFood)
-        >> Result.Extra.unpack (\error -> ( error |> HttpUtil.jsonErrorToError |> Tristate.toError model.configuration, Cmd.none ))
+        >> Result.Extra.unpack (\error -> ( error |> HttpUtil.jsonErrorToError |> Tristate.toError model, Cmd.none ))
             (\foods ->
                 ( model
                     |> Tristate.mapInitial
@@ -681,7 +681,7 @@ addComplexFood model complexFoodId =
 gotAddFoodResponse : Page.Model -> Result Error Ingredient -> ( Page.Model, Cmd Page.Msg )
 gotAddFoodResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\ingredient ->
                 model
                     |> Tristate.mapMain
@@ -701,7 +701,7 @@ gotAddFoodResponse model result =
 gotAddComplexFoodResponse : Page.Model -> Result Error ComplexIngredient -> ( Page.Model, Cmd Page.Msg )
 gotAddComplexFoodResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\complexIngredient ->
                 model
                     |> Tristate.mapMain
@@ -825,7 +825,7 @@ saveRecipeEdit model =
 gotSaveRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.Msg )
 gotSaveRecipeResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\recipe ->
                 model
                     |> Tristate.mapMain (Page.lenses.main.recipe.set (recipe |> Editing.asView))
@@ -886,7 +886,7 @@ cancelDeleteRecipe model =
 gotDeleteRecipeResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotDeleteRecipeResponse model result =
     result
-        |> Result.Extra.unpack (\error -> ( Tristate.toError model.configuration error, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
             (\_ ->
                 ( model
                 , Links.loadFrontendPage

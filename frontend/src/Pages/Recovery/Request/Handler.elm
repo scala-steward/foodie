@@ -47,7 +47,7 @@ find model =
 gotFindResponse : Page.Model -> Result Error (List User) -> ( Page.Model, Cmd Page.Msg )
 gotFindResponse model result =
     result
-        |> Result.Extra.unpack (\error -> ( Tristate.toError model.configuration error, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
             (\users ->
                 case users of
                     user :: [] ->
@@ -85,7 +85,7 @@ requestRecovery model userId =
 gotRequestRecoveryResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
 gotRequestRecoveryResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\_ -> model |> Tristate.mapMain (Page.lenses.main.mode.set Page.Requested))
     , Cmd.none
     )

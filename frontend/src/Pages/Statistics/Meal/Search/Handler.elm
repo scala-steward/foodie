@@ -52,7 +52,7 @@ setMealsPagination model pagination =
 gotFetchMealsResponse : Page.Model -> Result Error (List Meal) -> ( Page.Model, Cmd Page.Msg )
 gotFetchMealsResponse model result =
     ( result
-        |> Result.Extra.unpack (Tristate.toError model.configuration)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\meals ->
                 model
                     |> Tristate.mapInitial (Page.lenses.initial.meals.set (meals |> Just))
