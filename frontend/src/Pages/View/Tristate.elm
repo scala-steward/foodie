@@ -1,6 +1,5 @@
 module Pages.View.Tristate exposing (Model, Msg(..), Status(..), createInitial, createMain, fold, foldMain, fromInitToMain, lenses, mapInitial, mapMain, toError, updateWith, view)
 
-import Addresses.Frontend
 import Browser.Navigation
 import Configuration exposing (Configuration)
 import Html exposing (Html, button, div, label, table, td, text, tr)
@@ -212,10 +211,10 @@ view ps t =
                             (\configuration ->
                                 [ tr []
                                     [ td []
-                                        [ Links.linkButton
-                                            { url = Links.frontendPage configuration <| Addresses.Frontend.login.address <| ()
+                                        [ Links.toLoginButtonWith
+                                            { configuration = configuration
+                                            , buttonText = "Login"
                                             , attributes = [ Style.classes.button.error ]
-                                            , children = [ text "Login" ]
                                             }
                                         ]
                                     ]
