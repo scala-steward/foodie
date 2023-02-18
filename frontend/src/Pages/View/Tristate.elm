@@ -1,14 +1,14 @@
 module Pages.View.Tristate exposing (Model, Msg(..), Status(..), createInitial, createMain, fold, foldMain, fromInitToMain, lenses, mapInitial, mapMain, toError, updateWith, view)
 
+import Addresses.Frontend
 import Browser.Navigation
 import Configuration exposing (Configuration)
-import Html exposing (Html, button, div, label, td, text, tr)
+import Html exposing (Html, button, div, label, table, td, text, tr)
 import Html.Events exposing (onClick)
 import Maybe.Extra
 import Monocle.Optional exposing (Optional)
 import Pages.Util.Links as Links
 import Pages.Util.Style as Style
-import Pages.Util.ViewUtil as ViewUtil exposing (Page(..))
 import Util.HttpUtil as HttpUtil exposing (Error, ErrorExplanation)
 
 
@@ -212,10 +212,10 @@ view ps t =
                             (\configuration ->
                                 [ tr []
                                     [ td []
-                                        [ ViewUtil.navigationToPageButton
-                                            { page = Login
-                                            , mainPageURL = configuration.mainPageURL
-                                            , currentPage = Nothing
+                                        [ Links.linkButton
+                                            { url = Links.frontendPage configuration <| Addresses.Frontend.login.address <| ()
+                                            , attributes = [ Style.classes.button.error ]
+                                            , children = [ text "Login" ]
                                             }
                                         ]
                                     ]
@@ -225,13 +225,14 @@ view ps t =
                 reloadRow =
                     [ tr []
                         [ td []
-                            [ button [ onClick HandleError ] [ text "Retry" ]
+                            [ button [ onClick HandleError, Style.classes.button.error ] [ text "Retry" ]
                             ]
                         ]
                     ]
                         |> List.filter (always errorState.errorExplanation.suggestReload)
             in
-            div [ Style.ids.error ]
+            table
+                [ Style.ids.error ]
                 ([ tr []
                     [ td [] [ label [] [ text "An error occurred:" ] ]
                     , td [] [ label [] [ text <| errorState.errorExplanation.cause ] ]
@@ -261,7 +262,7 @@ updateWith update msg model =
                             errorState.previousMain
                                 |> Maybe.Extra.unwrap
                                     ( model, Browser.Navigation.reload )
-                                    (\main -> ( lenses.main.set main model, Cmd.none ))
+                                    (\main -> ( main |> Main |> Model model.configuration, Cmd.none ))
                     }
 
         Logic message ->

@@ -20,7 +20,8 @@ body, button, input {
 
 .overviewButton:hover,
 .navigationButton:hover:not(.disabled),
-.pagerButton:hover:not(.disabled) {
+.pagerButton:hover:not(.disabled),
+.errorButton:hover:not(.disabled) {
     background-color: rgb(100, 149, 237);
 }
 
@@ -95,7 +96,8 @@ body, button, input {
 .selectButton,
 .logoutButton,
 .alternativeButton,
-.nutrientsButton {
+.nutrientsButton,
+.errorButton {
     color: rgb(250, 250, 250);
     border: none;
     text-align: center;
@@ -517,7 +519,8 @@ th {
 }
 
 .navigationButton,
-.pagerButton {
+.pagerButton,
+.errorButton {
     background-color: rgb(66, 100, 160);
 }
 
