@@ -20,12 +20,12 @@ import Pages.Util.Requests
 import Util.HttpUtil as HttpUtil
 
 
-fetchMeal : Page.Flags -> Cmd Page.Msg
+fetchMeal : Page.Flags -> Cmd Page.LogicMsg
 fetchMeal =
     Pages.Util.Requests.fetchMealWith Page.GotFetchMealResponse
 
 
-fetchMealEntries : AuthorizedAccess -> MealId -> Cmd Page.Msg
+fetchMealEntries : AuthorizedAccess -> MealId -> Cmd Page.LogicMsg
 fetchMealEntries authorizedAccess mealId =
     HttpUtil.runPatternWithJwt
         authorizedAccess
@@ -35,12 +35,12 @@ fetchMealEntries authorizedAccess mealId =
         }
 
 
-fetchRecipes : AuthorizedAccess -> Cmd Page.Msg
+fetchRecipes : AuthorizedAccess -> Cmd Page.LogicMsg
 fetchRecipes =
     Pages.Util.Requests.fetchRecipesWith Page.GotFetchRecipesResponse
 
 
-saveMealEntry : AuthorizedAccess -> MealEntryUpdate -> Cmd Page.Msg
+saveMealEntry : AuthorizedAccess -> MealEntryUpdate -> Cmd Page.LogicMsg
 saveMealEntry authorizedAccess mealEntryUpdate =
     HttpUtil.runPatternWithJwt
         authorizedAccess
@@ -50,7 +50,7 @@ saveMealEntry authorizedAccess mealEntryUpdate =
         }
 
 
-deleteMealEntry : AuthorizedAccess -> MealEntryId -> Cmd Page.Msg
+deleteMealEntry : AuthorizedAccess -> MealEntryId -> Cmd Page.LogicMsg
 deleteMealEntry authorizedAccess mealEntryId =
     HttpUtil.runPatternWithJwt
         authorizedAccess
@@ -60,7 +60,7 @@ deleteMealEntry authorizedAccess mealEntryId =
         }
 
 
-addMealEntry : AuthorizedAccess -> MealEntryCreation -> Cmd Page.Msg
+addMealEntry : AuthorizedAccess -> MealEntryCreation -> Cmd Page.LogicMsg
 addMealEntry authorizedAccess mealEntryCreation =
     HttpUtil.runPatternWithJwt
         authorizedAccess

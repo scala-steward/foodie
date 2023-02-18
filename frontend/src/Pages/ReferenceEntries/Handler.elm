@@ -5,54 +5,38 @@ import Api.Auxiliary exposing (JWT, NutrientCode, ReferenceMapId)
 import Api.Types.Nutrient exposing (Nutrient, decoderNutrient, encoderNutrient)
 import Api.Types.ReferenceEntry exposing (ReferenceEntry)
 import Api.Types.ReferenceMap exposing (ReferenceMap)
-import Basics.Extra exposing (flip)
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens as Lens
 import Monocle.Optional
-import Pages.ReferenceEntries.Page as Page exposing (Msg(..))
+import Pages.ReferenceEntries.Page as Page exposing (LogicMsg(..))
 import Pages.ReferenceEntries.Pagination as Pagination exposing (Pagination)
 import Pages.ReferenceEntries.ReferenceEntryCreationClientInput as ReferenceEntryCreationClientInput exposing (ReferenceEntryCreationClientInput)
 import Pages.ReferenceEntries.ReferenceEntryUpdateClientInput as ReferenceEntryUpdateClientInput exposing (ReferenceEntryUpdateClientInput)
 import Pages.ReferenceEntries.Requests as Requests
-import Pages.ReferenceEntries.Status as Status
 import Pages.ReferenceMaps.ReferenceMapUpdateClientInput as ReferenceMapUpdateClientInput exposing (ReferenceMapUpdateClientInput)
 import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Requests
+import Pages.View.Tristate as Tristate
 import Ports
 import Result.Extra
 import Util.DictList as DictList
 import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil as HttpUtil exposing (Error)
-import Util.Initialization as Initialization
 import Util.LensUtil as LensUtil
 
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    ( { authorizedAccess = flags.authorizedAccess
-      , referenceMapId = flags.referenceMapId
-      , referenceMap =
-            Editing.asView
-                { id = flags.referenceMapId
-                , name = ""
-                }
-      , referenceEntries = DictList.empty
-      , nutrients = DictList.empty
-      , nutrientsSearchString = ""
-      , referenceEntriesSearchString = ""
-      , referenceEntriesToAdd = DictList.empty
-      , initialization = Initialization.Loading Status.initial
-      , pagination = Pagination.initial
-      }
-    , initialFetch flags
+    ( Page.initial flags.authorizedAccess
+    , initialFetch flags |> Cmd.map Tristate.Logic
     )
 
 
-initialFetch : Page.Flags -> Cmd Page.Msg
+initialFetch : Page.Flags -> Cmd Page.LogicMsg
 initialFetch flags =
     Cmd.batch
         [ Requests.fetchReferenceEntries flags.authorizedAccess flags.referenceMapId
@@ -62,7 +46,12 @@ initialFetch flags =
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
-update msg model =
+update =
+    Tristate.updateWith updateLogic
+
+
+updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+updateLogic msg model =
     case msg of
         Page.UpdateReferenceEntry referenceEntryUpdateClientInput ->
             updateReferenceEntry model referenceEntryUpdateClientInput
@@ -155,7 +144,7 @@ update msg model =
             gotDeleteReferenceMapResponse model result
 
 
-updateReferenceEntry : Page.Model -> ReferenceEntryUpdateClientInput -> ( Page.Model, Cmd Page.Msg )
+updateReferenceEntry : Page.Model -> ReferenceEntryUpdateClientInput -> ( Page.Model, Cmd Page.LogicMsg )
 updateReferenceEntry model referenceEntryUpdateClientInput =
     ( model
         |> mapReferenceEntryStateById referenceEntryUpdateClientInput.nutrientCode
@@ -164,30 +153,37 @@ updateReferenceEntry model referenceEntryUpdateClientInput =
     )
 
 
-saveReferenceEntryEdit : Page.Model -> ReferenceEntryUpdateClientInput -> ( Page.Model, Cmd Page.Msg )
+saveReferenceEntryEdit : Page.Model -> ReferenceEntryUpdateClientInput -> ( Page.Model, Cmd Page.LogicMsg )
 saveReferenceEntryEdit model referenceEntryUpdateClientInput =
     ( model
-    , referenceEntryUpdateClientInput
-        |> ReferenceEntryUpdateClientInput.to model.referenceMapId
-        |> Requests.saveReferenceEntry model.authorizedAccess
+    , model
+        |> Tristate.foldMain Cmd.none
+            (\main ->
+                referenceEntryUpdateClientInput
+                    |> ReferenceEntryUpdateClientInput.to main.referenceMap.original.id
+                    |> Requests.saveReferenceEntry
+                        { configuration = model.configuration
+                        , jwt = main.jwt
+                        }
+            )
     )
 
 
-gotSaveReferenceEntryResponse : Page.Model -> Result Error ReferenceEntry -> ( Page.Model, Cmd Page.Msg )
+gotSaveReferenceEntryResponse : Page.Model -> Result Error ReferenceEntry -> ( Page.Model, Cmd Page.LogicMsg )
 gotSaveReferenceEntryResponse model result =
     ( result
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\referenceEntry ->
                 model
                     |> mapReferenceEntryStateById referenceEntry.nutrientCode
                         (referenceEntry |> Editing.asView |> always)
-                    |> LensUtil.deleteAtId referenceEntry.nutrientCode Page.lenses.referenceEntriesToAdd
+                    |> Tristate.mapMain (LensUtil.deleteAtId referenceEntry.nutrientCode Page.lenses.main.referenceEntriesToAdd)
             )
     , Cmd.none
     )
 
 
-enterEditReferenceEntry : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
+enterEditReferenceEntry : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.LogicMsg )
 enterEditReferenceEntry model nutrientCode =
     ( model
         |> mapReferenceEntryStateById nutrientCode
@@ -196,7 +192,7 @@ enterEditReferenceEntry model nutrientCode =
     )
 
 
-exitEditReferenceEntryAt : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
+exitEditReferenceEntryAt : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.LogicMsg )
 exitEditReferenceEntryAt model nutrientCode =
     ( model
         |> mapReferenceEntryStateById nutrientCode Editing.toView
@@ -204,73 +200,82 @@ exitEditReferenceEntryAt model nutrientCode =
     )
 
 
-requestDeleteReferenceEntry : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
+requestDeleteReferenceEntry : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.LogicMsg )
 requestDeleteReferenceEntry model nutrientCode =
     ( model |> mapReferenceEntryStateById nutrientCode Editing.toDelete
     , Cmd.none
     )
 
 
-confirmDeleteReferenceEntry : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
+confirmDeleteReferenceEntry : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.LogicMsg )
 confirmDeleteReferenceEntry model nutrientCode =
     ( model
-    , Requests.deleteReferenceEntry model.authorizedAccess model.referenceMapId nutrientCode
+    , model
+        |> Tristate.foldMain Cmd.none
+            (\main ->
+                Requests.deleteReferenceEntry
+                    { configuration = model.configuration
+                    , jwt = main.jwt
+                    }
+                    main.referenceMap.original.id
+                    nutrientCode
+            )
     )
 
 
-cancelDeleteReferenceEntry : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
+cancelDeleteReferenceEntry : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.LogicMsg )
 cancelDeleteReferenceEntry model nutrientCode =
     ( model |> mapReferenceEntryStateById nutrientCode Editing.toView
     , Cmd.none
     )
 
 
-gotDeleteReferenceEntryResponse : Page.Model -> NutrientCode -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotDeleteReferenceEntryResponse : Page.Model -> NutrientCode -> Result Error () -> ( Page.Model, Cmd Page.LogicMsg )
 gotDeleteReferenceEntryResponse model nutrientCode result =
     ( result
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\_ ->
                 model
-                    |> LensUtil.deleteAtId nutrientCode Page.lenses.referenceEntries
+                    |> Tristate.mapMain (LensUtil.deleteAtId nutrientCode Page.lenses.main.referenceEntries)
             )
     , Cmd.none
     )
 
 
-gotFetchReferenceEntriesResponse : Page.Model -> Result Error (List ReferenceEntry) -> ( Page.Model, Cmd Page.Msg )
+gotFetchReferenceEntriesResponse : Page.Model -> Result Error (List ReferenceEntry) -> ( Page.Model, Cmd Page.LogicMsg )
 gotFetchReferenceEntriesResponse model result =
     ( result
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\referenceEntries ->
                 model
-                    |> Page.lenses.referenceEntries.set (referenceEntries |> List.map Editing.asView |> DictList.fromListWithKey (.original >> .nutrientCode))
-                    |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.referenceEntries).set True
+                    |> Tristate.mapInitial (Page.lenses.initial.referenceEntries.set (referenceEntries |> List.map Editing.asView |> DictList.fromListWithKey (.original >> .nutrientCode) |> Just))
+                    |> Tristate.fromInitToMain Page.initialToMain
             )
     , Cmd.none
     )
 
 
-gotFetchReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.Msg )
+gotFetchReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.LogicMsg )
 gotFetchReferenceMapResponse model result =
     ( result
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\referenceMap ->
                 model
-                    |> Page.lenses.referenceMap.set (referenceMap |> Editing.asView)
-                    |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.referenceMap).set True
+                    |> Tristate.mapInitial (Page.lenses.initial.referenceMap.set (referenceMap |> Editing.asView |> Just))
+                    |> Tristate.fromInitToMain Page.initialToMain
             )
     , Cmd.none
     )
 
 
-gotFetchNutrientsResponse : Page.Model -> Result Error (List Nutrient) -> ( Page.Model, Cmd Page.Msg )
+gotFetchNutrientsResponse : Page.Model -> Result Error (List Nutrient) -> ( Page.Model, Cmd Page.LogicMsg )
 gotFetchNutrientsResponse model result =
     result
-        |> Result.Extra.unpack (\error -> ( setError error model, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
             (\nutrients ->
                 ( model
-                    |> LensUtil.set nutrients .code Page.lenses.nutrients
-                    |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.nutrients).set True
+                    |> Tristate.mapInitial (Page.lenses.initial.nutrients.set (nutrients |> DictList.fromListWithKey .code |> Just))
+                    |> Tristate.fromInitToMain Page.initialToMain
                 , nutrients
                     |> Encode.list encoderNutrient
                     |> Encode.encode 0
@@ -279,212 +284,255 @@ gotFetchNutrientsResponse model result =
             )
 
 
-selectNutrient : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
+selectNutrient : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.LogicMsg )
 selectNutrient model nutrientCode =
     ( model
-        |> LensUtil.insertAtId nutrientCode
-            Page.lenses.referenceEntriesToAdd
-            (ReferenceEntryCreationClientInput.default nutrientCode)
+        |> Tristate.mapMain
+            (LensUtil.insertAtId nutrientCode
+                Page.lenses.main.referenceEntriesToAdd
+                (ReferenceEntryCreationClientInput.default nutrientCode)
+            )
     , Cmd.none
     )
 
 
-deselectNutrient : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
+deselectNutrient : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.LogicMsg )
 deselectNutrient model nutrientCode =
     ( model
-        |> LensUtil.deleteAtId nutrientCode Page.lenses.referenceEntriesToAdd
+        |> Tristate.mapMain (LensUtil.deleteAtId nutrientCode Page.lenses.main.referenceEntriesToAdd)
     , Cmd.none
     )
 
 
-addNutrient : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
+addNutrient : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.LogicMsg )
 addNutrient model nutrientCode =
     ( model
-    , DictList.get nutrientCode model.referenceEntriesToAdd
-        |> Maybe.map
-            (ReferenceEntryCreationClientInput.toCreation model.referenceMapId
-                >> Requests.addReferenceEntry model.authorizedAccess
+    , model
+        |> Tristate.lenses.main.getOption
+        |> Maybe.andThen
+            (\main ->
+                DictList.get nutrientCode main.referenceEntriesToAdd
+                    |> Maybe.map
+                        (ReferenceEntryCreationClientInput.toCreation main.referenceMap.original.id
+                            >> Requests.addReferenceEntry
+                                { configuration = model.configuration
+                                , jwt = main.jwt
+                                }
+                        )
             )
         |> Maybe.withDefault Cmd.none
     )
 
 
-gotAddReferenceEntryResponse : Page.Model -> Result Error ReferenceEntry -> ( Page.Model, Cmd Page.Msg )
+gotAddReferenceEntryResponse : Page.Model -> Result Error ReferenceEntry -> ( Page.Model, Cmd Page.LogicMsg )
 gotAddReferenceEntryResponse model result =
     ( result
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\referenceEntry ->
                 model
-                    |> LensUtil.insertAtId referenceEntry.nutrientCode
-                        Page.lenses.referenceEntries
-                        (referenceEntry |> Editing.asView)
-                    |> LensUtil.deleteAtId referenceEntry.nutrientCode Page.lenses.referenceEntriesToAdd
+                    |> Tristate.mapMain
+                        (LensUtil.insertAtId referenceEntry.nutrientCode
+                            Page.lenses.main.referenceEntries
+                            (referenceEntry |> Editing.asView)
+                            >> LensUtil.deleteAtId referenceEntry.nutrientCode Page.lenses.main.referenceEntriesToAdd
+                        )
             )
     , Cmd.none
     )
 
 
-updateAddNutrient : Page.Model -> ReferenceEntryCreationClientInput -> ( Page.Model, Cmd Page.Msg )
+updateAddNutrient : Page.Model -> ReferenceEntryCreationClientInput -> ( Page.Model, Cmd Page.LogicMsg )
 updateAddNutrient model referenceEntryCreationClientInput =
     ( model
-        |> LensUtil.insertAtId referenceEntryCreationClientInput.nutrientCode
-            Page.lenses.referenceEntriesToAdd
-            referenceEntryCreationClientInput
+        |> Tristate.mapMain
+            (LensUtil.insertAtId referenceEntryCreationClientInput.nutrientCode
+                Page.lenses.main.referenceEntriesToAdd
+                referenceEntryCreationClientInput
+            )
     , Cmd.none
     )
 
 
-updateNutrients : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
+updateNutrients : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 updateNutrients model =
     Decode.decodeString (Decode.list decoderNutrient)
-        >> Result.Extra.unpack (\error -> ( setJsonError error model, Cmd.none ))
+        >> Result.Extra.unpack (\error -> ( error |> HttpUtil.jsonErrorToError |> Tristate.toError model, Cmd.none ))
             (\nutrients ->
                 ( model
-                    |> LensUtil.set nutrients .code Page.lenses.nutrients
-                    |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.nutrients).set
-                        (nutrients
-                            |> List.isEmpty
-                            |> not
+                    |> Tristate.mapInitial
+                        (Page.lenses.initial.nutrients.set
+                            (nutrients
+                                |> DictList.fromListWithKey .code
+                                |> Just
+                                |> Maybe.Extra.filter (DictList.isEmpty >> not)
+                            )
                         )
-                , if List.isEmpty nutrients then
-                    Requests.fetchNutrients model.authorizedAccess
-
-                  else
-                    Cmd.none
+                    |> Tristate.fromInitToMain Page.initialToMain
+                , model
+                    |> Tristate.lenses.initial.getOption
+                    |> Maybe.Extra.filter (always (List.isEmpty nutrients))
+                    |> Maybe.Extra.unwrap Cmd.none
+                        (\initial ->
+                            Requests.fetchNutrients
+                                { configuration = model.configuration
+                                , jwt = initial.jwt
+                                }
+                        )
                 )
             )
 
 
-setNutrientsSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
+setNutrientsSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 setNutrientsSearchString model string =
-    ( PaginationSettings.setSearchStringAndReset
-        { searchStringLens =
-            Page.lenses.nutrientsSearchString
-        , paginationSettingsLens =
-            Page.lenses.pagination
-                |> Compose.lensWithLens Pagination.lenses.nutrients
-        }
-        model
-        string
+    ( model
+        |> Tristate.mapMain
+            (PaginationSettings.setSearchStringAndReset
+                { searchStringLens =
+                    Page.lenses.main.nutrientsSearchString
+                , paginationSettingsLens =
+                    Page.lenses.main.pagination
+                        |> Compose.lensWithLens Pagination.lenses.nutrients
+                }
+                string
+            )
     , Cmd.none
     )
 
 
-setReferenceEntriesSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
+setReferenceEntriesSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 setReferenceEntriesSearchString model string =
-    ( PaginationSettings.setSearchStringAndReset
-        { searchStringLens =
-            Page.lenses.referenceEntriesSearchString
-        , paginationSettingsLens =
-            Page.lenses.pagination
-                |> Compose.lensWithLens Pagination.lenses.referenceEntries
-        }
-        model
-        string
+    ( model
+        |> Tristate.mapMain
+            (PaginationSettings.setSearchStringAndReset
+                { searchStringLens =
+                    Page.lenses.main.referenceEntriesSearchString
+                , paginationSettingsLens =
+                    Page.lenses.main.pagination
+                        |> Compose.lensWithLens Pagination.lenses.referenceEntries
+                }
+                string
+            )
     , Cmd.none
     )
 
 
-setPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.Msg )
+setPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.LogicMsg )
 setPagination model pagination =
-    ( model |> Page.lenses.pagination.set pagination
+    ( model |> Tristate.mapMain (Page.lenses.main.pagination.set pagination)
     , Cmd.none
     )
 
 
-updateReferenceMap : Page.Model -> ReferenceMapUpdateClientInput -> ( Page.Model, Cmd Page.Msg )
+updateReferenceMap : Page.Model -> ReferenceMapUpdateClientInput -> ( Page.Model, Cmd Page.LogicMsg )
 updateReferenceMap model referenceMapUpdateClientInput =
     ( model
-        |> (Page.lenses.referenceMap
+        |> Tristate.mapMain
+            ((Page.lenses.main.referenceMap
                 |> Compose.lensWithOptional Editing.lenses.update
-           ).set
-            referenceMapUpdateClientInput
+             ).set
+                referenceMapUpdateClientInput
+            )
     , Cmd.none
     )
 
 
-saveReferenceMapEdit : Page.Model -> ( Page.Model, Cmd Page.Msg )
+saveReferenceMapEdit : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 saveReferenceMapEdit model =
     ( model
     , model
-        |> Page.lenses.referenceMap.get
-        |> Editing.extractUpdate
-        |> Maybe.Extra.unwrap
-            Cmd.none
-            (ReferenceMapUpdateClientInput.to
-                >> (\referenceMapUpdate ->
-                        Pages.Util.Requests.saveReferenceMapWith
-                            Page.GotSaveReferenceMapResponse
-                            { authorizedAccess = model.authorizedAccess
-                            , referenceMapUpdate = referenceMapUpdate
-                            }
-                   )
+        |> Tristate.lenses.main.getOption
+        |> Maybe.andThen
+            (\main ->
+                main
+                    |> Page.lenses.main.referenceMap.get
+                    |> Editing.extractUpdate
+                    |> Maybe.map
+                        (ReferenceMapUpdateClientInput.to
+                            >> (\referenceMapUpdate ->
+                                    Pages.Util.Requests.saveReferenceMapWith
+                                        Page.GotSaveReferenceMapResponse
+                                        { authorizedAccess =
+                                            { configuration = model.configuration
+                                            , jwt = main.jwt
+                                            }
+                                        , referenceMapUpdate = referenceMapUpdate
+                                        }
+                               )
+                        )
             )
+        |> Maybe.withDefault Cmd.none
     )
 
 
-gotSaveReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.Msg )
+gotSaveReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.LogicMsg )
 gotSaveReferenceMapResponse model result =
     ( result
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\referenceMap ->
                 model
-                    |> Page.lenses.referenceMap.set (referenceMap |> Editing.asView)
+                    |> Tristate.mapMain (Page.lenses.main.referenceMap.set (referenceMap |> Editing.asView))
             )
     , Cmd.none
     )
 
 
-enterEditReferenceMap : Page.Model -> ( Page.Model, Cmd Page.Msg )
+enterEditReferenceMap : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 enterEditReferenceMap model =
     ( model
-        |> Lens.modify Page.lenses.referenceMap (Editing.toUpdate ReferenceMapUpdateClientInput.from)
+        |> Tristate.mapMain (Lens.modify Page.lenses.main.referenceMap (Editing.toUpdate ReferenceMapUpdateClientInput.from))
     , Cmd.none
     )
 
 
-exitEditReferenceMap : Page.Model -> ( Page.Model, Cmd Page.Msg )
+exitEditReferenceMap : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 exitEditReferenceMap model =
     ( model
-        |> Lens.modify Page.lenses.referenceMap Editing.toView
+        |> Tristate.mapMain (Lens.modify Page.lenses.main.referenceMap Editing.toView)
     , Cmd.none
     )
 
 
-requestDeleteReferenceMap : Page.Model -> ( Page.Model, Cmd Page.Msg )
+requestDeleteReferenceMap : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 requestDeleteReferenceMap model =
     ( model
-        |> Lens.modify Page.lenses.referenceMap Editing.toDelete
+        |> Tristate.mapMain (Lens.modify Page.lenses.main.referenceMap Editing.toDelete)
     , Cmd.none
     )
 
 
-confirmDeleteReferenceMap : Page.Model -> ( Page.Model, Cmd Page.Msg )
+confirmDeleteReferenceMap : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 confirmDeleteReferenceMap model =
     ( model
-    , Pages.Util.Requests.deleteReferenceMapWith Page.GotDeleteReferenceMapResponse
-        { authorizedAccess = model.authorizedAccess
-        , referenceMapId = model.referenceMap.original.id
-        }
+    , model
+        |> Tristate.foldMain Cmd.none
+            (\main ->
+                Pages.Util.Requests.deleteReferenceMapWith Page.GotDeleteReferenceMapResponse
+                    { authorizedAccess =
+                        { configuration = model.configuration
+                        , jwt = main.jwt
+                        }
+                    , referenceMapId = main.referenceMap.original.id
+                    }
+            )
     )
 
 
-cancelDeleteReferenceMap : Page.Model -> ( Page.Model, Cmd Page.Msg )
+cancelDeleteReferenceMap : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 cancelDeleteReferenceMap model =
     ( model
-        |> Lens.modify Page.lenses.referenceMap Editing.toView
+        |> Tristate.mapMain (Lens.modify Page.lenses.main.referenceMap Editing.toView)
     , Cmd.none
     )
 
 
-gotDeleteReferenceMapResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotDeleteReferenceMapResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.LogicMsg )
 gotDeleteReferenceMapResponse model result =
     result
-        |> Result.Extra.unpack (\error -> ( model |> setError error, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
             (\_ ->
                 ( model
                 , Links.loadFrontendPage
-                    model.authorizedAccess.configuration
+                    model.configuration
                     (() |> Addresses.Frontend.referenceMaps.address)
                 )
             )
@@ -492,15 +540,5 @@ gotDeleteReferenceMapResponse model result =
 
 mapReferenceEntryStateById : NutrientCode -> (Page.ReferenceEntryState -> Page.ReferenceEntryState) -> Page.Model -> Page.Model
 mapReferenceEntryStateById ingredientId =
-    Page.lenses.referenceEntries
-        |> LensUtil.updateById ingredientId
-
-
-setError : Error -> Page.Model -> Page.Model
-setError =
-    HttpUtil.setError Page.lenses.initialization
-
-
-setJsonError : Decode.Error -> Page.Model -> Page.Model
-setJsonError =
-    HttpUtil.setJsonError Page.lenses.initialization
+    LensUtil.updateById ingredientId Page.lenses.main.referenceEntries
+        >> Tristate.mapMain

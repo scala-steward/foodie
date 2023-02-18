@@ -63,8 +63,22 @@ toLoginButton :
     }
     -> Html msg
 toLoginButton params =
+    toLoginButtonWith
+        { configuration = params.configuration
+        , buttonText = params.buttonText
+        , attributes = [ Style.classes.button.navigation ]
+        }
+
+
+toLoginButtonWith :
+    { configuration : Configuration
+    , buttonText : String
+    , attributes : List (Attribute msg)
+    }
+    -> Html msg
+toLoginButtonWith params =
     linkButton
         { url = frontendPage params.configuration <| Addresses.Frontend.login.address ()
-        , attributes = [ Style.classes.button.navigation ]
+        , attributes = params.attributes
         , children = [ text <| params.buttonText ]
         }

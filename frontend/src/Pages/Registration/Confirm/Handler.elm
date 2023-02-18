@@ -1,29 +1,27 @@
 module Pages.Registration.Confirm.Handler exposing (init, update)
 
-import Basics.Extra exposing (flip)
 import Pages.Registration.Confirm.Page as Page
 import Pages.Registration.Confirm.Requests as Requests
-import Pages.Util.ComplementInput as ComplementInput exposing (ComplementInput)
+import Pages.Util.ComplementInput exposing (ComplementInput)
+import Pages.View.Tristate as Tristate
 import Result.Extra
-import Util.HttpUtil as HttpUtil exposing (Error)
-import Util.Initialization exposing (Initialization(..))
+import Util.HttpUtil exposing (Error)
 
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    ( { userIdentifier = flags.userIdentifier
-      , complementInput = ComplementInput.initial
-      , configuration = flags.configuration
-      , initialization = Loading ()
-      , registrationJWT = flags.registrationJWT
-      , mode = Page.Editing
-      }
+    ( Page.initial flags
     , Cmd.none
     )
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
-update msg model =
+update =
+    Tristate.updateWith updateLogic
+
+
+updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+updateLogic msg model =
     case msg of
         Page.SetComplementInput complementInput ->
             setComplementInput model complementInput
@@ -35,32 +33,33 @@ update msg model =
             gotResponse model result
 
 
-setComplementInput : Page.Model -> ComplementInput -> ( Page.Model, Cmd Page.Msg )
+setComplementInput : Page.Model -> ComplementInput -> ( Page.Model, Cmd Page.LogicMsg )
 setComplementInput model complementInput =
-    ( model |> Page.lenses.complementInput.set complementInput
+    ( model |> Tristate.mapMain (Page.lenses.main.complementInput.set complementInput)
     , Cmd.none
     )
 
 
-request : Page.Model -> ( Page.Model, Cmd Page.Msg )
+request : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 request model =
     ( model
-    , Requests.request model.configuration
-        model.registrationJWT
-        { password = model.complementInput.passwordInput.password1
-        , displayName = model.complementInput.displayName
-        }
+    , model
+        |> Tristate.foldMain Cmd.none
+            (\main ->
+                Requests.request model.configuration
+                    main.registrationJWT
+                    { password = main.complementInput.passwordInput.password1
+                    , displayName = main.complementInput.displayName
+                    }
+            )
     )
 
 
-gotResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.LogicMsg )
 gotResponse model result =
     ( result
         |> Result.Extra.unpack
-            (HttpUtil.errorToExplanation
-                >> Failure
-                >> flip Page.lenses.initialization.set model
-            )
-            (\_ -> model |> Page.lenses.mode.set Page.Confirmed)
+            (Tristate.toError model)
+            (\_ -> model |> Tristate.mapMain (Page.lenses.main.mode.set Page.Confirmed))
     , Cmd.none
     )

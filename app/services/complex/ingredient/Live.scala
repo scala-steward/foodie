@@ -37,9 +37,8 @@ class Live @Inject() (
   ): Future[ServerError.Or[ComplexIngredient]] =
     db.run(companion.create(userId, complexIngredient))
       .map(Right(_))
-      .recover {
-        case error =>
-          Left(ErrorContext.Recipe.ComplexIngredient.Creation(error.getMessage).asServerError)
+      .recover { case error =>
+        Left(ErrorContext.Recipe.ComplexIngredient.Creation(error.getMessage).asServerError)
       }
 
   override def update(
@@ -48,9 +47,8 @@ class Live @Inject() (
   ): Future[ServerError.Or[ComplexIngredient]] =
     db.run(companion.update(userId, complexIngredient))
       .map(Right(_))
-      .recover {
-        case error =>
-          Left(ErrorContext.Recipe.ComplexIngredient.Update(error.getMessage).asServerError)
+      .recover { case error =>
+        Left(ErrorContext.Recipe.ComplexIngredient.Update(error.getMessage).asServerError)
       }
 
   override def delete(userId: UserId, recipeId: RecipeId, complexFoodId: ComplexFoodId): Future[Boolean] =

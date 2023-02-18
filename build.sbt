@@ -6,9 +6,9 @@ maintainer := "nikita.danilenko.is@gmail.com"
 
 version := "0.1"
 
-val circeVersion = "0.14.3"
+val circeVersion = "0.14.4"
 val slickVersion = "3.4.1"
-val jwtVersion   = "9.1.2"
+val jwtVersion   = "9.2.0"
 
 val config = ConfigFactory
   .parseFile(new File("conf/application.conf"))
@@ -25,7 +25,7 @@ lazy val root = (project in file("."))
       "com.typesafe.slick"         %% "slick"                     % slickVersion,
       "com.typesafe.slick"         %% "slick-hikaricp"            % slickVersion,
       "com.typesafe.slick"         %% "slick-codegen"             % slickVersion,
-      "org.postgresql"              % "postgresql"                % "42.5.3",
+      "org.postgresql"              % "postgresql"                % "42.5.4",
       "ch.qos.logback"              % "logback-classic"           % "1.4.5",
       "io.circe"                   %% "circe-core"                % circeVersion,
       "io.circe"                   %% "circe-generic"             % circeVersion,
@@ -35,13 +35,13 @@ lazy val root = (project in file("."))
       "com.typesafe.play"          %% "play-slick"                % "5.1.0",
       "com.dripower"               %% "play-circe"                % "2814.2",
       "com.davegurnell"            %% "bridges"                   % "0.24.0",
-      "com.github.pathikrit"       %% "better-files"              % "3.9.1",
+      "com.github.pathikrit"       %% "better-files"              % "3.9.2",
       "com.typesafe"                % "config"                    % "1.4.2",
       "io.scalaland"               %% "chimney"                   % "0.6.2",
       "com.github.jwt-scala"       %% "jwt-core"                  % jwtVersion,
       "com.github.jwt-scala"       %% "jwt-circe"                 % jwtVersion,
       "com.github.pureconfig"      %% "pureconfig"                % "0.17.2",
-      "org.typelevel"              %% "cats-effect"               % "3.4.6",
+      "org.typelevel"              %% "cats-effect"               % "3.4.7",
       "org.typelevel"              %% "cats-core"                 % "2.9.0",
       "com.beachape"               %% "enumeratum-circe"          % "1.7.2",
       "com.typesafe.play"          %% "play-mailer"               % "8.0.1",

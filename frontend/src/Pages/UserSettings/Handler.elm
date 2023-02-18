@@ -3,43 +3,39 @@ module Pages.UserSettings.Handler exposing (init, update)
 import Addresses.Frontend
 import Api.Types.Mode exposing (Mode)
 import Api.Types.User exposing (User)
-import Basics.Extra exposing (flip)
 import Browser.Navigation
 import Monocle.Compose as Compose
 import Monocle.Lens as Lens
 import Pages.UserSettings.Page as Page
 import Pages.UserSettings.Requests as Requests
-import Pages.UserSettings.Status as Status
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.ComplementInput as ComplementInput exposing (ComplementInput)
 import Pages.Util.Links as Links
 import Pages.Util.PasswordInput as PasswordInput
+import Pages.View.Tristate as Tristate
 import Ports
 import Result.Extra
-import Util.HttpUtil as HttpUtil exposing (Error)
-import Util.Initialization exposing (Initialization(..))
-import Util.LensUtil as LensUtil
+import Util.HttpUtil exposing (Error)
 
 
-initialFetch : AuthorizedAccess -> Cmd Page.Msg
+initialFetch : AuthorizedAccess -> Cmd Page.LogicMsg
 initialFetch =
     Requests.fetchUser
 
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    ( { authorizedAccess = flags.authorizedAccess
-      , user = Nothing
-      , complementInput = ComplementInput.initial
-      , initialization = Loading Status.initial
-      , mode = Page.Regular
-      }
-    , initialFetch flags.authorizedAccess
+    ( Page.initial flags.authorizedAccess
+    , initialFetch flags.authorizedAccess |> Cmd.map Tristate.Logic
     )
 
-
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
-update msg model =
+update =
+    Tristate.updateWith updateLogic
+
+
+updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+updateLogic msg model =
     case msg of
         Page.GotFetchUserResponse result ->
             gotFetchUserResponse model result
@@ -72,104 +68,131 @@ update msg model =
             gotLogoutResponse model result
 
 
-gotFetchUserResponse : Page.Model -> Result Error User -> ( Page.Model, Cmd Page.Msg )
+gotFetchUserResponse : Page.Model -> Result Error User -> ( Page.Model, Cmd Page.LogicMsg )
 gotFetchUserResponse model result =
     ( result
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\user ->
                 model
-                    |> Page.lenses.user.set (Just user)
-                    |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.user).set True
-                    |> (Page.lenses.complementInput |> Compose.lensWithLens ComplementInput.lenses.displayName).set user.displayName
+                    |> Tristate.mapInitial (Page.lenses.initial.user.set (Just user))
+                    |> Tristate.fromInitToMain Page.initialToMain
+                    |> Tristate.mapMain ((Page.lenses.main.complementInput |> Compose.lensWithLens ComplementInput.lenses.displayName).set user.displayName)
             )
     , Cmd.none
     )
 
 
-updatePassword : Page.Model -> ( Page.Model, Cmd Page.Msg )
+updatePassword : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 updatePassword model =
     ( model
-    , Requests.updatePassword
-        model.authorizedAccess
-        { password = model.complementInput.passwordInput.password1 }
+    , model
+        |> Tristate.foldMain Cmd.none
+            (\main ->
+                Requests.updatePassword
+                    { configuration = model.configuration
+                    , jwt = main.jwt
+                    }
+                    { password = main.complementInput.passwordInput.password1 }
+            )
     )
 
 
-gotUpdatePasswordResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotUpdatePasswordResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.LogicMsg )
 gotUpdatePasswordResponse model result =
     ( result
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\_ ->
-                Lens.modify Page.lenses.complementInput
-                    (ComplementInput.lenses.passwordInput.set PasswordInput.initial)
-                    model
+                model
+                    |> Tristate.mapMain
+                        (Lens.modify Page.lenses.main.complementInput
+                            (ComplementInput.lenses.passwordInput.set PasswordInput.initial)
+                        )
             )
     , Cmd.none
     )
 
 
-updateSettings : Page.Model -> ( Page.Model, Cmd Page.Msg )
+updateSettings : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 updateSettings model =
     ( model
-    , Requests.updateSettings
-        model.authorizedAccess
-        { displayName = model.complementInput.displayName }
+    , model
+        |> Tristate.foldMain Cmd.none
+            (\main ->
+                Requests.updateSettings
+                    { configuration = model.configuration
+                    , jwt = main.jwt
+                    }
+                    { displayName = main.complementInput.displayName }
+            )
     )
 
 
-gotUpdateSettingsResponse : Page.Model -> Result Error User -> ( Page.Model, Cmd Page.Msg )
+gotUpdateSettingsResponse : Page.Model -> Result Error User -> ( Page.Model, Cmd Page.LogicMsg )
 gotUpdateSettingsResponse model result =
     ( result
-        |> Result.Extra.unpack (flip setError model)
-            (\user -> Page.lenses.user.set (Just user) model)
+        |> Result.Extra.unpack (Tristate.toError model)
+            (\user -> model |> Tristate.mapMain (Page.lenses.main.user.set user))
     , Cmd.none
     )
 
 
-requestDeletion : Page.Model -> ( Page.Model, Cmd Page.Msg )
+requestDeletion : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 requestDeletion model =
     ( model
-    , Requests.requestDeletion model.authorizedAccess
+    , model
+        |> Tristate.foldMain Cmd.none
+            (\main ->
+                Requests.requestDeletion
+                    { configuration = model.configuration
+                    , jwt = main.jwt
+                    }
+            )
     )
 
 
-gotRequestDeletionResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotRequestDeletionResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.LogicMsg )
 gotRequestDeletionResponse model result =
     ( result
-        |> Result.Extra.unpack (flip setError model)
-            (\_ -> model |> Page.lenses.mode.set Page.RequestedDeletion)
+        |> Result.Extra.unpack (Tristate.toError model)
+            (\_ -> model |> Tristate.mapMain (Page.lenses.main.mode.set Page.RequestedDeletion))
     , Cmd.none
     )
 
 
-setComplementInput : Page.Model -> ComplementInput -> ( Page.Model, Cmd Page.Msg )
+setComplementInput : Page.Model -> ComplementInput -> ( Page.Model, Cmd Page.LogicMsg )
 setComplementInput model complementInput =
-    ( model |> Page.lenses.complementInput.set complementInput
+    ( model |> Tristate.mapMain (Page.lenses.main.complementInput.set complementInput)
     , Cmd.none
     )
 
 
-logout : Page.Model -> Api.Types.Mode.Mode -> ( Page.Model, Cmd Page.Msg )
+logout : Page.Model -> Api.Types.Mode.Mode -> ( Page.Model, Cmd Page.LogicMsg )
 logout model mode =
     ( model
-    , Requests.logout model.authorizedAccess mode
+    , model
+        |> Tristate.foldMain Cmd.none
+            (\main ->
+                Requests.logout
+                    { configuration = model.configuration
+                    , jwt = main.jwt
+                    }
+                    mode
+            )
     )
 
 
-gotLogoutResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotLogoutResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.LogicMsg )
 gotLogoutResponse model result =
     result
-        |> Result.Extra.unpack (\error -> ( model |> setError error, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
             (\_ ->
                 ( model
                 , Cmd.batch
                     [ Ports.doDeleteToken ()
-                    , () |> Addresses.Frontend.login.address |> Links.frontendPage model.authorizedAccess.configuration |> Browser.Navigation.load
+                    , ()
+                        |> Addresses.Frontend.login.address
+                        |> Links.frontendPage model.configuration
+                        |> Browser.Navigation.load
                     ]
                 )
             )
-
-
-setError : Error -> Page.Model -> Page.Model
-setError =
-    HttpUtil.setError Page.lenses.initialization

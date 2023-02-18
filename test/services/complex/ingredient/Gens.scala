@@ -10,13 +10,12 @@ object Gens {
     for {
       subset  <- GenUtils.subset(complexFoodIds)
       factors <- Gen.listOfN(subset.size, GenUtils.smallBigDecimalGen)
-    } yield subset.zip(factors).map {
-      case (complexFoodId, factor) =>
-        ComplexIngredient(
-          recipeId = recipeId,
-          complexFoodId = complexFoodId,
-          factor = factor
-        )
+    } yield subset.zip(factors).map { case (complexFoodId, factor) =>
+      ComplexIngredient(
+        recipeId = recipeId,
+        complexFoodId = complexFoodId,
+        factor = factor
+      )
     }
 
   def complexIngredientGen(recipeId: RecipeId, complexFoodIds: Seq[ComplexFoodId]): Gen[ComplexIngredient] =

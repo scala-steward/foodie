@@ -38,8 +38,8 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
       val propsPerNutrient = GenUtils.allNutrients.map { nutrient =>
         val prop = (nutrientMapFromService.get(nutrient), expectedNutrientValues.get(nutrient.id)) match {
           case (Some(actual), Some(expected)) =>
-            val (expectedSize, expectedValue) = expected.fold((0, Option.empty[BigDecimal])) {
-              case (size, value) => size -> Some(value)
+            val (expectedSize, expectedValue) = expected.fold((0, Option.empty[BigDecimal])) { case (size, value) =>
+              size -> Some(value)
             }
             Prop.all(
               PropUtil.closeEnough(actual.value, expectedValue) :| "Value correct",

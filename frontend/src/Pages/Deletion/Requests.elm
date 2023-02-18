@@ -8,7 +8,7 @@ import Pages.Deletion.Page as Page
 import Util.HttpUtil as HttpUtil
 
 
-deleteUser : Configuration -> JWT -> Cmd Page.Msg
+deleteUser : Configuration -> JWT -> Cmd Page.LogicMsg
 deleteUser configuration jwt =
     HttpUtil.runPatternWithJwt
         { configuration = configuration

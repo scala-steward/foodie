@@ -32,15 +32,14 @@ object Meal {
       )
       .buildTransformer
 
-  implicit val toRepresentation: Transformer[(Meal, UserId), Tables.MealRow] = {
-    case (meal, userId) =>
-      Tables.MealRow(
-        id = meal.id.transformInto[UUID],
-        userId = userId.transformInto[UUID],
-        consumedOnDate = meal.date.date.transformInto[LocalDate].transformInto[java.sql.Date],
-        consumedOnTime = meal.date.time.map(_.transformInto[LocalTime].transformInto[java.sql.Time]),
-        name = meal.name
-      )
+  implicit val toRepresentation: Transformer[(Meal, UserId), Tables.MealRow] = { case (meal, userId) =>
+    Tables.MealRow(
+      id = meal.id.transformInto[UUID],
+      userId = userId.transformInto[UUID],
+      consumedOnDate = meal.date.date.transformInto[LocalDate].transformInto[java.sql.Date],
+      consumedOnTime = meal.date.time.map(_.transformInto[LocalTime].transformInto[java.sql.Time]),
+      name = meal.name
+    )
   }
 
 }

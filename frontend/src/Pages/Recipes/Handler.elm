@@ -3,7 +3,6 @@ module Pages.Recipes.Handler exposing (init, update)
 import Addresses.Frontend
 import Api.Auxiliary exposing (JWT, RecipeId)
 import Api.Types.Recipe exposing (Recipe)
-import Basics.Extra exposing (flip)
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens
@@ -13,33 +12,34 @@ import Pages.Recipes.Pagination as Pagination exposing (Pagination)
 import Pages.Recipes.RecipeCreationClientInput as RecipeCreationClientInput exposing (RecipeCreationClientInput)
 import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
 import Pages.Recipes.Requests as Requests
-import Pages.Recipes.Status as Status
 import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
+import Pages.View.Tristate as Tristate
 import Result.Extra
 import Util.DictList as DictList
 import Util.Editing as Editing exposing (Editing)
-import Util.HttpUtil as HttpUtil exposing (Error)
-import Util.Initialization as Initialization exposing (Initialization(..))
+import Util.HttpUtil exposing (Error)
 import Util.LensUtil as LensUtil
 
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    ( { authorizedAccess = flags.authorizedAccess
-      , recipes = DictList.empty
-      , recipeToAdd = Nothing
-      , searchString = ""
-      , initialization = Initialization.Loading Status.initial
-      , pagination = Pagination.initial
-      }
-    , Requests.fetchRecipes flags.authorizedAccess
+    ( Page.initial flags.authorizedAccess
+    , Requests.fetchRecipes flags.authorizedAccess |> Cmd.map Tristate.Logic
     )
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
-update msg model =
+update =
+    Tristate.updateWith updateLogic
+
+
+updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+updateLogic msg model =
     case msg of
+        Page.GotFetchRecipesResponse dataOrError ->
+            gotFetchRecipesResponse model dataOrError
+
         Page.UpdateRecipeCreation recipeCreationClientInput ->
             updateRecipeCreation model recipeCreationClientInput
 
@@ -76,9 +76,6 @@ update msg model =
         Page.GotDeleteRecipeResponse deletedId dataOrError ->
             gotDeleteRecipeResponse model deletedId dataOrError
 
-        Page.GotFetchRecipesResponse dataOrError ->
-            gotFetchRecipesResponse model dataOrError
-
         Page.SetPagination pagination ->
             setPagination model pagination
 
@@ -86,40 +83,74 @@ update msg model =
             setSearchString model string
 
 
-updateRecipeCreation : Page.Model -> Maybe RecipeCreationClientInput -> ( Page.Model, Cmd Page.Msg )
-updateRecipeCreation model recipeToAdd =
-    ( model
-        |> Page.lenses.recipeToAdd.set recipeToAdd
+gotFetchRecipesResponse : Page.Model -> Result Error (List Recipe) -> ( Page.Model, Cmd Page.LogicMsg )
+gotFetchRecipesResponse model dataOrError =
+    ( dataOrError
+        |> Result.Extra.unpack (Tristate.toError model)
+            (\recipes ->
+                model
+                    |> Tristate.mapInitial
+                        (Page.lenses.initial.recipes.set
+                            (recipes
+                                |> List.map Editing.asView
+                                |> DictList.fromListWithKey (.original >> .id)
+                                |> Just
+                            )
+                        )
+                    |> Tristate.fromInitToMain Page.initialToMain
+            )
     , Cmd.none
     )
 
 
-createRecipe : Page.Model -> ( Page.Model, Cmd Page.Msg )
-createRecipe model =
+updateRecipeCreation : Page.Model -> Maybe RecipeCreationClientInput -> ( Page.Model, Cmd Page.LogicMsg )
+updateRecipeCreation model recipeToAdd =
     ( model
-    , model.recipeToAdd
-        |> Maybe.Extra.unwrap Cmd.none (RecipeCreationClientInput.toCreation >> Requests.createRecipe model.authorizedAccess)
+        |> Tristate.mapMain (Page.lenses.main.recipeToAdd.set recipeToAdd)
+    , Cmd.none
     )
 
 
-gotCreateRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.Msg )
+createRecipe : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+createRecipe model =
+    ( model
+    , model
+        |> Tristate.lenses.main.getOption
+        |> Maybe.andThen
+            (\main ->
+                main.recipeToAdd
+                    |> Maybe.map
+                        (RecipeCreationClientInput.toCreation
+                            >> Requests.createRecipe
+                                { configuration = model.configuration
+                                , jwt = main.jwt
+                                }
+                        )
+            )
+        |> Maybe.withDefault Cmd.none
+    )
+
+
+gotCreateRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.LogicMsg )
 gotCreateRecipeResponse model dataOrError =
     dataOrError
-        |> Result.Extra.unpack (\error -> ( setError error model, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
             (\recipe ->
                 ( model
-                    |> LensUtil.insertAtId recipe.id
-                        Page.lenses.recipes
-                        (recipe |> Editing.asView)
-                    |> Page.lenses.recipeToAdd.set Nothing
+                    |> Tristate.mapMain
+                        (LensUtil.insertAtId recipe.id
+                            Page.lenses.main.recipes
+                            (recipe |> Editing.asView)
+                            >> Page.lenses.main.recipeToAdd.set Nothing
+                        )
                 , recipe.id
                     |> Addresses.Frontend.ingredientEditor.address
-                    |> Links.loadFrontendPage model.authorizedAccess.configuration
+                    |> Links.loadFrontendPage model.configuration
                 )
             )
 
 
-updateRecipe : Page.Model -> RecipeUpdateClientInput -> ( Page.Model, Cmd Page.Msg )
+updateRecipe : Page.Model -> RecipeUpdateClientInput -> ( Page.Model, Cmd Page.LogicMsg )
 updateRecipe model recipeUpdate =
     ( model
         |> mapRecipeStateById recipeUpdate.id
@@ -128,30 +159,37 @@ updateRecipe model recipeUpdate =
     )
 
 
-saveRecipeEdit : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
+saveRecipeEdit : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.LogicMsg )
 saveRecipeEdit model recipeId =
     ( model
     , model
-        |> Page.lenses.recipes.get
-        |> DictList.get recipeId
-        |> Maybe.andThen Editing.extractUpdate
-        |> Maybe.Extra.unwrap
-            Cmd.none
-            (RecipeUpdateClientInput.to
-                >> (\recipeUpdate ->
-                        Requests.saveRecipe
-                            { authorizedAccess = model.authorizedAccess
-                            , recipeUpdate = recipeUpdate
-                            }
-                   )
+        |> Tristate.foldMain Cmd.none
+            (\main ->
+                main
+                    |> Page.lenses.main.recipes.get
+                    |> DictList.get recipeId
+                    |> Maybe.andThen Editing.extractUpdate
+                    |> Maybe.Extra.unwrap
+                        Cmd.none
+                        (RecipeUpdateClientInput.to
+                            >> (\recipeUpdate ->
+                                    Requests.saveRecipe
+                                        { authorizedAccess =
+                                            { configuration = model.configuration
+                                            , jwt = main.jwt
+                                            }
+                                        , recipeUpdate = recipeUpdate
+                                        }
+                               )
+                        )
             )
     )
 
 
-gotSaveRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.Msg )
+gotSaveRecipeResponse : Page.Model -> Result Error Recipe -> ( Page.Model, Cmd Page.LogicMsg )
 gotSaveRecipeResponse model dataOrError =
     ( dataOrError
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\recipe ->
                 model
                     |> mapRecipeStateById recipe.id
@@ -161,7 +199,7 @@ gotSaveRecipeResponse model dataOrError =
     )
 
 
-enterEditRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
+enterEditRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.LogicMsg )
 enterEditRecipe model recipeId =
     ( model
         |> mapRecipeStateById recipeId
@@ -170,95 +208,83 @@ enterEditRecipe model recipeId =
     )
 
 
-exitEditRecipeAt : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
+exitEditRecipeAt : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.LogicMsg )
 exitEditRecipeAt model recipeId =
     ( model |> mapRecipeStateById recipeId Editing.toView
     , Cmd.none
     )
 
 
-requestDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
+requestDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.LogicMsg )
 requestDeleteRecipe model recipeId =
     ( model |> mapRecipeStateById recipeId Editing.toDelete
     , Cmd.none
     )
 
 
-confirmDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
+confirmDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.LogicMsg )
 confirmDeleteRecipe model recipeId =
     ( model
-    , Requests.deleteRecipe
-        { authorizedAccess = model.authorizedAccess
-        , recipeId = recipeId
-        }
+    , model
+        |> Tristate.foldMain Cmd.none
+            (\main ->
+                Requests.deleteRecipe
+                    { authorizedAccess =
+                        { configuration = model.configuration
+                        , jwt = main.jwt
+                        }
+                    , recipeId = recipeId
+                    }
+            )
     )
 
 
-cancelDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Msg )
+cancelDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.LogicMsg )
 cancelDeleteRecipe model recipeId =
     ( model |> mapRecipeStateById recipeId Editing.toView
     , Cmd.none
     )
 
 
-gotDeleteRecipeResponse : Page.Model -> RecipeId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotDeleteRecipeResponse : Page.Model -> RecipeId -> Result Error () -> ( Page.Model, Cmd Page.LogicMsg )
 gotDeleteRecipeResponse model deletedId dataOrError =
     ( dataOrError
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model)
             (always
                 (model
-                    |> LensUtil.deleteAtId deletedId Page.lenses.recipes
+                    |> Tristate.mapMain (LensUtil.deleteAtId deletedId Page.lenses.main.recipes)
                 )
             )
     , Cmd.none
     )
 
 
-gotFetchRecipesResponse : Page.Model -> Result Error (List Recipe) -> ( Page.Model, Cmd Page.Msg )
-gotFetchRecipesResponse model dataOrError =
-    ( dataOrError
-        |> Result.Extra.unpack (flip setError model)
-            (\recipes ->
-                model
-                    |> Page.lenses.recipes.set
-                        (recipes
-                            |> List.map Editing.asView
-                            |> DictList.fromListWithKey (.original >> .id)
-                        )
-                    |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.recipes).set True
-            )
-    , Cmd.none
-    )
-
-
-setPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.Msg )
+setPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.LogicMsg )
 setPagination model pagination =
-    ( model |> Page.lenses.pagination.set pagination
+    ( model
+        |> Tristate.mapMain (Page.lenses.main.pagination.set pagination)
     , Cmd.none
     )
 
 
-setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
+setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 setSearchString model string =
-    ( PaginationSettings.setSearchStringAndReset
-        { searchStringLens =
-            Page.lenses.searchString
-        , paginationSettingsLens =
-            Page.lenses.pagination
-                |> Compose.lensWithLens Pagination.lenses.recipes
-        }
-        model
-        string
+    ( model
+        |> Tristate.mapMain
+            (PaginationSettings.setSearchStringAndReset
+                { searchStringLens =
+                    Page.lenses.main.searchString
+                , paginationSettingsLens =
+                    Page.lenses.main.pagination
+                        |> Compose.lensWithLens Pagination.lenses.recipes
+                }
+                string
+            )
     , Cmd.none
     )
 
 
 mapRecipeStateById : RecipeId -> (Page.RecipeState -> Page.RecipeState) -> Page.Model -> Page.Model
 mapRecipeStateById recipeId =
-    Page.lenses.recipes
-        |> LensUtil.updateById recipeId
-
-
-setError : Error -> Page.Model -> Page.Model
-setError =
-    HttpUtil.setError Page.lenses.initialization
+    LensUtil.updateById recipeId Page.lenses.main.recipes
+        >> Tristate.mapMain

@@ -1,40 +1,34 @@
 module Pages.Statistics.Recipe.Search.Handler exposing (init, update)
 
-import Addresses.StatisticsVariant as StatisticsVariant
-import Api.Types.Recipe exposing (Recipe, decoderRecipe)
-import Basics.Extra exposing (flip)
-import Json.Decode as Decode
+import Api.Types.Recipe exposing (Recipe)
 import Pages.Statistics.Recipe.Search.Page as Page
-import Pages.Statistics.Recipe.Search.Pagination as Pagination exposing (Pagination)
+import Pages.Statistics.Recipe.Search.Pagination exposing (Pagination)
 import Pages.Statistics.Recipe.Search.Requests as Requests
-import Pages.Statistics.Recipe.Search.Status as Status
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.View.Tristate as Tristate
 import Result.Extra
-import Util.HttpUtil as HttpUtil exposing (Error)
-import Util.Initialization as Initialization exposing (Initialization)
-import Util.LensUtil as LensUtil
+import Util.HttpUtil exposing (Error)
 
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    ( { authorizedAccess = flags.authorizedAccess
-      , recipes = []
-      , recipesSearchString = ""
-      , initialization = Initialization.Loading Status.initial
-      , pagination = Pagination.initial
-      , variant = StatisticsVariant.Recipe
-      }
-    , initialFetch flags.authorizedAccess
+    ( Page.initial flags.authorizedAccess
+    , initialFetch flags.authorizedAccess |> Cmd.map Tristate.Logic
     )
 
 
-initialFetch : AuthorizedAccess -> Cmd Page.Msg
+initialFetch : AuthorizedAccess -> Cmd Page.LogicMsg
 initialFetch =
     Requests.fetchRecipes
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
-update msg model =
+update =
+    Tristate.updateWith updateLogic
+
+
+updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+updateLogic msg model =
     case msg of
         Page.SetSearchString string ->
             setSearchString model string
@@ -45,63 +39,29 @@ update msg model =
         Page.GotFetchRecipesResponse result ->
             gotFetchRecipesResponse model result
 
-        Page.UpdateRecipes string ->
-            updateRecipes model string
 
-
-setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
+setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 setSearchString model string =
-    ( model |> Page.lenses.recipesSearchString.set string
+    ( model |> Tristate.mapMain (Page.lenses.main.recipesSearchString.set string)
     , Cmd.none
     )
 
 
-setRecipesPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.Msg )
+setRecipesPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.LogicMsg )
 setRecipesPagination model pagination =
-    ( model |> Page.lenses.pagination.set pagination
+    ( model |> Tristate.mapMain (Page.lenses.main.pagination.set pagination)
     , Cmd.none
     )
 
 
-gotFetchRecipesResponse : Page.Model -> Result Error (List Recipe) -> ( Page.Model, Cmd Page.Msg )
+gotFetchRecipesResponse : Page.Model -> Result Error (List Recipe) -> ( Page.Model, Cmd Page.LogicMsg )
 gotFetchRecipesResponse model result =
     ( result
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\recipes ->
                 model
-                    |> Page.lenses.recipes.set recipes
-                    |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.recipes).set True
+                    |> Tristate.mapInitial (Page.lenses.initial.recipes.set (recipes |> Just))
+                    |> Tristate.fromInitToMain Page.initialToMain
             )
     , Cmd.none
     )
-
-
-updateRecipes : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
-updateRecipes model =
-    Decode.decodeString (Decode.list decoderRecipe)
-        >> Result.Extra.unpack (\error -> ( setJsonError error model, Cmd.none ))
-            (\recipes ->
-                ( model
-                    |> Page.lenses.recipes.set recipes
-                    |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.recipes).set
-                        (recipes
-                            |> List.isEmpty
-                            |> not
-                        )
-                , if List.isEmpty recipes then
-                    Requests.fetchRecipes model.authorizedAccess
-
-                  else
-                    Cmd.none
-                )
-            )
-
-
-setError : Error -> Page.Model -> Page.Model
-setError =
-    HttpUtil.setError Page.lenses.initialization
-
-
-setJsonError : Decode.Error -> Page.Model -> Page.Model
-setJsonError =
-    HttpUtil.setJsonError Page.lenses.initialization

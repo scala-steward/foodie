@@ -5,30 +5,68 @@ import Api.Types.Nutrient exposing (Nutrient)
 import Api.Types.ReferenceEntry exposing (ReferenceEntry)
 import Api.Types.ReferenceMap exposing (ReferenceMap)
 import Monocle.Lens exposing (Lens)
-import Pages.ReferenceEntries.Pagination exposing (Pagination)
+import Pages.ReferenceEntries.Pagination as Pagination exposing (Pagination)
 import Pages.ReferenceEntries.ReferenceEntryCreationClientInput exposing (ReferenceEntryCreationClientInput)
 import Pages.ReferenceEntries.ReferenceEntryUpdateClientInput exposing (ReferenceEntryUpdateClientInput)
-import Pages.ReferenceEntries.Status exposing (Status)
 import Pages.ReferenceMaps.ReferenceMapUpdateClientInput exposing (ReferenceMapUpdateClientInput)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Util.DictList exposing (DictList)
+import Pages.View.Tristate as Tristate
+import Util.DictList as DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
-import Util.Initialization exposing (Initialization)
 
 
 type alias Model =
-    { authorizedAccess : AuthorizedAccess
-    , referenceMapId : ReferenceMapId
+    Tristate.Model Main Initial
+
+
+type alias Main =
+    { jwt : JWT
     , referenceMap : Editing ReferenceMap ReferenceMapUpdateClientInput
     , referenceEntries : ReferenceEntryStateMap
     , nutrients : NutrientMap
     , nutrientsSearchString : String
     , referenceEntriesSearchString : String
     , referenceEntriesToAdd : AddNutrientMap
-    , initialization : Initialization Status
     , pagination : Pagination
     }
+
+
+type alias Initial =
+    { jwt : JWT
+    , nutrients : Maybe NutrientMap
+    , referenceMap : Maybe (Editing ReferenceMap ReferenceMapUpdateClientInput)
+    , referenceEntries : Maybe ReferenceEntryStateMap
+    }
+
+
+initial : AuthorizedAccess -> Model
+initial authorizedAccess =
+    { jwt = authorizedAccess.jwt
+    , nutrients = Nothing
+    , referenceMap = Nothing
+    , referenceEntries = Nothing
+    }
+        |> Tristate.createInitial authorizedAccess.configuration
+
+
+initialToMain : Initial -> Maybe Main
+initialToMain i =
+    Maybe.map3
+        (\nutrients referenceMap referenceEntries ->
+            { jwt = i.jwt
+            , referenceMap = referenceMap
+            , referenceEntries = referenceEntries
+            , nutrients = nutrients
+            , nutrientsSearchString = ""
+            , referenceEntriesSearchString = ""
+            , referenceEntriesToAdd = DictList.empty
+            , pagination = Pagination.initial
+            }
+        )
+        i.nutrients
+        i.referenceMap
+        i.referenceEntries
 
 
 type alias ReferenceEntryState =
@@ -54,28 +92,44 @@ type alias Flags =
 
 
 lenses :
-    { referenceMap : Lens Model (Editing ReferenceMap ReferenceMapUpdateClientInput)
-    , referenceEntries : Lens Model ReferenceEntryStateMap
-    , referenceEntriesToAdd : Lens Model AddNutrientMap
-    , nutrients : Lens Model NutrientMap
-    , nutrientsSearchString : Lens Model String
-    , referenceEntriesSearchString : Lens Model String
-    , initialization : Lens Model (Initialization Status)
-    , pagination : Lens Model Pagination
+    { initial :
+        { referenceMap : Lens Initial (Maybe (Editing ReferenceMap ReferenceMapUpdateClientInput))
+        , referenceEntries : Lens Initial (Maybe ReferenceEntryStateMap)
+        , nutrients : Lens Initial (Maybe NutrientMap)
+        }
+    , main :
+        { referenceMap : Lens Main (Editing ReferenceMap ReferenceMapUpdateClientInput)
+        , referenceEntries : Lens Main ReferenceEntryStateMap
+        , referenceEntriesToAdd : Lens Main AddNutrientMap
+        , nutrients : Lens Main NutrientMap
+        , nutrientsSearchString : Lens Main String
+        , referenceEntriesSearchString : Lens Main String
+        , pagination : Lens Main Pagination
+        }
     }
 lenses =
-    { referenceMap = Lens .referenceMap (\b a -> { a | referenceMap = b })
-    , referenceEntries = Lens .referenceEntries (\b a -> { a | referenceEntries = b })
-    , referenceEntriesToAdd = Lens .referenceEntriesToAdd (\b a -> { a | referenceEntriesToAdd = b })
-    , nutrients = Lens .nutrients (\b a -> { a | nutrients = b })
-    , nutrientsSearchString = Lens .nutrientsSearchString (\b a -> { a | nutrientsSearchString = b })
-    , referenceEntriesSearchString = Lens .referenceEntriesSearchString (\b a -> { a | referenceEntriesSearchString = b })
-    , initialization = Lens .initialization (\b a -> { a | initialization = b })
-    , pagination = Lens .pagination (\b a -> { a | pagination = b })
+    { initial =
+        { referenceMap = Lens .referenceMap (\b a -> { a | referenceMap = b })
+        , referenceEntries = Lens .referenceEntries (\b a -> { a | referenceEntries = b })
+        , nutrients = Lens .nutrients (\b a -> { a | nutrients = b })
+        }
+    , main =
+        { referenceMap = Lens .referenceMap (\b a -> { a | referenceMap = b })
+        , referenceEntries = Lens .referenceEntries (\b a -> { a | referenceEntries = b })
+        , referenceEntriesToAdd = Lens .referenceEntriesToAdd (\b a -> { a | referenceEntriesToAdd = b })
+        , nutrients = Lens .nutrients (\b a -> { a | nutrients = b })
+        , nutrientsSearchString = Lens .nutrientsSearchString (\b a -> { a | nutrientsSearchString = b })
+        , referenceEntriesSearchString = Lens .referenceEntriesSearchString (\b a -> { a | referenceEntriesSearchString = b })
+        , pagination = Lens .pagination (\b a -> { a | pagination = b })
+        }
     }
 
 
-type Msg
+type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type LogicMsg
     = UpdateReferenceEntry ReferenceEntryUpdateClientInput
     | SaveReferenceEntryEdit ReferenceEntryUpdateClientInput
     | GotSaveReferenceEntryResponse (Result Error ReferenceEntry)

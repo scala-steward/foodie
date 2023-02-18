@@ -14,7 +14,7 @@ confirm :
     , recoveryJwt : JWT
     , password : String
     }
-    -> Cmd Page.Msg
+    -> Cmd Page.LogicMsg
 confirm params =
     HttpUtil.runPatternWithJwt
         { configuration = params.configuration

@@ -8,10 +8,3 @@ type alias AuthorizedAccess =
     { configuration : Configuration
     , jwt : JWT
     }
-
-
-from : { a | configuration : Configuration, jwt : JWT } -> AuthorizedAccess
-from x =
-    { configuration = x.configuration
-    , jwt = x.jwt
-    }

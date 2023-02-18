@@ -4,30 +4,44 @@ import Api.Auxiliary exposing (JWT)
 import Api.Types.UserIdentifier exposing (UserIdentifier)
 import Configuration exposing (Configuration)
 import Monocle.Lens exposing (Lens)
-import Pages.Util.ComplementInput exposing (ComplementInput)
+import Pages.Util.ComplementInput as ComplementInput exposing (ComplementInput)
+import Pages.View.Tristate as Tristate
 import Util.HttpUtil exposing (Error)
-import Util.Initialization exposing (Initialization)
 
 
 type alias Model =
+    Tristate.Model Main ()
+
+
+type alias Main =
     { userIdentifier : UserIdentifier
     , complementInput : ComplementInput
-    , configuration : Configuration
-    , initialization : Initialization ()
     , registrationJWT : JWT
     , mode : Mode
     }
 
 
+initial : Flags -> Model
+initial flags =
+    { userIdentifier = flags.userIdentifier
+    , complementInput = ComplementInput.initial
+    , registrationJWT = flags.registrationJWT
+    , mode = Editing
+    }
+        |> Tristate.createMain flags.configuration
+
+
 lenses :
-    { complementInput : Lens Model ComplementInput
-    , initialization : Lens Model (Initialization ())
-    , mode : Lens Model Mode
+    { main :
+        { complementInput : Lens Main ComplementInput
+        , mode : Lens Main Mode
+        }
     }
 lenses =
-    { complementInput = Lens .complementInput (\b a -> { a | complementInput = b })
-    , initialization = Lens .initialization (\b a -> { a | initialization = b })
-    , mode = Lens .mode (\b a -> { a | mode = b })
+    { main =
+        { complementInput = Lens .complementInput (\b a -> { a | complementInput = b })
+        , mode = Lens .mode (\b a -> { a | mode = b })
+        }
     }
 
 
@@ -43,7 +57,11 @@ type alias Flags =
     }
 
 
-type Msg
+type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type LogicMsg
     = SetComplementInput ComplementInput
     | Request
     | GotResponse (Result Error ())

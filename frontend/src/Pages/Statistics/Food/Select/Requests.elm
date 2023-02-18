@@ -10,12 +10,12 @@ import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Util.HttpUtil as HttpUtil
 
 
-fetchReferenceTrees : AuthorizedAccess -> Cmd Page.Msg
+fetchReferenceTrees : AuthorizedAccess -> Cmd Page.LogicMsg
 fetchReferenceTrees =
     StatisticsRequests.fetchReferenceTreesWith Page.GotFetchReferenceTreesResponse
 
 
-fetchFoodInfo : Page.Flags -> Cmd Page.Msg
+fetchFoodInfo : Page.Flags -> Cmd Page.LogicMsg
 fetchFoodInfo flags =
     HttpUtil.runPatternWithJwt
         flags.authorizedAccess
@@ -25,7 +25,7 @@ fetchFoodInfo flags =
         }
 
 
-fetchStats : Page.Flags -> Cmd Page.Msg
+fetchStats : Page.Flags -> Cmd Page.LogicMsg
 fetchStats flags =
     HttpUtil.runPatternWithJwt
         flags.authorizedAccess

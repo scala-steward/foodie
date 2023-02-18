@@ -5,8 +5,8 @@ import Api.Auxiliary exposing (ComplexFoodId, FoodId, JWT, MealId, RecipeId, Ref
 import Api.Types.LoginContent exposing (decoderLoginContent)
 import Api.Types.UserIdentifier exposing (UserIdentifier)
 import Basics.Extra exposing (flip)
-import Browser exposing (UrlRequest)
-import Browser.Navigation as Nav
+import Browser as Browser
+import Browser.Navigation
 import Configuration exposing (Configuration)
 import Html exposing (Html, div, text)
 import Jwt
@@ -84,6 +84,7 @@ import Pages.Statistics.Time.View
 import Pages.UserSettings.Handler
 import Pages.UserSettings.Page
 import Pages.UserSettings.View
+import Pages.View.Tristate as Tristate
 import Ports exposing (doFetchToken, fetchFoods, fetchNutrients, fetchToken)
 import Url exposing (Url)
 import Url.Parser as Parser exposing ((</>), Parser)
@@ -112,7 +113,7 @@ subscriptions _ =
 
 
 type alias Model =
-    { key : Nav.Key
+    { key : Browser.Navigation.Key
     , page : Page
     , configuration : Configuration
     , jwt : Maybe JWT
@@ -161,7 +162,7 @@ type Page
 
 
 type Msg
-    = ClickedLink UrlRequest
+    = ClickedLink Browser.UrlRequest
     | ChangedUrl Url
     | FetchToken String
     | DeleteToken ()
@@ -207,7 +208,7 @@ titleFor model =
     "Foodie" ++ nickname
 
 
-init : Configuration -> Url -> Nav.Key -> ( Model, Cmd Msg )
+init : Configuration -> Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init configuration url key =
     ( { page = NotFound
       , key = key
@@ -304,10 +305,10 @@ update msg model =
         ( ClickedLink urlRequest, _ ) ->
             case urlRequest of
                 Browser.Internal url ->
-                    ( model, Nav.pushUrl model.key (Url.toString url) )
+                    ( model, Browser.Navigation.pushUrl model.key (Url.toString url) )
 
                 Browser.External href ->
-                    ( model, Nav.load href )
+                    ( model, Browser.Navigation.load href )
 
         ( ChangedUrl url, _ ) ->
             model
@@ -326,13 +327,13 @@ update msg model =
             ( model |> lenses.jwt.set Nothing, Cmd.none )
 
         ( FetchFoods foods, Ingredients ingredients ) ->
-            stepThrough steps.ingredients model (Pages.Ingredients.Handler.update (Pages.Ingredients.Page.UpdateFoods foods) ingredients)
+            stepThrough steps.ingredients model (Pages.Ingredients.Handler.update (Pages.Ingredients.Page.UpdateFoods foods |> Tristate.Logic) ingredients)
 
         ( FetchFoods foods, StatisticsFoodSearch statisticsFoodSearch ) ->
-            stepThrough steps.statisticsFoodSearch model (Pages.Statistics.Food.Search.Handler.update (Pages.Statistics.Food.Search.Page.UpdateFoods foods) statisticsFoodSearch)
+            stepThrough steps.statisticsFoodSearch model (Pages.Statistics.Food.Search.Handler.update (Pages.Statistics.Food.Search.Page.UpdateFoods foods |> Tristate.Logic) statisticsFoodSearch)
 
         ( FetchNutrients nutrients, ReferenceEntries referenceEntries ) ->
-            stepThrough steps.referenceEntries model (Pages.ReferenceEntries.Handler.update (Pages.ReferenceEntries.Page.UpdateNutrients nutrients) referenceEntries)
+            stepThrough steps.referenceEntries model (Pages.ReferenceEntries.Handler.update (Pages.ReferenceEntries.Page.UpdateNutrients nutrients |> Tristate.Logic) referenceEntries)
 
         ( OverviewMsg overviewMsg, Overview overview ) ->
             stepThrough steps.overview model (Pages.Overview.Handler.update overviewMsg overview)
@@ -556,7 +557,7 @@ followRoute model =
                     Pages.Login.Handler.init { configuration = model.configuration } |> stepThrough steps.login model
 
                 OverviewRoute ->
-                    Pages.Overview.Handler.init flags |> stepThrough steps.overview model
+                    Pages.Overview.Handler.init { configuration = model.configuration } |> stepThrough steps.overview model
 
                 RecipesRoute ->
                     Pages.Recipes.Handler.init flags |> stepThrough steps.recipes model

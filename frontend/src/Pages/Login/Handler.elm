@@ -1,17 +1,16 @@
 module Pages.Login.Handler exposing (init, update)
 
 import Addresses.Frontend
-import Basics.Extra exposing (flip)
 import Browser.Navigation
 import Monocle.Compose as Compose
 import Pages.Login.Page as Page
 import Pages.Login.Requests as Requests
 import Pages.Util.Links as Links
+import Pages.View.Tristate as Tristate
 import Ports
 import Result.Extra
 import Util.CredentialsUtil as CredentialsUtil
-import Util.HttpUtil as HttpUtil exposing (Error)
-import Util.Initialization exposing (Initialization(..))
+import Util.HttpUtil exposing (Error)
 
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
@@ -20,15 +19,19 @@ init flags =
             { nickname = ""
             , password = ""
             }
-      , initialization = Loading ()
-      , configuration = flags.configuration
       }
+        |> Tristate.createMain flags.configuration
     , Cmd.none
     )
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
-update msg model =
+update =
+    Tristate.updateWith updateLogic
+
+
+updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+updateLogic msg model =
     case msg of
         Page.SetNickname nickname ->
             setNickname model nickname
@@ -43,44 +46,49 @@ update msg model =
             gotResponse model remoteData
 
 
-setNickname : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
+setNickname : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 setNickname model nickname =
-    ( (Page.lenses.credentials
-        |> Compose.lensWithLens CredentialsUtil.nickname
-      ).set
-        nickname
-        model
+    ( model
+        |> Tristate.mapMain
+            ((Page.lenses.main.credentials
+                |> Compose.lensWithLens CredentialsUtil.nickname
+             ).set
+                nickname
+            )
     , Cmd.none
     )
 
 
-setPassword : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
+setPassword : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 setPassword model password =
-    ( (Page.lenses.credentials
-        |> Compose.lensWithLens CredentialsUtil.password
-      ).set
-        password
-        model
+    ( model
+        |> Tristate.mapMain
+            ((Page.lenses.main.credentials
+                |> Compose.lensWithLens CredentialsUtil.password
+             ).set
+                password
+            )
     , Cmd.none
     )
 
 
-login : Page.Model -> ( Page.Model, Cmd Page.Msg )
+login : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 login model =
     ( model
-    , Requests.login model.configuration model.credentials
+    , model
+        |> Tristate.foldMain Cmd.none
+            (\main ->
+                Requests.login model.configuration main.credentials
+            )
     )
 
 
-gotResponse : Page.Model -> Result Error String -> ( Page.Model, Cmd Page.Msg )
+gotResponse : Page.Model -> Result Error String -> ( Page.Model, Cmd Page.LogicMsg )
 gotResponse model remoteData =
     remoteData
         |> Result.Extra.unpack
             (\error ->
-                ( error
-                    |> HttpUtil.errorToExplanation
-                    |> Failure
-                    |> flip Page.lenses.initialization.set model
+                ( Tristate.toError model error
                 , Cmd.none
                 )
             )

@@ -9,7 +9,7 @@ import Pages.Login.Page as Page
 import Util.HttpUtil as HttpUtil exposing (Error)
 
 
-login : Configuration -> Credentials -> Cmd Page.Msg
+login : Configuration -> Credentials -> Cmd Page.LogicMsg
 login configuration credentials =
     HttpUtil.runPattern
         configuration
