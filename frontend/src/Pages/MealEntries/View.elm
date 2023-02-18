@@ -42,7 +42,7 @@ view =
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
@@ -237,7 +237,7 @@ viewMain configuration main =
             ]
 
 
-viewMealEntryLine : Page.RecipeMap -> MealEntry -> Html Page.Msg
+viewMealEntryLine : Page.RecipeMap -> MealEntry -> Html Page.LogicMsg
 viewMealEntryLine recipeMap mealEntry =
     let
         editMsg =
@@ -254,7 +254,7 @@ viewMealEntryLine recipeMap mealEntry =
         mealEntry
 
 
-deleteMealEntryLine : Page.RecipeMap -> MealEntry -> Html Page.Msg
+deleteMealEntryLine : Page.RecipeMap -> MealEntry -> Html Page.LogicMsg
 deleteMealEntryLine recipeMap mealEntry =
     mealEntryLineWith
         { controls =
@@ -268,12 +268,12 @@ deleteMealEntryLine recipeMap mealEntry =
 
 
 mealEntryLineWith :
-    { controls : List (Html Page.Msg)
-    , onClick : List (Attribute Page.Msg)
+    { controls : List (Html Page.LogicMsg)
+    , onClick : List (Attribute Page.LogicMsg)
     , recipeMap : Page.RecipeMap
     }
     -> MealEntry
-    -> Html Page.Msg
+    -> Html Page.LogicMsg
 mealEntryLineWith ps mealEntry =
     let
         withOnClick =
@@ -287,7 +287,7 @@ mealEntryLineWith ps mealEntry =
         )
 
 
-updateEntryLine : Page.RecipeMap -> MealEntry -> MealEntryUpdateClientInput -> Html Page.Msg
+updateEntryLine : Page.RecipeMap -> MealEntry -> MealEntryUpdateClientInput -> Html Page.LogicMsg
 updateEntryLine recipeMap mealEntry mealEntryUpdateClientInput =
     let
         saveMsg =
@@ -328,14 +328,14 @@ updateEntryLine recipeMap mealEntry mealEntryUpdateClientInput =
         )
 
 
-recipeInfo : Page.RecipeMap -> RecipeId -> List (Attribute Page.Msg) -> List (Html Page.Msg)
+recipeInfo : Page.RecipeMap -> RecipeId -> List (Attribute Page.LogicMsg) -> List (Html Page.LogicMsg)
 recipeInfo recipeMap recipeId attributes =
     [ td attributes [ label [] [ text <| DictUtil.nameOrEmpty recipeMap <| recipeId ] ]
     , td attributes [ label [] [ text <| Page.descriptionOrEmpty recipeMap <| recipeId ] ]
     ]
 
 
-viewRecipeLine : Page.AddMealEntriesMap -> Page.MealEntryStateMap -> Recipe -> Html Page.Msg
+viewRecipeLine : Page.AddMealEntriesMap -> Page.MealEntryStateMap -> Recipe -> Html Page.LogicMsg
 viewRecipeLine mealEntriesToAdd mealEntries recipe =
     let
         addMsg =

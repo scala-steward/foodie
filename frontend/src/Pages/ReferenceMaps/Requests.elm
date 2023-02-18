@@ -13,7 +13,7 @@ import Pages.Util.Requests
 import Util.HttpUtil as HttpUtil
 
 
-fetchReferenceMaps : AuthorizedAccess -> Cmd Page.Msg
+fetchReferenceMaps : AuthorizedAccess -> Cmd Page.LogicMsg
 fetchReferenceMaps authorizedAccess =
     HttpUtil.runPatternWithJwt
         authorizedAccess
@@ -23,7 +23,7 @@ fetchReferenceMaps authorizedAccess =
         }
 
 
-createReferenceMap : AuthorizedAccess -> ReferenceMapCreation -> Cmd Page.Msg
+createReferenceMap : AuthorizedAccess -> ReferenceMapCreation -> Cmd Page.LogicMsg
 createReferenceMap authorizedAccess referenceMapCreation =
     HttpUtil.runPatternWithJwt
         authorizedAccess
@@ -37,7 +37,7 @@ saveReferenceMap :
     { authorizedAccess : AuthorizedAccess
     , referenceMapUpdate : ReferenceMapUpdate
     }
-    -> Cmd Page.Msg
+    -> Cmd Page.LogicMsg
 saveReferenceMap =
     Pages.Util.Requests.saveReferenceMapWith Page.GotSaveReferenceMapResponse
 
@@ -46,6 +46,6 @@ deleteReferenceMap :
     { authorizedAccess : AuthorizedAccess
     , referenceMapId : ReferenceMapId
     }
-    -> Cmd Page.Msg
+    -> Cmd Page.LogicMsg
 deleteReferenceMap ps =
     Pages.Util.Requests.deleteReferenceMapWith (Page.GotDeleteReferenceMapResponse ps.referenceMapId) ps

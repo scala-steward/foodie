@@ -113,10 +113,10 @@ type alias Flags =
 
 
 type alias Msg =
-    Tristate.Msg Logic
+    Tristate.Msg LogicMsg
 
 
-type Logic
+type LogicMsg
     = UpdateComplexFoodCreation ComplexFoodClientInput
     | CreateComplexFood RecipeId
     | GotCreateComplexFoodResponse (Result Error ComplexFood)

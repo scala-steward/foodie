@@ -38,7 +38,7 @@ view =
         , showLoginRedirect = True
         }
 
-viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
@@ -224,7 +224,7 @@ viewMain configuration main =
             ]
 
 
-viewReferenceEntryLine : Page.NutrientMap -> ReferenceEntry -> Html Page.Msg
+viewReferenceEntryLine : Page.NutrientMap -> ReferenceEntry -> Html Page.LogicMsg
 viewReferenceEntryLine nutrientMap referenceEntry =
     let
         editMsg =
@@ -241,7 +241,7 @@ viewReferenceEntryLine nutrientMap referenceEntry =
         referenceEntry
 
 
-deleteReferenceEntryLine : Page.NutrientMap -> ReferenceEntry -> Html Page.Msg
+deleteReferenceEntryLine : Page.NutrientMap -> ReferenceEntry -> Html Page.LogicMsg
 deleteReferenceEntryLine nutrientMap referenceEntry =
     referenceEntryLineWith
         { controls =
@@ -255,12 +255,12 @@ deleteReferenceEntryLine nutrientMap referenceEntry =
 
 
 referenceEntryLineWith :
-    { controls : List (Html Page.Msg)
-    , onClick : List (Attribute Page.Msg)
+    { controls : List (Html Page.LogicMsg)
+    , onClick : List (Attribute Page.LogicMsg)
     , nutrientMap : Page.NutrientMap
     }
     -> ReferenceEntry
-    -> Html Page.Msg
+    -> Html Page.LogicMsg
 referenceEntryLineWith ps referenceNutrient =
     let
         withOnClick =
@@ -278,7 +278,7 @@ referenceEntryLineWith ps referenceNutrient =
         )
 
 
-updateReferenceEntryLine : Page.NutrientMap -> ReferenceEntry -> ReferenceEntryUpdateClientInput -> Html Page.Msg
+updateReferenceEntryLine : Page.NutrientMap -> ReferenceEntry -> ReferenceEntryUpdateClientInput -> Html Page.LogicMsg
 updateReferenceEntryLine nutrientMap referenceNutrient referenceNutrientUpdateClientInput =
     let
         saveMsg =
@@ -326,7 +326,7 @@ updateReferenceEntryLine nutrientMap referenceNutrient referenceNutrientUpdateCl
         ]
 
 
-viewNutrientLine : Page.NutrientMap -> Page.ReferenceEntryStateMap -> Page.AddNutrientMap -> Nutrient -> Html Page.Msg
+viewNutrientLine : Page.NutrientMap -> Page.ReferenceEntryStateMap -> Page.AddNutrientMap -> Nutrient -> Html Page.LogicMsg
 viewNutrientLine nutrientMap referenceEntries referenceEntriesToAdd nutrient =
     let
         addMsg =

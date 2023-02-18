@@ -33,7 +33,7 @@ view =
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     let
         viewMeals =
@@ -168,7 +168,7 @@ viewMain configuration main =
                 )
 
 
-mealLine : Meal -> Html Page.Msg
+mealLine : Meal -> Html Page.LogicMsg
 mealLine meal =
     tr [ Style.classes.editLine ]
         [ td [ Style.classes.editable, Style.classes.date ] [ label [] [ text <| DateUtil.dateToString <| meal.date.date ] ]

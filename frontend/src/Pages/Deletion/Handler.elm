@@ -20,7 +20,12 @@ init flags =
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
-update msg model =
+update =
+    Tristate.updateWith updateLogic
+
+
+updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+updateLogic msg model =
     case msg of
         Page.Confirm ->
             confirm model
@@ -29,7 +34,7 @@ update msg model =
             gotConfirmResponse model result
 
 
-confirm : Page.Model -> ( Page.Model, Cmd Page.Msg )
+confirm : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 confirm model =
     ( model
     , model
@@ -40,7 +45,7 @@ confirm model =
     )
 
 
-gotConfirmResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotConfirmResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.LogicMsg )
 gotConfirmResponse model result =
     result
         |> Result.Extra.unpack

@@ -27,7 +27,7 @@ view =
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
@@ -100,7 +100,7 @@ viewMain configuration main =
                 ]
 
 
-viewComplexFoodLine : Configuration -> ComplexFood -> Html Page.Msg
+viewComplexFoodLine : Configuration -> ComplexFood -> Html Page.LogicMsg
 viewComplexFoodLine configuration complexFood =
     tr [ Style.classes.editing ]
         [ td [ Style.classes.editable ]

@@ -84,6 +84,7 @@ import Pages.Statistics.Time.View
 import Pages.UserSettings.Handler
 import Pages.UserSettings.Page
 import Pages.UserSettings.View
+import Pages.View.Tristate as Tristate
 import Ports exposing (doFetchToken, fetchFoods, fetchNutrients, fetchToken)
 import Url exposing (Url)
 import Url.Parser as Parser exposing ((</>), Parser)
@@ -326,13 +327,13 @@ update msg model =
             ( model |> lenses.jwt.set Nothing, Cmd.none )
 
         ( FetchFoods foods, Ingredients ingredients ) ->
-            stepThrough steps.ingredients model (Pages.Ingredients.Handler.update (Pages.Ingredients.Page.UpdateFoods foods) ingredients)
+            stepThrough steps.ingredients model (Pages.Ingredients.Handler.update (Pages.Ingredients.Page.UpdateFoods foods |> Tristate.Logic) ingredients)
 
         ( FetchFoods foods, StatisticsFoodSearch statisticsFoodSearch ) ->
-            stepThrough steps.statisticsFoodSearch model (Pages.Statistics.Food.Search.Handler.update (Pages.Statistics.Food.Search.Page.UpdateFoods foods) statisticsFoodSearch)
+            stepThrough steps.statisticsFoodSearch model (Pages.Statistics.Food.Search.Handler.update (Pages.Statistics.Food.Search.Page.UpdateFoods foods |> Tristate.Logic) statisticsFoodSearch)
 
         ( FetchNutrients nutrients, ReferenceEntries referenceEntries ) ->
-            stepThrough steps.referenceEntries model (Pages.ReferenceEntries.Handler.update (Pages.ReferenceEntries.Page.UpdateNutrients nutrients) referenceEntries)
+            stepThrough steps.referenceEntries model (Pages.ReferenceEntries.Handler.update (Pages.ReferenceEntries.Page.UpdateNutrients nutrients |> Tristate.Logic) referenceEntries)
 
         ( OverviewMsg overviewMsg, Overview overview ) ->
             stepThrough steps.overview model (Pages.Overview.Handler.update overviewMsg overview)

@@ -61,7 +61,11 @@ type alias Flags =
     }
 
 
-type Msg
+type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type LogicMsg
     = SetPasswordInput PasswordInput
     | Confirm
     | GotConfirmResponse (Result Error ())

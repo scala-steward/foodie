@@ -78,7 +78,11 @@ type alias Flags =
     }
 
 
-type Msg
+type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type LogicMsg
     = SetSearchString String
     | SetComplexFoodsPagination Pagination
     | GotFetchComplexFoodsResponse (Result Error (List ComplexFood))

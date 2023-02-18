@@ -29,7 +29,7 @@ view =
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
@@ -105,7 +105,7 @@ viewMain configuration main =
                 ]
 
 
-viewMealLine : Configuration -> Meal -> Html Page.Msg
+viewMealLine : Configuration -> Meal -> Html Page.LogicMsg
 viewMealLine configuration meal =
     tr [ Style.classes.editing ]
         [ td [ Style.classes.editable ]

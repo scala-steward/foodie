@@ -16,17 +16,22 @@ import Util.HttpUtil as HttpUtil exposing (Error)
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
     ( Page.initial flags.authorizedAccess
-    , initialFetch
+    , initialFetch |> Cmd.map Tristate.Logic
     )
 
 
-initialFetch : Cmd Page.Msg
+initialFetch : Cmd Page.LogicMsg
 initialFetch =
     Ports.doFetchFoods ()
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
-update msg model =
+update =
+    Tristate.updateWith updateLogic
+
+
+updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+updateLogic msg model =
     case msg of
         Page.SetSearchString string ->
             setSearchString model string
@@ -41,21 +46,21 @@ update msg model =
             updateFoods model string
 
 
-setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
+setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 setSearchString model string =
     ( model |> Tristate.mapMain (Page.lenses.main.foodsSearchString.set string)
     , Cmd.none
     )
 
 
-setFoodsPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.Msg )
+setFoodsPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.LogicMsg )
 setFoodsPagination model pagination =
     ( model |> Tristate.mapMain (Page.lenses.main.pagination.set pagination)
     , Cmd.none
     )
 
 
-gotFetchFoodsResponse : Page.Model -> Result Error (List Food) -> ( Page.Model, Cmd Page.Msg )
+gotFetchFoodsResponse : Page.Model -> Result Error (List Food) -> ( Page.Model, Cmd Page.LogicMsg )
 gotFetchFoodsResponse model result =
     result
         |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
@@ -69,7 +74,7 @@ gotFetchFoodsResponse model result =
             )
 
 
-updateFoods : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
+updateFoods : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 updateFoods model =
     Decode.decodeString (Decode.list decoderFood)
         >> Result.Extra.unpack (\error -> ( error |> HttpUtil.jsonErrorToError |> Tristate.toError model, Cmd.none ))

@@ -43,6 +43,10 @@ type alias Flags =
     }
 
 
-type Msg
+type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type LogicMsg
     = Confirm
     | GotConfirmResponse (Result Error ())

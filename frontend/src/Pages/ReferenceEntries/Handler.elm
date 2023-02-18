@@ -11,7 +11,7 @@ import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens as Lens
 import Monocle.Optional
-import Pages.ReferenceEntries.Page as Page exposing (Msg(..))
+import Pages.ReferenceEntries.Page as Page exposing (LogicMsg(..))
 import Pages.ReferenceEntries.Pagination as Pagination exposing (Pagination)
 import Pages.ReferenceEntries.ReferenceEntryCreationClientInput as ReferenceEntryCreationClientInput exposing (ReferenceEntryCreationClientInput)
 import Pages.ReferenceEntries.ReferenceEntryUpdateClientInput as ReferenceEntryUpdateClientInput exposing (ReferenceEntryUpdateClientInput)
@@ -32,11 +32,11 @@ import Util.LensUtil as LensUtil
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
     ( Page.initial flags.authorizedAccess
-    , initialFetch flags
+    , initialFetch flags |> Cmd.map Tristate.Logic
     )
 
 
-initialFetch : Page.Flags -> Cmd Page.Msg
+initialFetch : Page.Flags -> Cmd Page.LogicMsg
 initialFetch flags =
     Cmd.batch
         [ Requests.fetchReferenceEntries flags.authorizedAccess flags.referenceMapId
@@ -46,7 +46,12 @@ initialFetch flags =
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
-update msg model =
+update =
+    Tristate.updateWith updateLogic
+
+
+updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+updateLogic msg model =
     case msg of
         Page.UpdateReferenceEntry referenceEntryUpdateClientInput ->
             updateReferenceEntry model referenceEntryUpdateClientInput
@@ -139,7 +144,7 @@ update msg model =
             gotDeleteReferenceMapResponse model result
 
 
-updateReferenceEntry : Page.Model -> ReferenceEntryUpdateClientInput -> ( Page.Model, Cmd Page.Msg )
+updateReferenceEntry : Page.Model -> ReferenceEntryUpdateClientInput -> ( Page.Model, Cmd Page.LogicMsg )
 updateReferenceEntry model referenceEntryUpdateClientInput =
     ( model
         |> mapReferenceEntryStateById referenceEntryUpdateClientInput.nutrientCode
@@ -148,7 +153,7 @@ updateReferenceEntry model referenceEntryUpdateClientInput =
     )
 
 
-saveReferenceEntryEdit : Page.Model -> ReferenceEntryUpdateClientInput -> ( Page.Model, Cmd Page.Msg )
+saveReferenceEntryEdit : Page.Model -> ReferenceEntryUpdateClientInput -> ( Page.Model, Cmd Page.LogicMsg )
 saveReferenceEntryEdit model referenceEntryUpdateClientInput =
     ( model
     , model
@@ -164,7 +169,7 @@ saveReferenceEntryEdit model referenceEntryUpdateClientInput =
     )
 
 
-gotSaveReferenceEntryResponse : Page.Model -> Result Error ReferenceEntry -> ( Page.Model, Cmd Page.Msg )
+gotSaveReferenceEntryResponse : Page.Model -> Result Error ReferenceEntry -> ( Page.Model, Cmd Page.LogicMsg )
 gotSaveReferenceEntryResponse model result =
     ( result
         |> Result.Extra.unpack (Tristate.toError model)
@@ -178,7 +183,7 @@ gotSaveReferenceEntryResponse model result =
     )
 
 
-enterEditReferenceEntry : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
+enterEditReferenceEntry : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.LogicMsg )
 enterEditReferenceEntry model nutrientCode =
     ( model
         |> mapReferenceEntryStateById nutrientCode
@@ -187,7 +192,7 @@ enterEditReferenceEntry model nutrientCode =
     )
 
 
-exitEditReferenceEntryAt : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
+exitEditReferenceEntryAt : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.LogicMsg )
 exitEditReferenceEntryAt model nutrientCode =
     ( model
         |> mapReferenceEntryStateById nutrientCode Editing.toView
@@ -195,14 +200,14 @@ exitEditReferenceEntryAt model nutrientCode =
     )
 
 
-requestDeleteReferenceEntry : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
+requestDeleteReferenceEntry : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.LogicMsg )
 requestDeleteReferenceEntry model nutrientCode =
     ( model |> mapReferenceEntryStateById nutrientCode Editing.toDelete
     , Cmd.none
     )
 
 
-confirmDeleteReferenceEntry : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
+confirmDeleteReferenceEntry : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.LogicMsg )
 confirmDeleteReferenceEntry model nutrientCode =
     ( model
     , model
@@ -218,14 +223,14 @@ confirmDeleteReferenceEntry model nutrientCode =
     )
 
 
-cancelDeleteReferenceEntry : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
+cancelDeleteReferenceEntry : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.LogicMsg )
 cancelDeleteReferenceEntry model nutrientCode =
     ( model |> mapReferenceEntryStateById nutrientCode Editing.toView
     , Cmd.none
     )
 
 
-gotDeleteReferenceEntryResponse : Page.Model -> NutrientCode -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotDeleteReferenceEntryResponse : Page.Model -> NutrientCode -> Result Error () -> ( Page.Model, Cmd Page.LogicMsg )
 gotDeleteReferenceEntryResponse model nutrientCode result =
     ( result
         |> Result.Extra.unpack (Tristate.toError model)
@@ -237,7 +242,7 @@ gotDeleteReferenceEntryResponse model nutrientCode result =
     )
 
 
-gotFetchReferenceEntriesResponse : Page.Model -> Result Error (List ReferenceEntry) -> ( Page.Model, Cmd Page.Msg )
+gotFetchReferenceEntriesResponse : Page.Model -> Result Error (List ReferenceEntry) -> ( Page.Model, Cmd Page.LogicMsg )
 gotFetchReferenceEntriesResponse model result =
     ( result
         |> Result.Extra.unpack (Tristate.toError model)
@@ -250,7 +255,7 @@ gotFetchReferenceEntriesResponse model result =
     )
 
 
-gotFetchReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.Msg )
+gotFetchReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.LogicMsg )
 gotFetchReferenceMapResponse model result =
     ( result
         |> Result.Extra.unpack (Tristate.toError model)
@@ -263,7 +268,7 @@ gotFetchReferenceMapResponse model result =
     )
 
 
-gotFetchNutrientsResponse : Page.Model -> Result Error (List Nutrient) -> ( Page.Model, Cmd Page.Msg )
+gotFetchNutrientsResponse : Page.Model -> Result Error (List Nutrient) -> ( Page.Model, Cmd Page.LogicMsg )
 gotFetchNutrientsResponse model result =
     result
         |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
@@ -279,7 +284,7 @@ gotFetchNutrientsResponse model result =
             )
 
 
-selectNutrient : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
+selectNutrient : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.LogicMsg )
 selectNutrient model nutrientCode =
     ( model
         |> Tristate.mapMain
@@ -291,7 +296,7 @@ selectNutrient model nutrientCode =
     )
 
 
-deselectNutrient : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
+deselectNutrient : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.LogicMsg )
 deselectNutrient model nutrientCode =
     ( model
         |> Tristate.mapMain (LensUtil.deleteAtId nutrientCode Page.lenses.main.referenceEntriesToAdd)
@@ -299,7 +304,7 @@ deselectNutrient model nutrientCode =
     )
 
 
-addNutrient : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.Msg )
+addNutrient : Page.Model -> NutrientCode -> ( Page.Model, Cmd Page.LogicMsg )
 addNutrient model nutrientCode =
     ( model
     , model
@@ -319,7 +324,7 @@ addNutrient model nutrientCode =
     )
 
 
-gotAddReferenceEntryResponse : Page.Model -> Result Error ReferenceEntry -> ( Page.Model, Cmd Page.Msg )
+gotAddReferenceEntryResponse : Page.Model -> Result Error ReferenceEntry -> ( Page.Model, Cmd Page.LogicMsg )
 gotAddReferenceEntryResponse model result =
     ( result
         |> Result.Extra.unpack (Tristate.toError model)
@@ -336,7 +341,7 @@ gotAddReferenceEntryResponse model result =
     )
 
 
-updateAddNutrient : Page.Model -> ReferenceEntryCreationClientInput -> ( Page.Model, Cmd Page.Msg )
+updateAddNutrient : Page.Model -> ReferenceEntryCreationClientInput -> ( Page.Model, Cmd Page.LogicMsg )
 updateAddNutrient model referenceEntryCreationClientInput =
     ( model
         |> Tristate.mapMain
@@ -348,7 +353,7 @@ updateAddNutrient model referenceEntryCreationClientInput =
     )
 
 
-updateNutrients : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
+updateNutrients : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 updateNutrients model =
     Decode.decodeString (Decode.list decoderNutrient)
         >> Result.Extra.unpack (\error -> ( error |> HttpUtil.jsonErrorToError |> Tristate.toError model, Cmd.none ))
@@ -377,7 +382,7 @@ updateNutrients model =
             )
 
 
-setNutrientsSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
+setNutrientsSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 setNutrientsSearchString model string =
     ( model
         |> Tristate.mapMain
@@ -394,7 +399,7 @@ setNutrientsSearchString model string =
     )
 
 
-setReferenceEntriesSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
+setReferenceEntriesSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 setReferenceEntriesSearchString model string =
     ( model
         |> Tristate.mapMain
@@ -411,14 +416,14 @@ setReferenceEntriesSearchString model string =
     )
 
 
-setPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.Msg )
+setPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.LogicMsg )
 setPagination model pagination =
     ( model |> Tristate.mapMain (Page.lenses.main.pagination.set pagination)
     , Cmd.none
     )
 
 
-updateReferenceMap : Page.Model -> ReferenceMapUpdateClientInput -> ( Page.Model, Cmd Page.Msg )
+updateReferenceMap : Page.Model -> ReferenceMapUpdateClientInput -> ( Page.Model, Cmd Page.LogicMsg )
 updateReferenceMap model referenceMapUpdateClientInput =
     ( model
         |> Tristate.mapMain
@@ -431,7 +436,7 @@ updateReferenceMap model referenceMapUpdateClientInput =
     )
 
 
-saveReferenceMapEdit : Page.Model -> ( Page.Model, Cmd Page.Msg )
+saveReferenceMapEdit : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 saveReferenceMapEdit model =
     ( model
     , model
@@ -459,7 +464,7 @@ saveReferenceMapEdit model =
     )
 
 
-gotSaveReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.Msg )
+gotSaveReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.LogicMsg )
 gotSaveReferenceMapResponse model result =
     ( result
         |> Result.Extra.unpack (Tristate.toError model)
@@ -471,7 +476,7 @@ gotSaveReferenceMapResponse model result =
     )
 
 
-enterEditReferenceMap : Page.Model -> ( Page.Model, Cmd Page.Msg )
+enterEditReferenceMap : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 enterEditReferenceMap model =
     ( model
         |> Tristate.mapMain (Lens.modify Page.lenses.main.referenceMap (Editing.toUpdate ReferenceMapUpdateClientInput.from))
@@ -479,7 +484,7 @@ enterEditReferenceMap model =
     )
 
 
-exitEditReferenceMap : Page.Model -> ( Page.Model, Cmd Page.Msg )
+exitEditReferenceMap : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 exitEditReferenceMap model =
     ( model
         |> Tristate.mapMain (Lens.modify Page.lenses.main.referenceMap Editing.toView)
@@ -487,7 +492,7 @@ exitEditReferenceMap model =
     )
 
 
-requestDeleteReferenceMap : Page.Model -> ( Page.Model, Cmd Page.Msg )
+requestDeleteReferenceMap : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 requestDeleteReferenceMap model =
     ( model
         |> Tristate.mapMain (Lens.modify Page.lenses.main.referenceMap Editing.toDelete)
@@ -495,7 +500,7 @@ requestDeleteReferenceMap model =
     )
 
 
-confirmDeleteReferenceMap : Page.Model -> ( Page.Model, Cmd Page.Msg )
+confirmDeleteReferenceMap : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 confirmDeleteReferenceMap model =
     ( model
     , model
@@ -512,7 +517,7 @@ confirmDeleteReferenceMap model =
     )
 
 
-cancelDeleteReferenceMap : Page.Model -> ( Page.Model, Cmd Page.Msg )
+cancelDeleteReferenceMap : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 cancelDeleteReferenceMap model =
     ( model
         |> Tristate.mapMain (Lens.modify Page.lenses.main.referenceMap Editing.toView)
@@ -520,7 +525,7 @@ cancelDeleteReferenceMap model =
     )
 
 
-gotDeleteReferenceMapResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotDeleteReferenceMapResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.LogicMsg )
 gotDeleteReferenceMapResponse model result =
     result
         |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))

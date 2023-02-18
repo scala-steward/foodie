@@ -160,7 +160,11 @@ lenses =
     }
 
 
-type Msg
+type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type LogicMsg
     = UpdateIngredient IngredientUpdateClientInput
     | UpdateComplexIngredient ComplexIngredientClientInput
     | SaveIngredientEdit IngredientUpdateClientInput

@@ -24,7 +24,7 @@ view =
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration model =
     ViewUtil.viewMainWith
         { configuration = configuration
@@ -42,7 +42,7 @@ viewMain configuration model =
                 viewConfirmed configuration
 
 
-viewResetting : Page.Main -> Html Page.Msg
+viewResetting : Page.Main -> Html Page.LogicMsg
 viewResetting model =
     let
         isValidPassword =
@@ -108,7 +108,7 @@ viewResetting model =
         ]
 
 
-viewConfirmed : Configuration -> Html Page.Msg
+viewConfirmed : Configuration -> Html Page.LogicMsg
 viewConfirmed configuration =
     div [ Style.classes.confirm ]
         [ div [] [ label [] [ text "Successfully reset password." ] ]

@@ -92,7 +92,11 @@ type alias Flags =
     }
 
 
-type Msg
+type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type LogicMsg
     = GotFetchStatsResponse (Result Error TotalOnlyStats)
     | GotFetchReferenceTreesResponse (Result Error (List ReferenceTree))
     | GotFetchComplexFoodResponse (Result Error ComplexFood)

@@ -16,7 +16,12 @@ init flags =
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
-update msg model =
+update =
+    Tristate.updateWith updateLogic
+
+
+updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+updateLogic msg model =
     case msg of
         Page.SetComplementInput complementInput ->
             setComplementInput model complementInput
@@ -28,14 +33,14 @@ update msg model =
             gotResponse model result
 
 
-setComplementInput : Page.Model -> ComplementInput -> ( Page.Model, Cmd Page.Msg )
+setComplementInput : Page.Model -> ComplementInput -> ( Page.Model, Cmd Page.LogicMsg )
 setComplementInput model complementInput =
     ( model |> Tristate.mapMain (Page.lenses.main.complementInput.set complementInput)
     , Cmd.none
     )
 
 
-request : Page.Model -> ( Page.Model, Cmd Page.Msg )
+request : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 request model =
     ( model
     , model
@@ -50,7 +55,7 @@ request model =
     )
 
 
-gotResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.LogicMsg )
 gotResponse model result =
     ( result
         |> Result.Extra.unpack

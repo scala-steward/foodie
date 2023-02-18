@@ -131,7 +131,11 @@ descriptionOrEmpty recipeMap =
     flip DictList.get recipeMap >> Maybe.andThen .description >> Maybe.withDefault ""
 
 
-type Msg
+type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type LogicMsg
     = UpdateMealEntry MealEntryUpdateClientInput
     | SaveMealEntryEdit MealEntryUpdateClientInput
     | GotSaveMealEntryResponse (Result Error MealEntry)

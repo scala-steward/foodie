@@ -74,7 +74,11 @@ type alias Flags =
     }
 
 
-type Msg
+type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type LogicMsg
     = SetSearchString String
     | SetRecipesPagination Pagination
     | GotFetchRecipesResponse (Result Error (List Recipe))

@@ -22,7 +22,7 @@ view =
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
@@ -43,12 +43,12 @@ viewMain configuration main =
                 viewRequested configuration
 
 
-viewInitial : Page.Main -> Html Page.Msg
+viewInitial : Page.Main -> Html Page.LogicMsg
 viewInitial =
     div [ Style.classes.request ] << searchComponents
 
 
-viewRequesting : Page.Main -> Html Page.Msg
+viewRequesting : Page.Main -> Html Page.LogicMsg
 viewRequesting main =
     let
         remainder =
@@ -73,7 +73,7 @@ viewRequesting main =
     div [ Style.classes.request ] (searchComponents main ++ remainder)
 
 
-viewRequested : Configuration -> Html Page.Msg
+viewRequested : Configuration -> Html Page.LogicMsg
 viewRequested configuration =
     div [ Style.classes.confirm ]
         [ div [] [ label [] [ text "Requested user recovery. Please check your email" ] ]
@@ -86,7 +86,7 @@ viewRequested configuration =
         ]
 
 
-searchComponents : Page.Main -> List (Html Page.Msg)
+searchComponents : Page.Main -> List (Html Page.LogicMsg)
 searchComponents main =
     let
         isValid =

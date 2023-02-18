@@ -27,7 +27,7 @@ init flags =
     )
 
 
-initialFetch : AuthorizedAccess -> Cmd Page.Logic
+initialFetch : AuthorizedAccess -> Cmd Page.LogicMsg
 initialFetch authorizedAccess =
     Cmd.batch
         [ Requests.fetchRecipes authorizedAccess
@@ -40,7 +40,7 @@ update =
     Tristate.updateWith updateLogic
 
 
-updateLogic : Page.Logic -> Page.Model -> ( Page.Model, Cmd Page.Logic )
+updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 updateLogic msg model =
     case msg of
         Page.UpdateComplexFoodCreation createComplexFoodsMap ->
@@ -101,7 +101,7 @@ updateLogic msg model =
             setPagination model pagination
 
 
-updateComplexFoodCreation : Page.Model -> ComplexFoodClientInput -> ( Page.Model, Cmd Page.Logic )
+updateComplexFoodCreation : Page.Model -> ComplexFoodClientInput -> ( Page.Model, Cmd Page.LogicMsg )
 updateComplexFoodCreation model complexFoodClientInput =
     ( model
         |> Tristate.mapMain
@@ -114,7 +114,7 @@ updateComplexFoodCreation model complexFoodClientInput =
     )
 
 
-createComplexFood : Page.Model -> ComplexFoodId -> ( Page.Model, Cmd Page.Logic )
+createComplexFood : Page.Model -> ComplexFoodId -> ( Page.Model, Cmd Page.LogicMsg )
 createComplexFood model recipeId =
     ( model
     , model
@@ -137,7 +137,7 @@ createComplexFood model recipeId =
     )
 
 
-gotCreateComplexFoodResponse : Page.Model -> Result Error ComplexFood -> ( Page.Model, Cmd Page.Logic )
+gotCreateComplexFoodResponse : Page.Model -> Result Error ComplexFood -> ( Page.Model, Cmd Page.LogicMsg )
 gotCreateComplexFoodResponse model result =
     ( result
         |> Result.Extra.unpack (Tristate.toError model)
@@ -150,7 +150,7 @@ gotCreateComplexFoodResponse model result =
     )
 
 
-updateComplexFood : Page.Model -> ComplexFoodClientInput -> ( Page.Model, Cmd Page.Logic )
+updateComplexFood : Page.Model -> ComplexFoodClientInput -> ( Page.Model, Cmd Page.LogicMsg )
 updateComplexFood model complexFoodClientInput =
     ( model
         |> mapComplexFoodStateByRecipeId complexFoodClientInput.recipeId
@@ -159,7 +159,7 @@ updateComplexFood model complexFoodClientInput =
     )
 
 
-saveComplexFoodEdit : Page.Model -> ComplexFoodClientInput -> ( Page.Model, Cmd Page.Logic )
+saveComplexFoodEdit : Page.Model -> ComplexFoodClientInput -> ( Page.Model, Cmd Page.LogicMsg )
 saveComplexFoodEdit model complexFoodClientInput =
     ( model
     , model
@@ -175,7 +175,7 @@ saveComplexFoodEdit model complexFoodClientInput =
     )
 
 
-gotSaveComplexFoodResponse : Page.Model -> Result Error ComplexFood -> ( Page.Model, Cmd Page.Logic )
+gotSaveComplexFoodResponse : Page.Model -> Result Error ComplexFood -> ( Page.Model, Cmd Page.LogicMsg )
 gotSaveComplexFoodResponse model result =
     ( result
         |> Result.Extra.unpack (Tristate.toError model)
@@ -188,7 +188,7 @@ gotSaveComplexFoodResponse model result =
     )
 
 
-enterEditComplexFood : Page.Model -> ComplexFoodId -> ( Page.Model, Cmd Page.Logic )
+enterEditComplexFood : Page.Model -> ComplexFoodId -> ( Page.Model, Cmd Page.LogicMsg )
 enterEditComplexFood model complexFoodId =
     ( model
         |> mapComplexFoodStateByRecipeId complexFoodId
@@ -197,21 +197,21 @@ enterEditComplexFood model complexFoodId =
     )
 
 
-exitEditComplexFood : Page.Model -> ComplexFoodId -> ( Page.Model, Cmd Page.Logic )
+exitEditComplexFood : Page.Model -> ComplexFoodId -> ( Page.Model, Cmd Page.LogicMsg )
 exitEditComplexFood model complexFoodId =
     ( model |> mapComplexFoodStateByRecipeId complexFoodId Editing.toView
     , Cmd.none
     )
 
 
-requestDeleteComplexFood : Page.Model -> ComplexFoodId -> ( Page.Model, Cmd Page.Logic )
+requestDeleteComplexFood : Page.Model -> ComplexFoodId -> ( Page.Model, Cmd Page.LogicMsg )
 requestDeleteComplexFood model complexFoodId =
     ( model |> mapComplexFoodStateByRecipeId complexFoodId Editing.toDelete
     , Cmd.none
     )
 
 
-confirmDeleteComplexFood : Page.Model -> ComplexFoodId -> ( Page.Model, Cmd Page.Logic )
+confirmDeleteComplexFood : Page.Model -> ComplexFoodId -> ( Page.Model, Cmd Page.LogicMsg )
 confirmDeleteComplexFood model complexFoodId =
     ( model
     , model
@@ -226,14 +226,14 @@ confirmDeleteComplexFood model complexFoodId =
     )
 
 
-cancelDeleteComplexFood : Page.Model -> ComplexFoodId -> ( Page.Model, Cmd Page.Logic )
+cancelDeleteComplexFood : Page.Model -> ComplexFoodId -> ( Page.Model, Cmd Page.LogicMsg )
 cancelDeleteComplexFood model complexFoodId =
     ( model |> mapComplexFoodStateByRecipeId complexFoodId Editing.toView
     , Cmd.none
     )
 
 
-gotDeleteComplexFoodResponse : Page.Model -> ComplexFoodId -> Result Error () -> ( Page.Model, Cmd Page.Logic )
+gotDeleteComplexFoodResponse : Page.Model -> ComplexFoodId -> Result Error () -> ( Page.Model, Cmd Page.LogicMsg )
 gotDeleteComplexFoodResponse model complexFoodId result =
     ( result
         |> Result.Extra.unpack (Tristate.toError model)
@@ -246,7 +246,7 @@ gotDeleteComplexFoodResponse model complexFoodId result =
     )
 
 
-gotFetchRecipesResponse : Page.Model -> Result Error (List Recipe) -> ( Page.Model, Cmd Page.Logic )
+gotFetchRecipesResponse : Page.Model -> Result Error (List Recipe) -> ( Page.Model, Cmd Page.LogicMsg )
 gotFetchRecipesResponse model result =
     ( result
         |> Result.Extra.unpack (Tristate.toError model)
@@ -260,7 +260,7 @@ gotFetchRecipesResponse model result =
     )
 
 
-gotFetchComplexFoodsResponse : Page.Model -> Result Error (List ComplexFood) -> ( Page.Model, Cmd Page.Logic )
+gotFetchComplexFoodsResponse : Page.Model -> Result Error (List ComplexFood) -> ( Page.Model, Cmd Page.LogicMsg )
 gotFetchComplexFoodsResponse model result =
     ( result
         |> Result.Extra.unpack (Tristate.toError model)
@@ -273,7 +273,7 @@ gotFetchComplexFoodsResponse model result =
     )
 
 
-selectRecipe : Page.Model -> Recipe -> ( Page.Model, Cmd Page.Logic )
+selectRecipe : Page.Model -> Recipe -> ( Page.Model, Cmd Page.LogicMsg )
 selectRecipe model recipe =
     ( model
         |> Tristate.mapMain
@@ -285,7 +285,7 @@ selectRecipe model recipe =
     )
 
 
-deselectRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.Logic )
+deselectRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.LogicMsg )
 deselectRecipe model recipeId =
     ( model
         |> Tristate.mapMain (LensUtil.deleteAtId recipeId Page.lenses.main.complexFoodsToCreate)
@@ -293,7 +293,7 @@ deselectRecipe model recipeId =
     )
 
 
-setRecipesSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Logic )
+setRecipesSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 setRecipesSearchString model string =
     ( model
         |> Tristate.mapMain
@@ -309,7 +309,7 @@ setRecipesSearchString model string =
     )
 
 
-setComplexFoodsSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Logic )
+setComplexFoodsSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 setComplexFoodsSearchString model string =
     ( model
         |> Tristate.mapMain
@@ -325,7 +325,7 @@ setComplexFoodsSearchString model string =
     )
 
 
-setPagination : Page.Model -> Pagination.Pagination -> ( Page.Model, Cmd Page.Logic )
+setPagination : Page.Model -> Pagination.Pagination -> ( Page.Model, Cmd Page.LogicMsg )
 setPagination model pagination =
     ( model
         |> Tristate.mapMain (Page.lenses.main.pagination.set pagination)

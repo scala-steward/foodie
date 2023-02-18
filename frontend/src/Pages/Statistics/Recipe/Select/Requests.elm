@@ -10,17 +10,17 @@ import Pages.Util.Requests
 import Util.HttpUtil as HttpUtil
 
 
-fetchReferenceTrees : AuthorizedAccess -> Cmd Page.Msg
+fetchReferenceTrees : AuthorizedAccess -> Cmd Page.LogicMsg
 fetchReferenceTrees =
     StatisticsRequests.fetchReferenceTreesWith Page.GotFetchReferenceTreesResponse
 
 
-fetchRecipe : Page.Flags -> Cmd Page.Msg
+fetchRecipe : Page.Flags -> Cmd Page.LogicMsg
 fetchRecipe =
     Pages.Util.Requests.fetchRecipeWith Page.GotFetchRecipeResponse
 
 
-fetchStats : Page.Flags -> Cmd Page.Msg
+fetchStats : Page.Flags -> Cmd Page.LogicMsg
 fetchStats flags =
     HttpUtil.runPatternWithJwt
         flags.authorizedAccess

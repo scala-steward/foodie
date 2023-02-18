@@ -89,7 +89,11 @@ type alias Flags =
     }
 
 
-type Msg
+type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type LogicMsg
     = UpdateReferenceMapCreation (Maybe ReferenceMapCreationClientInput)
     | CreateReferenceMap
     | GotCreateReferenceMapResponse (Result Error ReferenceMap)

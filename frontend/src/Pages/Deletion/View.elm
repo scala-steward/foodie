@@ -18,7 +18,7 @@ view =
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
@@ -36,7 +36,7 @@ viewMain configuration main =
                 viewConfirmed configuration
 
 
-viewChecking : Configuration -> Page.Main -> Html Page.Msg
+viewChecking : Configuration -> Page.Main -> Html Page.LogicMsg
 viewChecking configuration model =
     div [ Style.classes.confirm ]
         [ label [ Style.classes.info ] [ text "Confirm deletion" ]
@@ -68,7 +68,7 @@ viewChecking configuration model =
         ]
 
 
-viewConfirmed : Configuration -> Html Page.Msg
+viewConfirmed : Configuration -> Html Page.LogicMsg
 viewConfirmed configuration =
     div [ Style.classes.confirm ]
         [ div [] [ label [] [ text "User deletion successful." ] ]

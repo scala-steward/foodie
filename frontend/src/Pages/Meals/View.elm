@@ -43,7 +43,7 @@ view =
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
@@ -133,7 +133,7 @@ tableHeader ps =
     ]
 
 
-createMeal : Maybe MealCreationClientInput -> Either (Html Page.Msg) (Html Page.Msg)
+createMeal : Maybe MealCreationClientInput -> Either (Html Page.LogicMsg) (Html Page.LogicMsg)
 createMeal maybeCreation =
     case maybeCreation of
         Nothing ->
@@ -150,7 +150,7 @@ createMeal maybeCreation =
             createMealLine creation |> Right
 
 
-viewMealLine : Configuration -> Meal -> Html Page.Msg
+viewMealLine : Configuration -> Meal -> Html Page.LogicMsg
 viewMealLine configuration meal =
     let
         editMsg =
@@ -182,7 +182,7 @@ viewMealLine configuration meal =
         meal
 
 
-deleteMealLine : Meal -> Html Page.Msg
+deleteMealLine : Meal -> Html Page.LogicMsg
 deleteMealLine meal =
     mealLineWith
         { controls =
@@ -216,7 +216,7 @@ mealLineWith ps meal =
         )
 
 
-updateMealLine : MealUpdateClientInput -> Html Page.Msg
+updateMealLine : MealUpdateClientInput -> Html Page.LogicMsg
 updateMealLine mealUpdateClientInput =
     editMealLineWith
         { saveMsg = Page.SaveMealEdit mealUpdateClientInput.id
@@ -232,7 +232,7 @@ updateMealLine mealUpdateClientInput =
         mealUpdateClientInput
 
 
-createMealLine : MealCreationClientInput -> Html Page.Msg
+createMealLine : MealCreationClientInput -> Html Page.LogicMsg
 createMealLine mealCreation =
     editMealLineWith
         { saveMsg = Page.CreateMeal

@@ -39,7 +39,7 @@ view =
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
@@ -128,7 +128,7 @@ tableHeader ps =
     ]
 
 
-createRecipe : Maybe RecipeCreationClientInput -> Either (Html Page.Msg) (Html Page.Msg)
+createRecipe : Maybe RecipeCreationClientInput -> Either (Html Page.LogicMsg) (Html Page.LogicMsg)
 createRecipe maybeCreation =
     case maybeCreation of
         Nothing ->
@@ -145,7 +145,7 @@ createRecipe maybeCreation =
             createRecipeLine creation |> Right
 
 
-viewRecipeLine : Configuration -> Recipe -> Html Page.Msg
+viewRecipeLine : Configuration -> Recipe -> Html Page.LogicMsg
 viewRecipeLine configuration recipe =
     let
         editMsg =
@@ -181,7 +181,7 @@ viewRecipeLine configuration recipe =
         recipe
 
 
-deleteRecipeLine : Recipe -> Html Page.Msg
+deleteRecipeLine : Recipe -> Html Page.LogicMsg
 deleteRecipeLine recipe =
     recipeLineWith
         { controls =
@@ -221,7 +221,7 @@ recipeLineWith ps recipe =
         )
 
 
-updateRecipeLine : RecipeUpdateClientInput -> Html Page.Msg
+updateRecipeLine : RecipeUpdateClientInput -> Html Page.LogicMsg
 updateRecipeLine recipeUpdateClientInput =
     editRecipeLineWith
         { saveMsg = Page.SaveRecipeEdit recipeUpdateClientInput.id
@@ -238,7 +238,7 @@ updateRecipeLine recipeUpdateClientInput =
         recipeUpdateClientInput
 
 
-createRecipeLine : RecipeCreationClientInput -> Html Page.Msg
+createRecipeLine : RecipeCreationClientInput -> Html Page.LogicMsg
 createRecipeLine =
     editRecipeLineWith
         { saveMsg = Page.CreateRecipe

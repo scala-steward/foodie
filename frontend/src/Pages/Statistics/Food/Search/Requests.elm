@@ -5,6 +5,6 @@ import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.Requests
 
 
-fetchFoods : AuthorizedAccess -> Cmd Page.Msg
+fetchFoods : AuthorizedAccess -> Cmd Page.LogicMsg
 fetchFoods =
     Pages.Util.Requests.fetchFoodsWith Page.GotFetchFoodsResponse

@@ -53,7 +53,11 @@ type alias Flags =
     }
 
 
-type Msg
+type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type LogicMsg
     = SetNickname (ValidatedInput String)
     | SetEmail (ValidatedInput String)
     | Request

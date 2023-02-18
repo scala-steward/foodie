@@ -52,7 +52,7 @@ view =
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
@@ -286,7 +286,7 @@ viewMain configuration main =
             ]
 
 
-viewPlain : Configuration -> Page.Main -> Html Page.Msg
+viewPlain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewPlain configuration main =
     let
         viewFoods =
@@ -352,7 +352,7 @@ viewPlain configuration main =
         ]
 
 
-viewComplex : Configuration -> Page.Main -> Html Page.Msg
+viewComplex : Configuration -> Page.Main -> Html Page.LogicMsg
 viewComplex configuration main =
     let
         viewComplexFoods =
@@ -418,7 +418,7 @@ viewComplex configuration main =
         ]
 
 
-viewIngredientLine : Page.FoodMap -> Ingredient -> Html Page.Msg
+viewIngredientLine : Page.FoodMap -> Ingredient -> Html Page.LogicMsg
 viewIngredientLine foodMap ingredient =
     let
         editMsg =
@@ -435,7 +435,7 @@ viewIngredientLine foodMap ingredient =
         ingredient
 
 
-deleteIngredientLine : Page.FoodMap -> Ingredient -> Html Page.Msg
+deleteIngredientLine : Page.FoodMap -> Ingredient -> Html Page.LogicMsg
 deleteIngredientLine foodMap ingredient =
     ingredientLineWith
         { controls =
@@ -456,12 +456,12 @@ measureOfFood measureId food =
 
 
 ingredientLineWith :
-    { controls : List (Html Page.Msg)
-    , onClick : List (Attribute Page.Msg)
+    { controls : List (Html Page.LogicMsg)
+    , onClick : List (Attribute Page.LogicMsg)
     , foodMap : Page.FoodMap
     }
     -> Ingredient
-    -> Html Page.Msg
+    -> Html Page.LogicMsg
 ingredientLineWith ps ingredient =
     let
         withOnClick =
@@ -486,7 +486,7 @@ ingredientLineWith ps ingredient =
         )
 
 
-viewComplexIngredientLine : Page.ComplexFoodMap -> ComplexIngredient -> Html Page.Msg
+viewComplexIngredientLine : Page.ComplexFoodMap -> ComplexIngredient -> Html Page.LogicMsg
 viewComplexIngredientLine complexFoodMap complexIngredient =
     let
         editMsg =
@@ -503,7 +503,7 @@ viewComplexIngredientLine complexFoodMap complexIngredient =
         complexIngredient
 
 
-deleteComplexIngredientLine : Page.ComplexFoodMap -> ComplexIngredient -> Html Page.Msg
+deleteComplexIngredientLine : Page.ComplexFoodMap -> ComplexIngredient -> Html Page.LogicMsg
 deleteComplexIngredientLine complexFoodMap complexIngredient =
     complexIngredientLineWith
         { controls =
@@ -517,12 +517,12 @@ deleteComplexIngredientLine complexFoodMap complexIngredient =
 
 
 complexIngredientLineWith :
-    { controls : List (Html Page.Msg)
-    , onClick : List (Attribute Page.Msg)
+    { controls : List (Html Page.LogicMsg)
+    , onClick : List (Attribute Page.LogicMsg)
     , complexFoodMap : Page.ComplexFoodMap
     }
     -> ComplexIngredient
-    -> Html Page.Msg
+    -> Html Page.LogicMsg
 complexIngredientLineWith ps complexIngredient =
     let
         withOnClick =
@@ -545,7 +545,7 @@ complexIngredientLineWith ps complexIngredient =
         )
 
 
-updateIngredientLine : Page.FoodMap -> Ingredient -> IngredientUpdateClientInput -> Html Page.Msg
+updateIngredientLine : Page.FoodMap -> Ingredient -> IngredientUpdateClientInput -> Html Page.LogicMsg
 updateIngredientLine foodMap ingredient ingredientUpdateClientInput =
     let
         saveMsg =
@@ -622,7 +622,7 @@ updateIngredientLine foodMap ingredient ingredientUpdateClientInput =
         ]
 
 
-updateComplexIngredientLine : Page.ComplexFoodMap -> ComplexIngredient -> ComplexIngredientClientInput -> Html Page.Msg
+updateComplexIngredientLine : Page.ComplexFoodMap -> ComplexIngredient -> ComplexIngredientClientInput -> Html Page.LogicMsg
 updateComplexIngredientLine complexFoodMap complexIngredient complexIngredientUpdateClientInput =
     let
         saveMsg =
@@ -688,10 +688,10 @@ onChangeDropdown :
     { amountUnitLens : Lens input AmountUnitClientInput.AmountUnitClientInput
     , measureIdOf : input -> MeasureId
     , input : input
-    , mkMsg : input -> Page.Msg
+    , mkMsg : input -> Page.LogicMsg
     }
     -> Maybe String
-    -> Page.Msg
+    -> Page.LogicMsg
 onChangeDropdown ps =
     Maybe.andThen String.toInt
         >> Maybe.withDefault (ps.measureIdOf ps.input)
@@ -734,7 +734,7 @@ amountInfoOf info =
     info.amountGrams ++ suffix
 
 
-viewFoodLine : Configuration -> Page.FoodMap -> Page.AddFoodsMap -> Page.PlainIngredientStateMap -> Food -> Html Page.Msg
+viewFoodLine : Configuration -> Page.FoodMap -> Page.AddFoodsMap -> Page.PlainIngredientStateMap -> Food -> Html Page.LogicMsg
 viewFoodLine configuration foodMap ingredientsToAdd ingredients food =
     let
         addMsg =
@@ -842,7 +842,7 @@ viewFoodLine configuration foodMap ingredientsToAdd ingredients food =
         )
 
 
-viewComplexFoodLine : Configuration -> Page.ComplexFoodMap -> Page.AddComplexFoodsMap -> Page.ComplexIngredientStateMap -> ComplexFood -> Html Page.Msg
+viewComplexFoodLine : Configuration -> Page.ComplexFoodMap -> Page.AddComplexFoodsMap -> Page.ComplexIngredientStateMap -> ComplexFood -> Html Page.LogicMsg
 viewComplexFoodLine configuration complexFoodMap complexIngredientsToAdd complexIngredients complexFood =
     let
         addMsg =

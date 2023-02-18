@@ -59,7 +59,11 @@ type alias Flags =
     }
 
 
-type Msg
+type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type LogicMsg
     = Find
     | GotFindResponse (Result Error (List User))
     | SetSearchString String

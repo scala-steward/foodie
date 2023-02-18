@@ -23,12 +23,17 @@ import Util.LensUtil as LensUtil
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
     ( Page.initial flags.authorizedAccess
-    , Requests.fetchMeals flags.authorizedAccess
+    , Requests.fetchMeals flags.authorizedAccess |> Cmd.map Tristate.Logic
     )
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
-update msg model =
+update =
+    Tristate.updateWith updateLogic
+
+
+updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+updateLogic msg model =
     case msg of
         Page.UpdateMealCreation mealCreationClientInput ->
             updateMealCreation model mealCreationClientInput
@@ -76,7 +81,7 @@ update msg model =
             setSearchString model string
 
 
-updateMealCreation : Page.Model -> Maybe MealCreationClientInput -> ( Page.Model, Cmd Page.Msg )
+updateMealCreation : Page.Model -> Maybe MealCreationClientInput -> ( Page.Model, Cmd Page.LogicMsg )
 updateMealCreation model mealToAdd =
     ( model
         |> Tristate.mapMain (Page.lenses.main.mealToAdd.set mealToAdd)
@@ -84,7 +89,7 @@ updateMealCreation model mealToAdd =
     )
 
 
-createMeal : Page.Model -> ( Page.Model, Cmd Page.Msg )
+createMeal : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 createMeal model =
     ( model
     , model
@@ -121,7 +126,7 @@ gotCreateMealResponse model dataOrError =
             )
 
 
-updateMeal : Page.Model -> MealUpdateClientInput -> ( Page.Model, Cmd Page.Msg )
+updateMeal : Page.Model -> MealUpdateClientInput -> ( Page.Model, Cmd Page.LogicMsg )
 updateMeal model mealUpdateClientInput =
     ( model
         |> mapMealStateById mealUpdateClientInput.id
@@ -130,7 +135,7 @@ updateMeal model mealUpdateClientInput =
     )
 
 
-saveMealEdit : Page.Model -> MealId -> ( Page.Model, Cmd Page.Msg )
+saveMealEdit : Page.Model -> MealId -> ( Page.Model, Cmd Page.LogicMsg )
 saveMealEdit model mealId =
     ( model
     , model
@@ -157,7 +162,7 @@ saveMealEdit model mealId =
     )
 
 
-gotSaveMealResponse : Page.Model -> Result Error Meal -> ( Page.Model, Cmd Page.Msg )
+gotSaveMealResponse : Page.Model -> Result Error Meal -> ( Page.Model, Cmd Page.LogicMsg )
 gotSaveMealResponse model dataOrError =
     ( dataOrError
         |> Result.Extra.unpack (Tristate.toError model)
@@ -170,7 +175,7 @@ gotSaveMealResponse model dataOrError =
     )
 
 
-enterEditMeal : Page.Model -> MealId -> ( Page.Model, Cmd Page.Msg )
+enterEditMeal : Page.Model -> MealId -> ( Page.Model, Cmd Page.LogicMsg )
 enterEditMeal model mealId =
     ( model
         |> mapMealStateById mealId
@@ -179,21 +184,21 @@ enterEditMeal model mealId =
     )
 
 
-exitEditMealAt : Page.Model -> MealId -> ( Page.Model, Cmd Page.Msg )
+exitEditMealAt : Page.Model -> MealId -> ( Page.Model, Cmd Page.LogicMsg )
 exitEditMealAt model mealId =
     ( model |> mapMealStateById mealId Editing.toView
     , Cmd.none
     )
 
 
-requestDeleteMeal : Page.Model -> MealId -> ( Page.Model, Cmd Page.Msg )
+requestDeleteMeal : Page.Model -> MealId -> ( Page.Model, Cmd Page.LogicMsg )
 requestDeleteMeal model mealId =
     ( model |> mapMealStateById mealId Editing.toDelete
     , Cmd.none
     )
 
 
-confirmDeleteMeal : Page.Model -> MealId -> ( Page.Model, Cmd Page.Msg )
+confirmDeleteMeal : Page.Model -> MealId -> ( Page.Model, Cmd Page.LogicMsg )
 confirmDeleteMeal model mealId =
     ( model
     , model
@@ -210,14 +215,14 @@ confirmDeleteMeal model mealId =
     )
 
 
-cancelDeleteMeal : Page.Model -> MealId -> ( Page.Model, Cmd Page.Msg )
+cancelDeleteMeal : Page.Model -> MealId -> ( Page.Model, Cmd Page.LogicMsg )
 cancelDeleteMeal model mealId =
     ( model |> mapMealStateById mealId Editing.toView
     , Cmd.none
     )
 
 
-gotDeleteMealResponse : Page.Model -> MealId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotDeleteMealResponse : Page.Model -> MealId -> Result Error () -> ( Page.Model, Cmd Page.LogicMsg )
 gotDeleteMealResponse model deletedId dataOrError =
     ( dataOrError
         |> Result.Extra.unpack (Tristate.toError model)
@@ -229,7 +234,7 @@ gotDeleteMealResponse model deletedId dataOrError =
     )
 
 
-gotFetchMealsResponse : Page.Model -> Result Error (List Meal) -> ( Page.Model, Cmd Page.Msg )
+gotFetchMealsResponse : Page.Model -> Result Error (List Meal) -> ( Page.Model, Cmd Page.LogicMsg )
 gotFetchMealsResponse model dataOrError =
     ( dataOrError
         |> Result.Extra.unpack (Tristate.toError model)
@@ -249,14 +254,14 @@ gotFetchMealsResponse model dataOrError =
     )
 
 
-setPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.Msg )
+setPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.LogicMsg )
 setPagination model pagination =
     ( model |> Tristate.mapMain (Page.lenses.main.pagination.set pagination)
     , Cmd.none
     )
 
 
-setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
+setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 setSearchString model string =
     ( model
         |> Tristate.mapMain

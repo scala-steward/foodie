@@ -23,12 +23,17 @@ import Util.LensUtil as LensUtil
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
     ( Page.initial flags.authorizedAccess
-    , Requests.fetchReferenceMaps flags.authorizedAccess
+    , Requests.fetchReferenceMaps flags.authorizedAccess |> Cmd.map Tristate.Logic
     )
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
-update msg model =
+update =
+    Tristate.updateWith updateLogic
+
+
+updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+updateLogic msg model =
     case msg of
         Page.UpdateReferenceMapCreation referenceMapCreationClientInput ->
             updateReferenceMapCreation model referenceMapCreationClientInput
@@ -76,7 +81,7 @@ update msg model =
             setSearchString model string
 
 
-updateReferenceMapCreation : Page.Model -> Maybe ReferenceMapCreationClientInput -> ( Page.Model, Cmd Page.Msg )
+updateReferenceMapCreation : Page.Model -> Maybe ReferenceMapCreationClientInput -> ( Page.Model, Cmd Page.LogicMsg )
 updateReferenceMapCreation model referenceMapToAdd =
     ( model
         |> Tristate.mapMain (Page.lenses.main.referenceMapToAdd.set referenceMapToAdd)
@@ -84,7 +89,7 @@ updateReferenceMapCreation model referenceMapToAdd =
     )
 
 
-createReferenceMap : Page.Model -> ( Page.Model, Cmd Page.Msg )
+createReferenceMap : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 createReferenceMap model =
     ( model
     , model
@@ -105,7 +110,7 @@ createReferenceMap model =
     )
 
 
-gotCreateReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.Msg )
+gotCreateReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.LogicMsg )
 gotCreateReferenceMapResponse model dataOrError =
     dataOrError
         |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
@@ -124,7 +129,7 @@ gotCreateReferenceMapResponse model dataOrError =
             )
 
 
-updateReferenceMap : Page.Model -> ReferenceMapUpdateClientInput -> ( Page.Model, Cmd Page.Msg )
+updateReferenceMap : Page.Model -> ReferenceMapUpdateClientInput -> ( Page.Model, Cmd Page.LogicMsg )
 updateReferenceMap model referenceMapUpdate =
     ( model
         |> mapReferenceMapStateById referenceMapUpdate.id
@@ -133,7 +138,7 @@ updateReferenceMap model referenceMapUpdate =
     )
 
 
-saveReferenceMapEdit : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
+saveReferenceMapEdit : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.LogicMsg )
 saveReferenceMapEdit model referenceMapId =
     ( model
     , model
@@ -161,7 +166,7 @@ saveReferenceMapEdit model referenceMapId =
     )
 
 
-gotSaveReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.Msg )
+gotSaveReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.LogicMsg )
 gotSaveReferenceMapResponse model dataOrError =
     ( dataOrError
         |> Result.Extra.unpack (Tristate.toError model)
@@ -174,7 +179,7 @@ gotSaveReferenceMapResponse model dataOrError =
     )
 
 
-enterEditReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
+enterEditReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.LogicMsg )
 enterEditReferenceMap model referenceMapId =
     ( model
         |> mapReferenceMapStateById referenceMapId
@@ -183,21 +188,21 @@ enterEditReferenceMap model referenceMapId =
     )
 
 
-exitEditReferenceMapAt : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
+exitEditReferenceMapAt : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.LogicMsg )
 exitEditReferenceMapAt model referenceMapId =
     ( model |> mapReferenceMapStateById referenceMapId Editing.toView
     , Cmd.none
     )
 
 
-requestDeleteReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
+requestDeleteReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.LogicMsg )
 requestDeleteReferenceMap model referenceMapId =
     ( model |> mapReferenceMapStateById referenceMapId Editing.toDelete
     , Cmd.none
     )
 
 
-confirmDeleteReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
+confirmDeleteReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.LogicMsg )
 confirmDeleteReferenceMap model referenceMapId =
     ( model
     , model
@@ -214,14 +219,14 @@ confirmDeleteReferenceMap model referenceMapId =
     )
 
 
-cancelDeleteReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
+cancelDeleteReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.LogicMsg )
 cancelDeleteReferenceMap model referenceMapId =
     ( model |> mapReferenceMapStateById referenceMapId Editing.toView
     , Cmd.none
     )
 
 
-gotDeleteReferenceMapResponse : Page.Model -> ReferenceMapId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotDeleteReferenceMapResponse : Page.Model -> ReferenceMapId -> Result Error () -> ( Page.Model, Cmd Page.LogicMsg )
 gotDeleteReferenceMapResponse model deletedId dataOrError =
     ( dataOrError
         |> Result.Extra.unpack (Tristate.toError model)
@@ -233,7 +238,7 @@ gotDeleteReferenceMapResponse model deletedId dataOrError =
     )
 
 
-gotFetchReferenceMapsResponse : Page.Model -> Result Error (List ReferenceMap) -> ( Page.Model, Cmd Page.Msg )
+gotFetchReferenceMapsResponse : Page.Model -> Result Error (List ReferenceMap) -> ( Page.Model, Cmd Page.LogicMsg )
 gotFetchReferenceMapsResponse model dataOrError =
     ( dataOrError
         |> Result.Extra.unpack (Tristate.toError model)
@@ -246,14 +251,14 @@ gotFetchReferenceMapsResponse model dataOrError =
     )
 
 
-setPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.Msg )
+setPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.LogicMsg )
 setPagination model pagination =
     ( model |> Tristate.mapMain (Page.lenses.main.pagination.set pagination)
     , Cmd.none
     )
 
 
-setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
+setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 setSearchString model string =
     ( model
         |> Tristate.mapMain

@@ -26,7 +26,12 @@ init flags =
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
-update msg model =
+update =
+    Tristate.updateWith updateLogic
+
+
+updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+updateLogic msg model =
     case msg of
         Page.SetNickname nickname ->
             setNickname model nickname
@@ -41,7 +46,7 @@ update msg model =
             gotResponse model remoteData
 
 
-setNickname : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
+setNickname : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 setNickname model nickname =
     ( model
         |> Tristate.mapMain
@@ -54,7 +59,7 @@ setNickname model nickname =
     )
 
 
-setPassword : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
+setPassword : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 setPassword model password =
     ( model
         |> Tristate.mapMain
@@ -67,7 +72,7 @@ setPassword model password =
     )
 
 
-login : Page.Model -> ( Page.Model, Cmd Page.Msg )
+login : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 login model =
     ( model
     , model
@@ -78,7 +83,7 @@ login model =
     )
 
 
-gotResponse : Page.Model -> Result Error String -> ( Page.Model, Cmd Page.Msg )
+gotResponse : Page.Model -> Result Error String -> ( Page.Model, Cmd Page.LogicMsg )
 gotResponse model remoteData =
     remoteData
         |> Result.Extra.unpack

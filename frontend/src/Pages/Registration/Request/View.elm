@@ -26,7 +26,7 @@ view =
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
@@ -44,7 +44,7 @@ viewMain configuration main =
                 viewConfirmed configuration
 
 
-viewEditing : Page.Main -> Html Page.Msg
+viewEditing : Page.Main -> Html Page.LogicMsg
 viewEditing main =
     let
         isValid =
@@ -102,7 +102,7 @@ viewEditing main =
         ]
 
 
-viewConfirmed : Configuration -> Html Page.Msg
+viewConfirmed : Configuration -> Html Page.LogicMsg
 viewConfirmed configuration =
     div [ Style.classes.confirm ]
         [ div [] [ label [] [ text "Registration requested. Please check your email to continue." ] ]

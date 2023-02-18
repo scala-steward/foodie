@@ -18,7 +18,7 @@ import Result.Extra
 import Util.HttpUtil exposing (Error)
 
 
-initialFetch : AuthorizedAccess -> Cmd Page.Msg
+initialFetch : AuthorizedAccess -> Cmd Page.LogicMsg
 initialFetch =
     Requests.fetchUser
 
@@ -26,12 +26,16 @@ initialFetch =
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
     ( Page.initial flags.authorizedAccess
-    , initialFetch flags.authorizedAccess
+    , initialFetch flags.authorizedAccess |> Cmd.map Tristate.Logic
     )
 
-
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
-update msg model =
+update =
+    Tristate.updateWith updateLogic
+
+
+updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+updateLogic msg model =
     case msg of
         Page.GotFetchUserResponse result ->
             gotFetchUserResponse model result
@@ -64,7 +68,7 @@ update msg model =
             gotLogoutResponse model result
 
 
-gotFetchUserResponse : Page.Model -> Result Error User -> ( Page.Model, Cmd Page.Msg )
+gotFetchUserResponse : Page.Model -> Result Error User -> ( Page.Model, Cmd Page.LogicMsg )
 gotFetchUserResponse model result =
     ( result
         |> Result.Extra.unpack (Tristate.toError model)
@@ -78,7 +82,7 @@ gotFetchUserResponse model result =
     )
 
 
-updatePassword : Page.Model -> ( Page.Model, Cmd Page.Msg )
+updatePassword : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 updatePassword model =
     ( model
     , model
@@ -93,7 +97,7 @@ updatePassword model =
     )
 
 
-gotUpdatePasswordResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotUpdatePasswordResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.LogicMsg )
 gotUpdatePasswordResponse model result =
     ( result
         |> Result.Extra.unpack (Tristate.toError model)
@@ -108,7 +112,7 @@ gotUpdatePasswordResponse model result =
     )
 
 
-updateSettings : Page.Model -> ( Page.Model, Cmd Page.Msg )
+updateSettings : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 updateSettings model =
     ( model
     , model
@@ -123,7 +127,7 @@ updateSettings model =
     )
 
 
-gotUpdateSettingsResponse : Page.Model -> Result Error User -> ( Page.Model, Cmd Page.Msg )
+gotUpdateSettingsResponse : Page.Model -> Result Error User -> ( Page.Model, Cmd Page.LogicMsg )
 gotUpdateSettingsResponse model result =
     ( result
         |> Result.Extra.unpack (Tristate.toError model)
@@ -132,7 +136,7 @@ gotUpdateSettingsResponse model result =
     )
 
 
-requestDeletion : Page.Model -> ( Page.Model, Cmd Page.Msg )
+requestDeletion : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 requestDeletion model =
     ( model
     , model
@@ -146,7 +150,7 @@ requestDeletion model =
     )
 
 
-gotRequestDeletionResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotRequestDeletionResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.LogicMsg )
 gotRequestDeletionResponse model result =
     ( result
         |> Result.Extra.unpack (Tristate.toError model)
@@ -155,14 +159,14 @@ gotRequestDeletionResponse model result =
     )
 
 
-setComplementInput : Page.Model -> ComplementInput -> ( Page.Model, Cmd Page.Msg )
+setComplementInput : Page.Model -> ComplementInput -> ( Page.Model, Cmd Page.LogicMsg )
 setComplementInput model complementInput =
     ( model |> Tristate.mapMain (Page.lenses.main.complementInput.set complementInput)
     , Cmd.none
     )
 
 
-logout : Page.Model -> Api.Types.Mode.Mode -> ( Page.Model, Cmd Page.Msg )
+logout : Page.Model -> Api.Types.Mode.Mode -> ( Page.Model, Cmd Page.LogicMsg )
 logout model mode =
     ( model
     , model
@@ -177,7 +181,7 @@ logout model mode =
     )
 
 
-gotLogoutResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotLogoutResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.LogicMsg )
 gotLogoutResponse model result =
     result
         |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))

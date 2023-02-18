@@ -79,7 +79,11 @@ type alias Flags =
     }
 
 
-type Msg
+type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type LogicMsg
     = GotFetchUserResponse (Result Error User)
     | UpdatePassword
     | GotUpdatePasswordResponse (Result Error ())

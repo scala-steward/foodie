@@ -12,12 +12,12 @@ import Url.Builder
 import Util.HttpUtil as HttpUtil
 
 
-fetchReferenceTrees : AuthorizedAccess -> Cmd Page.Msg
+fetchReferenceTrees : AuthorizedAccess -> Cmd Page.LogicMsg
 fetchReferenceTrees =
     StatisticsRequests.fetchReferenceTreesWith Page.GotFetchReferenceTreesResponse
 
 
-fetchStats : AuthorizedAccess -> RequestInterval -> Cmd Page.Msg
+fetchStats : AuthorizedAccess -> RequestInterval -> Cmd Page.LogicMsg
 fetchStats authorizedAccess requestInterval =
     let
         toQuery name =

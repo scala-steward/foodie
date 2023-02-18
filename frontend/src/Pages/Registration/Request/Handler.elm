@@ -16,7 +16,12 @@ init flags =
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
-update msg model =
+update =
+    Tristate.updateWith updateLogic
+
+
+updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+updateLogic msg model =
     case msg of
         Page.SetNickname nickname ->
             setNickname model nickname
@@ -31,21 +36,21 @@ update msg model =
             gotRequestResponse model result
 
 
-setNickname : Page.Model -> ValidatedInput String -> ( Page.Model, Cmd Page.Msg )
+setNickname : Page.Model -> ValidatedInput String -> ( Page.Model, Cmd Page.LogicMsg )
 setNickname model nickname =
     ( model |> Tristate.mapMain (Page.lenses.main.nickname.set nickname)
     , Cmd.none
     )
 
 
-setEmail : Page.Model -> ValidatedInput String -> ( Page.Model, Cmd Page.Msg )
+setEmail : Page.Model -> ValidatedInput String -> ( Page.Model, Cmd Page.LogicMsg )
 setEmail model email =
     ( model |> Tristate.mapMain (Page.lenses.main.email.set email)
     , Cmd.none
     )
 
 
-request : Page.Model -> ( Page.Model, Cmd Page.Msg )
+request : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 request model =
     ( model
     , model
@@ -60,7 +65,7 @@ request model =
     )
 
 
-gotRequestResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotRequestResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.LogicMsg )
 gotRequestResponse model result =
     ( result
         |> Result.Extra.unpack (Tristate.toError model)

@@ -57,7 +57,11 @@ type alias Flags =
     }
 
 
-type Msg
+type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type LogicMsg
     = SetComplementInput ComplementInput
     | Request
     | GotResponse (Result Error ())

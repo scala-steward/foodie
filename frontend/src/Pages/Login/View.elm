@@ -21,7 +21,7 @@ view =
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration model =
     ViewUtil.viewMainWith
         { configuration = configuration

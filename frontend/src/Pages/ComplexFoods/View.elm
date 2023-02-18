@@ -37,7 +37,7 @@ view =
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
@@ -172,7 +172,7 @@ viewMain configuration main =
             ]
 
 
-viewComplexFoodLine : Page.RecipeMap -> ComplexFood -> Html Page.Msg
+viewComplexFoodLine : Page.RecipeMap -> ComplexFood -> Html Page.LogicMsg
 viewComplexFoodLine recipeMap complexFood =
     let
         editMsg =
@@ -189,7 +189,7 @@ viewComplexFoodLine recipeMap complexFood =
         complexFood
 
 
-deleteComplexFoodLine : Page.RecipeMap -> ComplexFood -> Html Page.Msg
+deleteComplexFoodLine : Page.RecipeMap -> ComplexFood -> Html Page.LogicMsg
 deleteComplexFoodLine recipeMap complexFood =
     complexFoodLineWith
         { controls =
@@ -203,12 +203,12 @@ deleteComplexFoodLine recipeMap complexFood =
 
 
 complexFoodLineWith :
-    { controls : List (Html Page.Msg)
-    , onClick : List (Attribute Page.Msg)
+    { controls : List (Html Page.LogicMsg)
+    , onClick : List (Attribute Page.LogicMsg)
     , recipeMap : Page.RecipeMap
     }
     -> ComplexFood
-    -> Html Page.Msg
+    -> Html Page.LogicMsg
 complexFoodLineWith ps complexFood =
     let
         withOnClick =
@@ -223,7 +223,7 @@ complexFoodLineWith ps complexFood =
         )
 
 
-updateComplexFoodLine : ComplexFood -> ComplexFoodClientInput -> Html Page.Msg
+updateComplexFoodLine : ComplexFood -> ComplexFoodClientInput -> Html Page.LogicMsg
 updateComplexFoodLine complexFood complexFoodClientInput =
     let
         saveMsg =
@@ -281,7 +281,7 @@ updateComplexFoodLine complexFood complexFoodClientInput =
         ]
 
 
-viewRecipeLine : Page.CreateComplexFoodsMap -> Page.ComplexFoodStateMap -> Recipe -> Html Page.Msg
+viewRecipeLine : Page.CreateComplexFoodsMap -> Page.ComplexFoodStateMap -> Recipe -> Html Page.LogicMsg
 viewRecipeLine complexFoodsToCreate complexFoods recipe =
     let
         createMsg =

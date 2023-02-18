@@ -17,11 +17,11 @@ import Util.HttpUtil exposing (Error)
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
     ( Page.initial flags.authorizedAccess
-    , initialFetch flags
+    , initialFetch flags |> Cmd.map Tristate.Logic
     )
 
 
-initialFetch : Page.Flags -> Cmd Page.Msg
+initialFetch : Page.Flags -> Cmd Page.LogicMsg
 initialFetch flags =
     Cmd.batch
         [ Requests.fetchComplexFood flags
@@ -31,7 +31,12 @@ initialFetch flags =
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
-update msg model =
+update =
+    Tristate.updateWith updateLogic
+
+
+updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+updateLogic msg model =
     case msg of
         Page.GotFetchStatsResponse result ->
             gotFetchStatsResponse model result
@@ -49,7 +54,7 @@ update msg model =
             setNutrientsSearchString model string
 
 
-gotFetchStatsResponse : Page.Model -> Result Error TotalOnlyStats -> ( Page.Model, Cmd Page.Msg )
+gotFetchStatsResponse : Page.Model -> Result Error TotalOnlyStats -> ( Page.Model, Cmd Page.LogicMsg )
 gotFetchStatsResponse model result =
     ( result
         |> Result.Extra.unpack (Tristate.toError model)
@@ -68,7 +73,7 @@ gotFetchStatsResponse model result =
     )
 
 
-gotFetchReferenceTreesResponse : Page.Model -> Result Error (List ReferenceTree) -> ( Page.Model, Cmd Page.Msg )
+gotFetchReferenceTreesResponse : Page.Model -> Result Error (List ReferenceTree) -> ( Page.Model, Cmd Page.LogicMsg )
 gotFetchReferenceTreesResponse =
     StatisticsRequests.gotFetchReferenceTreesResponseWith
         { referenceTreesLens = Page.lenses.initial.referenceTrees
@@ -76,7 +81,7 @@ gotFetchReferenceTreesResponse =
         }
 
 
-gotFetchComplexFoodResponse : Page.Model -> Result Error ComplexFood -> ( Page.Model, Cmd Page.Msg )
+gotFetchComplexFoodResponse : Page.Model -> Result Error ComplexFood -> ( Page.Model, Cmd Page.LogicMsg )
 gotFetchComplexFoodResponse model result =
     ( result
         |> Result.Extra.unpack (Tristate.toError model)
@@ -89,14 +94,14 @@ gotFetchComplexFoodResponse model result =
     )
 
 
-selectReferenceMap : Page.Model -> Maybe ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
+selectReferenceMap : Page.Model -> Maybe ReferenceMapId -> ( Page.Model, Cmd Page.LogicMsg )
 selectReferenceMap =
     StatisticsRequests.selectReferenceMapWith
         { statisticsEvaluationLens = Page.lenses.main.statisticsEvaluation
         }
 
 
-setNutrientsSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
+setNutrientsSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 setNutrientsSearchString =
     StatisticsRequests.setNutrientsSearchStringWith
         { statisticsEvaluationLens = Page.lenses.main.statisticsEvaluation

@@ -87,7 +87,11 @@ type alias Flags =
     }
 
 
-type Msg
+type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type LogicMsg
     = UpdateMealCreation (Maybe MealCreationClientInput)
     | CreateMeal
     | GotCreateMealResponse (Result Error Meal)

@@ -125,7 +125,11 @@ lenses =
     }
 
 
-type Msg
+type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type LogicMsg
     = UpdateReferenceEntry ReferenceEntryUpdateClientInput
     | SaveReferenceEntryEdit ReferenceEntryUpdateClientInput
     | GotSaveReferenceEntryResponse (Result Error ReferenceEntry)

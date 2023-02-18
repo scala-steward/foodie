@@ -23,6 +23,10 @@ initial =
 
 
 type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type alias LogicMsg =
     ()
 
 

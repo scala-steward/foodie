@@ -26,7 +26,7 @@ view =
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration model =
     ViewUtil.viewMainWith
         { configuration = configuration
@@ -44,7 +44,7 @@ viewMain configuration model =
                 viewRequestedDeletion model
 
 
-viewRegular : Page.Main -> Html Page.Msg
+viewRegular : Page.Main -> Html Page.LogicMsg
 viewRegular main =
     let
         isValidPassword =
@@ -183,7 +183,7 @@ viewRegular main =
         ]
 
 
-viewRequestedDeletion : Page.Main -> Html Page.Msg
+viewRequestedDeletion : Page.Main -> Html Page.LogicMsg
 viewRequestedDeletion _ =
     div [ Style.classes.confirm ]
         [ div [] [ label [] [ text "Account deletion requested. Please check your email to continue." ] ]

@@ -8,7 +8,7 @@ import Pages.Registration.Request.Page as Page
 import Util.HttpUtil as HttpUtil
 
 
-request : Configuration -> UserIdentifier -> Cmd Page.Msg
+request : Configuration -> UserIdentifier -> Cmd Page.LogicMsg
 request configuration userIdentifier =
     HttpUtil.runPattern
         configuration

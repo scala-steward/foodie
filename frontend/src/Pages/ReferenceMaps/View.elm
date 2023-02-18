@@ -39,7 +39,7 @@ view =
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.Msg
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
@@ -115,7 +115,7 @@ tableHeader ps =
     ]
 
 
-createReferenceMap : Maybe ReferenceMapCreationClientInput -> Either (Html Page.Msg) (Html Page.Msg)
+createReferenceMap : Maybe ReferenceMapCreationClientInput -> Either (Html Page.LogicMsg) (Html Page.LogicMsg)
 createReferenceMap maybeCreation =
     case maybeCreation of
         Nothing ->
@@ -132,7 +132,7 @@ createReferenceMap maybeCreation =
             createReferenceMapLine creation |> Right
 
 
-viewReferenceMapLine : Configuration -> ReferenceMap -> Html Page.Msg
+viewReferenceMapLine : Configuration -> ReferenceMap -> Html Page.LogicMsg
 viewReferenceMapLine configuration referenceMap =
     let
         editMsg =
@@ -161,7 +161,7 @@ viewReferenceMapLine configuration referenceMap =
         referenceMap
 
 
-deleteReferenceMapLine : ReferenceMap -> Html Page.Msg
+deleteReferenceMapLine : ReferenceMap -> Html Page.LogicMsg
 deleteReferenceMapLine referenceMap =
     referenceMapLineWith
         { controls =
@@ -201,7 +201,7 @@ referenceMapLineWith ps referenceMap =
         )
 
 
-editReferenceMapLine : ReferenceMapUpdateClientInput -> Html Page.Msg
+editReferenceMapLine : ReferenceMapUpdateClientInput -> Html Page.LogicMsg
 editReferenceMapLine referenceMapUpdateClientInput =
     editReferenceMapLineWith
         { saveMsg = Page.SaveReferenceMapEdit referenceMapUpdateClientInput.id
@@ -215,7 +215,7 @@ editReferenceMapLine referenceMapUpdateClientInput =
         referenceMapUpdateClientInput
 
 
-createReferenceMapLine : ReferenceMapCreationClientInput -> Html Page.Msg
+createReferenceMapLine : ReferenceMapCreationClientInput -> Html Page.LogicMsg
 createReferenceMapLine referenceMapCreationClientInput =
     editReferenceMapLineWith
         { saveMsg = Page.CreateReferenceMap

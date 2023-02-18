@@ -13,17 +13,22 @@ import Util.HttpUtil exposing (Error)
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
     ( Page.initial flags.authorizedAccess
-    , initialFetch flags.authorizedAccess
+    , initialFetch flags.authorizedAccess |> Cmd.map Tristate.Logic
     )
 
 
-initialFetch : AuthorizedAccess -> Cmd Page.Msg
+initialFetch : AuthorizedAccess -> Cmd Page.LogicMsg
 initialFetch =
     Requests.fetchComplexFoods
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
-update msg model =
+update =
+    Tristate.updateWith updateLogic
+
+
+updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+updateLogic msg model =
     case msg of
         Page.SetSearchString string ->
             setSearchString model string
@@ -35,21 +40,21 @@ update msg model =
             gotFetchComplexFoodsResponse model result
 
 
-setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
+setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 setSearchString model string =
     ( model |> Tristate.mapMain (Page.lenses.main.complexFoodsSearchString.set string)
     , Cmd.none
     )
 
 
-setComplexFoodsPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.Msg )
+setComplexFoodsPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.LogicMsg )
 setComplexFoodsPagination model pagination =
     ( model |> Tristate.mapMain (Page.lenses.main.pagination.set pagination)
     , Cmd.none
     )
 
 
-gotFetchComplexFoodsResponse : Page.Model -> Result Error (List ComplexFood) -> ( Page.Model, Cmd Page.Msg )
+gotFetchComplexFoodsResponse : Page.Model -> Result Error (List ComplexFood) -> ( Page.Model, Cmd Page.LogicMsg )
 gotFetchComplexFoodsResponse model result =
     ( result
         |> Result.Extra.unpack (Tristate.toError model)

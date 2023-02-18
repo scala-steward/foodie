@@ -17,7 +17,12 @@ init flags =
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
-update msg model =
+update =
+    Tristate.updateWith updateLogic
+
+
+updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+updateLogic msg model =
     case msg of
         Page.Find ->
             find model
@@ -35,7 +40,7 @@ update msg model =
             gotRequestRecoveryResponse model result
 
 
-find : Page.Model -> ( Page.Model, Cmd Page.Msg )
+find : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 find model =
     ( model
     , model
@@ -44,7 +49,7 @@ find model =
     )
 
 
-gotFindResponse : Page.Model -> Result Error (List User) -> ( Page.Model, Cmd Page.Msg )
+gotFindResponse : Page.Model -> Result Error (List User) -> ( Page.Model, Cmd Page.LogicMsg )
 gotFindResponse model result =
     result
         |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
@@ -64,7 +69,7 @@ gotFindResponse model result =
             )
 
 
-setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
+setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 setSearchString model string =
     ( model
         |> Tristate.mapMain
@@ -75,14 +80,14 @@ setSearchString model string =
     )
 
 
-requestRecovery : Page.Model -> UserId -> ( Page.Model, Cmd Page.Msg )
+requestRecovery : Page.Model -> UserId -> ( Page.Model, Cmd Page.LogicMsg )
 requestRecovery model userId =
     ( model
     , Requests.requestRecovery model.configuration userId
     )
 
 
-gotRequestRecoveryResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotRequestRecoveryResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.LogicMsg )
 gotRequestRecoveryResponse model result =
     ( result
         |> Result.Extra.unpack (Tristate.toError model)

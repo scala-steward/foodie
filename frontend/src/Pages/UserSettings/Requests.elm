@@ -12,7 +12,7 @@ import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Util.HttpUtil as HttpUtil
 
 
-fetchUser : AuthorizedAccess -> Cmd Page.Msg
+fetchUser : AuthorizedAccess -> Cmd Page.LogicMsg
 fetchUser authorizedAccess =
     HttpUtil.runPatternWithJwt
         authorizedAccess
@@ -22,7 +22,7 @@ fetchUser authorizedAccess =
         }
 
 
-updatePassword : AuthorizedAccess -> PasswordChangeRequest -> Cmd Page.Msg
+updatePassword : AuthorizedAccess -> PasswordChangeRequest -> Cmd Page.LogicMsg
 updatePassword authorizedAccess passwordChangeRequest =
     HttpUtil.runPatternWithJwt
         authorizedAccess
@@ -32,7 +32,7 @@ updatePassword authorizedAccess passwordChangeRequest =
         }
 
 
-updateSettings : AuthorizedAccess -> UserUpdate -> Cmd Page.Msg
+updateSettings : AuthorizedAccess -> UserUpdate -> Cmd Page.LogicMsg
 updateSettings authorizedAccess userUpdate =
     HttpUtil.runPatternWithJwt
         authorizedAccess
@@ -42,7 +42,7 @@ updateSettings authorizedAccess userUpdate =
         }
 
 
-requestDeletion : AuthorizedAccess -> Cmd Page.Msg
+requestDeletion : AuthorizedAccess -> Cmd Page.LogicMsg
 requestDeletion authorizedAccess =
     HttpUtil.runPatternWithJwt
         authorizedAccess
@@ -52,7 +52,7 @@ requestDeletion authorizedAccess =
         }
 
 
-logout : AuthorizedAccess -> Mode -> Cmd Page.Msg
+logout : AuthorizedAccess -> Mode -> Cmd Page.LogicMsg
 logout authorizedAccess mode =
     HttpUtil.runPatternWithJwt
         authorizedAccess
