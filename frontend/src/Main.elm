@@ -5,8 +5,8 @@ import Api.Auxiliary exposing (ComplexFoodId, FoodId, JWT, MealId, RecipeId, Ref
 import Api.Types.LoginContent exposing (decoderLoginContent)
 import Api.Types.UserIdentifier exposing (UserIdentifier)
 import Basics.Extra exposing (flip)
-import Browser exposing (UrlRequest)
-import Browser.Navigation as Nav
+import Browser as Browser
+import Browser.Navigation
 import Configuration exposing (Configuration)
 import Html exposing (Html, div, text)
 import Jwt
@@ -112,7 +112,7 @@ subscriptions _ =
 
 
 type alias Model =
-    { key : Nav.Key
+    { key : Browser.Navigation.Key
     , page : Page
     , configuration : Configuration
     , jwt : Maybe JWT
@@ -161,7 +161,7 @@ type Page
 
 
 type Msg
-    = ClickedLink UrlRequest
+    = ClickedLink Browser.UrlRequest
     | ChangedUrl Url
     | FetchToken String
     | DeleteToken ()
@@ -207,7 +207,7 @@ titleFor model =
     "Foodie" ++ nickname
 
 
-init : Configuration -> Url -> Nav.Key -> ( Model, Cmd Msg )
+init : Configuration -> Url -> Browser.Navigation.Key -> ( Model, Cmd Msg )
 init configuration url key =
     ( { page = NotFound
       , key = key
@@ -304,10 +304,10 @@ update msg model =
         ( ClickedLink urlRequest, _ ) ->
             case urlRequest of
                 Browser.Internal url ->
-                    ( model, Nav.pushUrl model.key (Url.toString url) )
+                    ( model, Browser.Navigation.pushUrl model.key (Url.toString url) )
 
                 Browser.External href ->
-                    ( model, Nav.load href )
+                    ( model, Browser.Navigation.load href )
 
         ( ChangedUrl url, _ ) ->
             model
