@@ -16,12 +16,12 @@ import Api.Types.ReferenceEntryUpdate exposing (ReferenceEntryUpdate, encoderRef
 import Api.Types.ReferenceMap exposing (decoderReferenceMap)
 import Http
 import Json.Decode as Decode
-import Pages.ReferenceEntries.Page as Page exposing (Msg(..))
+import Pages.ReferenceEntries.Page as Page exposing (LogicMsg(..))
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Util.HttpUtil as HttpUtil
 
 
-fetchReferenceEntries : AuthorizedAccess -> ReferenceMapId -> Cmd Page.Msg
+fetchReferenceEntries : AuthorizedAccess -> ReferenceMapId -> Cmd Page.LogicMsg
 fetchReferenceEntries authorizedAccess referenceMapId =
     HttpUtil.runPatternWithJwt
         authorizedAccess
@@ -31,7 +31,7 @@ fetchReferenceEntries authorizedAccess referenceMapId =
         }
 
 
-fetchNutrients : AuthorizedAccess -> Cmd Page.Msg
+fetchNutrients : AuthorizedAccess -> Cmd Page.LogicMsg
 fetchNutrients authorizedAccess =
     HttpUtil.runPatternWithJwt
         authorizedAccess
@@ -41,7 +41,7 @@ fetchNutrients authorizedAccess =
         }
 
 
-fetchReferenceMap : AuthorizedAccess -> ReferenceMapId -> Cmd Page.Msg
+fetchReferenceMap : AuthorizedAccess -> ReferenceMapId -> Cmd Page.LogicMsg
 fetchReferenceMap authorizedAccess referenceMapId =
     HttpUtil.runPatternWithJwt
         authorizedAccess
@@ -51,7 +51,7 @@ fetchReferenceMap authorizedAccess referenceMapId =
         }
 
 
-saveReferenceEntry : AuthorizedAccess -> ReferenceEntryUpdate -> Cmd Page.Msg
+saveReferenceEntry : AuthorizedAccess -> ReferenceEntryUpdate -> Cmd Page.LogicMsg
 saveReferenceEntry authorizedAccess referenceEntryUpdate =
     HttpUtil.runPatternWithJwt
         authorizedAccess
@@ -61,7 +61,7 @@ saveReferenceEntry authorizedAccess referenceEntryUpdate =
         }
 
 
-deleteReferenceEntry : AuthorizedAccess -> ReferenceMapId -> NutrientCode -> Cmd Page.Msg
+deleteReferenceEntry : AuthorizedAccess -> ReferenceMapId -> NutrientCode -> Cmd Page.LogicMsg
 deleteReferenceEntry authorizedAccess referenceMapId nutrientCode =
     HttpUtil.runPatternWithJwt
         authorizedAccess
@@ -71,7 +71,7 @@ deleteReferenceEntry authorizedAccess referenceMapId nutrientCode =
         }
 
 
-addReferenceEntry : AuthorizedAccess -> ReferenceEntryCreation -> Cmd Page.Msg
+addReferenceEntry : AuthorizedAccess -> ReferenceEntryCreation -> Cmd Page.LogicMsg
 addReferenceEntry authorizedAccess referenceNutrientCreation =
     HttpUtil.runPatternWithJwt
         authorizedAccess

@@ -9,7 +9,7 @@ import Pages.Registration.Confirm.Page as Page
 import Util.HttpUtil as HttpUtil
 
 
-request : Configuration -> JWT -> CreationComplement -> Cmd Page.Msg
+request : Configuration -> JWT -> CreationComplement -> Cmd Page.LogicMsg
 request configuration jwt complement =
     HttpUtil.runPatternWithJwt
         { configuration = configuration

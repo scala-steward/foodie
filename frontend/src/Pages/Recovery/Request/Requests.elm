@@ -11,7 +11,7 @@ import Pages.Recovery.Request.Page as Page
 import Util.HttpUtil as HttpUtil
 
 
-find : Configuration -> String -> Cmd Page.Msg
+find : Configuration -> String -> Cmd Page.LogicMsg
 find configuration searchString =
     HttpUtil.runPattern
         configuration
@@ -22,7 +22,7 @@ find configuration searchString =
         }
 
 
-requestRecovery : Configuration -> UserId -> Cmd Page.Msg
+requestRecovery : Configuration -> UserId -> Cmd Page.LogicMsg
 requestRecovery configuration userId =
     HttpUtil.runPattern
         configuration

@@ -2,26 +2,30 @@ module Pages.Deletion.Handler exposing (init, update)
 
 import Pages.Deletion.Page as Page
 import Pages.Deletion.Requests as Requests
+import Pages.View.Tristate as Tristate
 import Ports
 import Result.Extra
-import Util.HttpUtil as HttpUtil exposing (Error)
-import Util.Initialization exposing (Initialization(..))
+import Util.HttpUtil exposing (Error)
 
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
     ( { deletionJWT = flags.deletionJWT
       , userIdentifier = flags.userIdentifier
-      , configuration = flags.configuration
-      , initialization = Loading ()
       , mode = Page.Checking
       }
+        |> Tristate.createMain flags.configuration
     , Cmd.none
     )
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
-update msg model =
+update =
+    Tristate.updateWith updateLogic
+
+
+updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+updateLogic msg model =
     case msg of
         Page.Confirm ->
             confirm model
@@ -30,20 +34,28 @@ update msg model =
             gotConfirmResponse model result
 
 
-confirm : Page.Model -> ( Page.Model, Cmd Page.Msg )
+confirm : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 confirm model =
     ( model
-    , Requests.deleteUser model.configuration model.deletionJWT
+    , model
+        |> Tristate.foldMain Cmd.none
+            (.deletionJWT
+                >> Requests.deleteUser model.configuration
+            )
     )
 
 
-gotConfirmResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotConfirmResponse : Page.Model -> Result Error () -> ( Page.Model, Cmd Page.LogicMsg )
 gotConfirmResponse model result =
     result
-        |> Result.Extra.unpack (\error -> ( model |> setError error, Cmd.none ))
-            (\_ -> ( model |> Page.lenses.mode.set Page.Confirmed, Ports.doDeleteToken () ))
-
-
-setError : Error -> Page.Model -> Page.Model
-setError =
-    HttpUtil.setError Page.lenses.initialization
+        |> Result.Extra.unpack
+            (\error ->
+                ( error |> Tristate.toError model
+                , Cmd.none
+                )
+            )
+            (\_ ->
+                ( model |> Tristate.mapMain (Page.lenses.main.mode.set Page.Confirmed)
+                , Ports.doDeleteToken ()
+                )
+            )

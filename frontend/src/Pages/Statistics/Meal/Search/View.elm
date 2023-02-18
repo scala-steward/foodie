@@ -9,7 +9,6 @@ import Maybe.Extra
 import Monocle.Compose as Compose
 import Pages.Statistics.Meal.Search.Page as Page
 import Pages.Statistics.Meal.Search.Pagination as Pagination
-import Pages.Statistics.Meal.Search.Status as Status
 import Pages.Statistics.StatisticsView as StatisticsView
 import Pages.Util.DateUtil as DateUtil
 import Pages.Util.HtmlUtil as HtmlUtil
@@ -17,33 +16,40 @@ import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil exposing (Page(..))
+import Pages.View.Tristate as Tristate
 import Paginate
 import Util.SearchUtil as SearchUtil
 
 
 view : Page.Model -> Html Page.Msg
-view model =
-    ViewUtil.viewWithErrorHandling
-        { isFinished = Status.isFinished
-        , initialization = .initialization
-        , configuration = .authorizedAccess >> .configuration
-        , jwt = .authorizedAccess >> .jwt >> Just
+view =
+    Tristate.view
+        { viewMain = viewMain
+        , showLoginRedirect = True
+        }
+
+
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
+viewMain configuration main =
+    ViewUtil.viewMainWith
+        { configuration = configuration
+        , jwt = .jwt >> Just
         , currentPage = Just Statistics
         , showNavigation = True
         }
-        model
+        main
     <|
         StatisticsView.withNavigationBar
-            { mainPageURL = model.authorizedAccess.configuration.mainPageURL
+            { mainPageURL = configuration.mainPageURL
             , currentPage = Just StatisticsVariant.Meal
             }
         <|
             let
                 filterOn =
-                    SearchUtil.search model.mealsSearchString
+                    SearchUtil.search main.mealsSearchString
 
                 viewMeals =
-                    model.meals
+                    main.meals
                         |> List.filter
                             (\v ->
                                 filterOn (v.name |> Maybe.withDefault "")
@@ -52,16 +58,16 @@ view model =
                         |> List.sortBy (.date >> DateUtil.toString)
                         |> ViewUtil.paginate
                             { pagination =
-                                Page.lenses.pagination
+                                Page.lenses.main.pagination
                                     |> Compose.lensWithLens Pagination.lenses.meals
                             }
-                            model
+                            main
             in
             div [ Style.ids.statistics.meal ]
                 [ div []
                     [ HtmlUtil.searchAreaWith
                         { msg = Page.SetSearchString
-                        , searchString = model.mealsSearchString
+                        , searchString = main.mealsSearchString
                         }
                     , table [ Style.classes.elementsWithControlsTable ]
                         [ colgroup []
@@ -80,17 +86,17 @@ view model =
                         , tbody []
                             (viewMeals
                                 |> Paginate.page
-                                |> List.map (viewMealLine model.authorizedAccess.configuration)
+                                |> List.map (viewMealLine configuration)
                             )
                         ]
                     , div [ Style.classes.pagination ]
                         [ ViewUtil.pagerButtons
                             { msg =
                                 PaginationSettings.updateCurrentPage
-                                    { pagination = Page.lenses.pagination
+                                    { pagination = Page.lenses.main.pagination
                                     , items = Pagination.lenses.meals
                                     }
-                                    model
+                                    main
                                     >> Page.SetMealsPagination
                             , elements = viewMeals
                             }
@@ -99,7 +105,7 @@ view model =
                 ]
 
 
-viewMealLine : Configuration -> Meal -> Html Page.Msg
+viewMealLine : Configuration -> Meal -> Html Page.LogicMsg
 viewMealLine configuration meal =
     tr [ Style.classes.editing ]
         [ td [ Style.classes.editable ]

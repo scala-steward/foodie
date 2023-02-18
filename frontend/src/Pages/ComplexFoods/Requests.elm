@@ -12,12 +12,12 @@ import Pages.Util.Requests
 import Util.HttpUtil as HttpUtil
 
 
-fetchRecipes : AuthorizedAccess -> Cmd Page.Msg
+fetchRecipes : AuthorizedAccess -> Cmd Page.LogicMsg
 fetchRecipes =
     Pages.Util.Requests.fetchRecipesWith Page.GotFetchRecipesResponse
 
 
-fetchComplexFoods : AuthorizedAccess -> Cmd Page.Msg
+fetchComplexFoods : AuthorizedAccess -> Cmd Page.LogicMsg
 fetchComplexFoods authorizedAccess =
     HttpUtil.runPatternWithJwt
         authorizedAccess
@@ -27,7 +27,7 @@ fetchComplexFoods authorizedAccess =
         }
 
 
-createComplexFood : AuthorizedAccess -> ComplexFoodIncoming -> Cmd Page.Msg
+createComplexFood : AuthorizedAccess -> ComplexFoodIncoming -> Cmd Page.LogicMsg
 createComplexFood authorizedAccess complexFood =
     HttpUtil.runPatternWithJwt
         authorizedAccess
@@ -37,7 +37,7 @@ createComplexFood authorizedAccess complexFood =
         }
 
 
-updateComplexFood : AuthorizedAccess -> ComplexFoodIncoming -> Cmd Page.Msg
+updateComplexFood : AuthorizedAccess -> ComplexFoodIncoming -> Cmd Page.LogicMsg
 updateComplexFood authorizedAccess complexFood =
     HttpUtil.runPatternWithJwt
         authorizedAccess
@@ -47,7 +47,7 @@ updateComplexFood authorizedAccess complexFood =
         }
 
 
-deleteComplexFood : AuthorizedAccess -> ComplexFoodId -> Cmd Page.Msg
+deleteComplexFood : AuthorizedAccess -> ComplexFoodId -> Cmd Page.LogicMsg
 deleteComplexFood authorizedAccess complexFoodId =
     HttpUtil.runPatternWithJwt
         authorizedAccess

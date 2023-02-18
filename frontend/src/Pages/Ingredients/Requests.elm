@@ -26,7 +26,7 @@ import Pages.Util.Requests
 import Util.HttpUtil as HttpUtil exposing (Error)
 
 
-fetchIngredients : AuthorizedAccess -> RecipeId -> Cmd Page.Msg
+fetchIngredients : AuthorizedAccess -> RecipeId -> Cmd Page.LogicMsg
 fetchIngredients flags recipeId =
     HttpUtil.runPatternWithJwt
         flags
@@ -36,7 +36,7 @@ fetchIngredients flags recipeId =
         }
 
 
-fetchComplexIngredients : AuthorizedAccess -> RecipeId -> Cmd Page.Msg
+fetchComplexIngredients : AuthorizedAccess -> RecipeId -> Cmd Page.LogicMsg
 fetchComplexIngredients flags recipeId =
     HttpUtil.runPatternWithJwt
         flags
@@ -46,17 +46,17 @@ fetchComplexIngredients flags recipeId =
         }
 
 
-fetchRecipe : Page.Flags -> Cmd Page.Msg
+fetchRecipe : Page.Flags -> Cmd Page.LogicMsg
 fetchRecipe =
     Pages.Util.Requests.fetchRecipeWith Page.GotFetchRecipeResponse
 
 
-fetchFoods : AuthorizedAccess -> Cmd Page.Msg
+fetchFoods : AuthorizedAccess -> Cmd Page.LogicMsg
 fetchFoods =
     Pages.Util.Requests.fetchFoodsWith Page.GotFetchFoodsResponse
 
 
-fetchComplexFoods : AuthorizedAccess -> Cmd Page.Msg
+fetchComplexFoods : AuthorizedAccess -> Cmd Page.LogicMsg
 fetchComplexFoods =
     Pages.Util.Requests.fetchComplexFoodsWith Page.GotFetchComplexFoodsResponse
 
@@ -64,7 +64,7 @@ fetchComplexFoods =
 addFood :
     AuthorizedAccess
     -> IngredientCreation
-    -> Cmd Page.Msg
+    -> Cmd Page.LogicMsg
 addFood authorizedAccess ingredientCreation =
     HttpUtil.runPatternWithJwt
         authorizedAccess
@@ -78,7 +78,7 @@ addComplexFood :
     AuthorizedAccess
     -> RecipeId
     -> ComplexIngredient
-    -> Cmd Page.Msg
+    -> Cmd Page.LogicMsg
 addComplexFood authorizedAccess recipeId complexIngredient =
     HttpUtil.runPatternWithJwt
         authorizedAccess
@@ -88,7 +88,7 @@ addComplexFood authorizedAccess recipeId complexIngredient =
         }
 
 
-saveIngredient : AuthorizedAccess -> IngredientUpdate -> Cmd Page.Msg
+saveIngredient : AuthorizedAccess -> IngredientUpdate -> Cmd Page.LogicMsg
 saveIngredient flags ingredientUpdate =
     HttpUtil.runPatternWithJwt
         flags
@@ -98,7 +98,7 @@ saveIngredient flags ingredientUpdate =
         }
 
 
-saveComplexIngredient : AuthorizedAccess -> RecipeId -> ComplexIngredient -> Cmd Page.Msg
+saveComplexIngredient : AuthorizedAccess -> RecipeId -> ComplexIngredient -> Cmd Page.LogicMsg
 saveComplexIngredient flags recipeId complexIngredient =
     HttpUtil.runPatternWithJwt
         flags
@@ -108,7 +108,7 @@ saveComplexIngredient flags recipeId complexIngredient =
         }
 
 
-deleteIngredient : AuthorizedAccess -> IngredientId -> Cmd Page.Msg
+deleteIngredient : AuthorizedAccess -> IngredientId -> Cmd Page.LogicMsg
 deleteIngredient flags ingredientId =
     HttpUtil.runPatternWithJwt
         flags
@@ -118,7 +118,7 @@ deleteIngredient flags ingredientId =
         }
 
 
-deleteComplexIngredient : AuthorizedAccess -> RecipeId -> ComplexIngredientId -> Cmd Page.Msg
+deleteComplexIngredient : AuthorizedAccess -> RecipeId -> ComplexIngredientId -> Cmd Page.LogicMsg
 deleteComplexIngredient flags recipeId complexIngredientId =
     HttpUtil.runPatternWithJwt
         flags

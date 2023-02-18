@@ -19,7 +19,6 @@ import Pages.Meals.MealCreationClientInput as MealCreationClientInput exposing (
 import Pages.Meals.MealUpdateClientInput as MealUpdateClientInput exposing (MealUpdateClientInput)
 import Pages.Meals.Page as Page
 import Pages.Meals.Pagination as Pagination
-import Pages.Meals.Status as Status
 import Pages.Util.DateUtil as DateUtil
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Links as Links
@@ -27,6 +26,7 @@ import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.SimpleDateInput as SimpleDateInput exposing (SimpleDateInput)
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
+import Pages.View.Tristate as Tristate
 import Paginate
 import Parser
 import Util.DictList as DictList
@@ -36,30 +36,36 @@ import Util.SearchUtil as SearchUtil
 
 
 view : Page.Model -> Html Page.Msg
-view model =
-    ViewUtil.viewWithErrorHandling
-        { isFinished = Status.isFinished
-        , initialization = .initialization
-        , configuration = .authorizedAccess >> .configuration
-        , jwt = .authorizedAccess >> .jwt >> Just
+view =
+    Tristate.view
+        { viewMain = viewMain
+        , showLoginRedirect = True
+        }
+
+
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
+viewMain configuration main =
+    ViewUtil.viewMainWith
+        { configuration = configuration
+        , jwt = .jwt >> Just
         , currentPage = Just ViewUtil.Meals
         , showNavigation = True
         }
-        model
+        main
     <|
         let
             viewMealState =
                 Editing.unpack
-                    { onView = viewMealLine model.authorizedAccess.configuration
+                    { onView = viewMealLine configuration
                     , onUpdate = updateMealLine |> always
                     , onDelete = deleteMealLine
                     }
 
             filterOn =
-                SearchUtil.search model.searchString
+                SearchUtil.search main.searchString
 
             viewMeals =
-                model.meals
+                main.meals
                     |> DictList.filter
                         (\_ v ->
                             filterOn (v.original.name |> Maybe.withDefault "")
@@ -69,17 +75,17 @@ view model =
                     |> List.sortBy (.original >> .date >> DateUtil.toString)
                     |> List.reverse
                     |> ViewUtil.paginate
-                        { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.meals }
-                        model
+                        { pagination = Page.lenses.main.pagination |> Compose.lensWithLens Pagination.lenses.meals }
+                        main
 
             ( button, creationLine ) =
-                createMeal model.mealToAdd |> Either.unpack (\l -> ( [ l ], [] )) (\r -> ( [], [ r ] ))
+                createMeal main.mealToAdd |> Either.unpack (\l -> ( [ l ], [] )) (\r -> ( [], [ r ] ))
         in
         div [ Style.ids.addMealView ]
             (button
                 ++ [ HtmlUtil.searchAreaWith
                         { msg = Page.SetSearchString
-                        , searchString = model.searchString
+                        , searchString = main.searchString
                         }
                    , table [ Style.classes.elementsWithControlsTable ]
                         (tableHeader { controlButtons = 4 }
@@ -96,10 +102,10 @@ view model =
                         [ ViewUtil.pagerButtons
                             { msg =
                                 PaginationSettings.updateCurrentPage
-                                    { pagination = Page.lenses.pagination
+                                    { pagination = Page.lenses.main.pagination
                                     , items = Pagination.lenses.meals
                                     }
-                                    model
+                                    main
                                     >> Page.SetPagination
                             , elements = viewMeals
                             }
@@ -127,7 +133,7 @@ tableHeader ps =
     ]
 
 
-createMeal : Maybe MealCreationClientInput -> Either (Html Page.Msg) (Html Page.Msg)
+createMeal : Maybe MealCreationClientInput -> Either (Html Page.LogicMsg) (Html Page.LogicMsg)
 createMeal maybeCreation =
     case maybeCreation of
         Nothing ->
@@ -144,7 +150,7 @@ createMeal maybeCreation =
             createMealLine creation |> Right
 
 
-viewMealLine : Configuration -> Meal -> Html Page.Msg
+viewMealLine : Configuration -> Meal -> Html Page.LogicMsg
 viewMealLine configuration meal =
     let
         editMsg =
@@ -176,7 +182,7 @@ viewMealLine configuration meal =
         meal
 
 
-deleteMealLine : Meal -> Html Page.Msg
+deleteMealLine : Meal -> Html Page.LogicMsg
 deleteMealLine meal =
     mealLineWith
         { controls =
@@ -210,7 +216,7 @@ mealLineWith ps meal =
         )
 
 
-updateMealLine : MealUpdateClientInput -> Html Page.Msg
+updateMealLine : MealUpdateClientInput -> Html Page.LogicMsg
 updateMealLine mealUpdateClientInput =
     editMealLineWith
         { saveMsg = Page.SaveMealEdit mealUpdateClientInput.id
@@ -226,7 +232,7 @@ updateMealLine mealUpdateClientInput =
         mealUpdateClientInput
 
 
-createMealLine : MealCreationClientInput -> Html Page.Msg
+createMealLine : MealCreationClientInput -> Html Page.LogicMsg
 createMealLine mealCreation =
     editMealLineWith
         { saveMsg = Page.CreateMeal

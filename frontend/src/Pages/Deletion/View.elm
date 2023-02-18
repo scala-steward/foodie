@@ -1,35 +1,43 @@
 module Pages.Deletion.View exposing (view)
 
+import Configuration exposing (Configuration)
 import Html exposing (Html, button, div, label, table, tbody, td, text, tr)
 import Html.Events exposing (onClick)
 import Pages.Deletion.Page as Page
 import Pages.Util.Links as Links
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
+import Pages.View.Tristate as Tristate
 
 
 view : Page.Model -> Html Page.Msg
-view model =
-    ViewUtil.viewWithErrorHandling
-        { isFinished = always True
-        , initialization = Page.lenses.initialization.get
-        , configuration = .configuration
+view =
+    Tristate.view
+        { viewMain = viewMain
+        , showLoginRedirect = True
+        }
+
+
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
+viewMain configuration main =
+    ViewUtil.viewMainWith
+        { configuration = configuration
         , jwt = always Nothing
         , currentPage = Nothing
         , showNavigation = False
         }
-        model
+        main
     <|
-        case model.mode of
+        case main.mode of
             Page.Checking ->
-                viewChecking model
+                viewChecking configuration main
 
             Page.Confirmed ->
-                viewConfirmed model
+                viewConfirmed configuration
 
 
-viewChecking : Page.Model -> Html Page.Msg
-viewChecking model =
+viewChecking : Configuration -> Page.Main -> Html Page.LogicMsg
+viewChecking configuration model =
     div [ Style.classes.confirm ]
         [ label [ Style.classes.info ] [ text "Confirm deletion" ]
         , table []
@@ -53,20 +61,20 @@ viewChecking model =
             ]
         , div []
             [ Links.toLoginButton
-                { configuration = model.configuration
+                { configuration = configuration
                 , buttonText = "Back to main"
                 }
             ]
         ]
 
 
-viewConfirmed : Page.Model -> Html Page.Msg
-viewConfirmed model =
+viewConfirmed : Configuration -> Html Page.LogicMsg
+viewConfirmed configuration =
     div [ Style.classes.confirm ]
         [ div [] [ label [] [ text "User deletion successful." ] ]
         , div []
             [ Links.toLoginButton
-                { configuration = model.configuration
+                { configuration = configuration
                 , buttonText = "Main page"
                 }
             ]

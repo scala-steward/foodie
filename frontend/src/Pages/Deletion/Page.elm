@@ -4,26 +4,30 @@ import Api.Auxiliary exposing (JWT)
 import Api.Types.UserIdentifier exposing (UserIdentifier)
 import Configuration exposing (Configuration)
 import Monocle.Lens exposing (Lens)
+import Pages.View.Tristate as Tristate
 import Util.HttpUtil exposing (Error)
-import Util.Initialization exposing (Initialization)
 
 
 type alias Model =
+    Tristate.Model Main ()
+
+
+type alias Main =
     { deletionJWT : JWT
     , userIdentifier : UserIdentifier
-    , configuration : Configuration
-    , initialization : Initialization ()
     , mode : Mode
     }
 
 
 lenses :
-    { initialization : Lens Model (Initialization ())
-    , mode : Lens Model Mode
+    { main :
+        { mode : Lens Main Mode
+        }
     }
 lenses =
-    { initialization = Lens .initialization (\b a -> { a | initialization = b })
-    , mode = Lens .mode (\b a -> { a | mode = b })
+    { main =
+        { mode = Lens .mode (\b a -> { a | mode = b })
+        }
     }
 
 
@@ -39,6 +43,10 @@ type alias Flags =
     }
 
 
-type Msg
+type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type LogicMsg
     = Confirm
     | GotConfirmResponse (Result Error ())

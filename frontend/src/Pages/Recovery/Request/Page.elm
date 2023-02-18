@@ -4,17 +4,32 @@ import Api.Auxiliary exposing (UserId)
 import Api.Types.User exposing (User)
 import Configuration exposing (Configuration)
 import Monocle.Lens exposing (Lens)
+import Pages.View.Tristate as Tristate
 import Util.HttpUtil exposing (Error)
-import Util.Initialization exposing (Initialization)
 
 
 type alias Model =
-    { configuration : Configuration
-    , users : List User
+    Tristate.Model Main Initial
+
+
+type alias Main =
+    { users : List User
     , searchString : String
-    , initialization : Initialization ()
     , mode : Mode
     }
+
+
+type alias Initial =
+    ()
+
+
+initial : Configuration -> Model
+initial configuration =
+    { users = []
+    , searchString = ""
+    , mode = Initial
+    }
+        |> Tristate.createMain configuration
 
 
 type Mode
@@ -24,16 +39,18 @@ type Mode
 
 
 lenses :
-    { users : Lens Model (List User)
-    , searchString : Lens Model String
-    , initialization : Lens Model (Initialization ())
-    , mode : Lens Model Mode
+    { main :
+        { users : Lens Main (List User)
+        , searchString : Lens Main String
+        , mode : Lens Main Mode
+        }
     }
 lenses =
-    { users = Lens .users (\b a -> { a | users = b })
-    , searchString = Lens .searchString (\b a -> { a | searchString = b })
-    , initialization = Lens .initialization (\b a -> { a | initialization = b })
-    , mode = Lens .mode (\b a -> { a | mode = b })
+    { main =
+        { users = Lens .users (\b a -> { a | users = b })
+        , searchString = Lens .searchString (\b a -> { a | searchString = b })
+        , mode = Lens .mode (\b a -> { a | mode = b })
+        }
     }
 
 
@@ -42,7 +59,11 @@ type alias Flags =
     }
 
 
-type Msg
+type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type LogicMsg
     = Find
     | GotFindResponse (Result Error (List User))
     | SetSearchString String

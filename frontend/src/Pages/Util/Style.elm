@@ -15,6 +15,7 @@ classes :
         , delete : Attribute msg
         , edit : Attribute msg
         , editor : Attribute msg
+        , error : Attribute msg
         , logout : Attribute msg
         , navigation : Attribute msg
         , nutrients : Attribute msg
@@ -70,6 +71,7 @@ classes =
         , delete = class "deleteButton"
         , edit = class "editButton"
         , editor = class "editorButton"
+        , error = class "errorButton"
         , logout = class "logoutButton"
         , navigation = class "navigationButton"
         , nutrients = class "nutrientsButton"

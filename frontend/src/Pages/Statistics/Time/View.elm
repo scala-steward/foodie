@@ -4,6 +4,7 @@ import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.Date exposing (Date)
 import Api.Types.Meal exposing (Meal)
 import Basics.Extra exposing (flip)
+import Configuration exposing (Configuration)
 import Html exposing (Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, scope, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -18,35 +19,110 @@ import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
+import Pages.View.Tristate as Tristate
 import Paginate
 import Parser
 import Uuid
 
 
 view : Page.Model -> Html Page.Msg
-view model =
+view =
+    Tristate.view
+        { viewMain = viewMain
+        , showLoginRedirect = True
+        }
+
+
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
+viewMain configuration main =
     let
         viewMeals =
-            model.stats.meals
+            main.stats.meals
                 |> List.sortBy (.date >> DateUtil.toString)
                 |> List.reverse
                 |> ViewUtil.paginate
-                    { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.meals
+                    { pagination = Page.lenses.main.pagination |> Compose.lensWithLens Pagination.lenses.meals
                     }
-                    model
+                    main
+
+        weightRow =
+            case main.status of
+                Page.Display ->
+                    [ div [ Style.classes.elements ]
+                        [ label
+                            []
+                            [ text <| (++) "Weight of ingredients: " <| flip (++) "g" <| StatisticsView.displayFloat <| .weightInGrams <| main.stats ]
+                        ]
+                    ]
+
+                _ ->
+                    []
+
+        stats =
+            case main.status of
+                Page.Display ->
+                    StatisticsView.statisticsTable
+                        { onSearchStringChange = Page.SetNutrientsSearchString
+                        , searchStringOf = .statisticsEvaluation >> .nutrientsSearchString
+                        , infoListOf = .stats >> .nutrients
+                        , amountOf = .amounts >> .values >> Maybe.map .total
+                        , dailyAmountOf = .amounts >> .values >> Maybe.map .dailyAverage
+                        , showDailyAmount = True
+                        , completenessFraction =
+                            Just
+                                { definedValues = .amounts >> .numberOfDefinedValues
+                                , totalValues = .amounts >> .numberOfIngredients
+                                }
+                        , nutrientBase = .base
+                        , referenceTree = .statisticsEvaluation >> .referenceTree
+                        , tableLabel = "Nutrients in all meals in the interval"
+                        }
+                        main
+                        ++ [ div [ Style.classes.elements ] [ text "Meals" ]
+                           , div [ Style.classes.info, Style.classes.meals ]
+                                [ table [ Style.classes.elementsWithControlsTable ]
+                                    [ thead []
+                                        [ tr []
+                                            [ th [] [ label [] [ text "Date" ] ]
+                                            , th [] [ label [] [ text "Time" ] ]
+                                            , th [] [ label [] [ text "Name" ] ]
+                                            , th [] [ label [] [ text "Description" ] ]
+                                            ]
+                                        ]
+                                    , tbody []
+                                        (viewMeals
+                                            |> Paginate.page
+                                            |> List.map mealLine
+                                        )
+                                    ]
+                                , div [ Style.classes.pagination ]
+                                    [ ViewUtil.pagerButtons
+                                        { msg =
+                                            PaginationSettings.updateCurrentPage
+                                                { pagination = Page.lenses.main.pagination
+                                                , items = Pagination.lenses.meals
+                                                }
+                                                main
+                                                >> Page.SetPagination
+                                        , elements = viewMeals
+                                        }
+                                    ]
+                                ]
+                           ]
+
+                _ ->
+                    []
     in
-    ViewUtil.viewWithErrorHandling
-        { isFinished = always True
-        , initialization = .initialization
-        , configuration = .authorizedAccess >> .configuration
-        , jwt = .authorizedAccess >> .jwt >> Just
+    ViewUtil.viewMainWith
+        { configuration = configuration
+        , jwt = .jwt >> Just
         , currentPage = Just ViewUtil.Statistics
         , showNavigation = True
         }
-        model
+        main
     <|
         StatisticsView.withNavigationBar
-            { mainPageURL = model.authorizedAccess.configuration.mainPageURL
+            { mainPageURL = configuration.mainPageURL
             , currentPage = Just StatisticsVariant.Time
             }
         <|
@@ -68,76 +144,31 @@ view model =
                             ]
                         , tbody []
                             [ tr []
-                                [ td [ Style.classes.editable, Style.classes.date ] [ dateInput model Page.SetFromDate Page.lenses.from ]
-                                , td [ Style.classes.editable, Style.classes.date ] [ dateInput model Page.SetToDate Page.lenses.to ]
+                                [ td [ Style.classes.editable, Style.classes.date ] [ dateInput main Page.SetFromDate Page.lenses.main.from ]
+                                , td [ Style.classes.editable, Style.classes.date ] [ dateInput main Page.SetToDate Page.lenses.main.to ]
                                 , td [ Style.classes.controls ]
                                     [ button
                                         [ Style.classes.button.select, onClick Page.FetchStats ]
                                         [ text "Compute" ]
                                     ]
                                 , td [ Style.classes.controls ]
-                                    ([ Links.loadingSymbol ] |> List.filter (always model.fetching))
-                                ],
-                              tr []
-                               [ td [Style.classes.descriptionColumn][ text "Weight of ingredients"],
-                                 td [Style.classes.descriptionColumn] [ text <| flip (++) "g" <| StatisticsView.displayFloat <| .weightInGrams <| model.stats]]
+                                    ([ Links.loadingSymbol ] |> List.filter (always (main.status == Page.Fetch)))
+                                ]
                             ]
                         ]
                     ]
-                    :: StatisticsView.statisticsTable
+                    :: StatisticsView.referenceMapSelection
                         { onReferenceMapSelection = Maybe.andThen Uuid.fromString >> Page.SelectReferenceMap
-                        , onSearchStringChange = Page.SetNutrientsSearchString
-                        , searchStringOf = .statisticsEvaluation >> .nutrientsSearchString
-                        , infoListOf = .stats >> .nutrients
-                        , amountOf = .amounts >> .values >> Maybe.map .total
-                        , dailyAmountOf = .amounts >> .values >> Maybe.map .dailyAverage
-                        , showDailyAmount = True
-                        , completenessFraction =
-                            Just
-                                { definedValues = .amounts >> .numberOfDefinedValues
-                                , totalValues = .amounts >> .numberOfIngredients
-                                }
-                        , nutrientBase = .base
                         , referenceTrees = .statisticsEvaluation >> .referenceTrees
                         , referenceTree = .statisticsEvaluation >> .referenceTree
-                        , tableLabel = "Nutrients in all meals in the interval"
                         }
-                        model
-                    ++ [ div [ Style.classes.elements ] [ text "Meals" ]
-                       , div [ Style.classes.info, Style.classes.meals ]
-                            [ table [ Style.classes.elementsWithControlsTable ]
-                                [ thead []
-                                    [ tr []
-                                        [ th [] [ label [] [ text "Date" ] ]
-                                        , th [] [ label [] [ text "Time" ] ]
-                                        , th [] [ label [] [ text "Name" ] ]
-                                        , th [] [ label [] [ text "Description" ] ]
-                                        ]
-                                    ]
-                                , tbody []
-                                    (viewMeals
-                                        |> Paginate.page
-                                        |> List.map mealLine
-                                    )
-                                ]
-                            , div [ Style.classes.pagination ]
-                                [ ViewUtil.pagerButtons
-                                    { msg =
-                                        PaginationSettings.updateCurrentPage
-                                            { pagination = Page.lenses.pagination
-                                            , items = Pagination.lenses.meals
-                                            }
-                                            model
-                                            >> Page.SetPagination
-                                    , elements = viewMeals
-                                    }
-                                ]
-                            ]
-                       ]
+                        main
+                    ++ weightRow
+                    ++ stats
                 )
 
 
-mealLine : Meal -> Html Page.Msg
+mealLine : Meal -> Html Page.LogicMsg
 mealLine meal =
     tr [ Style.classes.editLine ]
         [ td [ Style.classes.editable, Style.classes.date ] [ label [] [ text <| DateUtil.dateToString <| meal.date.date ] ]
@@ -146,7 +177,7 @@ mealLine meal =
         ]
 
 
-dateInput : Page.Model -> (Maybe Date -> c) -> Lens Page.Model (Maybe Date) -> Html c
+dateInput : Page.Main -> (Maybe Date -> c) -> Lens Page.Main (Maybe Date) -> Html c
 dateInput model mkCmd lens =
     input
         [ type_ "date"

@@ -1,56 +1,40 @@
 module Pages.Statistics.Time.Handler exposing (init, update)
 
-import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Auxiliary exposing (ReferenceMapId)
-import Api.Lenses.RequestIntervalLens as RequestIntervalLens
 import Api.Lenses.StatsLens as StatsLens
 import Api.Types.Date exposing (Date)
 import Api.Types.ReferenceTree exposing (ReferenceTree)
 import Api.Types.Stats exposing (Stats)
-import Basics.Extra exposing (flip)
 import Monocle.Lens as Lens
 import Pages.Statistics.StatisticsRequests as StatisticsRequests
-import Pages.Statistics.StatisticsUtil as StatisticsUtil
 import Pages.Statistics.Time.Page as Page
-import Pages.Statistics.Time.Pagination as Pagination exposing (Pagination)
+import Pages.Statistics.Time.Pagination exposing (Pagination)
 import Pages.Statistics.Time.Requests as Requests
-import Pages.Statistics.Time.Status as Status
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.View.Tristate as Tristate
 import Result.Extra
-import Util.HttpUtil as HttpUtil exposing (Error)
-import Util.Initialization as Initialization
+import Util.HttpUtil exposing (Error)
 
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    ( { authorizedAccess = flags.authorizedAccess
-      , requestInterval = RequestIntervalLens.default
-      , stats = defaultStats
-      , statisticsEvaluation = StatisticsUtil.initial
-      , initialization = Initialization.Loading Status.initial
-      , pagination = Pagination.initial
-      , fetching = False
-      , variant = StatisticsVariant.Time
-      }
-    , initialFetch flags.authorizedAccess
+    ( Page.initial flags.authorizedAccess
+    , initialFetch flags.authorizedAccess |> Cmd.map Tristate.Logic
     )
 
 
-initialFetch : AuthorizedAccess -> Cmd Page.Msg
+initialFetch : AuthorizedAccess -> Cmd Page.LogicMsg
 initialFetch =
     Requests.fetchReferenceTrees
 
 
-defaultStats : Stats
-defaultStats =
-    { meals = []
-    , nutrients = []
-    , weightInGrams = 0
-    }
-
-
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
-update msg model =
+update =
+    Tristate.updateWith updateLogic
+
+
+updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+updateLogic msg model =
     case msg of
         Page.SetFromDate maybeDate ->
             setFromDate model maybeDate
@@ -77,75 +61,84 @@ update msg model =
             setNutrientsSearchString model string
 
 
-setFromDate : Page.Model -> Maybe Date -> ( Page.Model, Cmd Page.Msg )
+setFromDate : Page.Model -> Maybe Date -> ( Page.Model, Cmd Page.LogicMsg )
 setFromDate model maybeDate =
     ( model
-        |> Page.lenses.from.set
-            maybeDate
-    , Cmd.none
-    )
-
-
-setToDate : Page.Model -> Maybe Date -> ( Page.Model, Cmd Page.Msg )
-setToDate model maybeDate =
-    ( model
-        |> Page.lenses.to.set
-            maybeDate
-    , Cmd.none
-    )
-
-
-fetchStats : Page.Model -> ( Page.Model, Cmd Page.Msg )
-fetchStats model =
-    ( model
-        |> Page.lenses.fetching.set True
-    , Requests.fetchStats model.authorizedAccess model.requestInterval
-    )
-
-
-gotFetchStatsResponse : Page.Model -> Result Error Stats -> ( Page.Model, Cmd Page.Msg )
-gotFetchStatsResponse model result =
-    ( result
-        |> Result.Extra.unpack (flip setError model)
-            (\stats ->
-                model
-                    |> Page.lenses.stats.set
-                        (stats |> Lens.modify StatsLens.nutrients (List.sortBy (.base >> .name)))
-                    |> Page.lenses.fetching.set False
+        |> Tristate.mapMain
+            (Page.lenses.main.from.set maybeDate
+                >> Page.lenses.main.status.set Page.Select
             )
     , Cmd.none
     )
 
 
-gotFetchReferenceTreesResponse : Page.Model -> Result Error (List ReferenceTree) -> ( Page.Model, Cmd Page.Msg )
-gotFetchReferenceTreesResponse =
-    StatisticsRequests.gotFetchReferenceTreesResponseWith
-        { setError = setError
-        , statisticsEvaluationLens = Page.lenses.statisticsEvaluation
-        }
-
-
-setPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.Msg )
-setPagination model pagination =
-    ( model |> Page.lenses.pagination.set pagination
+setToDate : Page.Model -> Maybe Date -> ( Page.Model, Cmd Page.LogicMsg )
+setToDate model maybeDate =
+    ( model
+        |> Tristate.mapMain
+            (Page.lenses.main.to.set maybeDate
+                >> Page.lenses.main.status.set Page.Select
+            )
     , Cmd.none
     )
 
 
-selectReferenceMap : Page.Model -> Maybe ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
+fetchStats : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+fetchStats model =
+    ( model
+        |> Tristate.mapMain (Page.lenses.main.status.set Page.Fetch)
+    , model
+        |> Tristate.foldMain Cmd.none
+            (\main ->
+                Requests.fetchStats
+                    { jwt = main.jwt
+                    , configuration = model.configuration
+                    }
+                    main.requestInterval
+            )
+    )
+
+
+gotFetchStatsResponse : Page.Model -> Result Error Stats -> ( Page.Model, Cmd Page.LogicMsg )
+gotFetchStatsResponse model result =
+    ( result
+        |> Result.Extra.unpack (Tristate.toError model)
+            (\stats ->
+                model
+                    |> Tristate.mapMain
+                        (Page.lenses.main.stats.set
+                            (stats |> Lens.modify StatsLens.nutrients (List.sortBy (.base >> .name)))
+                            >> Page.lenses.main.status.set Page.Display
+                        )
+            )
+    , Cmd.none
+    )
+
+
+gotFetchReferenceTreesResponse : Page.Model -> Result Error (List ReferenceTree) -> ( Page.Model, Cmd Page.LogicMsg )
+gotFetchReferenceTreesResponse =
+    StatisticsRequests.gotFetchReferenceTreesResponseWith
+        { referenceTreesLens = Page.lenses.initial.referenceTrees
+        , initialToMain = Page.initialToMain
+        }
+
+
+setPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.LogicMsg )
+setPagination model pagination =
+    ( model |> Tristate.mapMain (Page.lenses.main.pagination.set pagination)
+    , Cmd.none
+    )
+
+
+selectReferenceMap : Page.Model -> Maybe ReferenceMapId -> ( Page.Model, Cmd Page.LogicMsg )
 selectReferenceMap =
     StatisticsRequests.selectReferenceMapWith
-        { statisticsEvaluationLens = Page.lenses.statisticsEvaluation
+        { statisticsEvaluationLens = Page.lenses.main.statisticsEvaluation
         }
 
 
-setNutrientsSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
+setNutrientsSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 setNutrientsSearchString =
     StatisticsRequests.setNutrientsSearchStringWith
-        { statisticsEvaluationLens = Page.lenses.statisticsEvaluation
+        { statisticsEvaluationLens = Page.lenses.main.statisticsEvaluation
         }
-
-
-setError : Error -> Page.Model -> Page.Model
-setError =
-    HttpUtil.setError Page.lenses.initialization

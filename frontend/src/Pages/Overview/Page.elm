@@ -1,28 +1,35 @@
 module Pages.Overview.Page exposing (..)
 
-import Monocle.Lens exposing (Lens)
-import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Util.Initialization exposing (Initialization)
+import Basics.Extra exposing (flip)
+import Configuration exposing (Configuration)
+import Pages.View.Tristate as Tristate
 
 
 type alias Model =
-    { authorizedAccess : AuthorizedAccess
-    , initialization : Initialization ()
-    }
+    Tristate.Model () ()
 
 
-lenses :
-    { initialization : Lens Model (Initialization ())
-    }
-lenses =
-    { initialization = Lens .initialization (\b a -> { a | initialization = b })
-    }
+type alias Main =
+    ()
+
+
+type alias Initial =
+    ()
+
+
+initial : Configuration -> Model
+initial =
+    flip Tristate.createMain ()
 
 
 type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type alias LogicMsg =
     ()
 
 
 type alias Flags =
-    { authorizedAccess : AuthorizedAccess
+    { configuration : Configuration
     }

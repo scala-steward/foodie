@@ -2,31 +2,44 @@ module Pages.Registration.Request.Page exposing (..)
 
 import Configuration exposing (Configuration)
 import Monocle.Lens exposing (Lens)
-import Pages.Util.ValidatedInput exposing (ValidatedInput)
+import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
+import Pages.View.Tristate as Tristate
 import Util.HttpUtil exposing (Error)
-import Util.Initialization exposing (Initialization)
 
 
 type alias Model =
+    Tristate.Model Main ()
+
+
+type alias Main =
     { nickname : ValidatedInput String
     , email : ValidatedInput String
-    , configuration : Configuration
-    , initialization : Initialization ()
     , mode : Mode
     }
 
 
+initial : Configuration -> Model
+initial configuration =
+    { nickname = ValidatedInput.nonEmptyString
+    , email = ValidatedInput.nonEmptyString
+    , mode = Editing
+    }
+        |> Tristate.createMain configuration
+
+
 lenses :
-    { nickname : Lens Model (ValidatedInput String)
-    , email : Lens Model (ValidatedInput String)
-    , initialization : Lens Model (Initialization ())
-    , mode : Lens Model Mode
+    { main :
+        { nickname : Lens Main (ValidatedInput String)
+        , email : Lens Main (ValidatedInput String)
+        , mode : Lens Main Mode
+        }
     }
 lenses =
-    { nickname = Lens .nickname (\b a -> { a | nickname = b })
-    , email = Lens .email (\b a -> { a | email = b })
-    , initialization = Lens .initialization (\b a -> { a | initialization = b })
-    , mode = Lens .mode (\b a -> { a | mode = b })
+    { main =
+        { nickname = Lens .nickname (\b a -> { a | nickname = b })
+        , email = Lens .email (\b a -> { a | email = b })
+        , mode = Lens .mode (\b a -> { a | mode = b })
+        }
     }
 
 
@@ -40,7 +53,11 @@ type alias Flags =
     }
 
 
-type Msg
+type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type LogicMsg
     = SetNickname (ValidatedInput String)
     | SetEmail (ValidatedInput String)
     | Request

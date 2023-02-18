@@ -1,30 +1,37 @@
 module Pages.Statistics.Meal.Select.View exposing (view)
 
 import Basics.Extra exposing (flip)
+import Configuration exposing (Configuration)
 import Html exposing (Html, div, label, table, td, text, tr)
-import Maybe.Extra
 import Pages.Statistics.Meal.Select.Page as Page
 import Pages.Statistics.StatisticsView as StatisticsView
 import Pages.Util.DateUtil as DateUtil
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
+import Pages.View.Tristate as Tristate
 import Uuid
 
 
 view : Page.Model -> Html Page.Msg
-view model =
-    ViewUtil.viewWithErrorHandling
-        { isFinished = always True
-        , initialization = .initialization
-        , configuration = .authorizedAccess >> .configuration
-        , jwt = .authorizedAccess >> .jwt >> Just
+view =
+    Tristate.view
+        { viewMain = viewMain
+        , showLoginRedirect = True
+        }
+
+
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
+viewMain configuration main =
+    ViewUtil.viewMainWith
+        { configuration = configuration
+        , jwt = .jwt >> Just
         , currentPage = Nothing
         , showNavigation = True
         }
-        model
+        main
     <|
         StatisticsView.withNavigationBar
-            { mainPageURL = model.authorizedAccess.configuration.mainPageURL
+            { mainPageURL = configuration.mainPageURL
             , currentPage = Nothing
             }
         <|
@@ -33,21 +40,26 @@ view model =
                     [ table [ Style.classes.info ]
                         [ tr []
                             [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Date" ] ]
-                            , td [] [ label [] [ text <| Maybe.Extra.unwrap "" (DateUtil.toString << .date) <| model.meal ] ]
+                            , td [] [ label [] [ text <| (DateUtil.toString << .date) <| main.meal ] ]
                             ]
                         , tr []
                             [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Name" ] ]
-                            , td [] [ label [] [ text <| Maybe.withDefault "" <| Maybe.andThen .name <| model.meal ] ]
+                            , td [] [ label [] [ text <| Maybe.withDefault "" <| .name <| main.meal ] ]
                             ]
                         , tr []
                             [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Weight of ingredients" ] ]
-                            , td [] [ label [] [ text <| flip (++) "g" <| StatisticsView.displayFloat <| .weightInGrams <| model.mealStats ] ]
+                            , td [] [ label [] [ text <| flip (++) "g" <| StatisticsView.displayFloat <| .weightInGrams <| main.mealStats ] ]
                             ]
                         ]
                     ]
-                    :: StatisticsView.statisticsTable
+                    :: StatisticsView.referenceMapSelection
                         { onReferenceMapSelection = Maybe.andThen Uuid.fromString >> Page.SelectReferenceMap
-                        , onSearchStringChange = Page.SetNutrientsSearchString
+                        , referenceTrees = .statisticsEvaluation >> .referenceTrees
+                        , referenceTree = .statisticsEvaluation >> .referenceTree
+                        }
+                        main
+                    ++ StatisticsView.statisticsTable
+                        { onSearchStringChange = Page.SetNutrientsSearchString
                         , searchStringOf = .statisticsEvaluation >> .nutrientsSearchString
                         , infoListOf = .mealStats >> .nutrients
                         , amountOf = .amount >> .value
@@ -59,9 +71,8 @@ view model =
                                 , totalValues = .amount >> .numberOfIngredients
                                 }
                         , nutrientBase = .base
-                        , referenceTrees = .statisticsEvaluation >> .referenceTrees
                         , referenceTree = .statisticsEvaluation >> .referenceTree
                         , tableLabel = "Nutrients in the meal"
                         }
-                        model
+                        main
                 )

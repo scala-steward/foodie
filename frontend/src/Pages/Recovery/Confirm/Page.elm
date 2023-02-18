@@ -4,30 +4,48 @@ import Api.Auxiliary exposing (JWT)
 import Api.Types.UserIdentifier exposing (UserIdentifier)
 import Configuration exposing (Configuration)
 import Monocle.Lens exposing (Lens)
-import Pages.Util.PasswordInput exposing (PasswordInput)
+import Pages.Util.PasswordInput as PasswordInput exposing (PasswordInput)
+import Pages.View.Tristate as Tristate
 import Util.HttpUtil exposing (Error)
-import Util.Initialization exposing (Initialization)
 
 
 type alias Model =
-    { configuration : Configuration
-    , recoveryJwt : JWT
+    Tristate.Model Main Initial
+
+
+type alias Main =
+    { recoveryJwt : JWT
     , userIdentifier : UserIdentifier
     , passwordInput : PasswordInput
-    , initialization : Initialization ()
     , mode : Mode
     }
 
 
+type alias Initial =
+    ()
+
+
+initial : Flags -> Model
+initial flags =
+    { recoveryJwt = flags.recoveryJwt
+    , userIdentifier = flags.userIdentifier
+    , passwordInput = PasswordInput.initial
+    , mode = Resetting
+    }
+        |> Tristate.createMain flags.configuration
+
+
 lenses :
-    { passwordInput : Lens Model PasswordInput
-    , initialization : Lens Model (Initialization ())
-    , mode : Lens Model Mode
+    { main :
+        { passwordInput : Lens Main PasswordInput
+        , mode : Lens Main Mode
+        }
     }
 lenses =
-    { passwordInput = Lens .passwordInput (\b a -> { a | passwordInput = b })
-    , initialization = Lens .initialization (\b a -> { a | initialization = b })
-    , mode = Lens .mode (\b a -> { a | mode = b })
+    { main =
+        { passwordInput = Lens .passwordInput (\b a -> { a | passwordInput = b })
+        , mode = Lens .mode (\b a -> { a | mode = b })
+        }
     }
 
 
@@ -43,7 +61,11 @@ type alias Flags =
     }
 
 
-type Msg
+type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type LogicMsg
     = SetPasswordInput PasswordInput
     | Confirm
     | GotConfirmResponse (Result Error ())

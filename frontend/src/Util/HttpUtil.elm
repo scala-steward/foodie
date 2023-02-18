@@ -6,12 +6,17 @@ import Http exposing (Body, Error(..), Expect, expectStringResponse)
 import Json.Decode as Decode
 import Json.Decode.Pipeline exposing (..)
 import Maybe.Extra
-import Monocle.Compose as Compose
-import Monocle.Lens exposing (Lens)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.Links as Links
 import Url.Builder exposing (QueryParameter)
-import Util.Initialization as Initialization exposing (ErrorExplanation, Initialization)
+
+
+type alias ErrorExplanation =
+    { cause : String
+    , possibleSolution : String
+    , redirectToLogin : Bool
+    , suggestReload : Bool
+    }
 
 
 type Error
@@ -85,18 +90,21 @@ errorToExplanation error =
             { cause = "BadUrl: " ++ string
             , possibleSolution = "Check address. If the error persists, please contact an administrator."
             , redirectToLogin = False
+            , suggestReload = True
             }
 
         Timeout ->
             { cause = "Timeout"
             , possibleSolution = "Try again later. If the error persists, please contact an administrator."
             , redirectToLogin = False
+            , suggestReload = True
             }
 
         NetworkError ->
             { cause = "Timeout"
             , possibleSolution = "Try again later. If the error persists, please contact an administrator."
             , redirectToLogin = False
+            , suggestReload = True
             }
 
         BadStatus code explanation ->
@@ -108,12 +116,14 @@ errorToExplanation error =
                 else
                     ""
             , redirectToLogin = code == 401
+            , suggestReload = False
             }
 
         BadBody string ->
             { cause = "Bad body: " ++ string
             , possibleSolution = ""
             , redirectToLogin = False
+            , suggestReload = True
             }
 
 
@@ -127,17 +137,10 @@ jwtHeader =
     Http.header userTokenHeader
 
 
-setError : Lens model (Initialization status) -> Error -> model -> model
-setError initializationLens =
-    errorToExplanation
-        >> (initializationLens |> Compose.lensWithOptional Initialization.lenses.failure).set
-
-
-setJsonError : Lens model (Initialization status) -> Decode.Error -> model -> model
-setJsonError initializationLens =
+jsonErrorToError : Decode.Error -> Error
+jsonErrorToError =
     Decode.errorToString
         >> BadBody
-        >> setError initializationLens
 
 
 type Verb

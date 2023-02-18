@@ -3,42 +3,37 @@ module Pages.ReferenceMaps.Handler exposing (init, update)
 import Addresses.Frontend
 import Api.Auxiliary exposing (JWT, ReferenceMapId)
 import Api.Types.ReferenceMap exposing (ReferenceMap)
-import Basics.Extra exposing (flip)
-import Maybe.Extra
 import Monocle.Compose as Compose
-import Monocle.Lens
 import Monocle.Optional
 import Pages.ReferenceMaps.Page as Page exposing (ReferenceMapState)
 import Pages.ReferenceMaps.Pagination as Pagination exposing (Pagination)
 import Pages.ReferenceMaps.ReferenceMapCreationClientInput as ReferenceMapCreationClientInput exposing (ReferenceMapCreationClientInput)
 import Pages.ReferenceMaps.ReferenceMapUpdateClientInput as ReferenceMapUpdateClientInput exposing (ReferenceMapUpdateClientInput)
 import Pages.ReferenceMaps.Requests as Requests
-import Pages.ReferenceMaps.Status as Status
 import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
+import Pages.View.Tristate as Tristate
 import Result.Extra
 import Util.DictList as DictList
 import Util.Editing as Editing exposing (Editing)
-import Util.HttpUtil as HttpUtil exposing (Error)
-import Util.Initialization as Initialization exposing (Initialization(..))
+import Util.HttpUtil exposing (Error)
 import Util.LensUtil as LensUtil
 
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    ( { authorizedAccess = flags.authorizedAccess
-      , referenceMaps = DictList.empty
-      , referenceMapToAdd = Nothing
-      , searchString = ""
-      , initialization = Initialization.Loading Status.initial
-      , pagination = Pagination.initial
-      }
-    , Requests.fetchReferenceMaps flags.authorizedAccess
+    ( Page.initial flags.authorizedAccess
+    , Requests.fetchReferenceMaps flags.authorizedAccess |> Cmd.map Tristate.Logic
     )
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
-update msg model =
+update =
+    Tristate.updateWith updateLogic
+
+
+updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+updateLogic msg model =
     case msg of
         Page.UpdateReferenceMapCreation referenceMapCreationClientInput ->
             updateReferenceMapCreation model referenceMapCreationClientInput
@@ -86,40 +81,55 @@ update msg model =
             setSearchString model string
 
 
-updateReferenceMapCreation : Page.Model -> Maybe ReferenceMapCreationClientInput -> ( Page.Model, Cmd Page.Msg )
+updateReferenceMapCreation : Page.Model -> Maybe ReferenceMapCreationClientInput -> ( Page.Model, Cmd Page.LogicMsg )
 updateReferenceMapCreation model referenceMapToAdd =
     ( model
-        |> Page.lenses.referenceMapToAdd.set referenceMapToAdd
+        |> Tristate.mapMain (Page.lenses.main.referenceMapToAdd.set referenceMapToAdd)
     , Cmd.none
     )
 
 
-createReferenceMap : Page.Model -> ( Page.Model, Cmd Page.Msg )
+createReferenceMap : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 createReferenceMap model =
     ( model
-    , model.referenceMapToAdd
-        |> Maybe.Extra.unwrap Cmd.none (ReferenceMapCreationClientInput.toCreation >> Requests.createReferenceMap model.authorizedAccess)
+    , model
+        |> Tristate.lenses.main.getOption
+        |> Maybe.andThen
+            (\main ->
+                main
+                    |> Page.lenses.main.referenceMapToAdd.get
+                    |> Maybe.map
+                        (ReferenceMapCreationClientInput.toCreation
+                            >> Requests.createReferenceMap
+                                { configuration = model.configuration
+                                , jwt = main.jwt
+                                }
+                        )
+            )
+        |> Maybe.withDefault Cmd.none
     )
 
 
-gotCreateReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.Msg )
+gotCreateReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.LogicMsg )
 gotCreateReferenceMapResponse model dataOrError =
     dataOrError
-        |> Result.Extra.unpack (\error -> ( setError error model, Cmd.none ))
+        |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
             (\referenceMap ->
                 ( model
-                    |> LensUtil.insertAtId referenceMap.id
-                        Page.lenses.referenceMaps
-                        (referenceMap |> Editing.asView)
-                    |> Page.lenses.referenceMapToAdd.set Nothing
+                    |> Tristate.mapMain
+                        (LensUtil.insertAtId referenceMap.id
+                            Page.lenses.main.referenceMaps
+                            (referenceMap |> Editing.asView)
+                            >> Page.lenses.main.referenceMapToAdd.set Nothing
+                        )
                 , referenceMap.id
                     |> Addresses.Frontend.referenceEntries.address
-                    |> Links.loadFrontendPage model.authorizedAccess.configuration
+                    |> Links.loadFrontendPage model.configuration
                 )
             )
 
 
-updateReferenceMap : Page.Model -> ReferenceMapUpdateClientInput -> ( Page.Model, Cmd Page.Msg )
+updateReferenceMap : Page.Model -> ReferenceMapUpdateClientInput -> ( Page.Model, Cmd Page.LogicMsg )
 updateReferenceMap model referenceMapUpdate =
     ( model
         |> mapReferenceMapStateById referenceMapUpdate.id
@@ -128,30 +138,38 @@ updateReferenceMap model referenceMapUpdate =
     )
 
 
-saveReferenceMapEdit : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
+saveReferenceMapEdit : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.LogicMsg )
 saveReferenceMapEdit model referenceMapId =
     ( model
     , model
-        |> Page.lenses.referenceMaps.get
-        |> DictList.get referenceMapId
-        |> Maybe.andThen Editing.extractUpdate
-        |> Maybe.Extra.unwrap
-            Cmd.none
-            (ReferenceMapUpdateClientInput.to
-                >> (\referenceMapUpdate ->
-                        Requests.saveReferenceMap
-                            { authorizedAccess = model.authorizedAccess
-                            , referenceMapUpdate = referenceMapUpdate
-                            }
-                   )
+        |> Tristate.lenses.main.getOption
+        |> Maybe.andThen
+            (\main ->
+                main
+                    |> Page.lenses.main.referenceMaps.get
+                    |> DictList.get referenceMapId
+                    |> Maybe.andThen Editing.extractUpdate
+                    |> Maybe.map
+                        (ReferenceMapUpdateClientInput.to
+                            >> (\referenceMapUpdate ->
+                                    Requests.saveReferenceMap
+                                        { authorizedAccess =
+                                            { configuration = model.configuration
+                                            , jwt = main.jwt
+                                            }
+                                        , referenceMapUpdate = referenceMapUpdate
+                                        }
+                               )
+                        )
             )
+        |> Maybe.withDefault Cmd.none
     )
 
 
-gotSaveReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.Msg )
+gotSaveReferenceMapResponse : Page.Model -> Result Error ReferenceMap -> ( Page.Model, Cmd Page.LogicMsg )
 gotSaveReferenceMapResponse model dataOrError =
     ( dataOrError
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\referenceMap ->
                 model
                     |> mapReferenceMapStateById referenceMap.id
@@ -161,7 +179,7 @@ gotSaveReferenceMapResponse model dataOrError =
     )
 
 
-enterEditReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
+enterEditReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.LogicMsg )
 enterEditReferenceMap model referenceMapId =
     ( model
         |> mapReferenceMapStateById referenceMapId
@@ -170,90 +188,94 @@ enterEditReferenceMap model referenceMapId =
     )
 
 
-exitEditReferenceMapAt : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
+exitEditReferenceMapAt : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.LogicMsg )
 exitEditReferenceMapAt model referenceMapId =
     ( model |> mapReferenceMapStateById referenceMapId Editing.toView
     , Cmd.none
     )
 
 
-requestDeleteReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
+requestDeleteReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.LogicMsg )
 requestDeleteReferenceMap model referenceMapId =
     ( model |> mapReferenceMapStateById referenceMapId Editing.toDelete
     , Cmd.none
     )
 
 
-confirmDeleteReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
+confirmDeleteReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.LogicMsg )
 confirmDeleteReferenceMap model referenceMapId =
     ( model
-    , Requests.deleteReferenceMap
-        { authorizedAccess = model.authorizedAccess
-        , referenceMapId = referenceMapId
-        }
+    , model
+        |> Tristate.foldMain Cmd.none
+            (\main ->
+                Requests.deleteReferenceMap
+                    { authorizedAccess =
+                        { configuration = model.configuration
+                        , jwt = main.jwt
+                        }
+                    , referenceMapId = referenceMapId
+                    }
+            )
     )
 
 
-cancelDeleteReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.Msg )
+cancelDeleteReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.LogicMsg )
 cancelDeleteReferenceMap model referenceMapId =
     ( model |> mapReferenceMapStateById referenceMapId Editing.toView
     , Cmd.none
     )
 
 
-gotDeleteReferenceMapResponse : Page.Model -> ReferenceMapId -> Result Error () -> ( Page.Model, Cmd Page.Msg )
+gotDeleteReferenceMapResponse : Page.Model -> ReferenceMapId -> Result Error () -> ( Page.Model, Cmd Page.LogicMsg )
 gotDeleteReferenceMapResponse model deletedId dataOrError =
     ( dataOrError
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\_ ->
                 model
-                    |> LensUtil.deleteAtId deletedId Page.lenses.referenceMaps
+                    |> Tristate.mapMain (LensUtil.deleteAtId deletedId Page.lenses.main.referenceMaps)
             )
     , Cmd.none
     )
 
 
-gotFetchReferenceMapsResponse : Page.Model -> Result Error (List ReferenceMap) -> ( Page.Model, Cmd Page.Msg )
+gotFetchReferenceMapsResponse : Page.Model -> Result Error (List ReferenceMap) -> ( Page.Model, Cmd Page.LogicMsg )
 gotFetchReferenceMapsResponse model dataOrError =
     ( dataOrError
-        |> Result.Extra.unpack (flip setError model)
+        |> Result.Extra.unpack (Tristate.toError model)
             (\referenceMaps ->
                 model
-                    |> Page.lenses.referenceMaps.set (referenceMaps |> List.map Editing.asView |> DictList.fromListWithKey (.original >> .id))
-                    |> (LensUtil.initializationField Page.lenses.initialization Status.lenses.referenceMaps).set True
+                    |> Tristate.mapInitial (Page.lenses.initial.referenceMaps.set (referenceMaps |> List.map Editing.asView |> DictList.fromListWithKey (.original >> .id) |> Just))
+                    |> Tristate.fromInitToMain Page.initialToMain
             )
     , Cmd.none
     )
 
 
-setPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.Msg )
+setPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.LogicMsg )
 setPagination model pagination =
-    ( model |> Page.lenses.pagination.set pagination
+    ( model |> Tristate.mapMain (Page.lenses.main.pagination.set pagination)
     , Cmd.none
     )
 
 
-setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.Msg )
+setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 setSearchString model string =
-    ( PaginationSettings.setSearchStringAndReset
-        { searchStringLens =
-            Page.lenses.searchString
-        , paginationSettingsLens =
-            Page.lenses.pagination
-                |> Compose.lensWithLens Pagination.lenses.referenceMaps
-        }
-        model
-        string
+    ( model
+        |> Tristate.mapMain
+            (PaginationSettings.setSearchStringAndReset
+                { searchStringLens =
+                    Page.lenses.main.searchString
+                , paginationSettingsLens =
+                    Page.lenses.main.pagination
+                        |> Compose.lensWithLens Pagination.lenses.referenceMaps
+                }
+                string
+            )
     , Cmd.none
     )
 
 
 mapReferenceMapStateById : ReferenceMapId -> (Page.ReferenceMapState -> Page.ReferenceMapState) -> Page.Model -> Page.Model
 mapReferenceMapStateById referenceMapId =
-    Page.lenses.referenceMaps
-        |> LensUtil.updateById referenceMapId
-
-
-setError : Error -> Page.Model -> Page.Model
-setError =
-    HttpUtil.setError Page.lenses.initialization
+    LensUtil.updateById referenceMapId Page.lenses.main.referenceMaps
+        >> Tristate.mapMain

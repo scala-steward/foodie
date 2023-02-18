@@ -8,29 +8,83 @@ import Api.Types.Ingredient exposing (Ingredient)
 import Api.Types.Recipe exposing (Recipe)
 import Monocle.Lens exposing (Lens)
 import Pages.Ingredients.ComplexIngredientClientInput exposing (ComplexIngredientClientInput)
-import Pages.Ingredients.FoodGroup as FoodGroup exposing (FoodGroup)
+import Pages.Ingredients.FoodGroup as FoodGroup
 import Pages.Ingredients.IngredientCreationClientInput exposing (IngredientCreationClientInput)
 import Pages.Ingredients.IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
 import Pages.Ingredients.Pagination exposing (Pagination)
-import Pages.Ingredients.Status exposing (Status)
 import Pages.Recipes.RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.View.Tristate as Tristate
 import Util.DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
-import Util.Initialization exposing (Initialization)
 
 
 type alias Model =
-    { authorizedAccess : AuthorizedAccess
+    Tristate.Model Main Initial
+
+
+type alias Main =
+    { jwt : JWT
     , recipe : Editing Recipe RecipeUpdateClientInput
-    , ingredientsGroup : FoodGroup IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput
-    , complexIngredientsGroup : FoodGroup ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood ComplexIngredientClientInput
-    , initialization : Initialization Status
+    , ingredientsGroup : IngredientsGroup
+    , complexIngredientsGroup : ComplexIngredientsGroup
     , foodsMode : FoodsMode
     , ingredientsSearchString : String
     , complexIngredientsSearchString : String
     }
+
+
+type alias Initial =
+    { jwt : JWT
+    , recipe : Maybe (Editing Recipe RecipeUpdateClientInput)
+    , ingredientsGroup : FoodGroup.Initial IngredientId Ingredient IngredientUpdateClientInput FoodId Food
+    , complexIngredientsGroup : FoodGroup.Initial ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood
+    }
+
+
+initial : AuthorizedAccess -> Model
+initial authorizedAccess =
+    { jwt = authorizedAccess.jwt
+    , recipe = Nothing
+    , ingredientsGroup = FoodGroup.initial
+    , complexIngredientsGroup = FoodGroup.initial
+    }
+        |> Tristate.createInitial authorizedAccess.configuration
+
+
+initialToMain : Initial -> Maybe Main
+initialToMain i =
+    i.recipe
+        |> Maybe.andThen
+            (\recipe ->
+                i.ingredientsGroup
+                    |> FoodGroup.initialToMain
+                    |> Maybe.andThen
+                        (\ingredientsGroup ->
+                            i.complexIngredientsGroup
+                                |> FoodGroup.initialToMain
+                                |> Maybe.map
+                                    (\complexIngredientsGroup ->
+                                        { jwt = i.jwt
+                                        , recipe = recipe
+                                        , ingredientsGroup = ingredientsGroup
+                                        , complexIngredientsGroup = complexIngredientsGroup
+                                        , foodsMode = Plain
+                                        , ingredientsSearchString = ""
+                                        , complexIngredientsSearchString = ""
+                                        }
+                                    )
+                        )
+            )
+
+
+type alias IngredientsGroup =
+    FoodGroup.Main IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput
+
+
+type alias ComplexIngredientsGroup =
+    FoodGroup.Main ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood ComplexIngredientClientInput
 
 
 type alias PlainIngredientState =
@@ -75,26 +129,42 @@ type FoodsMode
 
 
 lenses :
-    { ingredientsGroup : Lens Model (FoodGroup IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput)
-    , complexIngredientsGroup : Lens Model (FoodGroup ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood ComplexIngredientClientInput)
-    , recipe : Lens Model (Editing Recipe RecipeUpdateClientInput)
-    , initialization : Lens Model (Initialization Status)
-    , foodsMode : Lens Model FoodsMode
-    , ingredientsSearchString : Lens Model String
-    , complexIngredientsSearchString : Lens Model String
+    { initial :
+        { ingredientsGroup : Lens Initial (FoodGroup.Initial IngredientId Ingredient IngredientUpdateClientInput FoodId Food)
+        , complexIngredientsGroup : Lens Initial (FoodGroup.Initial ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood)
+        , recipe : Lens Initial (Maybe (Editing Recipe RecipeUpdateClientInput))
+        }
+    , main :
+        { ingredientsGroup : Lens Main IngredientsGroup
+        , complexIngredientsGroup : Lens Main ComplexIngredientsGroup
+        , recipe : Lens Main (Editing Recipe RecipeUpdateClientInput)
+        , foodsMode : Lens Main FoodsMode
+        , ingredientsSearchString : Lens Main String
+        , complexIngredientsSearchString : Lens Main String
+        }
     }
 lenses =
-    { ingredientsGroup = Lens .ingredientsGroup (\b a -> { a | ingredientsGroup = b })
-    , complexIngredientsGroup = Lens .complexIngredientsGroup (\b a -> { a | complexIngredientsGroup = b })
-    , recipe = Lens .recipe (\b a -> { a | recipe = b })
-    , initialization = Lens .initialization (\b a -> { a | initialization = b })
-    , foodsMode = Lens .foodsMode (\b a -> { a | foodsMode = b })
-    , ingredientsSearchString = Lens .ingredientsSearchString (\b a -> { a | ingredientsSearchString = b })
-    , complexIngredientsSearchString = Lens .complexIngredientsSearchString (\b a -> { a | complexIngredientsSearchString = b })
+    { initial =
+        { ingredientsGroup = Lens .ingredientsGroup (\b a -> { a | ingredientsGroup = b })
+        , complexIngredientsGroup = Lens .complexIngredientsGroup (\b a -> { a | complexIngredientsGroup = b })
+        , recipe = Lens .recipe (\b a -> { a | recipe = b })
+        }
+    , main =
+        { ingredientsGroup = Lens .ingredientsGroup (\b a -> { a | ingredientsGroup = b })
+        , complexIngredientsGroup = Lens .complexIngredientsGroup (\b a -> { a | complexIngredientsGroup = b })
+        , recipe = Lens .recipe (\b a -> { a | recipe = b })
+        , foodsMode = Lens .foodsMode (\b a -> { a | foodsMode = b })
+        , ingredientsSearchString = Lens .ingredientsSearchString (\b a -> { a | ingredientsSearchString = b })
+        , complexIngredientsSearchString = Lens .complexIngredientsSearchString (\b a -> { a | complexIngredientsSearchString = b })
+        }
     }
 
 
-type Msg
+type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type LogicMsg
     = UpdateIngredient IngredientUpdateClientInput
     | UpdateComplexIngredient ComplexIngredientClientInput
     | SaveIngredientEdit IngredientUpdateClientInput

@@ -3,6 +3,7 @@ module Pages.ComplexFoods.View exposing (..)
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
+import Configuration exposing (Configuration)
 import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, disabled, scope, value)
 import Html.Attributes.Extra exposing (stringProperty)
@@ -14,13 +15,13 @@ import Monocle.Lens exposing (Lens)
 import Pages.ComplexFoods.ComplexFoodClientInput as ComplexFoodClientInput exposing (ComplexFoodClientInput)
 import Pages.ComplexFoods.Page as Page
 import Pages.ComplexFoods.Pagination as Pagination
-import Pages.ComplexFoods.Status as Status
 import Pages.Util.DictListUtil as DictListUtil
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
 import Pages.Util.ViewUtil as ViewUtil
+import Pages.View.Tristate as Tristate
 import Paginate as Paginate exposing (PaginatedList)
 import Util.DictList as DictList
 import Util.Editing as Editing
@@ -29,47 +30,53 @@ import Util.SearchUtil as SearchUtil
 
 
 view : Page.Model -> Html Page.Msg
-view model =
-    ViewUtil.viewWithErrorHandling
-        { isFinished = Status.isFinished
-        , initialization = .initialization
-        , configuration = .authorizedAccess >> .configuration
-        , jwt = .authorizedAccess >> .jwt >> Just
+view =
+    Tristate.view
+        { viewMain = viewMain
+        , showLoginRedirect = True
+        }
+
+
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
+viewMain configuration main =
+    ViewUtil.viewMainWith
+        { configuration = configuration
+        , jwt = .jwt >> Just
         , currentPage = Just ViewUtil.ComplexFoods
         , showNavigation = True
         }
-        model
+        main
     <|
         let
             viewComplexFoodState =
                 Editing.unpack
-                    { onView = viewComplexFoodLine model.recipes
+                    { onView = viewComplexFoodLine main.recipes
                     , onUpdate = updateComplexFoodLine
-                    , onDelete = deleteComplexFoodLine model.recipes
+                    , onDelete = deleteComplexFoodLine main.recipes
                     }
 
             viewComplexFoods =
-                model.complexFoods
+                main.complexFoods
                     |> DictList.values
-                    |> List.filter (\complexFood -> SearchUtil.search model.complexFoodsSearchString complexFood.original.name)
+                    |> List.filter (\complexFood -> SearchUtil.search main.complexFoodsSearchString complexFood.original.name)
                     |> List.sortBy (.original >> .name >> String.toLower)
                     |> ViewUtil.paginate
-                        { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.complexFoods
+                        { pagination = Page.lenses.main.pagination |> Compose.lensWithLens Pagination.lenses.complexFoods
                         }
-                        model
+                        main
 
             viewRecipes =
-                model.recipes
+                main.recipes
                     |> DictList.values
-                    |> List.filter (.name >> SearchUtil.search model.recipesSearchString)
+                    |> List.filter (.name >> SearchUtil.search main.recipesSearchString)
                     |> List.sortBy .name
                     |> ViewUtil.paginate
-                        { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.recipes
+                        { pagination = Page.lenses.main.pagination |> Compose.lensWithLens Pagination.lenses.recipes
                         }
-                        model
+                        main
 
             anySelection =
-                model.complexFoodsToCreate
+                main.complexFoodsToCreate
                     |> DictList.isEmpty
                     |> not
 
@@ -85,7 +92,7 @@ view model =
             , div [ Style.classes.choices ]
                 [ HtmlUtil.searchAreaWith
                     { msg = Page.SetComplexFoodsSearchString
-                    , searchString = model.complexFoodsSearchString
+                    , searchString = main.complexFoodsSearchString
                     }
                 , table [ Style.classes.elementsWithControlsTable ]
                     [ colgroup []
@@ -112,10 +119,10 @@ view model =
                     [ ViewUtil.pagerButtons
                         { msg =
                             PaginationSettings.updateCurrentPage
-                                { pagination = Page.lenses.pagination
+                                { pagination = Page.lenses.main.pagination
                                 , items = Pagination.lenses.complexFoods
                                 }
-                                model
+                                main
                                 >> Page.SetPagination
                         , elements = viewComplexFoods
                         }
@@ -125,7 +132,7 @@ view model =
                 [ div [ Style.classes.addElement ]
                     [ HtmlUtil.searchAreaWith
                         { msg = Page.SetRecipesSearchString
-                        , searchString = model.recipesSearchString
+                        , searchString = main.recipesSearchString
                         }
                     , table [ Style.classes.elementsWithControlsTable ]
                         [ colgroup []
@@ -145,17 +152,17 @@ view model =
                         , tbody []
                             (viewRecipes
                                 |> Paginate.page
-                                |> List.map (viewRecipeLine model.complexFoodsToCreate model.complexFoods)
+                                |> List.map (viewRecipeLine main.complexFoodsToCreate main.complexFoods)
                             )
                         ]
                     , div [ Style.classes.pagination ]
                         [ ViewUtil.pagerButtons
                             { msg =
                                 PaginationSettings.updateCurrentPage
-                                    { pagination = Page.lenses.pagination
+                                    { pagination = Page.lenses.main.pagination
                                     , items = Pagination.lenses.recipes
                                     }
-                                    model
+                                    main
                                     >> Page.SetPagination
                             , elements = viewRecipes
                             }
@@ -165,7 +172,7 @@ view model =
             ]
 
 
-viewComplexFoodLine : Page.RecipeMap -> ComplexFood -> Html Page.Msg
+viewComplexFoodLine : Page.RecipeMap -> ComplexFood -> Html Page.LogicMsg
 viewComplexFoodLine recipeMap complexFood =
     let
         editMsg =
@@ -182,7 +189,7 @@ viewComplexFoodLine recipeMap complexFood =
         complexFood
 
 
-deleteComplexFoodLine : Page.RecipeMap -> ComplexFood -> Html Page.Msg
+deleteComplexFoodLine : Page.RecipeMap -> ComplexFood -> Html Page.LogicMsg
 deleteComplexFoodLine recipeMap complexFood =
     complexFoodLineWith
         { controls =
@@ -196,12 +203,12 @@ deleteComplexFoodLine recipeMap complexFood =
 
 
 complexFoodLineWith :
-    { controls : List (Html Page.Msg)
-    , onClick : List (Attribute Page.Msg)
+    { controls : List (Html Page.LogicMsg)
+    , onClick : List (Attribute Page.LogicMsg)
     , recipeMap : Page.RecipeMap
     }
     -> ComplexFood
-    -> Html Page.Msg
+    -> Html Page.LogicMsg
 complexFoodLineWith ps complexFood =
     let
         withOnClick =
@@ -216,7 +223,7 @@ complexFoodLineWith ps complexFood =
         )
 
 
-updateComplexFoodLine : ComplexFood -> ComplexFoodClientInput -> Html Page.Msg
+updateComplexFoodLine : ComplexFood -> ComplexFoodClientInput -> Html Page.LogicMsg
 updateComplexFoodLine complexFood complexFoodClientInput =
     let
         saveMsg =
@@ -274,7 +281,7 @@ updateComplexFoodLine complexFood complexFoodClientInput =
         ]
 
 
-viewRecipeLine : Page.CreateComplexFoodsMap -> Page.ComplexFoodStateMap -> Recipe -> Html Page.Msg
+viewRecipeLine : Page.CreateComplexFoodsMap -> Page.ComplexFoodStateMap -> Recipe -> Html Page.LogicMsg
 viewRecipeLine complexFoodsToCreate complexFoods recipe =
     let
         createMsg =

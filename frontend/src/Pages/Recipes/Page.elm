@@ -3,25 +3,55 @@ module Pages.Recipes.Page exposing (..)
 import Api.Auxiliary exposing (JWT, RecipeId)
 import Api.Types.Recipe exposing (Recipe)
 import Monocle.Lens exposing (Lens)
-import Pages.Recipes.Pagination exposing (Pagination)
+import Pages.Recipes.Pagination as Pagination exposing (Pagination)
 import Pages.Recipes.RecipeCreationClientInput exposing (RecipeCreationClientInput)
 import Pages.Recipes.RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
-import Pages.Recipes.Status exposing (Status)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.View.Tristate as Tristate
 import Util.DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
-import Util.Initialization exposing (Initialization)
 
 
 type alias Model =
-    { authorizedAccess : AuthorizedAccess
+    Tristate.Model Main Initial
+
+
+type alias Main =
+    { jwt : JWT
     , recipes : RecipeStateMap
     , recipeToAdd : Maybe RecipeCreationClientInput
-    , searchString: String
-    , initialization : Initialization Status
+    , searchString : String
     , pagination : Pagination
     }
+
+
+type alias Initial =
+    { recipes : Maybe RecipeStateMap
+    , jwt : JWT
+    }
+
+
+initial : AuthorizedAccess -> Model
+initial authorizedAccess =
+    { recipes = Nothing
+    , jwt = authorizedAccess.jwt
+    }
+        |> Tristate.createInitial authorizedAccess.configuration
+
+
+initialToMain : Initial -> Maybe Main
+initialToMain i =
+    i.recipes
+        |> Maybe.map
+            (\recipes ->
+                { jwt = i.jwt
+                , recipes = recipes
+                , recipeToAdd = Nothing
+                , searchString = ""
+                , pagination = Pagination.initial
+                }
+            )
 
 
 type alias RecipeState =
@@ -33,18 +63,24 @@ type alias RecipeStateMap =
 
 
 lenses :
-    { recipes : Lens Model RecipeStateMap
-    , recipeToAdd : Lens Model (Maybe RecipeCreationClientInput)
-    , searchString : Lens Model String
-    , initialization : Lens Model (Initialization Status)
-    , pagination : Lens Model Pagination
+    { initial : { recipes : Lens Initial (Maybe RecipeStateMap) }
+    , main :
+        { recipes : Lens Main RecipeStateMap
+        , recipeToAdd : Lens Main (Maybe RecipeCreationClientInput)
+        , searchString : Lens Main String
+        , pagination : Lens Main Pagination
+        }
     }
 lenses =
-    { recipes = Lens .recipes (\b a -> { a | recipes = b })
-    , recipeToAdd = Lens .recipeToAdd (\b a -> { a | recipeToAdd = b })
-    , searchString = Lens .searchString (\b a -> { a | searchString = b })
-    , initialization = Lens .initialization (\b a -> { a | initialization = b })
-    , pagination = Lens .pagination (\b a -> { a | pagination = b })
+    { initial =
+        { recipes = Lens .recipes (\b a -> { a | recipes = b })
+        }
+    , main =
+        { recipes = Lens .recipes (\b a -> { a | recipes = b })
+        , recipeToAdd = Lens .recipeToAdd (\b a -> { a | recipeToAdd = b })
+        , searchString = Lens .searchString (\b a -> { a | searchString = b })
+        , pagination = Lens .pagination (\b a -> { a | pagination = b })
+        }
     }
 
 
@@ -53,7 +89,11 @@ type alias Flags =
     }
 
 
-type Msg
+type alias Msg =
+    Tristate.Msg LogicMsg
+
+
+type LogicMsg
     = UpdateRecipeCreation (Maybe RecipeCreationClientInput)
     | CreateRecipe
     | GotCreateRecipeResponse (Result Error Recipe)

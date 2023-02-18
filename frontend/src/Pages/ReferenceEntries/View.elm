@@ -5,6 +5,7 @@ import Api.Types.Nutrient exposing (Nutrient)
 import Api.Types.NutrientUnit as NutrientUnit
 import Api.Types.ReferenceEntry exposing (ReferenceEntry)
 import Basics.Extra exposing (flip)
+import Configuration exposing (Configuration)
 import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, disabled, scope, value)
 import Html.Attributes.Extra exposing (stringProperty)
@@ -16,7 +17,6 @@ import Pages.ReferenceEntries.Page as Page exposing (NutrientMap)
 import Pages.ReferenceEntries.Pagination as Pagination
 import Pages.ReferenceEntries.ReferenceEntryCreationClientInput as ReferenceEntryCreationClientInput exposing (ReferenceEntryCreationClientInput)
 import Pages.ReferenceEntries.ReferenceEntryUpdateClientInput as ReferenceEntryUpdateClientInput exposing (ReferenceEntryUpdateClientInput)
-import Pages.ReferenceEntries.Status as Status
 import Pages.ReferenceMaps.ReferenceMapUpdateClientInput as ReferenceMapUpdateClientInput
 import Pages.ReferenceMaps.View
 import Pages.Util.HtmlUtil as HtmlUtil
@@ -24,56 +24,61 @@ import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput
 import Pages.Util.ViewUtil as ViewUtil
+import Pages.View.Tristate as Tristate
 import Paginate
 import Util.DictList as DictList
 import Util.Editing as Editing
 import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
-
 view : Page.Model -> Html Page.Msg
-view model =
-    ViewUtil.viewWithErrorHandling
-        { isFinished = Status.isFinished
-        , initialization = .initialization
-        , configuration = .authorizedAccess >> .configuration
-        , jwt = .authorizedAccess >> .jwt >> Just
+view =
+    Tristate.view
+        { viewMain = viewMain
+        , showLoginRedirect = True
+        }
+
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
+viewMain configuration main =
+    ViewUtil.viewMainWith
+        { configuration = configuration
+        , jwt = .jwt >> Just
         , currentPage = Nothing
         , showNavigation = True
         }
-        model
+        main
     <|
         let
             viewReferenceEntryState =
                 Editing.unpack
-                    { onView = viewReferenceEntryLine model.nutrients
-                    , onUpdate = updateReferenceEntryLine model.nutrients
-                    , onDelete = deleteReferenceEntryLine model.nutrients
+                    { onView = viewReferenceEntryLine main.nutrients
+                    , onUpdate = updateReferenceEntryLine main.nutrients
+                    , onDelete = deleteReferenceEntryLine main.nutrients
                     }
 
             viewReferenceEntries =
-                model.referenceEntries
-                    |> DictList.filter (\_ v -> SearchUtil.search model.referenceEntriesSearchString (v.original.nutrientCode |> nutrientInfo model.nutrients |> .name))
+                main.referenceEntries
+                    |> DictList.filter (\_ v -> SearchUtil.search main.referenceEntriesSearchString (v.original.nutrientCode |> nutrientInfo main.nutrients |> .name))
                     |> DictList.toList
-                    |> List.sortBy (\( k, _ ) -> nutrientInfo model.nutrients k |> .unitName |> String.toLower)
+                    |> List.sortBy (\( k, _ ) -> nutrientInfo main.nutrients k |> .unitName |> String.toLower)
                     |> List.map Tuple.second
                     |> ViewUtil.paginate
-                        { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.referenceEntries
+                        { pagination = Page.lenses.main.pagination |> Compose.lensWithLens Pagination.lenses.referenceEntries
                         }
-                        model
+                        main
 
             viewNutrients =
-                model.nutrients
+                main.nutrients
                     |> DictList.values
-                    |> List.filter (\v -> SearchUtil.search model.nutrientsSearchString v.name)
+                    |> List.filter (\v -> SearchUtil.search main.nutrientsSearchString v.name)
                     |> List.sortBy .name
                     |> ViewUtil.paginate
-                        { pagination = Page.lenses.pagination |> Compose.lensWithLens Pagination.lenses.nutrients
+                        { pagination = Page.lenses.main.pagination |> Compose.lensWithLens Pagination.lenses.nutrients
                         }
-                        model
+                        main
 
             anySelection =
-                model.referenceEntriesToAdd
+                main.referenceEntriesToAdd
                     |> DictList.isEmpty
                     |> not
 
@@ -126,7 +131,7 @@ view model =
                             , styles = []
                             }
                     }
-                    model.referenceMap
+                    main.referenceMap
         in
         div [ Style.ids.referenceEntryEditor ]
             [ div []
@@ -139,7 +144,7 @@ view model =
             , div []
                 [ HtmlUtil.searchAreaWith
                     { msg = Page.SetReferenceEntriesSearchString
-                    , searchString = model.referenceEntriesSearchString
+                    , searchString = main.referenceEntriesSearchString
                     }
                 , table [ Style.classes.elementsWithControlsTable ]
                     [ colgroup []
@@ -167,10 +172,10 @@ view model =
                 [ ViewUtil.pagerButtons
                     { msg =
                         PaginationSettings.updateCurrentPage
-                            { pagination = Page.lenses.pagination
+                            { pagination = Page.lenses.main.pagination
                             , items = Pagination.lenses.referenceEntries
                             }
-                            model
+                            main
                             >> Page.SetPagination
                     , elements = viewReferenceEntries
                     }
@@ -179,7 +184,7 @@ view model =
                 [ div [ Style.classes.addElement ]
                     [ HtmlUtil.searchAreaWith
                         { msg = Page.SetNutrientsSearchString
-                        , searchString = model.nutrientsSearchString
+                        , searchString = main.nutrientsSearchString
                         }
                     , table [ Style.classes.elementsWithControlsTable ]
                         [ colgroup []
@@ -199,17 +204,17 @@ view model =
                         , tbody []
                             (viewNutrients
                                 |> Paginate.page
-                                |> List.map (viewNutrientLine model.nutrients model.referenceEntries model.referenceEntriesToAdd)
+                                |> List.map (viewNutrientLine main.nutrients main.referenceEntries main.referenceEntriesToAdd)
                             )
                         ]
                     , div [ Style.classes.pagination ]
                         [ ViewUtil.pagerButtons
                             { msg =
                                 PaginationSettings.updateCurrentPage
-                                    { pagination = Page.lenses.pagination
+                                    { pagination = Page.lenses.main.pagination
                                     , items = Pagination.lenses.nutrients
                                     }
-                                    model
+                                    main
                                     >> Page.SetPagination
                             , elements = viewNutrients
                             }
@@ -219,7 +224,7 @@ view model =
             ]
 
 
-viewReferenceEntryLine : Page.NutrientMap -> ReferenceEntry -> Html Page.Msg
+viewReferenceEntryLine : Page.NutrientMap -> ReferenceEntry -> Html Page.LogicMsg
 viewReferenceEntryLine nutrientMap referenceEntry =
     let
         editMsg =
@@ -236,7 +241,7 @@ viewReferenceEntryLine nutrientMap referenceEntry =
         referenceEntry
 
 
-deleteReferenceEntryLine : Page.NutrientMap -> ReferenceEntry -> Html Page.Msg
+deleteReferenceEntryLine : Page.NutrientMap -> ReferenceEntry -> Html Page.LogicMsg
 deleteReferenceEntryLine nutrientMap referenceEntry =
     referenceEntryLineWith
         { controls =
@@ -250,12 +255,12 @@ deleteReferenceEntryLine nutrientMap referenceEntry =
 
 
 referenceEntryLineWith :
-    { controls : List (Html Page.Msg)
-    , onClick : List (Attribute Page.Msg)
+    { controls : List (Html Page.LogicMsg)
+    , onClick : List (Attribute Page.LogicMsg)
     , nutrientMap : Page.NutrientMap
     }
     -> ReferenceEntry
-    -> Html Page.Msg
+    -> Html Page.LogicMsg
 referenceEntryLineWith ps referenceNutrient =
     let
         withOnClick =
@@ -273,7 +278,7 @@ referenceEntryLineWith ps referenceNutrient =
         )
 
 
-updateReferenceEntryLine : Page.NutrientMap -> ReferenceEntry -> ReferenceEntryUpdateClientInput -> Html Page.Msg
+updateReferenceEntryLine : Page.NutrientMap -> ReferenceEntry -> ReferenceEntryUpdateClientInput -> Html Page.LogicMsg
 updateReferenceEntryLine nutrientMap referenceNutrient referenceNutrientUpdateClientInput =
     let
         saveMsg =
@@ -321,7 +326,7 @@ updateReferenceEntryLine nutrientMap referenceNutrient referenceNutrientUpdateCl
         ]
 
 
-viewNutrientLine : Page.NutrientMap -> Page.ReferenceEntryStateMap -> Page.AddNutrientMap -> Nutrient -> Html Page.Msg
+viewNutrientLine : Page.NutrientMap -> Page.ReferenceEntryStateMap -> Page.AddNutrientMap -> Nutrient -> Html Page.LogicMsg
 viewNutrientLine nutrientMap referenceEntries referenceEntriesToAdd nutrient =
     let
         addMsg =
