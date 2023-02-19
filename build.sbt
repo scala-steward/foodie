@@ -19,7 +19,7 @@ lazy val root = (project in file("."))
   .enablePlugins(CodegenPlugin)
   .enablePlugins(JavaServerAppPackaging)
   .settings(
-    scalaVersion := "2.13.3",
+    scalaVersion := "2.13.10",
     libraryDependencies ++= Seq(
       guice,
       "com.typesafe.slick"    %% "slick"             % slickVersion,
