@@ -3,9 +3,9 @@ package services.user
 import cats.data.OptionT
 import db.daos.session.SessionKey
 import db.generated.Tables
-import db.{ SessionId, UserId }
+import db.{SessionId, UserId}
 import io.scalaland.chimney.dsl._
-import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import security.Hash
 import services.DBError
 import slick.dbio.DBIO
@@ -13,9 +13,10 @@ import slick.jdbc.PostgresProfile
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 
+import java.time.LocalDate
 import java.util.UUID
 import javax.inject.Inject
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 class Live @Inject() (
     override protected val dbConfigProvider: DatabaseConfigProvider,
@@ -42,7 +43,7 @@ class Live @Inject() (
   override def delete(userId: UserId): Future[Boolean] = db.run(companion.delete(userId))
 
   override def addSession(userId: UserId): Future[SessionId] =
-    db.run(companion.addSession(userId, UUID.randomUUID().transformInto[SessionId]))
+    db.run(companion.addSession(userId, UUID.randomUUID().transformInto[SessionId], LocalDate.now().transformInto[java.sql.Date]))
 
   override def deleteSession(userId: UserId, sessionId: SessionId): Future[Boolean] =
     db.run(companion.deleteSession(userId, sessionId))
@@ -124,14 +125,15 @@ object Live {
         .delete(userId)
         .map(_ > 0)
 
-    override def addSession(userId: UserId, sessionId: SessionId)(implicit
+    override def addSession(userId: UserId, sessionId: SessionId, createdAt: java.sql.Date)(implicit
         executionContext: ExecutionContext
     ): DBIO[SessionId] =
       sessionDao
         .insert(
           Tables.SessionRow(
             id = sessionId.transformInto[UUID],
-            userId = userId.transformInto[UUID]
+            userId = userId.transformInto[UUID],
+            createdAt = createdAt
           )
         )
         .map(_.id.transformInto[SessionId])
