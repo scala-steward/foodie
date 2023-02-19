@@ -16,7 +16,7 @@ object TestUtil {
     val start  = System.currentTimeMillis()
     val result = a
     val end    = System.currentTimeMillis()
-    pprint.log(s"$label: ${end - start}ms")
+    pprint.pprintln(s"$label: ${end - start}ms")
     result
   }
 
