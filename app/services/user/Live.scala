@@ -3,20 +3,23 @@ package services.user
 import cats.data.OptionT
 import db.daos.session.SessionKey
 import db.generated.Tables
-import db.{SessionId, UserId}
+import db.{ SessionId, UserId }
 import io.scalaland.chimney.dsl._
-import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
+import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import security.Hash
+import security.jwt.JwtConfiguration
 import services.DBError
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 
+import java.sql.Date
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 class Live @Inject() (
     override protected val dbConfigProvider: DatabaseConfigProvider,
@@ -43,7 +46,13 @@ class Live @Inject() (
   override def delete(userId: UserId): Future[Boolean] = db.run(companion.delete(userId))
 
   override def addSession(userId: UserId): Future[SessionId] =
-    db.run(companion.addSession(userId, UUID.randomUUID().transformInto[SessionId], LocalDate.now().transformInto[java.sql.Date]))
+    db.run(
+      companion.addSession(
+        userId,
+        UUID.randomUUID().transformInto[SessionId],
+        LocalDate.now().transformInto[java.sql.Date]
+      )
+    )
 
   override def deleteSession(userId: UserId, sessionId: SessionId): Future[Boolean] =
     db.run(companion.deleteSession(userId, sessionId))
@@ -61,6 +70,11 @@ object Live {
       userDao: db.daos.user.DAO,
       sessionDao: db.daos.session.DAO
   ) extends UserService.Companion {
+
+    private val jwtConfiguration: JwtConfiguration = JwtConfiguration.default
+
+    private val allowedValidityInDays: Int =
+      Math.ceil(jwtConfiguration.restrictedDurationInSeconds.toDouble / 86400).toInt
 
     def get(userId: UserId)(implicit executionContext: ExecutionContext): DBIO[Option[User]] =
       OptionT(userDao.find(userId))
@@ -127,16 +141,26 @@ object Live {
 
     override def addSession(userId: UserId, sessionId: SessionId, createdAt: java.sql.Date)(implicit
         executionContext: ExecutionContext
-    ): DBIO[SessionId] =
+    ): DBIO[SessionId] = {
       sessionDao
-        .insert(
-          Tables.SessionRow(
-            id = sessionId.transformInto[UUID],
-            userId = userId.transformInto[UUID],
-            createdAt = createdAt
-          )
+        .deleteAllBefore(
+          userId,
+          createdAt.toLocalDate
+            .minus(allowedValidityInDays, ChronoUnit.DAYS)
+            .transformInto[Date]
         )
-        .map(_.id.transformInto[SessionId])
+        .andThen(
+          sessionDao
+            .insert(
+              Tables.SessionRow(
+                id = sessionId.transformInto[UUID],
+                userId = userId.transformInto[UUID],
+                createdAt = createdAt
+              )
+            )
+            .map(_.id.transformInto[SessionId])
+        )
+    }
 
     override def deleteSession(userId: UserId, sessionId: SessionId)(implicit
         executionContext: ExecutionContext
