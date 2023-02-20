@@ -72,7 +72,7 @@ viewMain configuration main =
 
             viewComplexIngredientState =
                 Editing.unpack
-                    { onView = viewComplexIngredientLine main.complexIngredientsGroup.foods
+                    { onView = viewComplexIngredientLine configuration main.complexIngredientsGroup.foods
                     , onUpdate = updateComplexIngredientLine main.complexIngredientsGroup.foods
                     , onDelete = deleteComplexIngredientLine main.complexIngredientsGroup.foods
                     }
@@ -234,14 +234,14 @@ viewMain configuration main =
                         [ col [] []
                         , col [] []
                         , col [] []
-                        , col [ stringProperty "span" "2" ] []
+                        , col [ stringProperty "span" "3" ] []
                         ]
                     , thead []
                         [ tr [ Style.classes.tableHeader ]
                             [ th [ scope "col" ] [ label [] [ text "Name" ] ]
                             , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Factor" ] ]
                             , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Amount" ] ]
-                            , th [ colspan 2, scope "colgroup", Style.classes.controlsGroup ] []
+                            , th [ colspan 3, scope "colgroup", Style.classes.controlsGroup ] []
                             ]
                         ]
                     , tbody []
@@ -486,8 +486,8 @@ ingredientLineWith ps ingredient =
         )
 
 
-viewComplexIngredientLine : Page.ComplexFoodMap -> ComplexIngredient -> Html Page.LogicMsg
-viewComplexIngredientLine complexFoodMap complexIngredient =
+viewComplexIngredientLine : Configuration -> Page.ComplexFoodMap -> ComplexIngredient -> Html Page.LogicMsg
+viewComplexIngredientLine configuration complexFoodMap complexIngredient =
     let
         editMsg =
             Page.EnterEditComplexIngredient complexIngredient.complexFoodId |> onClick
@@ -496,6 +496,16 @@ viewComplexIngredientLine complexFoodMap complexIngredient =
         { controls =
             [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
             , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.RequestDeleteComplexIngredient complexIngredient.complexFoodId) ] [ text "Delete" ] ]
+            , td [ Style.classes.controls ]
+                [ Links.linkButton
+                    { url =
+                        complexIngredient.complexFoodId
+                            |> Addresses.Frontend.ingredientEditor.address
+                            |> Links.frontendPage configuration
+                    , attributes = [ Style.classes.button.editor ]
+                    , children = [ text "Recipe" ]
+                    }
+                ]
             ]
         , onClick = [ editMsg ]
         , complexFoodMap = complexFoodMap
