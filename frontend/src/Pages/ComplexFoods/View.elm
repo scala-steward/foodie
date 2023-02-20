@@ -20,6 +20,7 @@ import Pages.ComplexFoods.Pagination as Pagination
 import Pages.Util.DictListUtil as DictListUtil
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Links as Links
+import Pages.Util.NavigationUtil as NavigationUtil
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
@@ -185,8 +186,8 @@ viewComplexFoodLine configuration recipeMap complexFood =
         { controls =
             [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
             , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.RequestDeleteComplexFood complexFood.recipeId) ] [ text "Delete" ] ]
-            , td [ Style.classes.controls ] [ recipeLinkButton configuration complexFood.recipeId ]
-            , td [ Style.classes.controls ] [ nutrientsLinkButton configuration complexFood.recipeId ]
+            , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration complexFood.recipeId ]
+            , td [ Style.classes.controls ] [ NavigationUtil.recipeNutrientsLinkButton configuration complexFood.recipeId ]
             ]
         , onClick = [ editMsg ]
         , recipeMap = recipeMap
@@ -314,8 +315,8 @@ viewRecipeLine configuration complexFoodsToCreate complexFoods recipe =
                     [ td [ Style.classes.editable, Style.classes.numberCell ] []
                     , td [ Style.classes.editable, Style.classes.numberCell ] []
                     , td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick selectMsg ] [ text "Select" ] ]
-                    , td [ Style.classes.controls ] [ recipeLinkButton configuration recipe.id ]
-                    , td [ Style.classes.controls ] [ nutrientsLinkButton configuration recipe.id ]
+                    , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration recipe.id ]
+                    , td [ Style.classes.controls ] [ NavigationUtil.recipeNutrientsLinkButton configuration recipe.id ]
                     ]
 
                 Just complexFoodToAdd ->
@@ -398,27 +399,3 @@ viewRecipeLine configuration complexFoodsToCreate complexFoods recipe =
         (td [ Style.classes.editable ] [ label [] [ text recipe.name ] ]
             :: process
         )
-
-
-recipeLinkButton : Configuration -> RecipeId -> Html msg
-recipeLinkButton configuration recipeId =
-    Links.linkButton
-        { url =
-            recipeId
-                |> Addresses.Frontend.ingredientEditor.address
-                |> Links.frontendPage configuration
-        , attributes = [ Style.classes.button.editor ]
-        , children = [ text "Recipe" ]
-        }
-
-
-nutrientsLinkButton : Configuration -> RecipeId -> Html msg
-nutrientsLinkButton configuration recipeId =
-    Links.linkButton
-        { url =
-            recipeId
-                |> Addresses.Frontend.statisticsRecipeSelect.address
-                |> Links.frontendPage configuration
-        , attributes = [ Style.classes.button.nutrients ]
-        , children = [ text "Nutrients" ]
-        }

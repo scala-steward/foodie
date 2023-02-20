@@ -22,6 +22,7 @@ import Pages.Meals.View
 import Pages.Util.DictListUtil as DictUtil
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Links as Links
+import Pages.Util.NavigationUtil as NavigationUtil
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput
@@ -251,7 +252,7 @@ viewMealEntryLine configuration recipeMap mealEntry =
         { controls =
             [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
             , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.RequestDeleteMealEntry mealEntry.id) ] [ text "Delete" ] ]
-            , td [ Style.classes.controls ] [ recipeLinkButton configuration mealEntry.recipeId ]
+            , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration mealEntry.recipeId ]
             ]
         , onClick = [ editMsg ]
         , recipeMap = recipeMap
@@ -370,7 +371,7 @@ viewRecipeLine configuration mealEntriesToAdd mealEntries recipe =
                     [ td [ Style.classes.editable, Style.classes.numberCell ] []
                     , td [ Style.classes.controls ] []
                     , td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick selectMsg ] [ text "Select" ] ]
-                    , td [ Style.classes.controls ] [ recipeLinkButton configuration recipe.id ]
+                    , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration recipe.id ]
                     ]
 
                 Just mealEntryToAdd ->
@@ -422,15 +423,3 @@ viewRecipeLine configuration mealEntriesToAdd mealEntries recipe =
             :: td [ Style.classes.numberCell ] [ label [] [ text <| Maybe.withDefault "" <| recipe.servingSize ] ]
             :: process
         )
-
-
-recipeLinkButton : Configuration -> RecipeId -> Html msg
-recipeLinkButton configuration recipeId =
-    Links.linkButton
-        { url =
-            recipeId
-                |> Addresses.Frontend.ingredientEditor.address
-                |> Links.frontendPage configuration
-        , attributes = [ Style.classes.button.editor ]
-        , children = [ text "Recipe" ]
-        }
