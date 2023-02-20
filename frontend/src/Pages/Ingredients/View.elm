@@ -875,13 +875,8 @@ viewComplexFoodLine configuration complexFoodMap complexIngredientsToAdd complex
                     [ td [ Style.classes.editable, Style.classes.numberCell ] []
                     , td [ Style.classes.editable, Style.classes.numberCell ] []
                     , td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick selectMsg ] [ text "Select" ] ]
-                    , td [ Style.classes.controls ]
-                        [ Links.linkButton
-                            { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsComplexFoodSelect.address <| complexFood.recipeId
-                            , attributes = [ Style.classes.button.nutrients ]
-                            , children = [ text "Nutrients" ]
-                            }
-                        ]
+                    , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration complexFood.recipeId ]
+                    , td [ Style.classes.controls ] [ NavigationUtil.recipeNutrientsLinkButton configuration complexFood.recipeId ]
                     ]
 
                 Just complexIngredientToAdd ->
