@@ -6,6 +6,7 @@ import io.scalaland.chimney.dsl._
 import slick.jdbc.PostgresProfile.api._
 import utils.TransformerUtils.Implicits._
 
+import java.sql.Date
 import java.util.UUID
 
 trait DAO extends DAOActions[Tables.SessionRow, SessionKey] {
@@ -13,6 +14,8 @@ trait DAO extends DAOActions[Tables.SessionRow, SessionKey] {
   override val keyOf: Tables.SessionRow => SessionKey = SessionKey.of
 
   def deleteAllFor(userId: UserId): DBIO[Int]
+
+  def deleteAllBefore(userId: UserId, date: Date): DBIO[Int]
 }
 
 object DAO {
@@ -26,6 +29,11 @@ object DAO {
       override def deleteAllFor(userId: UserId): DBIO[Int] =
         Tables.Session
           .filter(_.userId === userId.transformInto[UUID])
+          .delete
+
+      override def deleteAllBefore(userId: UserId, date: Date): DBIO[Int] =
+        Tables.Session
+          .filter(session => session.userId === userId.transformInto[UUID] && session.createdAt < date)
           .delete
 
     }
