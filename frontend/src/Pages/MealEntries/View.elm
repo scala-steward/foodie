@@ -221,7 +221,7 @@ viewMain configuration main =
                         , tbody []
                             (viewRecipes
                                 |> Paginate.page
-                                |> List.map (viewRecipeLine main.mealEntriesToAdd main.mealEntries)
+                                |> List.map (viewRecipeLine configuration main.mealEntriesToAdd main.mealEntries)
                             )
                         ]
                     , div [ Style.classes.pagination ]
@@ -251,15 +251,7 @@ viewMealEntryLine configuration recipeMap mealEntry =
         { controls =
             [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
             , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.RequestDeleteMealEntry mealEntry.id) ] [ text "Delete" ] ]
-            , td [ Style.classes.controls ]
-                [ Links.linkButton
-                    { url = mealEntry.recipeId
-                              |> Addresses.Frontend.ingredientEditor.address
-                              |> Links.frontendPage configuration
-                    , attributes = [ Style.classes.button.editor ]
-                    , children = [ text "Recipe" ]
-                    }
-                ]
+            , td [ Style.classes.controls ] [ recipeLinkButton configuration mealEntry.recipeId ]
             ]
         , onClick = [ editMsg ]
         , recipeMap = recipeMap
@@ -353,8 +345,8 @@ recipeInfo recipeMap recipeId attributes =
     ]
 
 
-viewRecipeLine : Page.AddMealEntriesMap -> Page.MealEntryStateMap -> Recipe -> Html Page.LogicMsg
-viewRecipeLine mealEntriesToAdd mealEntries recipe =
+viewRecipeLine : Configuration -> Page.AddMealEntriesMap -> Page.MealEntryStateMap -> Recipe -> Html Page.LogicMsg
+viewRecipeLine configuration mealEntriesToAdd mealEntries recipe =
     let
         addMsg =
             Page.AddRecipe recipe.id
@@ -378,6 +370,7 @@ viewRecipeLine mealEntriesToAdd mealEntries recipe =
                     [ td [ Style.classes.editable, Style.classes.numberCell ] []
                     , td [ Style.classes.controls ] []
                     , td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick selectMsg ] [ text "Select" ] ]
+                    , td [ Style.classes.controls ] [ recipeLinkButton configuration recipe.id ]
                     ]
 
                 Just mealEntryToAdd ->
@@ -429,3 +422,15 @@ viewRecipeLine mealEntriesToAdd mealEntries recipe =
             :: td [ Style.classes.numberCell ] [ label [] [ text <| Maybe.withDefault "" <| recipe.servingSize ] ]
             :: process
         )
+
+
+recipeLinkButton : Configuration -> RecipeId -> Html msg
+recipeLinkButton configuration recipeId =
+    Links.linkButton
+        { url =
+            recipeId
+                |> Addresses.Frontend.ingredientEditor.address
+                |> Links.frontendPage configuration
+        , attributes = [ Style.classes.button.editor ]
+        , children = [ text "Recipe" ]
+        }
