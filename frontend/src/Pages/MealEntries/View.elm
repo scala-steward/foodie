@@ -55,7 +55,7 @@ viewMain configuration main =
         let
             viewMealEntryState =
                 Editing.unpack
-                    { onView = viewMealEntryLine main.recipes
+                    { onView = viewMealEntryLine configuration main.recipes
                     , onUpdate = updateEntryLine main.recipes
                     , onDelete = deleteMealEntryLine main.recipes
                     }
@@ -241,8 +241,8 @@ viewMain configuration main =
             ]
 
 
-viewMealEntryLine : Page.RecipeMap -> MealEntry -> Html Page.LogicMsg
-viewMealEntryLine recipeMap mealEntry =
+viewMealEntryLine : Configuration -> Page.RecipeMap -> MealEntry -> Html Page.LogicMsg
+viewMealEntryLine configuration recipeMap mealEntry =
     let
         editMsg =
             Page.EnterEditMealEntry mealEntry.id |> onClick
@@ -251,6 +251,15 @@ viewMealEntryLine recipeMap mealEntry =
         { controls =
             [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
             , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.RequestDeleteMealEntry mealEntry.id) ] [ text "Delete" ] ]
+            , td [ Style.classes.controls ]
+                [ Links.linkButton
+                    { url = mealEntry.recipeId
+                              |> Addresses.Frontend.ingredientEditor.address
+                              |> Links.frontendPage configuration
+                    , attributes = [ Style.classes.button.editor ]
+                    , children = [ text "Recipe" ]
+                    }
+                ]
             ]
         , onClick = [ editMsg ]
         , recipeMap = recipeMap
