@@ -22,6 +22,7 @@ import util.DateUtil
 import utils.TransformerUtils.Implicits._
 import utils.date.Date
 
+import java.sql
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 
@@ -294,6 +295,14 @@ object DAOTestInstance {
           fromIO {
             map.keys
               .filter(_.userId == userId)
+              .flatMap(map.remove)
+              .size
+          }
+
+        override def deleteAllBefore(userId: UserId, date: sql.Date): DBIO[Int] =
+          fromIO {
+            map
+              .collect { case (key, row) if key.userId == userId && row.createdAt.before(date) => key }
               .flatMap(map.remove)
               .size
           }
