@@ -22,6 +22,7 @@ import Pages.Meals.View
 import Pages.Util.DictListUtil as DictUtil
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Links as Links
+import Pages.Util.NavigationUtil as NavigationUtil
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput
@@ -55,7 +56,7 @@ viewMain configuration main =
         let
             viewMealEntryState =
                 Editing.unpack
-                    { onView = viewMealEntryLine main.recipes
+                    { onView = viewMealEntryLine configuration main.recipes
                     , onUpdate = updateEntryLine main.recipes
                     , onDelete = deleteMealEntryLine main.recipes
                     }
@@ -165,7 +166,7 @@ viewMain configuration main =
                         , col [] []
                         , col [] []
                         , col [] []
-                        , col [ stringProperty "span" "2" ] []
+                        , col [ stringProperty "span" "3" ] []
                         ]
                     , thead []
                         [ tr []
@@ -173,7 +174,7 @@ viewMain configuration main =
                             , th [ scope "col" ] [ label [] [ text "Description" ] ]
                             , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Serving size" ] ]
                             , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Servings" ] ]
-                            , th [ colspan 2, scope "colgroup", Style.classes.controlsGroup ] []
+                            , th [ colspan 3, scope "colgroup", Style.classes.controlsGroup ] []
                             ]
                         ]
                     , tbody []
@@ -221,7 +222,7 @@ viewMain configuration main =
                         , tbody []
                             (viewRecipes
                                 |> Paginate.page
-                                |> List.map (viewRecipeLine main.mealEntriesToAdd main.mealEntries)
+                                |> List.map (viewRecipeLine configuration main.mealEntriesToAdd main.mealEntries)
                             )
                         ]
                     , div [ Style.classes.pagination ]
@@ -241,8 +242,8 @@ viewMain configuration main =
             ]
 
 
-viewMealEntryLine : Page.RecipeMap -> MealEntry -> Html Page.LogicMsg
-viewMealEntryLine recipeMap mealEntry =
+viewMealEntryLine : Configuration -> Page.RecipeMap -> MealEntry -> Html Page.LogicMsg
+viewMealEntryLine configuration recipeMap mealEntry =
     let
         editMsg =
             Page.EnterEditMealEntry mealEntry.id |> onClick
@@ -251,6 +252,7 @@ viewMealEntryLine recipeMap mealEntry =
         { controls =
             [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
             , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.RequestDeleteMealEntry mealEntry.id) ] [ text "Delete" ] ]
+            , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration mealEntry.recipeId ]
             ]
         , onClick = [ editMsg ]
         , recipeMap = recipeMap
@@ -344,8 +346,8 @@ recipeInfo recipeMap recipeId attributes =
     ]
 
 
-viewRecipeLine : Page.AddMealEntriesMap -> Page.MealEntryStateMap -> Recipe -> Html Page.LogicMsg
-viewRecipeLine mealEntriesToAdd mealEntries recipe =
+viewRecipeLine : Configuration -> Page.AddMealEntriesMap -> Page.MealEntryStateMap -> Recipe -> Html Page.LogicMsg
+viewRecipeLine configuration mealEntriesToAdd mealEntries recipe =
     let
         addMsg =
             Page.AddRecipe recipe.id
@@ -369,6 +371,7 @@ viewRecipeLine mealEntriesToAdd mealEntries recipe =
                     [ td [ Style.classes.editable, Style.classes.numberCell ] []
                     , td [ Style.classes.controls ] []
                     , td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick selectMsg ] [ text "Select" ] ]
+                    , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration recipe.id ]
                     ]
 
                 Just mealEntryToAdd ->

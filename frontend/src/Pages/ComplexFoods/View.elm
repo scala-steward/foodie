@@ -1,5 +1,7 @@
 module Pages.ComplexFoods.View exposing (..)
 
+import Addresses.Frontend
+import Api.Auxiliary exposing (RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
@@ -17,6 +19,8 @@ import Pages.ComplexFoods.Page as Page
 import Pages.ComplexFoods.Pagination as Pagination
 import Pages.Util.DictListUtil as DictListUtil
 import Pages.Util.HtmlUtil as HtmlUtil
+import Pages.Util.Links as Links
+import Pages.Util.NavigationUtil as NavigationUtil
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
@@ -50,7 +54,7 @@ viewMain configuration main =
         let
             viewComplexFoodState =
                 Editing.unpack
-                    { onView = viewComplexFoodLine main.recipes
+                    { onView = viewComplexFoodLine configuration main.recipes
                     , onUpdate = updateComplexFoodLine
                     , onDelete = deleteComplexFoodLine main.recipes
                     }
@@ -99,14 +103,14 @@ viewMain configuration main =
                         [ col [] []
                         , col [] []
                         , col [] []
-                        , col [ stringProperty "span" "2" ] []
+                        , col [ stringProperty "span" "4" ] []
                         ]
                     , thead []
                         [ tr [ Style.classes.tableHeader ]
                             [ th [ scope "col" ] [ label [] [ text "Name" ] ]
                             , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Amount in g" ] ]
                             , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Amount in ml" ] ]
-                            , th [ colspan 2, scope "colgroup", Style.classes.controlsGroup ] []
+                            , th [ colspan 4, scope "colgroup", Style.classes.controlsGroup ] []
                             ]
                         ]
                     , tbody []
@@ -139,20 +143,20 @@ viewMain configuration main =
                             [ col [] []
                             , col [] []
                             , col [] []
-                            , col [ stringProperty "span" "2" ] []
+                            , col [ stringProperty "span" "3" ] []
                             ]
                         , thead []
                             [ tr [ Style.classes.tableHeader ]
                                 [ th [ scope "col" ] [ label [] [ text "Name" ] ]
                                 , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text amountGrams ] ]
                                 , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text amountMillilitres ] ]
-                                , th [ colspan 2, scope "colgroup", Style.classes.controlsGroup ] []
+                                , th [ colspan 3, scope "colgroup", Style.classes.controlsGroup ] []
                                 ]
                             ]
                         , tbody []
                             (viewRecipes
                                 |> Paginate.page
-                                |> List.map (viewRecipeLine main.complexFoodsToCreate main.complexFoods)
+                                |> List.map (viewRecipeLine configuration main.complexFoodsToCreate main.complexFoods)
                             )
                         ]
                     , div [ Style.classes.pagination ]
@@ -172,8 +176,8 @@ viewMain configuration main =
             ]
 
 
-viewComplexFoodLine : Page.RecipeMap -> ComplexFood -> Html Page.LogicMsg
-viewComplexFoodLine recipeMap complexFood =
+viewComplexFoodLine : Configuration -> Page.RecipeMap -> ComplexFood -> Html Page.LogicMsg
+viewComplexFoodLine configuration recipeMap complexFood =
     let
         editMsg =
             Page.EnterEditComplexFood complexFood.recipeId |> onClick
@@ -182,6 +186,8 @@ viewComplexFoodLine recipeMap complexFood =
         { controls =
             [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
             , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.RequestDeleteComplexFood complexFood.recipeId) ] [ text "Delete" ] ]
+            , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration complexFood.recipeId ]
+            , td [ Style.classes.controls ] [ NavigationUtil.recipeNutrientsLinkButton configuration complexFood.recipeId ]
             ]
         , onClick = [ editMsg ]
         , recipeMap = recipeMap
@@ -281,8 +287,8 @@ updateComplexFoodLine complexFood complexFoodClientInput =
         ]
 
 
-viewRecipeLine : Page.CreateComplexFoodsMap -> Page.ComplexFoodStateMap -> Recipe -> Html Page.LogicMsg
-viewRecipeLine complexFoodsToCreate complexFoods recipe =
+viewRecipeLine : Configuration -> Page.CreateComplexFoodsMap -> Page.ComplexFoodStateMap -> Recipe -> Html Page.LogicMsg
+viewRecipeLine configuration complexFoodsToCreate complexFoods recipe =
     let
         createMsg =
             Page.CreateComplexFood recipe.id
@@ -308,8 +314,9 @@ viewRecipeLine complexFoodsToCreate complexFoods recipe =
                 Nothing ->
                     [ td [ Style.classes.editable, Style.classes.numberCell ] []
                     , td [ Style.classes.editable, Style.classes.numberCell ] []
-                    , td [ Style.classes.controls ] []
                     , td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick selectMsg ] [ text "Select" ] ]
+                    , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration recipe.id ]
+                    , td [ Style.classes.controls ] [ NavigationUtil.recipeNutrientsLinkButton configuration recipe.id ]
                     ]
 
                 Just complexFoodToAdd ->

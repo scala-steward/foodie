@@ -1,6 +1,5 @@
 module Pages.Statistics.Meal.Search.View exposing (view)
 
-import Addresses.Frontend
 import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.Meal exposing (Meal)
 import Configuration exposing (Configuration)
@@ -12,7 +11,7 @@ import Pages.Statistics.Meal.Search.Pagination as Pagination
 import Pages.Statistics.StatisticsView as StatisticsView
 import Pages.Util.DateUtil as DateUtil
 import Pages.Util.HtmlUtil as HtmlUtil
-import Pages.Util.Links as Links
+import Pages.Util.NavigationUtil as NavigationUtil
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil exposing (Page(..))
@@ -56,6 +55,7 @@ viewMain configuration main =
                                     || filterOn (v.date |> DateUtil.toString)
                             )
                         |> List.sortBy (.date >> DateUtil.toString)
+                        |> List.reverse
                         |> ViewUtil.paginate
                             { pagination =
                                 Page.lenses.main.pagination
@@ -115,10 +115,7 @@ viewMealLine configuration meal =
         , td [ Style.classes.editable ]
             [ label [] [ text <| Maybe.withDefault "" <| meal.name ] ]
         , td [ Style.classes.controls ]
-            [ Links.linkButton
-                { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsMealSelect.address <| meal.id
-                , attributes = [ Style.classes.button.nutrients ]
-                , children = [ text "Nutrients" ]
-                }
-            ]
+            [ NavigationUtil.mealNutrientsLinkButton configuration meal.id ]
+        , td [ Style.classes.controls ]
+            [ NavigationUtil.mealEditorLinkButton configuration meal.id ]
         ]
