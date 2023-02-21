@@ -55,6 +55,7 @@ viewMain configuration main =
                                     || filterOn (v.date |> DateUtil.toString)
                             )
                         |> List.sortBy (.date >> DateUtil.toString)
+                        |> List.reverse
                         |> ViewUtil.paginate
                             { pagination =
                                 Page.lenses.main.pagination
