@@ -35,7 +35,7 @@ class ApplicationModule extends play.api.inject.Module {
       bind[ComplexFoodService].to[services.complex.food.Live],
       bind[MealService.Companion].to[services.meal.Live.Companion],
       bind[MealService].to[services.meal.Live],
-      bind[NutrientService.Companion].toInstance(services.nutrient.Live.Companion),
+      bind[NutrientService.Companion].to[services.nutrient.Live.Companion],
       bind[NutrientService].to[services.nutrient.Live],
       bind[StatsService.Companion].to[services.stats.Live.Companion],
       bind[StatsService].to[services.stats.Live],

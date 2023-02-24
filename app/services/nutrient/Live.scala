@@ -1,8 +1,6 @@
 package services.nutrient
 
-import cats.Applicative
 import cats.data.OptionT
-import cats.syntax.contravariantSemigroupal._
 import cats.syntax.traverse._
 import db.generated.Tables
 import db.{ FoodId, MeasureId }
@@ -18,7 +16,8 @@ import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 
 import javax.inject.Inject
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.duration.Duration
+import scala.concurrent.{ Await, ExecutionContext, Future }
 
 class Live @Inject() (
     override protected val dbConfigProvider: DatabaseConfigProvider,
@@ -34,7 +33,47 @@ class Live @Inject() (
 
 object Live {
 
-  object Companion extends NutrientService.Companion {
+  class Companion @Inject() (override protected val dbConfigProvider: DatabaseConfigProvider)
+      extends NutrientService.Companion
+      with HasDatabaseConfigProvider[PostgresProfile] {
+
+    // TODO: Remove print statements
+
+    // TODO: Handle injection better
+    private val allNutrientMaps: Map[FoodId, NutrientMap] = {
+      import scala.concurrent.ExecutionContext.Implicits.global
+      pprint.pprintln("Start computing all nutrient maps")
+      val start = System.currentTimeMillis()
+      val action = for {
+        allNutrientNames   <- Tables.NutrientName.result
+        allNutrientAmounts <- Tables.NutrientAmount.result
+      } yield {
+        val byNutrientId   = allNutrientNames.map(n => n.nutrientNameId -> n).toMap
+        val byNutrientCode = allNutrientNames.map(n => n.nutrientCode -> n).toMap
+
+        allNutrientAmounts
+          .groupBy(na => na.foodId)
+          .map { case (foodId, amounts) =>
+            val typedFoodId = foodId.transformInto[FoodId]
+            typedFoodId -> amounts.flatMap { nutrientAmount =>
+              byNutrientId
+                .get(nutrientAmount.nutrientId)
+                .orElse(byNutrientCode.get(nutrientAmount.nutrientId))
+                .map(name =>
+                  name.transformInto[Nutrient] -> AmountEvaluation.embed(nutrientAmount.nutrientValue, typedFoodId)
+                )
+            }.toMap
+          }
+      }
+
+      val future = db
+        .run(action)
+
+      val finished = Await.result(future, Duration.Inf)
+      val end      = System.currentTimeMillis()
+      pprint.pprintln(s"Computing all nutrient maps took ${end - start}ms")
+      finished
+    }
 
     override def conversionFactor(
         foodId: FoodId,
@@ -89,37 +128,10 @@ object Live {
       Tables.NutrientName.result
         .map(_.map(_.transformInto[Nutrient]))
 
-    private def getNutrient(
-        idOrCode: Int
-    )(implicit ec: ExecutionContext): DBIO[Option[Nutrient]] =
-      OptionT(
-        Tables.NutrientName
-          .filter(n => n.nutrientNameId === idOrCode || n.nutrientCode === idOrCode)
-          .result
-          .headOption: DBIO[Option[Tables.NutrientNameRow]]
-      )
-        .map(_.transformInto[Nutrient])
-        .value
-
     private def nutrientBaseOf(
         foodId: FoodId
-    )(implicit
-        ec: ExecutionContext
     ): DBIO[NutrientMap] =
-      for {
-        nutrientAmounts <-
-          Tables.NutrientAmount
-            .filter(_.foodId === foodId.transformInto[Int])
-            .result
-        pairs <-
-          nutrientAmounts
-            .traverse(n =>
-              (
-                getNutrient(n.nutrientId),
-                Applicative[DBIO].pure(n.nutrientValue)
-              ).mapN((n, a) => n.map(_ -> AmountEvaluation.embed(a, foodId)))
-            )
-      } yield pairs.flatten.toMap
+      DBIO.successful(allNutrientMaps.getOrElse(foodId, Map.empty))
 
     private def hundredGrams(foodId: Int): Tables.ConversionFactorRow =
       Tables.ConversionFactorRow(
