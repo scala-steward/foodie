@@ -76,6 +76,7 @@ object Live {
       finished
     }
 
+    // TODO: Switch value type to only the conversionFactorValue
     private val allConversionFactors: Map[(FoodId, MeasureId), Tables.ConversionFactorRow] = {
       import scala.concurrent.ExecutionContext.Implicits.global
       val action = Tables.ConversionFactor.result
