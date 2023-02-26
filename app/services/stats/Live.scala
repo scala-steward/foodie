@@ -82,7 +82,7 @@ object Live {
         meals <- mealService.allMeals(userId, requestInterval)
         mealIds = meals.map(_.id)
         meals              <- mealIds.traverse(mealService.getMeal(userId, _)).map(_.flatten)
-        mealEntries        <- mealIds.flatTraverse(mealService.getMealEntries(userId, _))
+        mealEntries        <- mealService.getMealEntries(userId, meals.map(_.id))
         nutrientsPerRecipe <- nutrientsOfRecipeIds(userId, mealEntries.map(_.recipeId))
         allNutrients       <- nutrientService.all
       } yield {
@@ -161,7 +161,7 @@ object Live {
         ec: ExecutionContext
     ): DBIO[NutrientAmountMap] =
       for {
-        mealEntries        <- mealService.getMealEntries(userId, mealId)
+        mealEntries        <- mealService.getMealEntries(userId, Seq(mealId))
         nutrientsPerRecipe <- nutrientsOfRecipeIds(userId, mealEntries.map(_.recipeId))
         allNutrients       <- nutrientService.all
       } yield nutrientAmountMapOfMealEntries(mealEntries, nutrientsPerRecipe, allNutrients)
@@ -198,7 +198,7 @@ object Live {
         ec: ExecutionContext
     ): DBIO[Option[BigDecimal]] = {
       val transformer = for {
-        mealEntries <- OptionT.liftF(mealService.getMealEntries(userId, mealId))
+        mealEntries <- OptionT.liftF(mealService.getMealEntries(userId, Seq(mealId)))
         // Warning: Nested 'traverse' - the performance may be lacking.
         weights <- mealEntries.traverse { mealEntry =>
           for {
