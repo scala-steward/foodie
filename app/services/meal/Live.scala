@@ -1,6 +1,5 @@
 package services.meal
 
-import cats.Applicative
 import cats.data.OptionT
 import db.daos.meal.MealKey
 import db.generated.Tables
@@ -50,8 +49,8 @@ class Live @Inject() (
 
   override def deleteMeal(userId: UserId, id: MealId): Future[Boolean] = db.run(companion.deleteMeal(userId, id))
 
-  override def getMealEntries(userId: UserId, id: MealId): Future[Seq[MealEntry]] =
-    db.run(companion.getMealEntries(userId, id))
+  override def getMealEntries(userId: UserId, ids: Seq[MealId]): Future[Seq[MealEntry]] =
+    db.run(companion.getMealEntries(userId, ids))
 
   override def addMealEntry(userId: UserId, mealEntryCreation: MealEntryCreation): Future[ServerError.Or[MealEntry]] =
     db.run(companion.addMealEntry(userId, UUID.randomUUID().transformInto[MealEntryId], mealEntryCreation))
@@ -141,17 +140,17 @@ object Live {
         .delete(MealKey(userId, id))
         .map(_ > 0)
 
-    override def getMealEntries(userId: UserId, id: MealId)(implicit ec: ExecutionContext): DBIO[Seq[MealEntry]] = {
+    override def getMealEntries(userId: UserId, ids: Seq[MealId])(implicit
+        ec: ExecutionContext
+    ): DBIO[Seq[MealEntry]] =
       for {
-        exists <- mealDao.exists(MealKey(userId, id))
+        matchingMeals <- mealDao.allOf(userId, ids)
         mealEntries <-
-          if (exists)
-            mealEntryDao
-              .findAllFor(id)
-              .map(_.map(_.transformInto[MealEntry]))
-          else Applicative[DBIO].pure(List.empty)
+          mealEntryDao
+            // TODO: Reconsider the conversion to and from mealId here, and in the DAO.
+            .findAllFor(matchingMeals.map(_.id.transformInto[MealId]))
+            .map(_.map(_.transformInto[MealEntry]))
       } yield mealEntries
-    }
 
     override def addMealEntry(
         userId: UserId,
