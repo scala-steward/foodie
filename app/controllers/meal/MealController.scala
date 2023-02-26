@@ -98,7 +98,7 @@ class MealController @Inject() (
       mealService
         .getMealEntries(
           request.user.id,
-          id.transformInto[MealId]
+          Seq(id.transformInto[MealId])
         )
         .map(
           _.pipe(_.map(_.transformInto[MealEntry]).asJson)
