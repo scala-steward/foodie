@@ -172,6 +172,14 @@ object DAOTestInstance {
               .toList
           }
 
+        override def allOf(userId: UserId, mealIds: Seq[MealId]): DBIO[Seq[Tables.MealRow]] =
+          fromIO {
+            map.view
+              .filterKeys { key => key.userId == userId && mealIds.contains(key.mealId) }
+              .values
+              .toList
+          }
+
       }
 
     def instanceFrom(contents: Seq[(UserId, Meal)]): db.daos.meal.DAO =
@@ -188,10 +196,10 @@ object DAOTestInstance {
         contents
       ) with db.daos.mealEntry.DAO {
 
-        override def findAllFor(mealId: MealId): DBIO[Seq[Tables.MealEntryRow]] =
+        override def findAllFor(mealIds: Seq[MealId]): DBIO[Seq[Tables.MealEntryRow]] =
           fromIO {
             map.values
-              .filter(_.mealId.transformInto[MealId] == mealId)
+              .filter(meal => mealIds.contains(meal.mealId.transformInto[MealId]))
               .toList
           }
 
