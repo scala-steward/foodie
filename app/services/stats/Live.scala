@@ -82,7 +82,7 @@ object Live {
         meals <- mealService.allMeals(userId, requestInterval)
         mealIds = meals.map(_.id)
         meals              <- mealIds.traverse(mealService.getMeal(userId, _)).map(_.flatten)
-        mealEntries        <- mealService.getMealEntries(userId, meals.map(_.id))
+        mealEntries        <- mealService.getMealEntries(userId, mealIds)
         nutrientsPerRecipe <- nutrientsOfRecipeIds(userId, mealEntries.map(_.recipeId))
         allNutrients       <- nutrientService.all
       } yield {
