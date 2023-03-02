@@ -1,6 +1,5 @@
 package services.nutrient
 
-import cats.data.OptionT
 import cats.syntax.traverse._
 import db.generated.Tables
 import db.{ FoodId, MeasureId }
@@ -38,16 +37,13 @@ object Live {
     )(implicit
         ec: ExecutionContext
     ): DBIO[BigDecimal] =
-      OptionT
-        .fromOption[DBIO](
-          fullTableConstants.allConversionFactors
-            .get((foodId, measureId))
-        )
+      fullTableConstants.allConversionFactors
+        .get((foodId, measureId))
         .orElse {
           val specialized = hundredGrams(foodId)
-          OptionT.when(measureId.transformInto[Int] == specialized.measureId)(specialized.conversionFactorValue)
+          Option.when(measureId.transformInto[Int] == specialized.measureId)(specialized.conversionFactorValue)
         }
-        .getOrElseF(DBIO.failed(DBError.Nutrient.ConversionFactorNotFound))
+        .fold(DBIO.failed(DBError.Nutrient.ConversionFactorNotFound): DBIO[BigDecimal])(DBIO.successful)
 
     override def nutrientsOfFood(
         foodId: FoodId,
