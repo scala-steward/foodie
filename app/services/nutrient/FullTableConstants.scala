@@ -1,15 +1,15 @@
 package services.nutrient
 
-import db.{ FoodId, MeasureId }
 import db.generated.Tables
+import db.{ FoodId, MeasureId }
+import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
 import utils.TransformerUtils.Implicits._
-import io.scalaland.chimney.dsl._
 
 import javax.inject.{ Inject, Singleton }
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 import scala.concurrent.{ Await, ExecutionContext }
 
 @Singleton
@@ -18,12 +18,8 @@ class FullTableConstants @Inject() (
 )(implicit executionContext: ExecutionContext)
     extends HasDatabaseConfigProvider[PostgresProfile] {
 
-  // TODO: Remove print statements
-
-  val allNutrientMaps: Map[FoodId, NutrientMap] = {
-    pprint.pprintln("Start computing all nutrient maps")
-    val start = System.currentTimeMillis()
-    val action = for {
+  val allNutrientMaps: Map[FoodId, NutrientMap] = compute {
+    for {
       allNutrientNames   <- Tables.NutrientName.result
       allNutrientAmounts <- Tables.NutrientAmount.result
     } yield {
@@ -44,38 +40,23 @@ class FullTableConstants @Inject() (
           }.toMap
         }
     }
-
-    val future = db
-      .run(action)
-
-    // TODO: Set sensible timeout
-    val finished = Await.result(future, Duration.Inf)
-    val end      = System.currentTimeMillis()
-    pprint.pprintln(s"Computing all nutrient maps took ${end - start}ms")
-    finished
   }
 
-  val allConversionFactors: Map[(FoodId, MeasureId), BigDecimal] = {
-    val action = Tables.ConversionFactor.result
+  val allConversionFactors: Map[(FoodId, MeasureId), BigDecimal] = compute {
+    Tables.ConversionFactor.result
       .map {
         _.map(row =>
           (row.foodId.transformInto[FoodId], row.measureId.transformInto[MeasureId]) -> row.conversionFactorValue
         ).toMap
       }
-    val future = db
-      .run(action)
-    // TODO: Set sensible timeout
-    Await.result(future, Duration.Inf)
   }
 
-  val allNutrients: Seq[Nutrient] = {
-    val action = Tables.NutrientName.result
+  val allNutrients: Seq[Nutrient] = compute {
+    Tables.NutrientName.result
       .map(_.map(_.transformInto[Nutrient]))
-
-    val future = db
-      .run(action)
-    // TODO: Set sensible timeout
-    Await.result(future, Duration.Inf)
   }
+
+  private def compute[A](action: DBIO[A]): A =
+    Await.result(db.run(action), ConstantsConfiguration.default.timeoutInSeconds.seconds)
 
 }
