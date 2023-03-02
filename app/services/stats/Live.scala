@@ -177,7 +177,7 @@ object Live {
             nutrientService
               .conversionFactor(ingredient.foodId, ingredient.amountUnit.measureId.getOrElse(AmountUnit.hundredGrams))
               .map { conversionFactor =>
-                100 * ingredient.amountUnit.factor * conversionFactor.conversionFactorValue
+                100 * ingredient.amountUnit.factor * conversionFactor
               }: DBIO[BigDecimal]
           }
         }

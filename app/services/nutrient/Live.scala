@@ -4,26 +4,23 @@ import cats.data.OptionT
 import cats.syntax.traverse._
 import db.generated.Tables
 import db.{ FoodId, MeasureId }
-import io.scalaland.chimney.dsl.TransformerOps
+import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
 import services.recipe.{ AmountUnit, Ingredient }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
-import slick.jdbc.PostgresProfile.api._
 import spire.implicits._
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 
 import javax.inject.Inject
-import scala.concurrent.duration.Duration
-import scala.concurrent.{ Await, ExecutionContext, Future }
+import scala.concurrent.{ ExecutionContext, Future }
 
 class Live @Inject() (
     override protected val dbConfigProvider: DatabaseConfigProvider,
     companion: NutrientService.Companion
-)(implicit ec: ExecutionContext)
-    extends NutrientService
+) extends NutrientService
     with HasDatabaseConfigProvider[PostgresProfile] {
 
   override def all: Future[Seq[Nutrient]] =
@@ -33,76 +30,22 @@ class Live @Inject() (
 
 object Live {
 
-  class Companion @Inject() (override protected val dbConfigProvider: DatabaseConfigProvider)
-      extends NutrientService.Companion
-      with HasDatabaseConfigProvider[PostgresProfile] {
-
-    // TODO: Remove print statements
-
-    // TODO: Handle injection better
-    private val allNutrientMaps: Map[FoodId, NutrientMap] = {
-      import scala.concurrent.ExecutionContext.Implicits.global
-      pprint.pprintln("Start computing all nutrient maps")
-      val start = System.currentTimeMillis()
-      val action = for {
-        allNutrientNames   <- Tables.NutrientName.result
-        allNutrientAmounts <- Tables.NutrientAmount.result
-      } yield {
-        val byNutrientId   = allNutrientNames.map(n => n.nutrientNameId -> n).toMap
-        val byNutrientCode = allNutrientNames.map(n => n.nutrientCode -> n).toMap
-
-        allNutrientAmounts
-          .groupBy(na => na.foodId)
-          .map { case (foodId, amounts) =>
-            val typedFoodId = foodId.transformInto[FoodId]
-            typedFoodId -> amounts.flatMap { nutrientAmount =>
-              byNutrientId
-                .get(nutrientAmount.nutrientId)
-                .orElse(byNutrientCode.get(nutrientAmount.nutrientId))
-                .map(name =>
-                  name.transformInto[Nutrient] -> AmountEvaluation.embed(nutrientAmount.nutrientValue, typedFoodId)
-                )
-            }.toMap
-          }
-      }
-
-      val future = db
-        .run(action)
-
-      // TODO: Set sensible timeout
-      val finished = Await.result(future, Duration.Inf)
-      val end      = System.currentTimeMillis()
-      pprint.pprintln(s"Computing all nutrient maps took ${end - start}ms")
-      finished
-    }
-
-    // TODO: Switch value type to only the conversionFactorValue
-    private val allConversionFactors: Map[(FoodId, MeasureId), Tables.ConversionFactorRow] = {
-      import scala.concurrent.ExecutionContext.Implicits.global
-      val action = Tables.ConversionFactor.result
-        .map {
-          _.map(row => (row.foodId.transformInto[FoodId], row.measureId.transformInto[MeasureId]) -> row).toMap
-        }
-      val future = db
-        .run(action)
-      // TODO: Set sensible timeout
-      Await.result(future, Duration.Inf)
-    }
+  class Companion @Inject() (fullTableConstants: FullTableConstants) extends NutrientService.Companion {
 
     override def conversionFactor(
         foodId: FoodId,
         measureId: MeasureId
     )(implicit
         ec: ExecutionContext
-    ): DBIO[Tables.ConversionFactorRow] =
+    ): DBIO[BigDecimal] =
       OptionT
         .fromOption[DBIO](
-          allConversionFactors
+          fullTableConstants.allConversionFactors
             .get((foodId, measureId))
         )
         .orElse {
           val specialized = hundredGrams(foodId)
-          OptionT.when(measureId.transformInto[Int] == specialized.measureId)(specialized)
+          OptionT.when(measureId.transformInto[Int] == specialized.measureId)(specialized.conversionFactorValue)
         }
         .getOrElseF(DBIO.failed(DBError.Nutrient.ConversionFactorNotFound))
 
@@ -117,7 +60,7 @@ object Live {
         conversionFactor <-
           measureId
             .fold(DBIO.successful(BigDecimal(1)): DBIO[BigDecimal])(
-              conversionFactor(foodId, _).map(_.conversionFactorValue)
+              conversionFactor(foodId, _)
             )
       } yield factor *: conversionFactor *: nutrientBaseOf(foodId)
 
@@ -135,14 +78,14 @@ object Live {
         .traverse(nutrientsOfIngredient)
         .map(_.qsum)
 
-    override def all(implicit ec: ExecutionContext): DBIO[Seq[Nutrient]] =
-      Tables.NutrientName.result
-        .map(_.map(_.transformInto[Nutrient]))
+    override val all: DBIO[Seq[Nutrient]] =
+      DBIO.successful(fullTableConstants.allNutrients)
 
     private def nutrientBaseOf(
         foodId: FoodId
     ): NutrientMap =
-      allNutrientMaps.getOrElse(foodId, Map.empty)
+      fullTableConstants.allNutrientMaps
+        .getOrElse(foodId, Map.empty)
 
     private def hundredGrams(foodId: Int): Tables.ConversionFactorRow =
       Tables.ConversionFactorRow(

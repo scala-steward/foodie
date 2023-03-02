@@ -1,6 +1,5 @@
 package services.nutrient
 
-import db.generated.Tables
 import db.{ FoodId, MeasureId }
 import services.recipe.Ingredient
 import slick.dbio.DBIO
@@ -29,9 +28,9 @@ object NutrientService {
     def conversionFactor(
         foodId: FoodId,
         measureId: MeasureId
-    )(implicit ec: ExecutionContext): DBIO[Tables.ConversionFactorRow]
+    )(implicit ec: ExecutionContext): DBIO[BigDecimal]
 
-    def all(implicit ec: ExecutionContext): DBIO[Seq[Nutrient]]
+    def all: DBIO[Seq[Nutrient]]
   }
 
 }
