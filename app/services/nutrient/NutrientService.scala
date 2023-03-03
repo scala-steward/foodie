@@ -13,6 +13,11 @@ trait NutrientService {
 
 object NutrientService {
 
+  case class ConversionFactorKey(
+      foodId: FoodId,
+      measureId: MeasureId
+  )
+
   trait Companion {
 
     def nutrientsOfFood(
@@ -29,6 +34,11 @@ object NutrientService {
         foodId: FoodId,
         measureId: MeasureId
     )(implicit ec: ExecutionContext): DBIO[BigDecimal]
+
+    // TODO: Check usage
+    def conversionFactors(
+        conversionFactorKeys: Seq[ConversionFactorKey]
+    )(implicit ec: ExecutionContext): DBIO[Map[ConversionFactorKey, BigDecimal]]
 
     def all: DBIO[Seq[Nutrient]]
   }
