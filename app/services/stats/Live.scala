@@ -82,8 +82,7 @@ object Live {
       for {
         meals <- mealService.allMeals(userId, requestInterval)
         mealIds = meals.map(_.id)
-        // TODO: Check traverse
-        meals              <- mealIds.traverse(mealService.getMeal(userId, _)).map(_.flatten)
+        meals              <- mealService.getMeals(userId, mealIds)
         mealEntries        <- mealService.getMealEntries(userId, mealIds)
         nutrientsPerRecipe <- nutrientsOfRecipeIds(userId, mealEntries.map(_.recipeId))
         allNutrients       <- nutrientService.all
