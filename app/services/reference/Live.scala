@@ -1,6 +1,5 @@
 package services.reference
 
-import cats.Applicative
 import cats.data.OptionT
 import cats.syntax.traverse._
 import db.daos.referenceMap.ReferenceMapKey
@@ -84,7 +83,7 @@ class Live @Inject() (
     db.run(companion.delete(userId, referenceMapId))
 
   override def allReferenceEntries(userId: UserId, referenceMapId: ReferenceMapId): Future[List[ReferenceEntry]] =
-    db.run(companion.allReferenceEntries(userId, referenceMapId))
+    db.run(companion.allReferenceEntries(userId, Seq(referenceMapId)))
 
   override def addReferenceEntry(
       userId: UserId,
@@ -136,13 +135,20 @@ object Live {
         referenceMapId: ReferenceMapId
     )(implicit ec: ExecutionContext): DBIO[Option[ReferenceNutrientMap]] =
       for {
-        referenceEntries <- allReferenceEntries(userId, referenceMapId)
+        referenceEntries <- allReferenceEntries(userId, Seq(referenceMapId))
       } yield referenceEntries
         .traverse { referenceEntry =>
           nutrientNameByCode(referenceEntry.nutrientCode)
             .map(_ -> referenceEntry.amount)
         }
         .map(_.toMap)
+
+    override def getReferenceNutrientsMaps(
+        userId: UserId,
+        referenceMapIds: Seq[ReferenceMapId]
+    )(implicit
+        ec: ExecutionContext
+    ): DBIO[Seq[ReferenceNutrientMap]] = ???
 
     override def getReferenceMap(userId: UserId, referenceMapId: ReferenceMapId)(implicit
         ec: ExecutionContext
@@ -189,17 +195,16 @@ object Live {
         .delete(ReferenceMapKey(userId, referenceMapId))
         .map(_ > 0)
 
-    override def allReferenceEntries(userId: UserId, referenceMapId: ReferenceMapId)(implicit
+    override def allReferenceEntries(userId: UserId, referenceMapIds: Seq[ReferenceMapId])(implicit
         ec: ExecutionContext
     ): DBIO[List[ReferenceEntry]] =
       for {
-        exists <- referenceMapDao.exists(ReferenceMapKey(userId, referenceMapId))
+        matchingReferenceMaps <- referenceMapDao.allOf(userId, referenceMapIds)
         referenceEntries <-
-          if (exists)
-            referenceMapEntryDao
-              .findAllFor(referenceMapId)
-              .map(_.map(_.transformInto[ReferenceEntry]).toList)
-          else Applicative[DBIO].pure(List.empty)
+          referenceMapEntryDao
+            // TODO: Reconsider the conversion to and from ReferenceMapId here, and in the DAO.
+            .findAllFor(matchingReferenceMaps.map(_.id.transformInto[ReferenceMapId]))
+            .map(_.map(_.transformInto[ReferenceEntry]).toList)
       } yield referenceEntries
 
     override def addReferenceEntry(

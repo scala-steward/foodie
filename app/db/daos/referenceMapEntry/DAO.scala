@@ -12,7 +12,7 @@ trait DAO extends DAOActions[Tables.ReferenceEntryRow, ReferenceMapEntryKey] {
 
   override def keyOf: Tables.ReferenceEntryRow => ReferenceMapEntryKey = ReferenceMapEntryKey.of
 
-  def findAllFor(referenceMapId: ReferenceMapId): DBIO[Seq[Tables.ReferenceEntryRow]]
+  def findAllFor(referenceMapIds: Seq[ReferenceMapId]): DBIO[Seq[Tables.ReferenceEntryRow]]
 }
 
 object DAO {
@@ -25,10 +25,12 @@ object DAO {
           table.nutrientCode === key.nutrientCode.transformInto[Int]
     ) with DAO {
 
-      override def findAllFor(referenceMapId: ReferenceMapId): DBIO[Seq[Tables.ReferenceEntryRow]] =
+      override def findAllFor(referenceMapIds: Seq[ReferenceMapId]): DBIO[Seq[Tables.ReferenceEntryRow]] = {
+        val untypedIds = referenceMapIds.map(_.transformInto[UUID])
         Tables.ReferenceEntry
-          .filter(_.referenceMapId === referenceMapId.transformInto[UUID])
+          .filter(_.referenceMapId.inSetBind(untypedIds))
           .result
+      }
 
     }
 

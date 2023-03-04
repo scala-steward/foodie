@@ -1,7 +1,7 @@
 package db.daos.referenceMap
 
 import db.generated.Tables
-import db.{ DAOActions, UserId }
+import db.{DAOActions, ReferenceMapId, UserId}
 import io.scalaland.chimney.dsl._
 import slick.jdbc.PostgresProfile.api._
 import utils.TransformerUtils.Implicits._
@@ -13,6 +13,8 @@ trait DAO extends DAOActions[Tables.ReferenceMapRow, ReferenceMapKey] {
   override val keyOf: Tables.ReferenceMapRow => ReferenceMapKey = ReferenceMapKey.of
 
   def findAllFor(userId: UserId): DBIO[Seq[Tables.ReferenceMapRow]]
+
+  def allOf(userId: UserId, referenceMapIds: Seq[ReferenceMapId]): DBIO[Seq[Tables.ReferenceMapRow]]
 }
 
 object DAO {
@@ -28,6 +30,18 @@ object DAO {
         Tables.ReferenceMap
           .filter(_.userId === userId.transformInto[UUID])
           .result
+
+      override def allOf(
+          userId: UserId,
+          referenceMapIds: Seq[ReferenceMapId]
+      ): DBIO[Seq[Tables.ReferenceMapRow]] = {
+        val untypedIds = referenceMapIds.map(_.transformInto[UUID])
+        Tables.ReferenceMap
+          .filter(referenceMap =>
+            referenceMap.userId === userId.transformInto[UUID] && referenceMap.id.inSetBind(untypedIds)
+          )
+          .result
+      }
 
     }
 
