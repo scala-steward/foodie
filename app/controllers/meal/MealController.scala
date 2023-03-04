@@ -40,17 +40,20 @@ class MealController @Inject() (
             .pipe(_.asJson)
             .pipe(Ok(_))
         )
+        .recover(errorHandler)
     }
 
   def get(id: UUID): Action[AnyContent] =
     userAction.async { request =>
-      OptionT(mealService.getMeal(request.user.id, id.transformInto[MealId])).fold(
-        NotFound(ErrorContext.Meal.NotFound.asServerError.asJson): Result
-      )(
-        _.pipe(_.transformInto[Meal])
-          .pipe(_.asJson)
-          .pipe(Ok(_))
-      )
+      OptionT(mealService.getMeal(request.user.id, id.transformInto[MealId]))
+        .fold(
+          NotFound(ErrorContext.Meal.NotFound.asServerError.asJson): Result
+        )(
+          _.pipe(_.transformInto[Meal])
+            .pipe(_.asJson)
+            .pipe(Ok(_))
+        )
+        .recover(errorHandler)
     }
 
   def create: Action[MealCreation] =
@@ -65,7 +68,7 @@ class MealController @Inject() (
             .pipe(Ok(_))
         )
         .fold(badRequest, identity)
-        .recover(mealErrorHandler)
+        .recover(errorHandler)
     }
 
   def update: Action[MealUpdate] =
@@ -80,7 +83,7 @@ class MealController @Inject() (
             .pipe(Ok(_))
         )
         .fold(badRequest, identity)
-        .recover(mealErrorHandler)
+        .recover(errorHandler)
     }
 
   def delete(id: UUID): Action[AnyContent] =
@@ -91,6 +94,7 @@ class MealController @Inject() (
           _.pipe(_.asJson)
             .pipe(Ok(_))
         )
+        .recover(errorHandler)
     }
 
   def getMealEntries(id: UUID): Action[AnyContent] =
@@ -104,7 +108,7 @@ class MealController @Inject() (
           _.pipe(_.map(_.transformInto[MealEntry]).asJson)
             .pipe(Ok(_))
         )
-        .recover(mealErrorHandler)
+        .recover(errorHandler)
     }
 
   def addMealEntry: Action[MealEntryCreation] =
@@ -121,7 +125,7 @@ class MealController @Inject() (
             .pipe(_.asJson)
             .pipe(Ok(_))
         )
-        .recover(mealErrorHandler)
+        .recover(errorHandler)
     }
 
   def updateMealEntry: Action[MealEntryUpdate] =
@@ -138,7 +142,7 @@ class MealController @Inject() (
             .pipe(_.asJson)
             .pipe(Ok(_))
         )
-        .recover(mealErrorHandler)
+        .recover(errorHandler)
     }
 
   def deleteMealEntry(id: UUID): Action[AnyContent] =
@@ -149,12 +153,13 @@ class MealController @Inject() (
           _.pipe(_.asJson)
             .pipe(Ok(_))
         )
+        .recover(errorHandler)
     }
 
   private def badRequest(serverError: ServerError): Result =
     BadRequest(serverError.asJson)
 
-  private def mealErrorHandler: PartialFunction[Throwable, Result] = { case error =>
+  private def errorHandler: PartialFunction[Throwable, Result] = { case error =>
     val context = error match {
       case DBError.Meal.NotFound =>
         ErrorContext.Meal.NotFound

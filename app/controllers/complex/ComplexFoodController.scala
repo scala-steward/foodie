@@ -35,6 +35,7 @@ class ComplexFoodController @Inject() (
             .pipe(_.asJson)
             .pipe(Ok(_))
         )
+        .recover(errorHandler)
     }
 
   def get(recipeId: UUID): Action[AnyContent] =
@@ -48,6 +49,7 @@ class ComplexFoodController @Inject() (
               .pipe(Ok(_))
           )
         )
+        .recover(errorHandler)
     }
 
   def create: Action[ComplexFoodIncoming] =

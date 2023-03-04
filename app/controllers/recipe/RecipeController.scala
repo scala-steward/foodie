@@ -35,16 +35,19 @@ class RecipeController @Inject() (
             .pipe(_.asJson)
             .pipe(Ok(_))
         )
+        .recover(errorHandler)
     }
 
   // TODO: Consider allowing specialized search instead of delivering all foods at once.
   def getFoods: Action[AnyContent] =
     userAction.async {
-      recipeService.allFoods.map(
-        _.map(_.transformInto[Food])
-          .pipe(_.asJson)
-          .pipe(Ok(_))
-      )
+      recipeService.allFoods
+        .map(
+          _.map(_.transformInto[Food])
+            .pipe(_.asJson)
+            .pipe(Ok(_))
+        )
+        .recover(errorHandler)
     }
 
   def getFood(foodId: Int): Action[AnyContent] =
@@ -58,7 +61,7 @@ class RecipeController @Inject() (
         _.pipe(_.transformInto[FoodInfo])
           .pipe(_.asJson)
           .pipe(Ok(_))
-      )
+      ).recover(errorHandler)
     }
 
   def getRecipes: Action[AnyContent] =
@@ -70,17 +73,20 @@ class RecipeController @Inject() (
             .pipe(_.asJson)
             .pipe(Ok(_))
         )
+        .recover(errorHandler)
     }
 
   def get(id: UUID): Action[AnyContent] =
     userAction.async { request =>
-      OptionT(recipeService.getRecipe(request.user.id, id.transformInto[RecipeId])).fold(
-        NotFound(ErrorContext.Recipe.NotFound.asServerError.asJson): Result
-      )(
-        _.pipe(_.transformInto[Recipe])
-          .pipe(_.asJson)
-          .pipe(Ok(_))
-      )
+      OptionT(recipeService.getRecipe(request.user.id, id.transformInto[RecipeId]))
+        .fold(
+          NotFound(ErrorContext.Recipe.NotFound.asServerError.asJson): Result
+        )(
+          _.pipe(_.transformInto[Recipe])
+            .pipe(_.asJson)
+            .pipe(Ok(_))
+        )
+        .recover(errorHandler)
     }
 
   def create: Action[RecipeCreation] =
@@ -121,6 +127,7 @@ class RecipeController @Inject() (
           _.pipe(_.asJson)
             .pipe(Ok(_))
         )
+        .recover(errorHandler)
     }
 
   def getIngredients(id: UUID): Action[AnyContent] =
@@ -162,6 +169,7 @@ class RecipeController @Inject() (
           _.pipe(_.asJson)
             .pipe(Ok(_))
         )
+        .recover(errorHandler)
     }
 
   def updateIngredient: Action[IngredientUpdate] =
@@ -220,6 +228,7 @@ class RecipeController @Inject() (
           _.pipe(_.asJson)
             .pipe(Ok(_))
         )
+        .recover(errorHandler)
     }
 
   def updateComplexIngredient(recipeId: UUID): Action[ComplexIngredient] =
