@@ -85,6 +85,22 @@ object Live {
       transformer.value
     }
 
+    override def getAll(userId: UserId, recipeIds: Seq[RecipeId])(implicit
+        ec: ExecutionContext
+    ): DBIO[Seq[ComplexFood]] =
+      for {
+        recipes         <- recipeService.getRecipes(userId, recipeIds)
+        complexFoodRows <- dao.findByKeys(recipeIds)
+      } yield {
+        val complexFoodMap = complexFoodRows.map(complexFood => complexFood.recipeId -> complexFood).toMap
+
+        recipes.flatMap { recipe =>
+          complexFoodMap
+            .get(recipe.id.transformInto[UUID])
+            .map(complexFoodRow => (complexFoodRow, recipe).transformInto[ComplexFood])
+        }
+      }
+
     override def create(userId: UserId, complexFood: ComplexFoodIncoming)(implicit
         ec: ExecutionContext
     ): DBIO[ComplexFood] = {
