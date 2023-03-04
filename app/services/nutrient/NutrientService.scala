@@ -46,7 +46,6 @@ object NutrientService {
         measureId: MeasureId
     )(implicit ec: ExecutionContext): DBIO[BigDecimal]
 
-    // TODO: Check usage
     def conversionFactors(
         conversionFactorKeys: Seq[ConversionFactorKey]
     )(implicit ec: ExecutionContext): DBIO[Map[ConversionFactorKey, BigDecimal]]
