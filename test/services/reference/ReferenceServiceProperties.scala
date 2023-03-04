@@ -19,7 +19,8 @@ object ReferenceServiceProperties extends Properties("Reference service properti
   ): services.reference.Live.Companion =
     new services.reference.Live.Companion(
       referenceMapDao = DAOTestInstance.ReferenceMap.instanceFrom(referenceMapContents),
-      referenceMapEntryDao = DAOTestInstance.ReferenceMapEntry.instanceFrom(referenceMapEntryContents)
+      referenceMapEntryDao = DAOTestInstance.ReferenceMapEntry.instanceFrom(referenceMapEntryContents),
+      fullTableConstants = DBTestUtil.fullTableConstants
     )
 
   def referenceMapServiceWith(
