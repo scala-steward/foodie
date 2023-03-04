@@ -265,7 +265,6 @@ object Live {
           nutrients          <- nutrientService.nutrientsOfIngredients(ingredients)
           recipeNutrientMapsOfComplexNutrients <-
             complexIngredients
-              // TODO: Check traverse
               .traverse { complexIngredient =>
                 descend(complexIngredient.complexFoodId)
                   .map(recipeNutrientMap =>
