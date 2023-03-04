@@ -13,10 +13,21 @@ trait NutrientService {
 
 object NutrientService {
 
+  /** The case `measureId = None` means that the unit is "100g", i.e. no conversion is necessary. */
   case class ConversionFactorKey(
       foodId: FoodId,
-      measureId: MeasureId
+      measureId: Option[MeasureId]
   )
+
+  object ConversionFactorKey {
+
+    def of(ingredient: Ingredient): ConversionFactorKey =
+      ConversionFactorKey(
+        ingredient.foodId,
+        ingredient.amountUnit.measureId
+      )
+
+  }
 
   trait Companion {
 

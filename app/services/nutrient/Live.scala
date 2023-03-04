@@ -1,5 +1,6 @@
 package services.nutrient
 
+import cats.data.OptionT
 import cats.syntax.traverse._
 import db.generated.Tables
 import db.{ FoodId, MeasureId }
@@ -10,11 +11,11 @@ import services.recipe.{ AmountUnit, Ingredient }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import spire.implicits._
+import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
-import scala.util.chaining.scalaUtilChainingOps
 
 class Live @Inject() (
     override protected val dbConfigProvider: DatabaseConfigProvider,
@@ -52,18 +53,10 @@ object Live {
 
     override def conversionFactors(
         conversionFactorKeys: Seq[NutrientService.ConversionFactorKey]
-    )(implicit ec: ExecutionContext): DBIO[Map[NutrientService.ConversionFactorKey, BigDecimal]] = {
-      val (errors, factors) = conversionFactorKeys.partitionMap { key =>
-        fullTableConstants.allConversionFactors
-          .get((key.foodId, key.measureId))
-          .map(key -> _)
-          .toRight(())
-      }
-      // TODO: Do we really want to fail entirely?
-      if (errors.isEmpty)
-        DBIO.successful(factors.toMap)
-      else DBIO.failed(DBError.Nutrient.ConversionFactorNotFound)
-    }
+    )(implicit ec: ExecutionContext): DBIO[Map[NutrientService.ConversionFactorKey, BigDecimal]] =
+      OptionT
+        .fromOption[DBIO](conversionFactorsOf(conversionFactorKeys))
+        .getOrElseF(DBIO.failed(DBError.Nutrient.ConversionFactorNotFound))
 
     override def nutrientsOfFood(
         foodId: FoodId,
@@ -91,29 +84,35 @@ object Live {
           factor *: conversionFactor *: nutrientBaseOf(foodId)
         }
 
-    // TODO: Check usage
-    private def conversionFactorsOf(conversionFactorKeys: Seq[NutrientService.ConversionFactorKey]) =
-      conversionFactorKeys.flatMap { key =>
-        fullTableConstants.allConversionFactors
-          .get((key.foodId, key.measureId))
-          .map(key -> _)
-      }.toMap
+    private def conversionFactorsOf(
+        conversionFactorKeys: Seq[NutrientService.ConversionFactorKey]
+    ): Option[Map[NutrientService.ConversionFactorKey, BigDecimal]] =
+      conversionFactorKeys
+        .traverse { key =>
+          key.measureId.fold(Option(key -> BigDecimal(1))) { measureId =>
+            fullTableConstants.allConversionFactors
+              .get((key.foodId, measureId))
+              .map(key -> _)
+          }
+        }
+        .map(_.toMap)
 
     override def nutrientsOfIngredients(ingredients: Seq[Ingredient])(implicit
         ec: ExecutionContext
     ): DBIO[NutrientMap] =
-      ingredients
-        .traverse { ingredient =>
-          nutrientsOfFoodNoEffect(
-            foodId = ingredient.foodId,
-            measureId = ingredient.amountUnit.measureId,
-            factor = ingredient.amountUnit.factor
-          )
+      OptionT
+        .fromOption[DBIO] {
+          ingredients
+            .traverse { ingredient =>
+              nutrientsOfFoodNoEffect(
+                foodId = ingredient.foodId,
+                measureId = ingredient.amountUnit.measureId,
+                factor = ingredient.amountUnit.factor
+              )
+            }
+            .map(_.qsum)
         }
-        .fold(DBIO.failed(DBError.Nutrient.ConversionFactorNotFound))(
-          _.pipe(_.qsum)
-            .pipe(DBIO.successful(_))
-        )
+        .getOrElseF(DBIO.failed(DBError.Nutrient.ConversionFactorNotFound))
 
     override val all: DBIO[Seq[Nutrient]] =
       DBIO.successful(fullTableConstants.allNutrients)

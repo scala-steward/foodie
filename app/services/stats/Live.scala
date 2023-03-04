@@ -3,16 +3,17 @@ package services.stats
 import algebra.ring.AdditiveMonoid
 import cats.data.OptionT
 import cats.syntax.traverse._
+import db._
 import db.generated.Tables
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
+import services.common.RequestInterval
 import services.complex.food.ComplexFoodService
 import services.complex.ingredient.ComplexIngredientService
 import services.meal.{ MealEntry, MealService }
+import services.nutrient.NutrientService.ConversionFactorKey
 import services.nutrient.{ AmountEvaluation, Nutrient, NutrientMap, NutrientService }
-import services.recipe.{ AmountUnit, RecipeService }
-import db._
-import services.common.RequestInterval
+import services.recipe.RecipeService
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
@@ -172,13 +173,18 @@ object Live {
       val transformer = for {
         _           <- OptionT(recipeService.getRecipe(userId, recipeId))
         ingredients <- OptionT.liftF(recipeService.getIngredients(userId, recipeId))
-        ingredientWeights <- OptionT.liftF {
+        conversionFactorMap <- OptionT.liftF {
+          nutrientService.conversionFactors(
+            ingredients.map(ConversionFactorKey.of)
+          )
+        }
+        ingredientWeights <- OptionT.fromOption {
           ingredients.traverse { ingredient =>
-            nutrientService
-              .conversionFactor(ingredient.foodId, ingredient.amountUnit.measureId.getOrElse(AmountUnit.hundredGrams))
+            conversionFactorMap
+              .get(ConversionFactorKey.of(ingredient))
               .map { conversionFactor =>
                 100 * ingredient.amountUnit.factor * conversionFactor
-              }: DBIO[BigDecimal]
+              }
           }
         }
         complexIngredients <- OptionT.liftF(complexIngredientService.all(userId, recipeId))
