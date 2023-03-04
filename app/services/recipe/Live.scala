@@ -151,6 +151,14 @@ object Live {
         recipeDao.find(RecipeKey(userId, id))
       ).map(_.transformInto[Recipe]).value
 
+    override def getRecipes(
+        userId: UserId,
+        ids: Seq[RecipeId]
+    )(implicit ec: ExecutionContext): DBIO[Seq[Recipe]] =
+      recipeDao
+        .allOf(userId, ids)
+        .map(_.map(_.transformInto[Recipe]))
+
     override def createRecipe(
         userId: UserId,
         id: RecipeId,
