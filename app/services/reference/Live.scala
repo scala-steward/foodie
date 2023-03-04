@@ -41,19 +41,15 @@ class Live @Inject() (
   override def getReferenceMap(userId: UserId, referenceMapId: ReferenceMapId): Future[Option[ReferenceMap]] =
     db.run(companion.getReferenceMap(userId, referenceMapId))
 
-  // TODO: Remove 'traverse'
   override def allReferenceTrees(userId: UserId): Future[List[ReferenceTree]] = {
     val action = for {
-      referenceMaps <- companion.allReferenceMaps(userId)
-      referenceTrees <- referenceMaps.traverse(referenceMap =>
-        OptionT(
-          companion
-            .getReferenceNutrientsMap(userId, referenceMap.id)
-        )
-          .map(ReferenceTree(referenceMap, _))
-          .value
-      )
-    } yield referenceTrees.flatten.toList
+      referenceMaps                <- companion.allReferenceMaps(userId)
+      nutrientMapsByReferenceMapId <- companion.getReferenceNutrientsMaps(userId, referenceMaps.map(_.id))
+    } yield referenceMaps.flatMap { referenceMap =>
+      nutrientMapsByReferenceMapId.get(referenceMap.id).map {
+        ReferenceTree(referenceMap, _)
+      }
+    }.toList
 
     db.run(action.transactionally)
   }
@@ -84,6 +80,7 @@ class Live @Inject() (
 
   override def allReferenceEntries(userId: UserId, referenceMapId: ReferenceMapId): Future[List[ReferenceEntry]] =
     db.run(companion.allReferenceEntries(userId, Seq(referenceMapId)))
+      .map(_.values.flatten.toList)
 
   override def addReferenceEntry(
       userId: UserId,
@@ -134,21 +131,25 @@ object Live {
         userId: UserId,
         referenceMapId: ReferenceMapId
     )(implicit ec: ExecutionContext): DBIO[Option[ReferenceNutrientMap]] =
-      for {
-        referenceEntries <- allReferenceEntries(userId, Seq(referenceMapId))
-      } yield referenceEntries
-        .traverse { referenceEntry =>
-          nutrientNameByCode(referenceEntry.nutrientCode)
-            .map(_ -> referenceEntry.amount)
-        }
-        .map(_.toMap)
+      getReferenceNutrientsMaps(userId, Seq(referenceMapId))
+        .map(_.get(referenceMapId))
 
     override def getReferenceNutrientsMaps(
         userId: UserId,
         referenceMapIds: Seq[ReferenceMapId]
     )(implicit
         ec: ExecutionContext
-    ): DBIO[Seq[ReferenceNutrientMap]] = ???
+    ): DBIO[Map[ReferenceMapId, ReferenceNutrientMap]] =
+      for {
+        referenceEntries <- allReferenceEntries(userId, referenceMapIds)
+      } yield referenceEntries.flatMap { case (referenceMapId, referenceEntries) =>
+        referenceEntries
+          .traverse(referenceEntry =>
+            nutrientNameByCode(referenceEntry.nutrientCode)
+              .map(_ -> referenceEntry.amount)
+          )
+          .map(referenceValues => referenceMapId -> referenceValues.toMap)
+      }
 
     override def getReferenceMap(userId: UserId, referenceMapId: ReferenceMapId)(implicit
         ec: ExecutionContext
@@ -197,14 +198,24 @@ object Live {
 
     override def allReferenceEntries(userId: UserId, referenceMapIds: Seq[ReferenceMapId])(implicit
         ec: ExecutionContext
-    ): DBIO[List[ReferenceEntry]] =
+    ): DBIO[Map[ReferenceMapId, List[ReferenceEntry]]] =
       for {
         matchingReferenceMaps <- referenceMapDao.allOf(userId, referenceMapIds)
+        typedIds = matchingReferenceMaps.map(_.id.transformInto[ReferenceMapId])
         referenceEntries <-
           referenceMapEntryDao
             // TODO: Reconsider the conversion to and from ReferenceMapId here, and in the DAO.
-            .findAllFor(matchingReferenceMaps.map(_.id.transformInto[ReferenceMapId]))
-            .map(_.map(_.transformInto[ReferenceEntry]).toList)
+            .findAllFor(typedIds)
+            .map { referenceEntryRows =>
+              // If a reference map has no entries, it will not be present in the 'groupBy' result.
+              // Hence, we update the map: If the value is present, then use the value,
+              // otherwise create an empty map.
+              // Note that only those ids are handled that have been previously matched.
+              val preMap = referenceEntryRows.groupBy(_.referenceMapId.transformInto[ReferenceMapId])
+              typedIds.map { id =>
+                id -> preMap.getOrElse(id, Seq.empty).map(_.transformInto[ReferenceEntry]).toList
+              }.toMap
+            }
       } yield referenceEntries
 
     override def addReferenceEntry(
