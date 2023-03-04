@@ -99,6 +99,14 @@ object Live {
         mealDao.find(MealKey(userId, id))
       ).map(_.transformInto[Meal]).value
 
+    override def getMeals(
+        userId: UserId,
+        ids: Seq[MealId]
+    )(implicit ec: ExecutionContext): DBIO[Seq[Meal]] =
+      mealDao
+        .allOf(userId, ids)
+        .map(_.map(_.transformInto[Meal]))
+
     override def createMeal(
         userId: UserId,
         id: MealId,
