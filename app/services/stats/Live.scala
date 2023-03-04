@@ -186,6 +186,7 @@ object Live {
           )
         }
         ingredientWeights <- OptionT.fromOption {
+          // Traverse without asynchronous effect
           ingredients.traverse { ingredient =>
             conversionFactorMap
               .get(ConversionFactorKey.of(ingredient))
@@ -195,10 +196,12 @@ object Live {
           }
         }
         complexIngredients <- OptionT.liftF(complexIngredientService.all(userId, recipeId))
-        // Since 'traverse' is involved, this is quite slow.
-        // TODO: Check traverse
+        complexFoods       <- OptionT.liftF(complexFoodService.getAll(userId, complexIngredients.map(_.complexFoodId)))
+        complexFoodsMap = complexFoods.map(complexFood => complexFood.recipeId -> complexFood).toMap
+        // Traverse without asynchronous effect
         complexIngredientsWeights <- complexIngredients.traverse { complexIngredient =>
-          OptionT(complexFoodService.get(userId, complexIngredient.complexFoodId))
+          OptionT
+            .fromOption(complexFoodsMap.get(complexIngredient.complexFoodId))
             .map { complexFood =>
               complexIngredient.factor * complexFood.amountGrams
             }
