@@ -13,7 +13,7 @@ import services.complex.ingredient.ComplexIngredientService
 import services.meal.{ MealEntry, MealService }
 import services.nutrient.NutrientService.ConversionFactorKey
 import services.nutrient.{ AmountEvaluation, Nutrient, NutrientMap, NutrientService }
-import services.recipe.RecipeService
+import services.recipe.{ Recipe, RecipeService }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
@@ -144,8 +144,15 @@ object Live {
         ec: ExecutionContext
     ): DBIO[Option[NutrientAmountMap]] = {
       val transformer = for {
-        allNutrients      <- OptionT.liftF(nutrientService.all)
-        recipeNutrientMap <- nutrientsOfRecipeT(userId, recipeId, scaleMode)
+        allNutrients <- OptionT.liftF(nutrientService.all)
+        recipeNutrientMap <- OptionT(
+          nutrientsOfRecipes(
+            userId = userId,
+            recipeIds = Seq(recipeId),
+            scaleMode = scaleMode
+          )
+            .map(_.headOption): DBIO[Option[RecipeNutrientMap]]
+        )
       } yield unifyAndCount(
         recipeNutrientMap.nutrientMap,
         totalNumberOfIngredients = recipeNutrientMap.foodIds.size,
@@ -233,22 +240,16 @@ object Live {
         userId: UserId,
         recipeIds: Seq[RecipeId]
     )(implicit ec: ExecutionContext): DBIO[Map[RecipeId, RecipeNutrientMap]] =
-      recipeIds.distinct
-        // TODO: Check traverse
-        .traverse { recipeId =>
-          nutrientsOfRecipeT(userId, recipeId, ScaleMode.Serving)
-            .map(recipeId -> _)
-            .value
-        }
-        .map(_.flatten.toMap)
+      nutrientsOfRecipes(userId, recipeIds.distinct, ScaleMode.Serving)
+        .map(_.map(recipeNutrientMap => recipeNutrientMap.recipe.id -> recipeNutrientMap).toMap)
 
-    private def nutrientsOfRecipeT(
+    private def nutrientsOfRecipes(
         userId: UserId,
-        recipeId: RecipeId,
+        recipeIds: Seq[RecipeId],
         scaleMode: ScaleMode
     )(implicit
         ec: ExecutionContext
-    ): OptionT[DBIO, RecipeNutrientMap] = {
+    ): DBIO[Seq[RecipeNutrientMap]] = {
       case class NutrientsAndFoods(
           nutrientMap: NutrientMap,
           foodIds: Set[FoodId]
@@ -274,9 +275,11 @@ object Live {
         )
 
       for {
-        recipe            <- OptionT(recipeService.getRecipe(userId, recipeId))
-        nutrientsAndFoods <- OptionT.liftF(descend(recipeId))
-      } yield {
+        recipes <- recipeService.getRecipes(userId, recipeIds)
+        allNutrientsAndFoods <- recipes.traverse { recipe =>
+          descend(recipe.id).map(recipe -> _): DBIO[(Recipe, NutrientsAndFoods)]
+        }
+      } yield allNutrientsAndFoods.map { case (recipe, nutrientsAndFoods) =>
         val scale = scaleMode match {
           case ScaleMode.Serving             => recipe.numberOfServings.reciprocal
           case ScaleMode.Unit(definedAmount) => BigDecimal(100) / definedAmount
