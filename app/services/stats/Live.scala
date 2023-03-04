@@ -82,6 +82,7 @@ object Live {
       for {
         meals <- mealService.allMeals(userId, requestInterval)
         mealIds = meals.map(_.id)
+        // TODO: Check traverse
         meals              <- mealIds.traverse(mealService.getMeal(userId, _)).map(_.flatten)
         mealEntries        <- mealService.getMealEntries(userId, mealIds)
         nutrientsPerRecipe <- nutrientsOfRecipeIds(userId, mealEntries.map(_.recipeId))
@@ -189,6 +190,7 @@ object Live {
         }
         complexIngredients <- OptionT.liftF(complexIngredientService.all(userId, recipeId))
         // Since 'traverse' is involved, this is quite slow.
+        // TODO: Check traverse
         complexIngredientsWeights <- complexIngredients.traverse { complexIngredient =>
           OptionT(complexFoodService.get(userId, complexIngredient.complexFoodId))
             .map { complexFood =>
@@ -206,6 +208,7 @@ object Live {
       val transformer = for {
         mealEntries <- OptionT.liftF(mealService.getMealEntries(userId, Seq(mealId)))
         // Warning: Nested 'traverse' - the performance may be lacking.
+        // TODO: Check traverse
         weights <- mealEntries.traverse { mealEntry =>
           for {
             recipe <- OptionT(recipeService.getRecipe(userId, mealEntry.recipeId))
@@ -220,6 +223,7 @@ object Live {
     override def weightOfMeals(userId: UserId, mealIds: Seq[MealId])(implicit ec: ExecutionContext): DBIO[BigDecimal] =
       mealIds
         // Doubly nested 'traverse' - this is likely to scale very poorly.
+        // TODO: Check traverse
         .traverse { mealId =>
           OptionT(weightOfMeal(userId, mealId))
         }
@@ -231,6 +235,7 @@ object Live {
         recipeIds: Seq[RecipeId]
     )(implicit ec: ExecutionContext): DBIO[Map[RecipeId, RecipeNutrientMap]] =
       recipeIds.distinct
+        // TODO: Check traverse
         .traverse { recipeId =>
           nutrientsOfRecipeT(userId, recipeId, ScaleMode.Serving)
             .map(recipeId -> _)
@@ -257,6 +262,7 @@ object Live {
           nutrients          <- nutrientService.nutrientsOfIngredients(ingredients)
           recipeNutrientMapsOfComplexNutrients <-
             complexIngredients
+              // TODO: Check traverse
               .traverse { complexIngredient =>
                 descend(complexIngredient.complexFoodId)
                   .map(recipeNutrientMap =>

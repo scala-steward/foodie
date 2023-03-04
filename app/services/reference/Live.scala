@@ -42,6 +42,7 @@ class Live @Inject() (
   override def getReferenceMap(userId: UserId, referenceMapId: ReferenceMapId): Future[Option[ReferenceMap]] =
     db.run(companion.getReferenceMap(userId, referenceMapId))
 
+  // TODO: Remove 'traverse'
   override def allReferenceTrees(userId: UserId): Future[List[ReferenceTree]] = {
     val action = for {
       referenceMaps <- companion.allReferenceMaps(userId)
@@ -135,6 +136,7 @@ object Live {
     )(implicit ec: ExecutionContext): DBIO[Option[ReferenceNutrientMap]] = {
       val transformer = for {
         referenceEntries <- OptionT.liftF(allReferenceEntries(userId, referenceMapId))
+        // TODO: Check 'traverse'
         referenceEntriesAmounts <-
           referenceEntries
             .traverse { referenceEntry =>

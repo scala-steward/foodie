@@ -108,6 +108,7 @@ object Live {
       ingredientDao: db.daos.ingredient.DAO
   ) extends RecipeService.Companion {
 
+    // TODO: This can be done with a join rather than a traverse
     override def allFoods(implicit ec: ExecutionContext): DBIO[Seq[Food]] =
       for {
         foods <- Tables.FoodName.result
