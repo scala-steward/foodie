@@ -115,7 +115,7 @@ object Live {
         .getOrElseF(DBIO.failed(DBError.Nutrient.ConversionFactorNotFound))
 
     override val all: DBIO[Seq[Nutrient]] =
-      DBIO.successful(fullTableConstants.allNutrients)
+      DBIO.successful(fullTableConstants.allNutrients.values.toSeq)
 
     private def nutrientBaseOf(
         foodId: FoodId

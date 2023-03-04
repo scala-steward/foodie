@@ -1,7 +1,7 @@
 package services.nutrient
 
 import db.generated.Tables
-import db.{ FoodId, MeasureId }
+import db.{ FoodId, MeasureId, NutrientCode }
 import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import slick.jdbc.PostgresProfile
@@ -51,9 +51,14 @@ class FullTableConstants @Inject() (
       }
   }
 
-  val allNutrients: Seq[Nutrient] = compute {
+  val allNutrients: Map[NutrientCode, Nutrient] = compute {
     Tables.NutrientName.result
-      .map(_.map(_.transformInto[Nutrient]))
+      .map {
+        _.map { nutrientName =>
+          val nutrient = nutrientName.transformInto[Nutrient]
+          nutrient.code -> nutrient
+        }.toMap
+      }
   }
 
   private def compute[A](action: DBIO[A]): A =
