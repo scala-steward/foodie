@@ -12,7 +12,8 @@ trait DAO extends DAOActions[Tables.RecipeIngredientRow, IngredientId] {
 
   override val keyOf: Tables.RecipeIngredientRow => IngredientId = _.id.transformInto[IngredientId]
 
-  def findAllFor(recipeId: RecipeId): DBIO[Seq[Tables.RecipeIngredientRow]]
+  def findAllFor(recipeIds: Seq[RecipeId]): DBIO[Seq[Tables.RecipeIngredientRow]]
+
 }
 
 object DAO {
@@ -23,10 +24,12 @@ object DAO {
       (table, key) => table.id === key.transformInto[UUID]
     ) with DAO {
 
-      override def findAllFor(recipeId: RecipeId): DBIO[Seq[Tables.RecipeIngredientRow]] =
+      override def findAllFor(recipeIds: Seq[RecipeId]): DBIO[Seq[Tables.RecipeIngredientRow]] = {
+        val untypedIds = recipeIds.map(_.transformInto[UUID])
         Tables.RecipeIngredient
-          .filter(_.recipeId === recipeId.transformInto[UUID])
+          .filter(_.recipeId.inSetBind(untypedIds))
           .result
+      }
 
     }
 

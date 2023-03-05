@@ -69,6 +69,11 @@ object RecipeService {
         recipeId: RecipeId
     )(implicit ec: ExecutionContext): DBIO[List[Ingredient]]
 
+    def getAllIngredients(
+        userId: UserId,
+        recipeIds: Seq[RecipeId]
+    )(implicit ec: ExecutionContext): DBIO[Map[RecipeId, List[Ingredient]]]
+
     def addIngredient(
         userId: UserId,
         id: IngredientId,

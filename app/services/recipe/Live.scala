@@ -15,6 +15,7 @@ import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
+import utils.collection.MapUtil
 
 import java.util.UUID
 import javax.inject.Inject
@@ -212,10 +213,29 @@ object Live {
         ingredients <-
           if (exists)
             ingredientDao
-              .findAllFor(recipeId)
+              .findAllFor(Seq(recipeId))
               .map(_.map(_.transformInto[Ingredient]).toList)
           else Applicative[DBIO].pure(List.empty)
       } yield ingredients
+
+    override def getAllIngredients(userId: UserId, recipeIds: Seq[RecipeId])(implicit
+        ec: ExecutionContext
+    ): DBIO[Map[RecipeId, List[Ingredient]]] = {
+      for {
+        matchingRecipes <- recipeDao.allOf(userId, recipeIds)
+        typedIds = matchingRecipes.map(_.id.transformInto[RecipeId])
+        // TODO: Reconsider the conversion from and to RecipeId here and in the DAO.
+        allIngredients <- ingredientDao.findAllFor(typedIds)
+      } yield {
+        // GroupBy skips recipes with no entries, hence they are added manually afterwards.
+        val preMap = allIngredients.groupBy(_.recipeId.transformInto[RecipeId])
+        MapUtil
+          .unionWith(preMap, typedIds.map(_ -> Seq.empty).toMap)((x, _) => x)
+          .view
+          .mapValues(_.map(_.transformInto[Ingredient]).toList)
+          .toMap
+      }
+    }
 
     override def addIngredient(
         userId: UserId,
