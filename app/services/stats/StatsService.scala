@@ -19,7 +19,7 @@ trait StatsService {
   def weightOfRecipe(userId: UserId, recipeId: RecipeId): Future[Option[BigDecimal]]
   def weightOfMeal(userId: UserId, mealId: MealId): Future[Option[BigDecimal]]
 
-  def weightOfMeals(userId: UserId, mealIds: Seq[MealId]): Future[BigDecimal]
+  def weightOfMeals(userId: UserId, mealIds: Seq[MealId]): Future[Option[BigDecimal]]
 }
 
 object StatsService {
@@ -43,7 +43,7 @@ object StatsService {
 
     def weightOfMeal(userId: UserId, mealId: MealId)(implicit ec: ExecutionContext): DBIO[Option[BigDecimal]]
 
-    def weightOfMeals(userId: UserId, mealIds: Seq[MealId])(implicit ec: ExecutionContext): DBIO[BigDecimal]
+    def weightOfMeals(userId: UserId, mealIds: Seq[MealId])(implicit ec: ExecutionContext): DBIO[Option[BigDecimal]]
   }
 
 }
