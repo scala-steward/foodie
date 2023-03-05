@@ -60,7 +60,7 @@ viewMain configuration main =
                 main.referenceEntries
                     |> DictList.filter (\_ v -> SearchUtil.search main.referenceEntriesSearchString (v.original.nutrientCode |> nutrientInfo main.nutrients |> .name))
                     |> DictList.toList
-                    |> List.sortBy (\( k, _ ) -> nutrientInfo main.nutrients k |> .unitName |> String.toLower)
+                    |> List.sortBy (\( k, _ ) -> nutrientInfo main.nutrients k |> .name |> String.toLower)
                     |> List.map Tuple.second
                     |> ViewUtil.paginate
                         { pagination = Page.lenses.main.pagination |> Compose.lensWithLens Pagination.lenses.referenceEntries

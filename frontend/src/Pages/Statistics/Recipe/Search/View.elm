@@ -1,6 +1,5 @@
 module Pages.Statistics.Recipe.Search.View exposing (view)
 
-import Addresses.Frontend
 import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.Recipe exposing (Recipe)
 import Configuration exposing (Configuration)
@@ -10,7 +9,7 @@ import Pages.Statistics.Recipe.Search.Page as Page
 import Pages.Statistics.Recipe.Search.Pagination as Pagination
 import Pages.Statistics.StatisticsView as StatisticsView
 import Pages.Util.HtmlUtil as HtmlUtil
-import Pages.Util.Links as Links
+import Pages.Util.NavigationUtil as NavigationUtil
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil exposing (Page(..))
@@ -110,10 +109,7 @@ viewRecipeLine configuration recipe =
         , td [ Style.classes.editable ]
             [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
         , td [ Style.classes.controls ]
-            [ Links.linkButton
-                { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsRecipeSelect.address <| recipe.id
-                , attributes = [ Style.classes.button.nutrients ]
-                , children = [ text "Nutrients" ]
-                }
-            ]
+            [ NavigationUtil.recipeNutrientsLinkButton configuration recipe.id ]
+        , td [ Style.classes.controls ]
+            [ NavigationUtil.recipeEditorLinkButton configuration recipe.id ]
         ]

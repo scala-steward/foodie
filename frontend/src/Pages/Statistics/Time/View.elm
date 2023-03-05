@@ -16,6 +16,7 @@ import Pages.Statistics.Time.Page as Page
 import Pages.Statistics.Time.Pagination as Pagination
 import Pages.Util.DateUtil as DateUtil
 import Pages.Util.Links as Links
+import Pages.Util.NavigationUtil as NavigationUtil
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
@@ -86,13 +87,12 @@ viewMain configuration main =
                                             [ th [] [ label [] [ text "Date" ] ]
                                             , th [] [ label [] [ text "Time" ] ]
                                             , th [] [ label [] [ text "Name" ] ]
-                                            , th [] [ label [] [ text "Description" ] ]
                                             ]
                                         ]
                                     , tbody []
                                         (viewMeals
                                             |> Paginate.page
-                                            |> List.map mealLine
+                                            |> List.map (mealLine configuration)
                                         )
                                     ]
                                 , div [ Style.classes.pagination ]
@@ -168,12 +168,16 @@ viewMain configuration main =
                 )
 
 
-mealLine : Meal -> Html Page.LogicMsg
-mealLine meal =
+mealLine : Configuration -> Meal -> Html Page.LogicMsg
+mealLine configuration meal =
     tr [ Style.classes.editLine ]
         [ td [ Style.classes.editable, Style.classes.date ] [ label [] [ text <| DateUtil.dateToString <| meal.date.date ] ]
         , td [ Style.classes.editable, Style.classes.time ] [ label [] [ text <| Maybe.Extra.unwrap "" DateUtil.timeToString <| meal.date.time ] ]
         , td [ Style.classes.editable ] [ label [] [ text <| Maybe.withDefault "" <| meal.name ] ]
+        , td [ Style.classes.controls ]
+            [ NavigationUtil.mealNutrientsLinkButton configuration meal.id ]
+        , td [ Style.classes.controls ]
+            [ NavigationUtil.mealEditorLinkButton configuration meal.id ]
         ]
 
 
