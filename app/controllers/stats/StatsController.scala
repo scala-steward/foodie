@@ -32,23 +32,26 @@ class StatsController @Inject() (
 
   def get(from: Option[String], to: Option[String]): Action[AnyContent] =
     userAction.async { request =>
-      val result = for {
+      val transformer = for {
         stats <-
-          statsService
-            .nutrientsOverTime(
-              userId = request.user.id,
-              requestInterval = RequestInterval(
-                from = from.flatMap(Date.parse),
-                to = to.flatMap(Date.parse)
-              ).transformInto[common.RequestInterval]
-            )
-        weightInGrams <- statsService.weightOfMeals(request.user.id, stats.meals.map(_.id))
+          OptionT.liftF(
+            statsService
+              .nutrientsOverTime(
+                userId = request.user.id,
+                requestInterval = RequestInterval(
+                  from = from.flatMap(Date.parse),
+                  to = to.flatMap(Date.parse)
+                ).transformInto[common.RequestInterval]
+              )
+          )
+        weightInGrams <- OptionT(statsService.weightOfMeals(request.user.id, stats.meals.map(_.id)))
       } yield (stats, weightInGrams)
         .pipe(_.transformInto[Stats])
         .pipe(_.asJson)
         .pipe(Ok(_))
 
-      result
+      transformer
+        .getOrElse(NotFound(ErrorContext.Stats.General("Error fetching stats over time.").asServerError.asJson))
         .recover(errorHandler)
     }
 
