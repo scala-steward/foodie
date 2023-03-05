@@ -33,7 +33,7 @@ object DAO {
           .result
 
       override def allOf(userId: UserId, ids: Seq[RecipeId]): DBIO[Seq[Tables.RecipeRow]] = {
-        val untypedIds = ids.map(_.transformInto[UUID])
+        val untypedIds = ids.distinct.map(_.transformInto[UUID])
         Tables.Recipe
           .filter(recipe => recipe.userId === userId.transformInto[UUID] && recipe.id.inSetBind(untypedIds))
           .result

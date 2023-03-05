@@ -26,7 +26,7 @@ object DAO {
     ) with DAO {
 
       override def findAllFor(referenceMapIds: Seq[ReferenceMapId]): DBIO[Seq[Tables.ReferenceEntryRow]] = {
-        val untypedIds = referenceMapIds.map(_.transformInto[UUID])
+        val untypedIds = referenceMapIds.distinct.map(_.transformInto[UUID])
         Tables.ReferenceEntry
           .filter(_.referenceMapId.inSetBind(untypedIds))
           .result

@@ -35,7 +35,7 @@ object DAO {
           userId: UserId,
           referenceMapIds: Seq[ReferenceMapId]
       ): DBIO[Seq[Tables.ReferenceMapRow]] = {
-        val untypedIds = referenceMapIds.map(_.transformInto[UUID])
+        val untypedIds = referenceMapIds.distinct.map(_.transformInto[UUID])
         Tables.ReferenceMap
           .filter(referenceMap =>
             referenceMap.userId === userId.transformInto[UUID] && referenceMap.id.inSetBind(untypedIds)

@@ -25,7 +25,7 @@ object DAO {
     ) with DAO {
 
       override def findAllFor(recipeIds: Seq[RecipeId]): DBIO[Seq[Tables.RecipeIngredientRow]] = {
-        val untypedIds = recipeIds.map(_.transformInto[UUID])
+        val untypedIds = recipeIds.distinct.map(_.transformInto[UUID])
         Tables.RecipeIngredient
           .filter(_.recipeId.inSetBind(untypedIds))
           .result
