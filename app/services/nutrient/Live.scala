@@ -87,7 +87,7 @@ object Live {
     private def conversionFactorsOf(
         conversionFactorKeys: Seq[NutrientService.ConversionFactorKey]
     ): Option[Map[NutrientService.ConversionFactorKey, BigDecimal]] =
-      conversionFactorKeys
+      conversionFactorKeys.distinct
         .traverse { key =>
           key.measureId.fold(Option(key -> BigDecimal(1))) { measureId =>
             fullTableConstants.allConversionFactors
