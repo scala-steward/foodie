@@ -16,6 +16,7 @@ import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
+import utils.collection.MapUtil
 
 import java.util.UUID
 import javax.inject.Inject
@@ -212,9 +213,11 @@ object Live {
               // otherwise create an empty map.
               // Note that only those ids are handled that have been previously matched.
               val preMap = referenceEntryRows.groupBy(_.referenceMapId.transformInto[ReferenceMapId])
-              typedIds.map { id =>
-                id -> preMap.getOrElse(id, Seq.empty).map(_.transformInto[ReferenceEntry]).toList
-              }.toMap
+              MapUtil
+                .unionWith(preMap, typedIds.map(_ -> Seq.empty).toMap)((x, _) => x)
+                .view
+                .mapValues(_.map(_.transformInto[ReferenceEntry]).toList)
+                .toMap
             }
       } yield referenceEntries
 
