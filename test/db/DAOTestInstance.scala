@@ -104,10 +104,10 @@ object DAOTestInstance {
         contents
       ) with db.daos.complexIngredient.DAO {
 
-        override def findAllFor(recipeId: RecipeId): DBIO[Seq[Tables.ComplexIngredientRow]] =
+        override def findAllFor(recipeIds: Seq[RecipeId]): DBIO[Seq[Tables.ComplexIngredientRow]] =
           fromIO {
             map.view
-              .filterKeys(_.recipeId == recipeId)
+              .filterKeys(recipe => recipeIds.contains(recipe.recipeId))
               .values
               .toSeq
           }
@@ -131,10 +131,10 @@ object DAOTestInstance {
         contents
       ) with db.daos.ingredient.DAO {
 
-        override def findAllFor(recipeId: RecipeId): DBIO[Seq[Tables.RecipeIngredientRow]] =
+        override def findAllFor(recipeIds: Seq[RecipeId]): DBIO[Seq[Tables.RecipeIngredientRow]] =
           fromIO {
             map.values.collect {
-              case ingredient if ingredient.recipeId.transformInto[RecipeId] == recipeId => ingredient
+              case ingredient if recipeIds.contains(ingredient.recipeId.transformInto[RecipeId]) => ingredient
             }.toList
           }
 
