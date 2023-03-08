@@ -48,6 +48,8 @@ Depending on the setup the commands below may need to be prefixed with `sudo`.
    `pg_dump -h <container-name> -d <database-name> -U <user-name> --inserts -W > /tmp/<backup-file-name>.sql`.
    You will be prompted for the password for said user.
    Moving the file to `/tmp` handles possible access issues.
+   Even better - dump only the relevant tables by listing them with `-t <table_name>` for each
+   table (prefixed with `public.`).
 1. Find the id the desired container: `docker ps`
 1. In a third CLI copy the backup file to your local file system:
    `docker cp <container-id>:/tmp/<backup-file-name>.sql <path-on-local-file-system>`
