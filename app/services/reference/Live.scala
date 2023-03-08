@@ -10,7 +10,7 @@ import errors.{ ErrorContext, ServerError }
 import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
-import services.nutrient.{ FullTableConstants, Nutrient, ReferenceNutrientMap }
+import services.nutrient.{ NutrientTableConstants, Nutrient, ReferenceNutrientMap }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
@@ -118,7 +118,7 @@ object Live {
   class Companion @Inject() (
       referenceMapDao: db.daos.referenceMap.DAO,
       referenceMapEntryDao: db.daos.referenceMapEntry.DAO,
-      fullTableConstants: FullTableConstants
+      nutrientTableConstants: NutrientTableConstants
   ) extends ReferenceService.Companion {
 
     override def allReferenceMaps(userId: UserId)(implicit ec: ExecutionContext): DBIO[Seq[ReferenceMap]] =
@@ -277,7 +277,7 @@ object Live {
       } yield result
 
     private def nutrientNameByCode(nutrientCode: Int): Option[Nutrient] =
-      fullTableConstants.allNutrients
+      nutrientTableConstants.allNutrients
         .get(nutrientCode.transformInto[NutrientCode])
 
     private def ifReferenceMapExists[A](

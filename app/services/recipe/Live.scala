@@ -10,6 +10,7 @@ import errors.{ ErrorContext, ServerError }
 import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
+import services.common.GeneralTableConstants
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
@@ -106,7 +107,8 @@ object Live {
 
   class Companion @Inject() (
       recipeDao: db.daos.recipe.DAO,
-      ingredientDao: db.daos.ingredient.DAO
+      ingredientDao: db.daos.ingredient.DAO,
+      generalTableConstants: GeneralTableConstants
   ) extends RecipeService.Companion {
 
     // TODO: This can be done with a join rather than a traverse
@@ -134,9 +136,8 @@ object Live {
         .headOption
         .map(_.map(_.transformInto[FoodInfo]))
 
-    override def allMeasures(implicit ec: ExecutionContext): DBIO[Seq[Measure]] =
-      Tables.MeasureName.result
-        .map(_.map(_.transformInto[Measure]))
+    override val allMeasures: DBIO[Seq[Measure]] =
+      DBIO.successful(generalTableConstants.allMeasureNames.map(_.transformInto[Measure]))
 
     override def allRecipes(userId: UserId)(implicit ec: ExecutionContext): DBIO[Seq[Recipe]] =
       recipeDao

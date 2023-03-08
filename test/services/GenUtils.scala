@@ -119,11 +119,11 @@ object GenUtils {
     )
     .toMap
 
-  lazy val allNutrients: Seq[Nutrient] = DBTestUtil.fullTableConstants.allNutrients.values.toSeq
+  lazy val allNutrients: Seq[Nutrient] = DBTestUtil.nutrientTableConstants.allNutrients.values.toSeq
   lazy val allMeasures: Seq[Measure]   = DBTestUtil.await(recipeService.allMeasures)
 
   lazy val allConversionFactors: Map[(FoodId, MeasureId), BigDecimal] =
-    DBTestUtil.fullTableConstants.allConversionFactors
+    DBTestUtil.nutrientTableConstants.allConversionFactors
 
   lazy val foodGen: Gen[Food] =
     Gen.oneOf(allFoods.values)

@@ -7,6 +7,7 @@ import db.{ FoodId, MeasureId }
 import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
+import services.common.GeneralTableConstants
 import services.recipe.{ AmountUnit, Ingredient }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
@@ -30,7 +31,10 @@ class Live @Inject() (
 
 object Live {
 
-  class Companion @Inject() (fullTableConstants: FullTableConstants) extends NutrientService.Companion {
+  class Companion @Inject() (
+      nutrientTableConstants: NutrientTableConstants,
+      generalTableConstants: GeneralTableConstants
+  ) extends NutrientService.Companion {
 
     override def conversionFactor(
         foodId: FoodId,
@@ -44,7 +48,7 @@ object Live {
     private def conversionFactorNoEffect(
         foodId: FoodId,
         measureId: MeasureId
-    ): Option[BigDecimal] = fullTableConstants.allConversionFactors
+    ): Option[BigDecimal] = generalTableConstants.allConversionFactors
       .get((foodId, measureId))
       .orElse {
         val specialized = hundredGrams(foodId)
@@ -90,7 +94,7 @@ object Live {
       conversionFactorKeys.distinct
         .traverse { key =>
           key.measureId.fold(Option(key -> BigDecimal(1))) { measureId =>
-            fullTableConstants.allConversionFactors
+            generalTableConstants.allConversionFactors
               .get((key.foodId, measureId))
               .map(key -> _)
           }
@@ -115,12 +119,12 @@ object Live {
         .getOrElseF(DBIO.failed(DBError.Nutrient.ConversionFactorNotFound))
 
     override val all: DBIO[Seq[Nutrient]] =
-      DBIO.successful(fullTableConstants.allNutrients.values.toSeq)
+      DBIO.successful(nutrientTableConstants.allNutrients.values.toSeq)
 
     private def nutrientBaseOf(
         foodId: FoodId
     ): NutrientMap =
-      fullTableConstants.allNutrientMaps
+      nutrientTableConstants.allNutrientMaps
         .getOrElse(foodId, Map.empty)
 
     private def hundredGrams(foodId: Int): Tables.ConversionFactorRow =

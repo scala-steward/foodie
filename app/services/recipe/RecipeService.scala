@@ -30,7 +30,7 @@ object RecipeService {
     def allFoods(implicit ec: ExecutionContext): DBIO[Seq[Food]]
 
     def getFoodInfo(foodId: FoodId)(implicit ec: ExecutionContext): DBIO[Option[FoodInfo]]
-    def allMeasures(implicit ec: ExecutionContext): DBIO[Seq[Measure]]
+    def allMeasures: DBIO[Seq[Measure]]
 
     def allRecipes(userId: UserId)(implicit ec: ExecutionContext): DBIO[Seq[Recipe]]
 

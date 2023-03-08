@@ -4,18 +4,18 @@ import cats.data.EitherT
 import db.generated.Tables
 import errors.ServerError
 import org.scalacheck.Prop
-import services.nutrient.FullTableConstants
+import services.nutrient.NutrientTableConstants
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
 
-import scala.concurrent.duration.{ Duration, _ }
+import scala.concurrent.duration._
 import scala.concurrent.{ Await, ExecutionContext, Future }
 
 object DBTestUtil {
 
   val defaultAwaitTimeout: Duration = 2.minutes
 
-  val fullTableConstants: FullTableConstants = TestUtil.injector.instanceOf[FullTableConstants]
+  val nutrientTableConstants: NutrientTableConstants = TestUtil.injector.instanceOf[NutrientTableConstants]
 
   def clearDb(): Unit =
     await(
