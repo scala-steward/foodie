@@ -129,6 +129,18 @@ object Live {
         }
       } yield withMeasure.map(_.transformInto[Food])
 
+    def allFoods2: DBIO[Seq[Food]] = DBIO.successful {
+      generalTableConstants.allFoodNames.map { food =>
+        val allMeasureIds = AmountUnit.hundredGrams +: generalTableConstants.allConversionFactors.collect {
+          case ((foodId, measureId), _) if foodId == food.foodId => measureId
+        }.toList
+        val measures = generalTableConstants.allMeasureNames.filter { measureRow =>
+          allMeasureIds.contains(measureRow.measureId)
+        }
+        (food -> measures.toList).transformInto[Food]
+      }
+    }
+
     override def getFoodInfo(foodId: FoodId)(implicit ec: ExecutionContext): DBIO[Option[FoodInfo]] =
       Tables.FoodName
         .filter(_.foodId === foodId.transformInto[Int])
