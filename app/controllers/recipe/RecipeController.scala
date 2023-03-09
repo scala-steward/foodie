@@ -38,7 +38,6 @@ class RecipeController @Inject() (
         .recover(errorHandler)
     }
 
-  // TODO: Consider allowing specialized search instead of delivering all foods at once.
   def getFoods: Action[AnyContent] =
     userAction.async {
       recipeService.allFoods

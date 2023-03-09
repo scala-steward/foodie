@@ -31,8 +31,6 @@ class Live @Inject() (
 
   override def getMeal(userId: UserId, id: MealId): Future[Option[Meal]] = db.run(companion.getMeal(userId, id))
 
-  // TODO: The error can be specialized, because the most likely case is that the user is missing,
-  // and thus a foreign key constraint is not met.
   override def createMeal(userId: UserId, mealCreation: MealCreation): Future[ServerError.Or[Meal]] =
     db.run(companion.createMeal(userId, UUID.randomUUID().transformInto[MealId], mealCreation))
       .map(Right(_))

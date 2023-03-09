@@ -44,8 +44,6 @@ class Live @Inject() (
   ): Future[Option[Recipe]] =
     db.run(companion.getRecipe(userId, id))
 
-  // TODO: The error can be specialized, because the most likely case is that the user is missing,
-  // and thus a foreign key constraint is not met.
   override def createRecipe(
       userId: UserId,
       recipeCreation: RecipeCreation
