@@ -155,7 +155,6 @@ object Live {
         matchingMeals <- mealDao.allOf(userId, ids)
         mealEntries <-
           mealEntryDao
-            // TODO: Reconsider the conversion to and from mealId here, and in the DAO.
             .findAllFor(matchingMeals.map(_.id.transformInto[MealId]))
             .map(_.map(_.transformInto[MealEntry]))
       } yield mealEntries

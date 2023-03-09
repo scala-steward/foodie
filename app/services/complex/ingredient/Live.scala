@@ -70,7 +70,6 @@ object Live {
       for {
         matchingRecipes <- recipeDao.allOf(userId, recipeIds)
         typedIds = matchingRecipes.map(_.id.transformInto[RecipeId])
-        // TODO: Reconsider the conversion from and to RecipeId here and in the DAO.
         complexIngredients <- complexIngredientDao.findAllFor(typedIds)
       } yield {
         // GroupBy skips recipes with no entries, hence they are added manually afterwards.

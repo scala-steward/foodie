@@ -205,7 +205,6 @@ object Live {
         typedIds = matchingReferenceMaps.map(_.id.transformInto[ReferenceMapId])
         referenceEntries <-
           referenceMapEntryDao
-            // TODO: Reconsider the conversion to and from ReferenceMapId here, and in the DAO.
             .findAllFor(typedIds)
             .map { referenceEntryRows =>
               // If a reference map has no entries, it will not be present in the 'groupBy' result.
