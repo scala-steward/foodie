@@ -180,7 +180,7 @@ object MealServiceProperties extends Properties("Meal service") {
     val transformer = for {
       mealEntry <- EitherT(mealService.addMealEntry(setup.userId, setup.mealEntryCreation))
       mealEntries <- EitherT.liftF[Future, ServerError, Seq[MealEntry]](
-        mealService.getMealEntries(setup.userId, setup.fullMeal.meal.id)
+        mealService.getMealEntries(setup.userId, Seq(setup.fullMeal.meal.id))
       )
     } yield {
       val expectedMealEntry = MealEntryCreation.create(mealEntry.id, setup.mealEntryCreation)
@@ -213,7 +213,7 @@ object MealServiceProperties extends Properties("Meal service") {
     )
     val transformer = for {
       mealEntries <- EitherT.liftF[Future, ServerError, Seq[MealEntry]](
-        mealService.getMealEntries(setup.userId, setup.fullMeal.meal.id)
+        mealService.getMealEntries(setup.userId, Seq(setup.fullMeal.meal.id))
       )
     } yield mealEntries.sortBy(_.id) ?= setup.fullMeal.mealEntries.sortBy(_.id)
 
@@ -250,7 +250,7 @@ object MealServiceProperties extends Properties("Meal service") {
     val transformer = for {
       updatedMealEntry <- EitherT(mealService.updateMealEntry(setup.userId, setup.mealEntryUpdate))
       mealEntries <- EitherT.liftF[Future, ServerError, Seq[MealEntry]](
-        mealService.getMealEntries(setup.userId, setup.fullMeal.meal.id)
+        mealService.getMealEntries(setup.userId, Seq(setup.fullMeal.meal.id))
       )
     } yield {
       val expectedMealEntry = MealEntryUpdate.update(setup.mealEntry, setup.mealEntryUpdate)
@@ -298,7 +298,7 @@ object MealServiceProperties extends Properties("Meal service") {
     val transformer = for {
       deletionResult <- EitherT.liftF(mealService.removeMealEntry(setup.userId, setup.mealEntryId))
       mealEntries <- EitherT.liftF[Future, ServerError, Seq[MealEntry]](
-        mealService.getMealEntries(setup.userId, setup.fullMeal.meal.id)
+        mealService.getMealEntries(setup.userId, Seq(setup.fullMeal.meal.id))
       )
     } yield {
       val expectedMealEntries = setup.fullMeal.mealEntries.filter(_.id != setup.mealEntryId)
@@ -427,7 +427,7 @@ object MealServiceProperties extends Properties("Meal service") {
     val transformer = for {
       result <- EitherT.liftF(mealService.addMealEntry(userId2, setup.mealEntryCreation))
       mealEntries <- EitherT.liftF[Future, ServerError, Seq[MealEntry]](
-        mealService.getMealEntries(setup.userId, setup.fullMeal.meal.id)
+        mealService.getMealEntries(setup.userId, Seq(setup.fullMeal.meal.id))
       )
     } yield Prop.all(
       Prop(result.isLeft) :| "MealEntry addition failed",
@@ -447,7 +447,7 @@ object MealServiceProperties extends Properties("Meal service") {
     )
     val transformer = for {
       mealEntries <- EitherT.liftF[Future, ServerError, Seq[MealEntry]](
-        mealService.getMealEntries(userId2, setup.fullMeal.meal.id)
+        mealService.getMealEntries(userId2, Seq(setup.fullMeal.meal.id))
       )
     } yield mealEntries ?= List.empty
 
@@ -465,7 +465,7 @@ object MealServiceProperties extends Properties("Meal service") {
     val transformer = for {
       result <- EitherT.liftF(mealService.updateMealEntry(userId2, setup.mealEntryUpdate))
       mealEntries <- EitherT.liftF[Future, ServerError, Seq[MealEntry]](
-        mealService.getMealEntries(setup.userId, setup.fullMeal.meal.id)
+        mealService.getMealEntries(setup.userId, Seq(setup.fullMeal.meal.id))
       )
     } yield Prop.all(
       Prop(result.isLeft) :| "Meal entry update failed",
@@ -488,7 +488,7 @@ object MealServiceProperties extends Properties("Meal service") {
     val transformer = for {
       deletionResult <- EitherT.liftF(mealService.removeMealEntry(userId2, setup.mealEntryId))
       mealEntries <- EitherT.liftF[Future, ServerError, Seq[MealEntry]](
-        mealService.getMealEntries(setup.userId, setup.fullMeal.meal.id)
+        mealService.getMealEntries(setup.userId, Seq(setup.fullMeal.meal.id))
       )
     } yield {
       val expectedMealEntries = setup.fullMeal.mealEntries

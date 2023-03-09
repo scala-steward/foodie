@@ -67,6 +67,11 @@ object ReferenceService {
         referenceMapId: ReferenceMapId
     )(implicit ec: ExecutionContext): DBIO[Option[ReferenceNutrientMap]]
 
+    def getReferenceNutrientsMaps(
+        userId: UserId,
+        referenceMapIds: Seq[ReferenceMapId]
+    )(implicit ec: ExecutionContext): DBIO[Map[ReferenceMapId, ReferenceNutrientMap]]
+
     def getReferenceMap(userId: UserId, referenceMapId: ReferenceMapId)(implicit
         ec: ExecutionContext
     ): DBIO[Option[ReferenceMap]]
@@ -89,8 +94,8 @@ object ReferenceService {
 
     def allReferenceEntries(
         userId: UserId,
-        referenceMapId: ReferenceMapId
-    )(implicit ec: ExecutionContext): DBIO[List[ReferenceEntry]]
+        referenceMapIds: Seq[ReferenceMapId]
+    )(implicit ec: ExecutionContext): DBIO[Map[ReferenceMapId, List[ReferenceEntry]]]
 
     def addReferenceEntry(
         userId: UserId,

@@ -1,18 +1,16 @@
 package services.nutrient
 
-import cats.Applicative
 import cats.data.OptionT
-import cats.syntax.contravariantSemigroupal._
 import cats.syntax.traverse._
 import db.generated.Tables
 import db.{ FoodId, MeasureId }
-import io.scalaland.chimney.dsl.TransformerOps
+import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
+import services.common.GeneralTableConstants
 import services.recipe.{ AmountUnit, Ingredient }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
-import slick.jdbc.PostgresProfile.api._
 import spire.implicits._
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
@@ -23,8 +21,7 @@ import scala.concurrent.{ ExecutionContext, Future }
 class Live @Inject() (
     override protected val dbConfigProvider: DatabaseConfigProvider,
     companion: NutrientService.Companion
-)(implicit ec: ExecutionContext)
-    extends NutrientService
+) extends NutrientService
     with HasDatabaseConfigProvider[PostgresProfile] {
 
   override def all: Future[Seq[Nutrient]] =
@@ -34,26 +31,36 @@ class Live @Inject() (
 
 object Live {
 
-  object Companion extends NutrientService.Companion {
+  class Companion @Inject() (
+      nutrientTableConstants: NutrientTableConstants,
+      generalTableConstants: GeneralTableConstants
+  ) extends NutrientService.Companion {
 
     override def conversionFactor(
         foodId: FoodId,
         measureId: MeasureId
     )(implicit
         ec: ExecutionContext
-    ): DBIO[Tables.ConversionFactorRow] =
-      OptionT(
-        Tables.ConversionFactor
-          .filter(cf =>
-            cf.foodId === foodId.transformInto[Int] &&
-              cf.measureId === measureId.transformInto[Int]
-          )
-          .result
-          .headOption: DBIO[Option[Tables.ConversionFactorRow]]
-      ).orElse {
+    ): DBIO[BigDecimal] =
+      conversionFactorNoEffect(foodId, measureId)
+        .fold(DBIO.failed(DBError.Nutrient.ConversionFactorNotFound): DBIO[BigDecimal])(DBIO.successful)
+
+    private def conversionFactorNoEffect(
+        foodId: FoodId,
+        measureId: MeasureId
+    ): Option[BigDecimal] = generalTableConstants.allConversionFactors
+      .get((foodId, measureId))
+      .orElse {
         val specialized = hundredGrams(foodId)
-        OptionT.when(measureId.transformInto[Int] == specialized.measureId)(specialized)
-      }.getOrElseF(DBIO.failed(DBError.Nutrient.ConversionFactorNotFound))
+        Option.when(measureId.transformInto[Int] == specialized.measureId)(specialized.conversionFactorValue)
+      }
+
+    override def conversionFactors(
+        conversionFactorKeys: Seq[NutrientService.ConversionFactorKey]
+    )(implicit ec: ExecutionContext): DBIO[Map[NutrientService.ConversionFactorKey, BigDecimal]] =
+      OptionT
+        .fromOption[DBIO](conversionFactorsOf(conversionFactorKeys))
+        .getOrElseF(DBIO.failed(DBError.Nutrient.ConversionFactorNotFound))
 
     override def nutrientsOfFood(
         foodId: FoodId,
@@ -63,63 +70,62 @@ object Live {
         ec: ExecutionContext
     ): DBIO[NutrientMap] =
       for {
-        nutrientBase <- nutrientBaseOf(foodId)
         conversionFactor <-
           measureId
             .fold(DBIO.successful(BigDecimal(1)): DBIO[BigDecimal])(
-              conversionFactor(foodId, _).map(_.conversionFactorValue)
+              conversionFactor(foodId, _)
             )
-      } yield factor *: conversionFactor *: nutrientBase
+      } yield factor *: conversionFactor *: nutrientBaseOf(foodId)
 
-    private def nutrientsOfIngredient(ingredient: Ingredient)(implicit ec: ExecutionContext): DBIO[NutrientMap] =
-      nutrientsOfFood(
-        foodId = ingredient.foodId,
-        measureId = ingredient.amountUnit.measureId,
-        factor = ingredient.amountUnit.factor
-      )
+    private def nutrientsOfFoodNoEffect(
+        foodId: FoodId,
+        measureId: Option[MeasureId],
+        factor: BigDecimal
+    ): Option[NutrientMap] =
+      measureId
+        .fold(Option(BigDecimal(1)))(conversionFactorNoEffect(foodId, _))
+        .map { conversionFactor =>
+          factor *: conversionFactor *: nutrientBaseOf(foodId)
+        }
+
+    private def conversionFactorsOf(
+        conversionFactorKeys: Seq[NutrientService.ConversionFactorKey]
+    ): Option[Map[NutrientService.ConversionFactorKey, BigDecimal]] =
+      conversionFactorKeys.distinct
+        .traverse { key =>
+          key.measureId.fold(Option(key -> BigDecimal(1))) { measureId =>
+            generalTableConstants.allConversionFactors
+              .get((key.foodId, measureId))
+              .map(key -> _)
+          }
+        }
+        .map(_.toMap)
 
     override def nutrientsOfIngredients(ingredients: Seq[Ingredient])(implicit
         ec: ExecutionContext
     ): DBIO[NutrientMap] =
-      ingredients
-        .traverse(nutrientsOfIngredient)
-        .map(_.qsum)
+      OptionT
+        .fromOption[DBIO] {
+          ingredients
+            .traverse { ingredient =>
+              nutrientsOfFoodNoEffect(
+                foodId = ingredient.foodId,
+                measureId = ingredient.amountUnit.measureId,
+                factor = ingredient.amountUnit.factor
+              )
+            }
+            .map(_.qsum)
+        }
+        .getOrElseF(DBIO.failed(DBError.Nutrient.ConversionFactorNotFound))
 
-    override def all(implicit ec: ExecutionContext): DBIO[Seq[Nutrient]] =
-      Tables.NutrientName.result
-        .map(_.map(_.transformInto[Nutrient]))
-
-    private def getNutrient(
-        idOrCode: Int
-    )(implicit ec: ExecutionContext): DBIO[Option[Nutrient]] =
-      OptionT(
-        Tables.NutrientName
-          .filter(n => n.nutrientNameId === idOrCode || n.nutrientCode === idOrCode)
-          .result
-          .headOption: DBIO[Option[Tables.NutrientNameRow]]
-      )
-        .map(_.transformInto[Nutrient])
-        .value
+    override val all: DBIO[Seq[Nutrient]] =
+      DBIO.successful(nutrientTableConstants.allNutrients.values.toSeq)
 
     private def nutrientBaseOf(
         foodId: FoodId
-    )(implicit
-        ec: ExecutionContext
-    ): DBIO[NutrientMap] =
-      for {
-        nutrientAmounts <-
-          Tables.NutrientAmount
-            .filter(_.foodId === foodId.transformInto[Int])
-            .result
-        pairs <-
-          nutrientAmounts
-            .traverse(n =>
-              (
-                getNutrient(n.nutrientId),
-                Applicative[DBIO].pure(n.nutrientValue)
-              ).mapN((n, a) => n.map(_ -> AmountEvaluation.embed(a, foodId)))
-            )
-      } yield pairs.flatten.toMap
+    ): NutrientMap =
+      nutrientTableConstants.allNutrientMaps
+        .getOrElse(foodId, Map.empty)
 
     private def hundredGrams(foodId: Int): Tables.ConversionFactorRow =
       Tables.ConversionFactorRow(

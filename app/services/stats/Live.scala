@@ -3,16 +3,18 @@ package services.stats
 import algebra.ring.AdditiveMonoid
 import cats.data.OptionT
 import cats.syntax.traverse._
+import cats.syntax.contravariantSemigroupal._
+import db._
 import db.generated.Tables
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
+import services.common.RequestInterval
 import services.complex.food.ComplexFoodService
 import services.complex.ingredient.ComplexIngredientService
 import services.meal.{ MealEntry, MealService }
+import services.nutrient.NutrientService.ConversionFactorKey
 import services.nutrient.{ AmountEvaluation, Nutrient, NutrientMap, NutrientService }
-import services.recipe.{ AmountUnit, RecipeService }
-import db._
-import services.common.RequestInterval
+import services.recipe.{ Recipe, RecipeService }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
@@ -57,7 +59,7 @@ class Live @Inject() (
   override def weightOfMeal(userId: UserId, mealId: MealId): Future[Option[BigDecimal]] =
     db.run(companion.weightOfMeal(userId, mealId))
 
-  override def weightOfMeals(userId: UserId, mealIds: Seq[MealId]): Future[BigDecimal] =
+  override def weightOfMeals(userId: UserId, mealIds: Seq[MealId]): Future[Option[BigDecimal]] =
     db.run(companion.weightOfMeals(userId, mealIds))
 
 }
@@ -81,8 +83,8 @@ object Live {
       for {
         meals <- mealService.allMeals(userId, requestInterval)
         mealIds = meals.map(_.id)
-        meals              <- mealIds.traverse(mealService.getMeal(userId, _)).map(_.flatten)
-        mealEntries        <- mealIds.flatTraverse(mealService.getMealEntries(userId, _))
+        meals              <- mealService.getMeals(userId, mealIds)
+        mealEntries        <- mealService.getMealEntries(userId, mealIds)
         nutrientsPerRecipe <- nutrientsOfRecipeIds(userId, mealEntries.map(_.recipeId))
         allNutrients       <- nutrientService.all
       } yield {
@@ -143,8 +145,15 @@ object Live {
         ec: ExecutionContext
     ): DBIO[Option[NutrientAmountMap]] = {
       val transformer = for {
-        allNutrients      <- OptionT.liftF(nutrientService.all)
-        recipeNutrientMap <- nutrientsOfRecipeT(userId, recipeId, scaleMode)
+        allNutrients <- OptionT.liftF(nutrientService.all)
+        recipeNutrientMap <- OptionT(
+          nutrientsOfRecipes(
+            userId = userId,
+            recipeIds = Seq(recipeId),
+            scaleMode = scaleMode
+          )
+            .map(_.headOption): DBIO[Option[RecipeNutrientMap]]
+        )
       } yield unifyAndCount(
         recipeNutrientMap.nutrientMap,
         totalNumberOfIngredients = recipeNutrientMap.foodIds.size,
@@ -161,84 +170,109 @@ object Live {
         ec: ExecutionContext
     ): DBIO[NutrientAmountMap] =
       for {
-        mealEntries        <- mealService.getMealEntries(userId, mealId)
+        mealEntries        <- mealService.getMealEntries(userId, Seq(mealId))
         nutrientsPerRecipe <- nutrientsOfRecipeIds(userId, mealEntries.map(_.recipeId))
         allNutrients       <- nutrientService.all
       } yield nutrientAmountMapOfMealEntries(mealEntries, nutrientsPerRecipe, allNutrients)
 
     override def weightOfRecipe(userId: UserId, recipeId: RecipeId)(implicit
         ec: ExecutionContext
-    ): DBIO[Option[BigDecimal]] = {
-      val transformer = for {
-        _           <- OptionT(recipeService.getRecipe(userId, recipeId))
-        ingredients <- OptionT.liftF(recipeService.getIngredients(userId, recipeId))
-        ingredientWeights <- OptionT.liftF {
-          ingredients.traverse { ingredient =>
-            nutrientService
-              .conversionFactor(ingredient.foodId, ingredient.amountUnit.measureId.getOrElse(AmountUnit.hundredGrams))
-              .map { conversionFactor =>
-                100 * ingredient.amountUnit.factor * conversionFactor.conversionFactorValue
-              }: DBIO[BigDecimal]
-          }
-        }
-        complexIngredients <- OptionT.liftF(complexIngredientService.all(userId, recipeId))
-        // Since 'traverse' is involved, this is quite slow.
-        complexIngredientsWeights <- complexIngredients.traverse { complexIngredient =>
-          OptionT(complexFoodService.get(userId, complexIngredient.complexFoodId))
-            .map { complexFood =>
-              complexIngredient.factor * complexFood.amountGrams
-            }
-        }
-      } yield ingredientWeights.sum + complexIngredientsWeights.sum
-
-      transformer.value
-    }
+    ): DBIO[Option[BigDecimal]] =
+      OptionT(weightsOfRecipes(userId, Seq(recipeId)))
+        .subflatMap(_.get(recipeId))
+        .value
 
     override def weightOfMeal(userId: UserId, mealId: MealId)(implicit
         ec: ExecutionContext
+    ): DBIO[Option[BigDecimal]] = weightOfMeals(userId, Seq(mealId))
+
+    override def weightOfMeals(userId: UserId, mealIds: Seq[MealId])(implicit
+        ec: ExecutionContext
+    ): DBIO[Option[BigDecimal]] =
+      for {
+        mealEntries <- mealService.getMealEntries(userId, mealIds)
+        weights     <- weightsOfMealEntries(userId, mealEntries)
+      } yield weights
+
+    private def weightsOfMealEntries(
+        userId: UserId,
+        mealEntries: Seq[MealEntry]
+    )(implicit
+        ec: ExecutionContext
     ): DBIO[Option[BigDecimal]] = {
+      val recipeIds = mealEntries.map(_.recipeId)
       val transformer = for {
-        mealEntries <- OptionT.liftF(mealService.getMealEntries(userId, mealId))
-        // Warning: Nested 'traverse' - the performance may be lacking.
-        weights <- mealEntries.traverse { mealEntry =>
-          for {
-            recipe <- OptionT(recipeService.getRecipe(userId, mealEntry.recipeId))
-            weight <- OptionT(weightOfRecipe(userId, mealEntry.recipeId))
-          } yield mealEntry.numberOfServings * weight / recipe.numberOfServings
+        recipes <- OptionT.liftF(recipeService.getRecipes(userId, recipeIds))
+        recipeMap = recipes.map(recipe => recipe.id -> recipe).toMap
+        recipeWeights <- OptionT(weightsOfRecipes(userId, recipeIds))
+        weights <- OptionT.fromOption {
+          // Traverse without asynchronous effect
+          mealEntries.toList.traverse { mealEntry =>
+            for {
+              recipeWeight <- recipeWeights.get(mealEntry.recipeId)
+              recipe       <- recipeMap.get(mealEntry.recipeId)
+            } yield mealEntry.numberOfServings * recipeWeight / recipe.numberOfServings
+          }
         }
       } yield weights.sum
 
       transformer.value
     }
 
-    override def weightOfMeals(userId: UserId, mealIds: Seq[MealId])(implicit ec: ExecutionContext): DBIO[BigDecimal] =
-      mealIds
-        // Doubly nested 'traverse' - this is likely to scale very poorly.
-        .traverse { mealId =>
-          OptionT(weightOfMeal(userId, mealId))
-        }
-        .map(_.sum)
-        .getOrElse(BigDecimal(0))
+    private def weightsOfRecipes(userId: UserId, recipeIds: Seq[RecipeId])(implicit
+        ec: ExecutionContext
+    ): DBIO[Option[Map[RecipeId, BigDecimal]]] = {
+      for {
+        ingredientsMap        <- recipeService.getAllIngredients(userId, recipeIds)
+        complexIngredientsMap <- complexIngredientService.all(userId, recipeIds)
+        conversionFactorMap <- nutrientService.conversionFactors(
+          ingredientsMap.values.flatten.map(ConversionFactorKey.of).toSeq
+        )
+        complexIngredients = complexIngredientsMap.values.flatten.toSeq
+        complexFoods <- complexFoodService.getAll(userId, complexIngredients.map(_.complexFoodId))
+        complexFoodsMap = complexFoods.map(complexFood => complexFood.recipeId -> complexFood).toMap
+      } yield {
+        val ingredientWeights =
+          ingredientsMap.toList
+            .traverse { case (recipeId, ingredients) =>
+              ingredients
+                .traverse { ingredient =>
+                  conversionFactorMap
+                    .get(ConversionFactorKey.of(ingredient))
+                    .map(100 * ingredient.amountUnit.factor * _)
+                }
+                .map(weights => recipeId -> weights.sum)
+            }
+            .map(_.toMap)
+        val complexIngredientsWeights = complexIngredientsMap.toList
+          .traverse { case (recipeId, complexIngredients) =>
+            complexIngredients.toList
+              .traverse { complexIngredient =>
+                complexFoodsMap
+                  .get(complexIngredient.complexFoodId)
+                  .map(complexFood => complexIngredient.factor * complexFood.amountGrams)
+              }
+              .map(weights => recipeId -> weights.sum)
+          }
+          .map(_.toMap)
+        (ingredientWeights, complexIngredientsWeights).mapN(MapUtil.unionWith(_, _)(_ + _))
+      }
+    }
 
     private def nutrientsOfRecipeIds(
         userId: UserId,
         recipeIds: Seq[RecipeId]
     )(implicit ec: ExecutionContext): DBIO[Map[RecipeId, RecipeNutrientMap]] =
-      recipeIds.distinct
-        .traverse { recipeId =>
-          nutrientsOfRecipeT(userId, recipeId, ScaleMode.Serving)
-            .map(recipeId -> _)
-            .value
-        }
-        .map(_.flatten.toMap)
+      nutrientsOfRecipes(userId, recipeIds.distinct, ScaleMode.Serving)
+        .map(_.map(recipeNutrientMap => recipeNutrientMap.recipe.id -> recipeNutrientMap).toMap)
 
-    private def nutrientsOfRecipeT(
+    private def nutrientsOfRecipes(
         userId: UserId,
-        recipeId: RecipeId,
+        recipeIds: Seq[RecipeId],
         scaleMode: ScaleMode
     )(implicit
         ec: ExecutionContext
-    ): OptionT[DBIO, RecipeNutrientMap] = {
+    ): DBIO[Seq[RecipeNutrientMap]] = {
       case class NutrientsAndFoods(
           nutrientMap: NutrientMap,
           foodIds: Set[FoodId]
@@ -247,10 +281,10 @@ object Live {
       def descend(recipeId: RecipeId): DBIO[NutrientsAndFoods] =
         for {
           ingredients        <- recipeService.getIngredients(userId, recipeId)
-          complexIngredients <- complexIngredientService.all(userId, recipeId)
+          complexIngredients <- complexIngredientService.all(userId, Seq(recipeId))
           nutrients          <- nutrientService.nutrientsOfIngredients(ingredients)
           recipeNutrientMapsOfComplexNutrients <-
-            complexIngredients
+            complexIngredients.values.flatten.toList
               .traverse { complexIngredient =>
                 descend(complexIngredient.complexFoodId)
                   .map(recipeNutrientMap =>
@@ -263,9 +297,11 @@ object Live {
         )
 
       for {
-        recipe            <- OptionT(recipeService.getRecipe(userId, recipeId))
-        nutrientsAndFoods <- OptionT.liftF(descend(recipeId))
-      } yield {
+        recipes <- recipeService.getRecipes(userId, recipeIds)
+        allNutrientsAndFoods <- recipes.traverse { recipe =>
+          descend(recipe.id).map(recipe -> _): DBIO[(Recipe, NutrientsAndFoods)]
+        }
+      } yield allNutrientsAndFoods.map { case (recipe, nutrientsAndFoods) =>
         val scale = scaleMode match {
           case ScaleMode.Serving             => recipe.numberOfServings.reciprocal
           case ScaleMode.Unit(definedAmount) => BigDecimal(100) / definedAmount

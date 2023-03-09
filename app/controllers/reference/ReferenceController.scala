@@ -38,6 +38,7 @@ class ReferenceController @Inject() (
             .pipe(_.asJson)
             .pipe(Ok(_))
         )
+        .recover(errorHandler)
     }
 
   def allTrees: Action[AnyContent] =
@@ -53,17 +54,20 @@ class ReferenceController @Inject() (
             .pipe(_.asJson)
             .pipe(Ok(_))
         )
+        .recover(errorHandler)
     }
 
   def get(id: UUID): Action[AnyContent] =
     userAction.async { request =>
-      OptionT(referenceService.getReferenceMap(request.user.id, id.transformInto[ReferenceMapId])).fold(
-        NotFound(ErrorContext.ReferenceMap.NotFound.asServerError.asJson): Result
-      )(
-        _.pipe(_.transformInto[ReferenceMap])
-          .pipe(_.asJson)
-          .pipe(Ok(_))
-      )
+      OptionT(referenceService.getReferenceMap(request.user.id, id.transformInto[ReferenceMapId]))
+        .fold(
+          NotFound(ErrorContext.ReferenceMap.NotFound.asServerError.asJson): Result
+        )(
+          _.pipe(_.transformInto[ReferenceMap])
+            .pipe(_.asJson)
+            .pipe(Ok(_))
+        )
+        .recover(errorHandler)
     }
 
   def create: Action[ReferenceMapCreation] =
@@ -78,7 +82,7 @@ class ReferenceController @Inject() (
             .pipe(Ok(_))
         )
         .fold(badRequest, identity)
-        .recover(referenceMapErrorHandler)
+        .recover(errorHandler)
     }
 
   def update: Action[ReferenceMapUpdate] =
@@ -93,7 +97,7 @@ class ReferenceController @Inject() (
             .pipe(Ok(_))
         )
         .fold(badRequest, identity)
-        .recover(referenceMapErrorHandler)
+        .recover(errorHandler)
     }
 
   def delete(id: UUID): Action[AnyContent] =
@@ -104,6 +108,7 @@ class ReferenceController @Inject() (
           _.pipe(_.asJson)
             .pipe(Ok(_))
         )
+        .recover(errorHandler)
     }
 
   def allReferenceEntries(id: UUID): Action[AnyContent] =
@@ -117,7 +122,7 @@ class ReferenceController @Inject() (
           _.pipe(_.map(_.transformInto[ReferenceEntry]).asJson)
             .pipe(Ok(_))
         )
-        .recover(referenceMapErrorHandler)
+        .recover(errorHandler)
     }
 
   def addReferenceEntry: Action[ReferenceEntryCreation] =
@@ -134,7 +139,7 @@ class ReferenceController @Inject() (
             .pipe(_.asJson)
             .pipe(Ok(_))
         )
-        .recover(referenceMapErrorHandler)
+        .recover(errorHandler)
     }
 
   def updateReferenceEntry: Action[ReferenceEntryUpdate] =
@@ -151,7 +156,7 @@ class ReferenceController @Inject() (
             .pipe(_.asJson)
             .pipe(Ok(_))
         )
-        .recover(referenceMapErrorHandler)
+        .recover(errorHandler)
     }
 
   def deleteReferenceEntry(mapId: UUID, nutrientCode: Int): Action[AnyContent] =
@@ -166,12 +171,13 @@ class ReferenceController @Inject() (
           _.pipe(_.asJson)
             .pipe(Ok(_))
         )
+        .recover(errorHandler)
     }
 
   private def badRequest(serverError: ServerError): Result =
     BadRequest(serverError.asJson)
 
-  private def referenceMapErrorHandler: PartialFunction[Throwable, Result] = { case error =>
+  private def errorHandler: PartialFunction[Throwable, Result] = { case error =>
     val context = error match {
       case DBError.Reference.MapNotFound =>
         ErrorContext.ReferenceMap.NotFound

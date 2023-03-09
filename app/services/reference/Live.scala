@@ -1,6 +1,5 @@
 package services.reference
 
-import cats.Applicative
 import cats.data.OptionT
 import cats.syntax.traverse._
 import db.daos.referenceMap.ReferenceMapKey
@@ -11,12 +10,13 @@ import errors.{ ErrorContext, ServerError }
 import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
-import services.nutrient.{ Nutrient, ReferenceNutrientMap }
+import services.nutrient.{ NutrientTableConstants, Nutrient, ReferenceNutrientMap }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
+import utils.collection.MapUtil
 
 import java.util.UUID
 import javax.inject.Inject
@@ -44,16 +44,13 @@ class Live @Inject() (
 
   override def allReferenceTrees(userId: UserId): Future[List[ReferenceTree]] = {
     val action = for {
-      referenceMaps <- companion.allReferenceMaps(userId)
-      referenceTrees <- referenceMaps.traverse(referenceMap =>
-        OptionT(
-          companion
-            .getReferenceNutrientsMap(userId, referenceMap.id)
-        )
-          .map(ReferenceTree(referenceMap, _))
-          .value
-      )
-    } yield referenceTrees.flatten.toList
+      referenceMaps                <- companion.allReferenceMaps(userId)
+      nutrientMapsByReferenceMapId <- companion.getReferenceNutrientsMaps(userId, referenceMaps.map(_.id))
+    } yield referenceMaps.flatMap { referenceMap =>
+      nutrientMapsByReferenceMapId.get(referenceMap.id).map {
+        ReferenceTree(referenceMap, _)
+      }
+    }.toList
 
     db.run(action.transactionally)
   }
@@ -83,7 +80,8 @@ class Live @Inject() (
     db.run(companion.delete(userId, referenceMapId))
 
   override def allReferenceEntries(userId: UserId, referenceMapId: ReferenceMapId): Future[List[ReferenceEntry]] =
-    db.run(companion.allReferenceEntries(userId, referenceMapId))
+    db.run(companion.allReferenceEntries(userId, Seq(referenceMapId)))
+      .map(_.values.flatten.toList)
 
   override def addReferenceEntry(
       userId: UserId,
@@ -119,7 +117,8 @@ object Live {
 
   class Companion @Inject() (
       referenceMapDao: db.daos.referenceMap.DAO,
-      referenceMapEntryDao: db.daos.referenceMapEntry.DAO
+      referenceMapEntryDao: db.daos.referenceMapEntry.DAO,
+      nutrientTableConstants: NutrientTableConstants
   ) extends ReferenceService.Companion {
 
     override def allReferenceMaps(userId: UserId)(implicit ec: ExecutionContext): DBIO[Seq[ReferenceMap]] =
@@ -132,20 +131,26 @@ object Live {
     override def getReferenceNutrientsMap(
         userId: UserId,
         referenceMapId: ReferenceMapId
-    )(implicit ec: ExecutionContext): DBIO[Option[ReferenceNutrientMap]] = {
-      val transformer = for {
-        referenceEntries <- OptionT.liftF(allReferenceEntries(userId, referenceMapId))
-        referenceEntriesAmounts <-
-          referenceEntries
-            .traverse { referenceEntry =>
-              OptionT(
-                nutrientNameByCode(referenceEntry.nutrientCode)
-              ).map(nutrientNameRow => nutrientNameRow.transformInto[Nutrient] -> referenceEntry.amount)
-            }
-      } yield referenceEntriesAmounts.toMap
+    )(implicit ec: ExecutionContext): DBIO[Option[ReferenceNutrientMap]] =
+      getReferenceNutrientsMaps(userId, Seq(referenceMapId))
+        .map(_.get(referenceMapId))
 
-      transformer.value
-    }
+    override def getReferenceNutrientsMaps(
+        userId: UserId,
+        referenceMapIds: Seq[ReferenceMapId]
+    )(implicit
+        ec: ExecutionContext
+    ): DBIO[Map[ReferenceMapId, ReferenceNutrientMap]] =
+      for {
+        referenceEntries <- allReferenceEntries(userId, referenceMapIds)
+      } yield referenceEntries.flatMap { case (referenceMapId, referenceEntries) =>
+        referenceEntries
+          .traverse(referenceEntry =>
+            nutrientNameByCode(referenceEntry.nutrientCode)
+              .map(_ -> referenceEntry.amount)
+          )
+          .map(referenceValues => referenceMapId -> referenceValues.toMap)
+      }
 
     override def getReferenceMap(userId: UserId, referenceMapId: ReferenceMapId)(implicit
         ec: ExecutionContext
@@ -192,17 +197,27 @@ object Live {
         .delete(ReferenceMapKey(userId, referenceMapId))
         .map(_ > 0)
 
-    override def allReferenceEntries(userId: UserId, referenceMapId: ReferenceMapId)(implicit
+    override def allReferenceEntries(userId: UserId, referenceMapIds: Seq[ReferenceMapId])(implicit
         ec: ExecutionContext
-    ): DBIO[List[ReferenceEntry]] =
+    ): DBIO[Map[ReferenceMapId, List[ReferenceEntry]]] =
       for {
-        exists <- referenceMapDao.exists(ReferenceMapKey(userId, referenceMapId))
+        matchingReferenceMaps <- referenceMapDao.allOf(userId, referenceMapIds)
+        typedIds = matchingReferenceMaps.map(_.id.transformInto[ReferenceMapId])
         referenceEntries <-
-          if (exists)
-            referenceMapEntryDao
-              .findAllFor(referenceMapId)
-              .map(_.map(_.transformInto[ReferenceEntry]).toList)
-          else Applicative[DBIO].pure(List.empty)
+          referenceMapEntryDao
+            .findAllFor(typedIds)
+            .map { referenceEntryRows =>
+              // If a reference map has no entries, it will not be present in the 'groupBy' result.
+              // Hence, we update the map: If the value is present, then use the value,
+              // otherwise create an empty map.
+              // Note that only those ids are handled that have been previously matched.
+              val preMap = referenceEntryRows.groupBy(_.referenceMapId.transformInto[ReferenceMapId])
+              MapUtil
+                .unionWith(preMap, typedIds.map(_ -> Seq.empty).toMap)((x, _) => x)
+                .view
+                .mapValues(_.map(_.transformInto[ReferenceEntry]).toList)
+                .toMap
+            }
       } yield referenceEntries
 
     override def addReferenceEntry(
@@ -260,11 +275,9 @@ object Live {
           else DBIO.successful(false)
       } yield result
 
-    private def nutrientNameByCode(nutrientCode: Int): DBIO[Option[Tables.NutrientNameRow]] =
-      Tables.NutrientName
-        .filter(_.nutrientCode === nutrientCode)
-        .result
-        .headOption
+    private def nutrientNameByCode(nutrientCode: Int): Option[Nutrient] =
+      nutrientTableConstants.allNutrients
+        .get(nutrientCode.transformInto[NutrientCode])
 
     private def ifReferenceMapExists[A](
         userId: UserId,

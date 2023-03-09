@@ -33,6 +33,8 @@ object ComplexFoodService {
 
     def get(userId: UserId, recipeId: RecipeId)(implicit ec: ExecutionContext): DBIO[Option[ComplexFood]]
 
+    def getAll(userId: UserId, recipeIds: Seq[RecipeId])(implicit ec: ExecutionContext): DBIO[Seq[ComplexFood]]
+
     def create(
         userId: UserId,
         complexFood: ComplexFoodIncoming

@@ -1,6 +1,5 @@
 package services.complex.ingredient
 
-import cats.Applicative
 import cats.data.OptionT
 import db.daos.complexIngredient.ComplexIngredientKey
 import db.daos.recipe.RecipeKey
@@ -17,6 +16,7 @@ import utils.CycleCheck
 import utils.CycleCheck.Arc
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
+import utils.collection.MapUtil
 
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
@@ -29,7 +29,7 @@ class Live @Inject() (
     with HasDatabaseConfigProvider[PostgresProfile] {
 
   override def all(userId: UserId, recipeId: RecipeId): Future[Seq[ComplexIngredient]] =
-    db.run(companion.all(userId, recipeId))
+    db.run(companion.all(userId, Seq(recipeId)).map(_.values.flatten.toSeq))
 
   override def create(
       userId: UserId,
@@ -64,14 +64,22 @@ object Live {
       complexIngredientDao: db.daos.complexIngredient.DAO
   ) extends ComplexIngredientService.Companion {
 
-    override def all(userId: UserId, recipeId: RecipeId)(implicit ec: ExecutionContext): DBIO[Seq[ComplexIngredient]] =
+    override def all(userId: UserId, recipeIds: Seq[RecipeId])(implicit
+        ec: ExecutionContext
+    ): DBIO[Map[RecipeId, Seq[ComplexIngredient]]] =
       for {
-        exists <- recipeDao.exists(RecipeKey(userId, recipeId))
-        complexIngredients <-
-          if (exists)
-            complexIngredientDao.findAllFor(recipeId)
-          else Applicative[DBIO].pure(List.empty)
-      } yield complexIngredients.map(_.transformInto[ComplexIngredient])
+        matchingRecipes <- recipeDao.allOf(userId, recipeIds)
+        typedIds = matchingRecipes.map(_.id.transformInto[RecipeId])
+        complexIngredients <- complexIngredientDao.findAllFor(typedIds)
+      } yield {
+        // GroupBy skips recipes with no entries, hence they are added manually afterwards.
+        val preMap = complexIngredients.groupBy(_.recipeId.transformInto[RecipeId])
+        MapUtil
+          .unionWith(preMap, typedIds.map(_ -> Seq.empty).toMap)((x, _) => x)
+          .view
+          .mapValues(_.map(_.transformInto[ComplexIngredient]))
+          .toMap
+      }
 
     override def create(userId: UserId, complexIngredient: ComplexIngredient)(implicit
         ec: ExecutionContext

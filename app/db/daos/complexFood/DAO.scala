@@ -23,10 +23,12 @@ object DAO {
       (table, key) => table.recipeId === key.transformInto[UUID]
     ) with DAO {
 
-      override def findByKeys(keys: Seq[RecipeId]): DBIO[Seq[Tables.ComplexFoodRow]] =
+      override def findByKeys(keys: Seq[RecipeId]): DBIO[Seq[Tables.ComplexFoodRow]] = {
+        val untypedIds = keys.distinct.map(_.transformInto[UUID])
         Tables.ComplexFood
-          .filter(_.recipeId.inSetBind(keys.map(_.transformInto[UUID])))
+          .filter(_.recipeId.inSetBind(untypedIds))
           .result
+      }
 
     }
 

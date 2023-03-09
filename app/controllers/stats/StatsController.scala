@@ -32,21 +32,27 @@ class StatsController @Inject() (
 
   def get(from: Option[String], to: Option[String]): Action[AnyContent] =
     userAction.async { request =>
-      for {
+      val transformer = for {
         stats <-
-          statsService
-            .nutrientsOverTime(
-              userId = request.user.id,
-              requestInterval = RequestInterval(
-                from = from.flatMap(Date.parse),
-                to = to.flatMap(Date.parse)
-              ).transformInto[common.RequestInterval]
-            )
-        weightInGrams <- statsService.weightOfMeals(request.user.id, stats.meals.map(_.id))
+          OptionT.liftF(
+            statsService
+              .nutrientsOverTime(
+                userId = request.user.id,
+                requestInterval = RequestInterval(
+                  from = from.flatMap(Date.parse),
+                  to = to.flatMap(Date.parse)
+                ).transformInto[common.RequestInterval]
+              )
+          )
+        weightInGrams <- OptionT(statsService.weightOfMeals(request.user.id, stats.meals.map(_.id)))
       } yield (stats, weightInGrams)
         .pipe(_.transformInto[Stats])
         .pipe(_.asJson)
         .pipe(Ok(_))
+
+      transformer
+        .getOrElse(NotFound(ErrorContext.Stats.General("Error fetching stats over time.").asServerError.asJson))
+        .recover(errorHandler)
     }
 
   def ofFood(foodId: Int): Action[AnyContent] =
@@ -60,6 +66,7 @@ class StatsController @Inject() (
               .pipe(Ok(_))
           )
         )
+        .recover(errorHandler)
     }
 
   def ofComplexFood(recipeId: UUID): Action[AnyContent] =
@@ -73,9 +80,11 @@ class StatsController @Inject() (
         .pipe(_.asJson)
         .pipe(Ok(_))
 
-      transformer.getOrElse(
-        NotFound(ErrorContext.Stats.General("Error fetching stats for complex food.").asServerError.asJson)
-      )
+      transformer
+        .getOrElse(
+          NotFound(ErrorContext.Stats.General("Error fetching stats for complex food.").asServerError.asJson)
+        )
+        .recover(errorHandler)
     }
 
   def ofRecipe(recipeId: UUID): Action[AnyContent] =
@@ -89,9 +98,11 @@ class StatsController @Inject() (
         .pipe(_.asJson)
         .pipe(Ok(_))
 
-      transformer.getOrElse(
-        NotFound(ErrorContext.Stats.General("Error fetching stats for recipe.").asServerError.asJson)
-      )
+      transformer
+        .getOrElse(
+          NotFound(ErrorContext.Stats.General("Error fetching stats for recipe.").asServerError.asJson)
+        )
+        .recover(errorHandler)
     }
 
   def ofMeal(mealId: UUID): Action[AnyContent] =
@@ -106,18 +117,28 @@ class StatsController @Inject() (
         .pipe(_.asJson)
         .pipe(Ok(_))
 
-      transformer.getOrElse(
-        NotFound(ErrorContext.Stats.General(s"Error while fetching stats for meal.").asServerError.asJson)
-      )
+      transformer
+        .getOrElse(
+          NotFound(ErrorContext.Stats.General(s"Error while fetching stats for meal.").asServerError.asJson)
+        )
+        .recover(errorHandler)
     }
 
   def allNutrients: Action[AnyContent] =
     userAction.async {
-      nutrientService.all.map(
-        _.map(_.transformInto[Nutrient])
-          .pipe(_.asJson)
-          .pipe(Ok(_))
-      )
+      nutrientService.all
+        .map(
+          _.map(_.transformInto[Nutrient])
+            .pipe(_.asJson)
+            .pipe(Ok(_))
+        )
+        .recover(errorHandler)
     }
+
+  private def errorHandler: PartialFunction[Throwable, Result] = { case error =>
+    val context = ErrorContext.Recipe.General(error.getMessage)
+
+    BadRequest(context.asServerError.asJson)
+  }
 
 }

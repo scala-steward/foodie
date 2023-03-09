@@ -15,7 +15,7 @@ trait MealService {
   def updateMeal(userId: UserId, mealUpdate: MealUpdate): Future[ServerError.Or[Meal]]
   def deleteMeal(userId: UserId, id: MealId): Future[Boolean]
 
-  def getMealEntries(userId: UserId, id: MealId): Future[Seq[MealEntry]]
+  def getMealEntries(userId: UserId, ids: Seq[MealId]): Future[Seq[MealEntry]]
   def addMealEntry(userId: UserId, mealEntryCreation: MealEntryCreation): Future[ServerError.Or[MealEntry]]
   def updateMealEntry(userId: UserId, mealEntryUpdate: MealEntryUpdate): Future[ServerError.Or[MealEntry]]
   def removeMealEntry(userId: UserId, mealEntryId: MealEntryId): Future[Boolean]
@@ -27,11 +27,13 @@ object MealService {
     def allMeals(userId: UserId, interval: RequestInterval)(implicit ec: ExecutionContext): DBIO[Seq[Meal]]
     def getMeal(userId: UserId, id: MealId)(implicit ec: ExecutionContext): DBIO[Option[Meal]]
 
+    def getMeals(userId: UserId, ids: Seq[MealId])(implicit ec: ExecutionContext): DBIO[Seq[Meal]]
+
     def createMeal(userId: UserId, id: MealId, mealCreation: MealCreation)(implicit ec: ExecutionContext): DBIO[Meal]
     def updateMeal(userId: UserId, mealUpdate: MealUpdate)(implicit ec: ExecutionContext): DBIO[Meal]
     def deleteMeal(userId: UserId, id: MealId)(implicit ec: ExecutionContext): DBIO[Boolean]
 
-    def getMealEntries(userId: UserId, id: MealId)(implicit ec: ExecutionContext): DBIO[Seq[MealEntry]]
+    def getMealEntries(userId: UserId, ids: Seq[MealId])(implicit ec: ExecutionContext): DBIO[Seq[MealEntry]]
 
     def addMealEntry(
         userId: UserId,

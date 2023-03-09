@@ -10,11 +10,13 @@ import errors.{ ErrorContext, ServerError }
 import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
+import services.common.GeneralTableConstants
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
+import utils.collection.MapUtil
 
 import java.util.UUID
 import javax.inject.Inject
@@ -42,8 +44,6 @@ class Live @Inject() (
   ): Future[Option[Recipe]] =
     db.run(companion.getRecipe(userId, id))
 
-  // TODO: The error can be specialized, because the most likely case is that the user is missing,
-  // and thus a foreign key constraint is not met.
   override def createRecipe(
       userId: UserId,
       recipeCreation: RecipeCreation
@@ -105,25 +105,21 @@ object Live {
 
   class Companion @Inject() (
       recipeDao: db.daos.recipe.DAO,
-      ingredientDao: db.daos.ingredient.DAO
+      ingredientDao: db.daos.ingredient.DAO,
+      generalTableConstants: GeneralTableConstants
   ) extends RecipeService.Companion {
 
-    override def allFoods(implicit ec: ExecutionContext): DBIO[Seq[Food]] =
-      for {
-        foods <- Tables.FoodName.result
-        withMeasure <- foods.traverse { food =>
-          Tables.ConversionFactor
-            .filter(cf => cf.foodId === food.foodId)
-            .map(_.measureId)
-            .result
-            .flatMap(measureIds =>
-              Tables.MeasureName
-                .filter(_.measureId.inSetBind(AmountUnit.hundredGrams.transformInto[Int] +: measureIds))
-                .result
-                .map(ms => food -> ms.toList)
-            ): DBIO[(Tables.FoodNameRow, List[Tables.MeasureNameRow])]
+    def allFoods: DBIO[Seq[Food]] = DBIO.successful {
+      generalTableConstants.allFoodNames.map { food =>
+        val allMeasureIds = AmountUnit.hundredGrams +: generalTableConstants.allConversionFactors.collect {
+          case ((foodId, measureId), _) if foodId == food.foodId => measureId
+        }.toList
+        val measures = generalTableConstants.allMeasureNames.filter { measureRow =>
+          allMeasureIds.contains(measureRow.measureId)
         }
-      } yield withMeasure.map(_.transformInto[Food])
+        (food -> measures.toList).transformInto[Food]
+      }
+    }
 
     override def getFoodInfo(foodId: FoodId)(implicit ec: ExecutionContext): DBIO[Option[FoodInfo]] =
       Tables.FoodName
@@ -132,9 +128,8 @@ object Live {
         .headOption
         .map(_.map(_.transformInto[FoodInfo]))
 
-    override def allMeasures(implicit ec: ExecutionContext): DBIO[Seq[Measure]] =
-      Tables.MeasureName.result
-        .map(_.map(_.transformInto[Measure]))
+    override val allMeasures: DBIO[Seq[Measure]] =
+      DBIO.successful(generalTableConstants.allMeasureNames.map(_.transformInto[Measure]))
 
     override def allRecipes(userId: UserId)(implicit ec: ExecutionContext): DBIO[Seq[Recipe]] =
       recipeDao
@@ -149,6 +144,14 @@ object Live {
       OptionT(
         recipeDao.find(RecipeKey(userId, id))
       ).map(_.transformInto[Recipe]).value
+
+    override def getRecipes(
+        userId: UserId,
+        ids: Seq[RecipeId]
+    )(implicit ec: ExecutionContext): DBIO[Seq[Recipe]] =
+      recipeDao
+        .allOf(userId, ids)
+        .map(_.map(_.transformInto[Recipe]))
 
     override def createRecipe(
         userId: UserId,
@@ -203,10 +206,28 @@ object Live {
         ingredients <-
           if (exists)
             ingredientDao
-              .findAllFor(recipeId)
+              .findAllFor(Seq(recipeId))
               .map(_.map(_.transformInto[Ingredient]).toList)
           else Applicative[DBIO].pure(List.empty)
       } yield ingredients
+
+    override def getAllIngredients(userId: UserId, recipeIds: Seq[RecipeId])(implicit
+        ec: ExecutionContext
+    ): DBIO[Map[RecipeId, List[Ingredient]]] = {
+      for {
+        matchingRecipes <- recipeDao.allOf(userId, recipeIds)
+        typedIds = matchingRecipes.map(_.id.transformInto[RecipeId])
+        allIngredients <- ingredientDao.findAllFor(typedIds)
+      } yield {
+        // GroupBy skips recipes with no entries, hence they are added manually afterwards.
+        val preMap = allIngredients.groupBy(_.recipeId.transformInto[RecipeId])
+        MapUtil
+          .unionWith(preMap, typedIds.map(_ -> Seq.empty).toMap)((x, _) => x)
+          .view
+          .mapValues(_.map(_.transformInto[Ingredient]).toList)
+          .toMap
+      }
+    }
 
     override def addIngredient(
         userId: UserId,

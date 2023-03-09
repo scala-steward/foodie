@@ -38,7 +38,8 @@ object ServiceFunctions {
         ),
         recipeService = new services.recipe.Live.Companion(
           recipeDao = DAOTestInstance.Recipe.instanceFrom(recipeContents),
-          ingredientDao = DAOTestInstance.Ingredient.instanceFrom(ingredientContents)
+          ingredientDao = DAOTestInstance.Ingredient.instanceFrom(ingredientContents),
+          generalTableConstants = DBTestUtil.generalTableConstants
         ),
         nutrientService = nutrientServiceCompanion,
         complexFoodService = ComplexFoodServiceProperties.companionWith(

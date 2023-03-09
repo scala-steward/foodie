@@ -27,7 +27,10 @@ trait ComplexIngredientService {
 object ComplexIngredientService {
 
   trait Companion {
-    def all(userId: UserId, recipeId: RecipeId)(implicit ec: ExecutionContext): DBIO[Seq[ComplexIngredient]]
+
+    def all(userId: UserId, recipeIds: Seq[RecipeId])(implicit
+        ec: ExecutionContext
+    ): DBIO[Map[RecipeId, Seq[ComplexIngredient]]]
 
     def create(
         userId: UserId,

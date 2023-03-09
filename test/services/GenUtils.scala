@@ -1,17 +1,15 @@
 package services
 
-import cats.{ Monad, StackSafeMonad }
 import cats.data.NonEmptyList
-import db.generated.Tables
+import cats.{ Monad, StackSafeMonad }
+import db.{ FoodId, MeasureId, UserId }
 import io.scalaland.chimney.dsl._
 import org.scalacheck.Gen
 import security.Hash
-import services.nutrient.{ Nutrient, NutrientService }
+import services.nutrient.Nutrient
 import services.recipe._
-import db.{ FoodId, MeasureId, UserId }
 import services.user.User
 import shapeless.tag.@@
-import slick.jdbc.PostgresProfile.api._
 import spire.math.Natural
 import utils.TransformerUtils.Implicits._
 import utils.date.{ Date, SimpleDate, Time }
@@ -31,8 +29,7 @@ object GenUtils {
 
   }
 
-  private val recipeService   = TestUtil.injector.instanceOf[RecipeService]
-  private val nutrientService = TestUtil.injector.instanceOf[NutrientService]
+  private val recipeService = TestUtil.injector.instanceOf[RecipeService]
 
   val nonEmptyAsciiString: Gen[String] =
     Gen
@@ -122,16 +119,11 @@ object GenUtils {
     )
     .toMap
 
-  lazy val allNutrients: Seq[Nutrient] = DBTestUtil.await(nutrientService.all)
+  lazy val allNutrients: Seq[Nutrient] = DBTestUtil.nutrientTableConstants.allNutrients.values.toSeq
   lazy val allMeasures: Seq[Measure]   = DBTestUtil.await(recipeService.allMeasures)
 
   lazy val allConversionFactors: Map[(FoodId, MeasureId), BigDecimal] =
-    DBTestUtil
-      .await(DBTestUtil.dbRun(Tables.ConversionFactor.result))
-      .map { row =>
-        (row.foodId.transformInto[FoodId], row.measureId.transformInto[MeasureId]) -> row.conversionFactorValue
-      }
-      .toMap
+    DBTestUtil.generalTableConstants.allConversionFactors
 
   lazy val foodGen: Gen[Food] =
     Gen.oneOf(allFoods.values)
