@@ -47,7 +47,7 @@ class Live @Inject() (
 
   override def deleteMeal(userId: UserId, id: MealId): Future[Boolean] = db.run(companion.deleteMeal(userId, id))
 
-  override def getMealEntries(userId: UserId, ids: Seq[MealId]): Future[Seq[MealEntry]] =
+  override def getMealEntries(userId: UserId, ids: Seq[MealId]): Future[Map[MealId, Seq[MealEntry]]] =
     db.run(companion.getMealEntries(userId, ids))
 
   override def addMealEntry(userId: UserId, mealEntryCreation: MealEntryCreation): Future[ServerError.Or[MealEntry]] =
@@ -148,13 +148,13 @@ object Live {
 
     override def getMealEntries(userId: UserId, ids: Seq[MealId])(implicit
         ec: ExecutionContext
-    ): DBIO[Seq[MealEntry]] =
+    ): DBIO[Map[MealId, Seq[MealEntry]]] =
       for {
         matchingMeals <- mealDao.allOf(userId, ids)
         mealEntries <-
           mealEntryDao
             .findAllFor(matchingMeals.map(_.id.transformInto[MealId]))
-            .map(_.map(_.transformInto[MealEntry]))
+            .map { _.view.mapValues(_.map(_.transformInto[MealEntry])).toMap }
       } yield mealEntries
 
     override def addMealEntry(

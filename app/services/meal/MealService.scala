@@ -15,7 +15,7 @@ trait MealService {
   def updateMeal(userId: UserId, mealUpdate: MealUpdate): Future[ServerError.Or[Meal]]
   def deleteMeal(userId: UserId, id: MealId): Future[Boolean]
 
-  def getMealEntries(userId: UserId, ids: Seq[MealId]): Future[Seq[MealEntry]]
+  def getMealEntries(userId: UserId, ids: Seq[MealId]): Future[Map[MealId, Seq[MealEntry]]]
   def addMealEntry(userId: UserId, mealEntryCreation: MealEntryCreation): Future[ServerError.Or[MealEntry]]
   def updateMealEntry(userId: UserId, mealEntryUpdate: MealEntryUpdate): Future[ServerError.Or[MealEntry]]
   def removeMealEntry(userId: UserId, mealEntryId: MealEntryId): Future[Boolean]
@@ -33,7 +33,9 @@ object MealService {
     def updateMeal(userId: UserId, mealUpdate: MealUpdate)(implicit ec: ExecutionContext): DBIO[Meal]
     def deleteMeal(userId: UserId, id: MealId)(implicit ec: ExecutionContext): DBIO[Boolean]
 
-    def getMealEntries(userId: UserId, ids: Seq[MealId])(implicit ec: ExecutionContext): DBIO[Seq[MealEntry]]
+    def getMealEntries(userId: UserId, ids: Seq[MealId])(implicit
+        ec: ExecutionContext
+    ): DBIO[Map[MealId, Seq[MealEntry]]]
 
     def addMealEntry(
         userId: UserId,
