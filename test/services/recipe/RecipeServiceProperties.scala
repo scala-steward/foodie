@@ -19,7 +19,8 @@ object RecipeServiceProperties extends Properties("Recipe service") {
   ): services.recipe.Live.Companion =
     new services.recipe.Live.Companion(
       recipeDao = DAOTestInstance.Recipe.instanceFrom(recipeContents),
-      ingredientDao = DAOTestInstance.Ingredient.instanceFrom(ingredientContents)
+      ingredientDao = DAOTestInstance.Ingredient.instanceFrom(ingredientContents),
+      generalTableConstants = DBTestUtil.generalTableConstants
     )
 
   def recipeServiceWith(

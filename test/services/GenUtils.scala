@@ -123,7 +123,7 @@ object GenUtils {
   lazy val allMeasures: Seq[Measure]   = DBTestUtil.await(recipeService.allMeasures)
 
   lazy val allConversionFactors: Map[(FoodId, MeasureId), BigDecimal] =
-    DBTestUtil.nutrientTableConstants.allConversionFactors
+    DBTestUtil.generalTableConstants.allConversionFactors
 
   lazy val foodGen: Gen[Food] =
     Gen.oneOf(allFoods.values)
