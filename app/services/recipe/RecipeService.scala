@@ -27,7 +27,7 @@ trait RecipeService {
 object RecipeService {
 
   trait Companion {
-    def allFoods(implicit ec: ExecutionContext): DBIO[Seq[Food]]
+    def allFoods: DBIO[Seq[Food]]
 
     def getFoodInfo(foodId: FoodId)(implicit ec: ExecutionContext): DBIO[Option[FoodInfo]]
     def allMeasures: DBIO[Seq[Measure]]

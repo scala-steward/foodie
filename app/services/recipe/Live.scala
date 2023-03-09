@@ -111,25 +111,7 @@ object Live {
       generalTableConstants: GeneralTableConstants
   ) extends RecipeService.Companion {
 
-    // TODO: This can be done with a join rather than a traverse
-    override def allFoods(implicit ec: ExecutionContext): DBIO[Seq[Food]] =
-      for {
-        foods <- Tables.FoodName.result
-        withMeasure <- foods.traverse { food =>
-          Tables.ConversionFactor
-            .filter(cf => cf.foodId === food.foodId)
-            .map(_.measureId)
-            .result
-            .flatMap(measureIds =>
-              Tables.MeasureName
-                .filter(_.measureId.inSetBind(AmountUnit.hundredGrams.transformInto[Int] +: measureIds))
-                .result
-                .map(ms => food -> ms.toList)
-            ): DBIO[(Tables.FoodNameRow, List[Tables.MeasureNameRow])]
-        }
-      } yield withMeasure.map(_.transformInto[Food])
-
-    def allFoods2: DBIO[Seq[Food]] = DBIO.successful {
+    def allFoods: DBIO[Seq[Food]] = DBIO.successful {
       generalTableConstants.allFoodNames.map { food =>
         val allMeasureIds = AmountUnit.hundredGrams +: generalTableConstants.allConversionFactors.collect {
           case ((foodId, measureId), _) if foodId == food.foodId => measureId
