@@ -51,6 +51,7 @@ GET    /stats/complex-food/:recipeId                     controllers.stats.Stats
 GET    /stats/recipe/:recipeId                           controllers.stats.StatsController.ofRecipe(recipeId: java.util.UUID)
 GET    /stats/meal/:mealId                               controllers.stats.StatsController.ofMeal(mealId: java.util.UUID)
 GET    /stats/nutrients                                  controllers.stats.StatsController.allNutrients
+GET    /stats/recipe-occurrences                         controllers.stats.StatsController.recipeOccurrences
 
 GET    /                                                 controllers.home.HomeController.home
 POST   /users/login                                      controllers.user.UserController.login
