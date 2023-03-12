@@ -42,7 +42,7 @@ viewMain configuration main =
     <|
         StatisticsView.withNavigationBar
             { mainPageURL = configuration.mainPageURL
-            , currentPage = Just StatisticsVariant.Recipe
+            , currentPage = Just StatisticsVariant.RecipeOccurrences
             }
         <|
             let
