@@ -3,7 +3,9 @@ module Pages.Statistics.RecipeOccurrences.View exposing (view)
 import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.RecipeOccurrence exposing (RecipeOccurrence)
 import Configuration exposing (Configuration)
-import Html exposing (Html, col, colgroup, div, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Html, button, col, colgroup, div, label, table, tbody, td, text, th, thead, tr)
+import Html.Attributes exposing (disabled)
+import Html.Events exposing (onClick)
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Pages.Statistics.RecipeOccurrences.Page as Page
@@ -78,9 +80,23 @@ viewMain configuration main =
                             ]
                         , thead []
                             [ tr [ Style.classes.tableHeader ]
-                                [ th [] [ label [] [ text "Name" ] ]
+                                [ th []
+                                    [ button
+                                        [ disabled <| main.sortType == Page.RecipeName
+                                        , onClick (Page.SortBy Page.RecipeName)
+                                        , Style.classes.button.alternative
+                                        ]
+                                        [ label [] [ text "Recipe name" ] ]
+                                    ]
                                 , th [] [ label [] [ text "Description" ] ]
-                                , th [] [ label [] [ text "Date of meal" ] ]
+                                , th []
+                                    [ button
+                                        [ disabled <| main.sortType == Page.MealDate
+                                        , onClick (Page.SortBy Page.MealDate)
+                                        , Style.classes.button.alternative
+                                        ]
+                                        [ label [] [ text "Meal date" ] ]
+                                    ]
                                 , th [] [ label [] [ text "Name of meal" ] ]
                                 , th [ Style.classes.controlsGroup ] []
                                 ]
