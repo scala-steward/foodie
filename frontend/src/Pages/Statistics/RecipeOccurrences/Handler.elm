@@ -39,6 +39,9 @@ updateLogic msg model =
         Page.GotFetchRecipeOccurrencesResponse result ->
             gotFetchRecipeOccurrencesResponse model result
 
+        Page.SortBy sortType ->
+            sortBy model sortType
+
 
 setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 setSearchString model string =
@@ -63,5 +66,12 @@ gotFetchRecipeOccurrencesResponse model result =
                     |> Tristate.mapInitial (Page.lenses.initial.recipeOccurrences.set (recipes |> Just))
                     |> Tristate.fromInitToMain Page.initialToMain
             )
+    , Cmd.none
+    )
+
+
+sortBy : Page.Model -> Page.SortType -> ( Page.Model, Cmd Page.LogicMsg )
+sortBy model sortType =
+    ( model |> Tristate.mapMain (Page.lenses.main.sortType.set sortType)
     , Cmd.none
     )

@@ -19,6 +19,7 @@ type alias Main =
     , recipeOccurrences : List RecipeOccurrence
     , recipesSearchString : String
     , pagination : Pagination
+    , sortType: SortType
     , variant : Page
     }
 
@@ -45,6 +46,7 @@ initialToMain i =
             , recipeOccurrences = recipeOccurrences
             , recipesSearchString = ""
             , pagination = Pagination.initial
+            , sortType = RecipeName
             , variant = StatisticsVariant.RecipeOccurrences
             }
         )
@@ -56,6 +58,7 @@ lenses :
     , main :
         { recipeOccurrences : Lens Main (List RecipeOccurrence)
         , recipesSearchString : Lens Main String
+        , sortType : Lens Main SortType
         , pagination : Lens Main Pagination
         }
     }
@@ -64,6 +67,7 @@ lenses =
     , main =
         { recipeOccurrences = Lens .recipeOccurrences (\b a -> { a | recipeOccurrences = b })
         , recipesSearchString = Lens .recipesSearchString (\b a -> { a | recipesSearchString = b })
+        , sortType = Lens .sortType (\b a -> { a | sortType = b })
         , pagination = Lens .pagination (\b a -> { a | pagination = b })
         }
     }
@@ -77,8 +81,14 @@ type alias Flags =
 type alias Msg =
     Tristate.Msg LogicMsg
 
--- todo: Add sorting logic
+
+type SortType
+    = RecipeName
+    | MealDate
+
+
 type LogicMsg
     = SetSearchString String
     | SetRecipeOccurrencesPagination Pagination
     | GotFetchRecipeOccurrencesResponse (Result Error (List RecipeOccurrence))
+    | SortBy SortType

@@ -56,7 +56,7 @@ viewMain configuration main =
                                     || filterOn (v.lastUsedInMeal |> Maybe.Extra.unwrap "" (.date >> DateUtil.toString))
                                     || filterOn (v.lastUsedInMeal |> Maybe.andThen .name |> Maybe.withDefault "")
                             )
-                        |> List.sortBy (.recipe >> .name)
+                        |> sortBy main.sortType
                         |> ViewUtil.paginate
                             { pagination =
                                 Page.lenses.main.pagination
@@ -138,3 +138,16 @@ viewRecipeOccurrenceLine configuration recipeOccurrence =
          ]
             ++ mealButton
         )
+
+
+sortBy : Page.SortType -> List RecipeOccurrence -> List RecipeOccurrence
+sortBy sortType recipeOccurrences =
+    case sortType of
+        Page.RecipeName ->
+            recipeOccurrences
+                |> List.sortBy (.recipe >> .name)
+
+        Page.MealDate ->
+            recipeOccurrences
+                |> List.sortBy (.lastUsedInMeal >> Maybe.Extra.unwrap "" (.date >> DateUtil.toString))
+                |> List.reverse
