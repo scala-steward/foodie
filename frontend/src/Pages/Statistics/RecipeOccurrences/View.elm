@@ -4,10 +4,12 @@ import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.RecipeOccurrence exposing (RecipeOccurrence)
 import Configuration exposing (Configuration)
 import Html exposing (Html, col, colgroup, div, label, table, tbody, td, text, th, thead, tr)
+import Maybe.Extra
 import Monocle.Compose as Compose
 import Pages.Statistics.RecipeOccurrences.Page as Page
 import Pages.Statistics.RecipeOccurrences.Pagination as Pagination
 import Pages.Statistics.StatisticsView as StatisticsView
+import Pages.Util.DateUtil as DateUtil
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.NavigationUtil as NavigationUtil
 import Pages.Util.PaginationSettings as PaginationSettings
@@ -60,7 +62,7 @@ viewMain configuration main =
                             }
                             main
             in
-            div [ Style.ids.statistics.recipe ]
+            div [ Style.ids.statistics.recipeOccurrence ]
                 [ div []
                     [ HtmlUtil.searchAreaWith
                         { msg = Page.SetSearchString
@@ -103,13 +105,32 @@ viewMain configuration main =
 
 viewRecipeOccurrenceLine : Configuration -> RecipeOccurrence -> Html Page.LogicMsg
 viewRecipeOccurrenceLine configuration recipeOccurrence =
+    let
+        ( mealDate, mealName, mealButton ) =
+            recipeOccurrence.lastUsedInMeal
+                |> Maybe.Extra.unwrap ( "", "", [] )
+                    (\meal ->
+                        ( meal.date |> DateUtil.toString
+                        , meal.name |> Maybe.withDefault ""
+                        , [ td [ Style.classes.controls ]
+                                [ NavigationUtil.mealEditorLinkButton configuration meal.id ]
+                          ]
+                        )
+                    )
+    in
     tr [ Style.classes.editing ]
-        [ td [ Style.classes.editable ]
+        ([ td [ Style.classes.editable ]
             [ label [] [ text recipeOccurrence.recipe.name ] ]
-        , td [ Style.classes.editable ]
+         , td [ Style.classes.editable ]
             [ label [] [ text <| Maybe.withDefault "" <| recipeOccurrence.recipe.description ] ]
-        , td [ Style.classes.controls ]
+         , td [ Style.classes.controls ]
+            [ label [] [ text mealDate ] ]
+         , td [ Style.classes.controls ]
+            [ label [] [ text mealName ] ]
+         , td [ Style.classes.controls ]
             [ NavigationUtil.recipeNutrientsLinkButton configuration recipeOccurrence.recipe.id ]
-        , td [ Style.classes.controls ]
+         , td [ Style.classes.controls ]
             [ NavigationUtil.recipeEditorLinkButton configuration recipeOccurrence.recipe.id ]
-        ]
+         ]
+            ++ mealButton
+        )

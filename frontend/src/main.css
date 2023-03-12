@@ -348,6 +348,22 @@ th {
     width: 30%
 }
 
+#statisticsRecipeOccurrence th:first-child {
+    width: 20%;
+}
+
+#statisticsRecipeOccurrence th:nth-child(2) {
+    width: 20%;
+}
+
+#statisticsRecipeOccurrence th:nth-child(3) {
+    width: 10%;
+}
+
+#statisticsRecipeOccurrence th:nth-child(4) {
+    width: 15%;
+}
+
 .low {
     color: #fa8128; /* tangerine */
 }
