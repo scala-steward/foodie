@@ -9,6 +9,7 @@ type Page
     | Recipe
     | Meal
     | Time
+    | RecipeOccurrences
 
 
 food : String
@@ -50,6 +51,9 @@ addressSuffix page =
 
                 Time ->
                     ""
+
+                RecipeOccurrences ->
+                    "recipe-occurrences"
     in
     Url.Builder.relative [ "statistics", suffix ] []
 
@@ -71,3 +75,6 @@ nameOfPage page =
 
         Time ->
             "Over time"
+
+        RecipeOccurrences ->
+            "Recipe occurrences"
