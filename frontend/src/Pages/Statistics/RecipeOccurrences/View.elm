@@ -148,8 +148,6 @@ viewRecipeOccurrenceLine configuration recipeOccurrence =
          , td [ Style.classes.controls ]
             [ label [] [ text mealName ] ]
          , td [ Style.classes.controls ]
-            [ NavigationUtil.recipeNutrientsLinkButton configuration recipeOccurrence.recipe.id ]
-         , td [ Style.classes.controls ]
             [ NavigationUtil.recipeEditorLinkButton configuration recipeOccurrence.recipe.id ]
          ]
             ++ mealButton
