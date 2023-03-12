@@ -53,6 +53,8 @@ viewMain configuration main =
                             (\v ->
                                 filterOn v.recipe.name
                                     || filterOn (v.recipe.description |> Maybe.withDefault "")
+                                    || filterOn (v.lastUsedInMeal |> Maybe.Extra.unwrap "" (.date >> DateUtil.toString))
+                                    || filterOn (v.lastUsedInMeal |> Maybe.andThen .name |> Maybe.withDefault "")
                             )
                         |> List.sortBy (.recipe >> .name)
                         |> ViewUtil.paginate
@@ -78,6 +80,8 @@ viewMain configuration main =
                             [ tr [ Style.classes.tableHeader ]
                                 [ th [] [ label [] [ text "Name" ] ]
                                 , th [] [ label [] [ text "Description" ] ]
+                                , th [] [ label [] [ text "Date of meal" ] ]
+                                , th [] [ label [] [ text "Name of meal" ] ]
                                 , th [ Style.classes.controlsGroup ] []
                                 ]
                             ]
