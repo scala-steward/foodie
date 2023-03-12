@@ -24,6 +24,7 @@ searchByInitials ps =
     ps.actual
         |> String.toLower
         |> String.split " "
+        |> List.concatMap (String.split "-")
         |> List.Extra.andThen (String.toList >> List.Extra.dropWhile (Char.isAlpha >> not) >> List.head >> Maybe.Extra.toList)
         |> List.Extra.isSubsequenceOf (ps.desired |> String.toLower |> String.toList)
 
