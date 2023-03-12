@@ -32,6 +32,11 @@ meal =
     "meal"
 
 
+recipeOccurrences : String
+recipeOccurrences =
+    "recipe-occurrences"
+
+
 addressSuffix : Page -> String
 addressSuffix page =
     let

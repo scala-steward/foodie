@@ -1,4 +1,4 @@
-module Pages.Statistics.RecipeOccurrences.View exposing (..)
+module Pages.Statistics.RecipeOccurrences.View exposing (view)
 
 import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.RecipeOccurrence exposing (RecipeOccurrence)

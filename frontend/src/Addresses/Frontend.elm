@@ -19,6 +19,7 @@ module Addresses.Frontend exposing
     , statisticsFoodSelect
     , statisticsMealSearch
     , statisticsMealSelect
+    , statisticsRecipeOccurrences
     , statisticsRecipeSearch
     , statisticsRecipeSelect
     , statisticsTime
@@ -126,6 +127,13 @@ statisticsMealSelect =
         , toString = Uuid.toString >> List.singleton
         , paramParser = ParserUtil.uuidParser
         }
+
+
+statisticsRecipeOccurrences : AddressWithParser () a a
+statisticsRecipeOccurrences =
+    plainMultiple
+        "statistics"
+        [ StatisticsVariant.recipeOccurrences ]
 
 
 referenceMaps : AddressWithParser () a a

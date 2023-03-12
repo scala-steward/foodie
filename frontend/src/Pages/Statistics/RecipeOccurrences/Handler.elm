@@ -1,4 +1,4 @@
-module Pages.Statistics.RecipeOccurrences.Handler exposing (..)
+module Pages.Statistics.RecipeOccurrences.Handler exposing (init, update)
 
 import Api.Types.RecipeOccurrence exposing (RecipeOccurrence)
 import Pages.Statistics.RecipeOccurrences.Page as Page
@@ -8,6 +8,7 @@ import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.View.Tristate as Tristate
 import Result.Extra
 import Util.HttpUtil exposing (Error)
+
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
@@ -38,17 +39,20 @@ updateLogic msg model =
         Page.GotFetchRecipeOccurrencesResponse result ->
             gotFetchRecipeOccurrencesResponse model result
 
+
 setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
 setSearchString model string =
     ( model |> Tristate.mapMain (Page.lenses.main.recipesSearchString.set string)
     , Cmd.none
     )
 
+
 setRecipesPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.LogicMsg )
 setRecipesPagination model pagination =
     ( model |> Tristate.mapMain (Page.lenses.main.pagination.set pagination)
     , Cmd.none
     )
+
 
 gotFetchRecipeOccurrencesResponse : Page.Model -> Result Error (List RecipeOccurrence) -> ( Page.Model, Cmd Page.LogicMsg )
 gotFetchRecipeOccurrencesResponse model result =
