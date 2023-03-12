@@ -1,4 +1,4 @@
-package services.stats
+package util
 
 import org.scalacheck.Prop
 import org.scalacheck.Prop._

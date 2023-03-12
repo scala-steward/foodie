@@ -5,9 +5,10 @@ import config.TestConfiguration
 import db.UserTag
 import errors.ErrorContext
 import org.scalacheck.Prop._
-import org.scalacheck.{ Prop, Properties, Test }
+import org.scalacheck.{Prop, Properties, Test}
 import services._
 import spire.math.Natural
+import util.PropUtil
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
