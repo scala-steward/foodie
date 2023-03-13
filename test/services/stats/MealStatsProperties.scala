@@ -1,7 +1,7 @@
 package services.stats
 
 import algebra.ring.AdditiveSemigroup
-import cats.data.{EitherT, NonEmptyList}
+import cats.data.{ EitherT, NonEmptyList }
 import cats.instances.list._
 import cats.syntax.traverse._
 import config.TestConfiguration
@@ -9,7 +9,7 @@ import db._
 import errors.ServerError
 import io.scalaland.chimney.dsl.TransformerOps
 import org.scalacheck.Prop.AnyOperators
-import org.scalacheck.{Gen, Prop, Properties, Test}
+import org.scalacheck.{ Gen, Prop, Properties, Test }
 import services._
 import services.common.RequestInterval
 import services.meal._
@@ -17,8 +17,8 @@ import services.recipe.FullRecipe
 import spire.compat._
 import spire.implicits._
 import spire.math.interval._
-import spire.math.{Interval, Natural}
-import util.{DateUtil, PropUtil}
+import spire.math.{ Interval, Natural }
+import util.{ DateUtil, PropUtil }
 import utils.collection.MapUtil
 import utils.date.Date
 
@@ -118,16 +118,7 @@ object MealStatsProperties extends Properties("Meal stats") {
       )
     }
 
-    DBTestUtil.await(
-      transformer.fold(
-        error => {
-          pprint.log(error.message)
-          Prop.exception
-        },
-        identity
-      )
-    )
-
+    DBTestUtil.awaitProp(transformer)
   }
 
   private case class OverTimeSetup(
@@ -213,15 +204,7 @@ object MealStatsProperties extends Properties("Meal stats") {
       )
     }
 
-    DBTestUtil.await(
-      transformer.fold(
-        error => {
-          pprint.log(error.message)
-          Prop.exception
-        },
-        identity
-      )
-    )
+    DBTestUtil.awaitProp(transformer)
   }
 
   private case class RestrictedOverTimeSetup(
@@ -274,15 +257,7 @@ object MealStatsProperties extends Properties("Meal stats") {
         mealsInInterval.map(FullMeal(_, List.empty))
       )
 
-    DBTestUtil.await(
-      transformer.fold(
-        error => {
-          pprint.log(error.message)
-          Prop.exception
-        },
-        identity
-      )
-    )
+    DBTestUtil.awaitProp(transformer)
   }
 
   private def extractValue[A](bound: Bound[A]): Option[A] =
