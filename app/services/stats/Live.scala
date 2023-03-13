@@ -207,11 +207,10 @@ object Live {
       } yield {
         val mealMap   = allMeals.map(meal => meal.id -> meal).toMap
         val recipeMap = allRecipes.map(recipe => recipe.id -> recipe).toMap
-        val inSomeMeal = allMealEntries
+        val inSomeMeal = allMealEntries.toList
           .flatMap { case (mealId, mealEntries) =>
             mealEntries.map(mealId -> _)
           }
-          .toList
           .groupBy(_._2.recipeId)
           .map { case (recipeId, mealEntries) =>
             val latestMeal = mealEntries.map(_._1.pipe(mealMap)).maxBy(_.date)
