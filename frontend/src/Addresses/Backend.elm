@@ -122,6 +122,7 @@ stats :
     , recipe : RecipeId -> ResourcePattern
     , meal : MealId -> ResourcePattern
     , nutrients : ResourcePattern
+    , recipeOccurrences : ResourcePattern
     }
 stats =
     let
@@ -134,6 +135,7 @@ stats =
     , recipe = \recipeId -> get <| base <| [ StatisticsVariant.recipe, recipeId |> Uuid.toString ]
     , meal = \mealId -> get <| base <| [ StatisticsVariant.meal, mealId |> Uuid.toString ]
     , nutrients = get <| base <| [ "nutrients" ]
+    , recipeOccurrences = get <| base [ "recipe-occurrences" ]
     }
 
 

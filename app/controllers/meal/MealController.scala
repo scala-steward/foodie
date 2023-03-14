@@ -105,7 +105,9 @@ class MealController @Inject() (
           Seq(id.transformInto[MealId])
         )
         .map(
-          _.pipe(_.map(_.transformInto[MealEntry]).asJson)
+          _.pipe(_.values)
+            .pipe(_.flatten)
+            .pipe(_.map(_.transformInto[MealEntry]).asJson)
             .pipe(Ok(_))
         )
         .recover(errorHandler)

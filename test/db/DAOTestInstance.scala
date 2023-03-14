@@ -196,11 +196,16 @@ object DAOTestInstance {
         contents
       ) with db.daos.mealEntry.DAO {
 
-        override def findAllFor(mealIds: Seq[MealId]): DBIO[Seq[Tables.MealEntryRow]] =
+        override def findAllFor(
+            mealIds: Seq[MealId]
+        )(implicit ec: ExecutionContext): DBIO[Map[MealId, Seq[Tables.MealEntryRow]]] =
           fromIO {
             map.values
               .filter(meal => mealIds.contains(meal.mealId.transformInto[MealId]))
-              .toList
+              .groupBy(_.mealId.transformInto[MealId])
+              .view
+              .mapValues(_.toSeq)
+              .toMap
           }
 
       }

@@ -23,9 +23,11 @@ import spire.math.Natural
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 import utils.collection.MapUtil
+import spire.compat._
 
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
+import scala.util.chaining._
 
 class Live @Inject() (
     override protected val dbConfigProvider: DatabaseConfigProvider,
@@ -62,6 +64,9 @@ class Live @Inject() (
   override def weightOfMeals(userId: UserId, mealIds: Seq[MealId]): Future[Option[BigDecimal]] =
     db.run(companion.weightOfMeals(userId, mealIds))
 
+  override def recipeOccurrences(userId: UserId): Future[Seq[RecipeOccurrence]] =
+    db.run(companion.recipeOccurrences(userId))
+
 }
 
 object Live {
@@ -84,7 +89,7 @@ object Live {
         meals <- mealService.allMeals(userId, requestInterval)
         mealIds = meals.map(_.id)
         meals              <- mealService.getMeals(userId, mealIds)
-        mealEntries        <- mealService.getMealEntries(userId, mealIds)
+        mealEntries        <- mealService.getMealEntries(userId, mealIds).map(_.values.flatten.toSeq)
         nutrientsPerRecipe <- nutrientsOfRecipeIds(userId, mealEntries.map(_.recipeId))
         allNutrients       <- nutrientService.all
       } yield {
@@ -170,7 +175,7 @@ object Live {
         ec: ExecutionContext
     ): DBIO[NutrientAmountMap] =
       for {
-        mealEntries        <- mealService.getMealEntries(userId, Seq(mealId))
+        mealEntries        <- mealService.getMealEntries(userId, Seq(mealId)).map(_.values.flatten.toSeq)
         nutrientsPerRecipe <- nutrientsOfRecipeIds(userId, mealEntries.map(_.recipeId))
         allNutrients       <- nutrientService.all
       } yield nutrientAmountMapOfMealEntries(mealEntries, nutrientsPerRecipe, allNutrients)
@@ -191,8 +196,39 @@ object Live {
     ): DBIO[Option[BigDecimal]] =
       for {
         mealEntries <- mealService.getMealEntries(userId, mealIds)
-        weights     <- weightsOfMealEntries(userId, mealEntries)
+        weights     <- weightsOfMealEntries(userId, mealEntries.values.flatten.toSeq)
       } yield weights
+
+    override def recipeOccurrences(userId: UserId)(implicit ec: ExecutionContext): DBIO[Seq[RecipeOccurrence]] = {
+      for {
+        allMeals       <- mealService.allMeals(userId, RequestInterval(None, None))
+        allMealEntries <- mealService.getMealEntries(userId, allMeals.map(_.id))
+        allRecipes     <- recipeService.allRecipes(userId)
+      } yield {
+        val mealMap   = allMeals.map(meal => meal.id -> meal).toMap
+        val recipeMap = allRecipes.map(recipe => recipe.id -> recipe).toMap
+        val inSomeMeal = allMealEntries.toList
+          .flatMap { case (mealId, mealEntries) =>
+            mealEntries.map(mealId -> _)
+          }
+          .groupBy(_._2.recipeId)
+          .map { case (recipeId, mealEntries) =>
+            val latestMeal = mealEntries.map(_._1.pipe(mealMap)).maxBy(_.date)
+            recipeId -> RecipeOccurrence(
+              recipe = recipeMap(recipeId),
+              lastUsedInMeal = Some(latestMeal)
+            )
+          }
+        val inNoMeal = recipeMap.view.mapValues(RecipeOccurrence(_, None)).toMap
+        MapUtil
+          .unionWith(
+            inNoMeal,
+            inSomeMeal
+          )((_, x) => x)
+          .values
+          .toSeq
+      }
+    }
 
     private def weightsOfMealEntries(
         userId: UserId,

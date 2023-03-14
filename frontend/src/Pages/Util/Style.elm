@@ -136,6 +136,7 @@ ids :
         , meal : Attribute msg
         , recipe : Attribute msg
         , time : Attribute msg
+        , recipeOccurrence : Attribute msg
         }
     }
 ids =
@@ -156,5 +157,6 @@ ids =
         , meal = id "statisticsMeal"
         , recipe = id "statisticsRecipe"
         , time = id "statistics"
+        , recipeOccurrence = id "statisticsRecipeOccurrence"
         }
     }

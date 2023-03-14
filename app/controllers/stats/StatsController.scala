@@ -135,6 +135,17 @@ class StatsController @Inject() (
         .recover(errorHandler)
     }
 
+  def recipeOccurrences: Action[AnyContent] = userAction.async { request =>
+    statsService
+      .recipeOccurrences(request.user.id)
+      .map(
+        _.map(_.transformInto[RecipeOccurrence])
+          .pipe(_.asJson)
+          .pipe(Ok(_))
+      )
+      .recover(errorHandler)
+  }
+
   private def errorHandler: PartialFunction[Throwable, Result] = { case error =>
     val context = ErrorContext.Recipe.General(error.getMessage)
 

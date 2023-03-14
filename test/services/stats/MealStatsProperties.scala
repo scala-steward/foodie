@@ -18,7 +18,7 @@ import spire.compat._
 import spire.implicits._
 import spire.math.interval._
 import spire.math.{ Interval, Natural }
-import util.DateUtil
+import util.{ DateUtil, PropUtil }
 import utils.collection.MapUtil
 import utils.date.Date
 
@@ -118,16 +118,7 @@ object MealStatsProperties extends Properties("Meal stats") {
       )
     }
 
-    DBTestUtil.await(
-      transformer.fold(
-        error => {
-          pprint.log(error.message)
-          Prop.exception
-        },
-        identity
-      )
-    )
-
+    DBTestUtil.awaitProp(transformer)
   }
 
   private case class OverTimeSetup(
@@ -213,15 +204,7 @@ object MealStatsProperties extends Properties("Meal stats") {
       )
     }
 
-    DBTestUtil.await(
-      transformer.fold(
-        error => {
-          pprint.log(error.message)
-          Prop.exception
-        },
-        identity
-      )
-    )
+    DBTestUtil.awaitProp(transformer)
   }
 
   private case class RestrictedOverTimeSetup(
@@ -274,15 +257,7 @@ object MealStatsProperties extends Properties("Meal stats") {
         mealsInInterval.map(FullMeal(_, List.empty))
       )
 
-    DBTestUtil.await(
-      transformer.fold(
-        error => {
-          pprint.log(error.message)
-          Prop.exception
-        },
-        identity
-      )
-    )
+    DBTestUtil.awaitProp(transformer)
   }
 
   private def extractValue[A](bound: Bound[A]): Option[A] =

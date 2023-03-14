@@ -100,6 +100,7 @@ navigationPages =
     , StatisticsVariant.Recipe
     , StatisticsVariant.Meal
     , StatisticsVariant.Time
+    , StatisticsVariant.RecipeOccurrences
     ]
 
 

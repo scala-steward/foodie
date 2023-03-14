@@ -137,6 +137,7 @@ object Bridge {
     mkAndWrite[ComplexFood]
     mkAndWrite[ComplexFoodIncoming]
     mkAndWrite[Values]
+    mkAndWrite[RecipeOccurrence]
   }
 
 }
