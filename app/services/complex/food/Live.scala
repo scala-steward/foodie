@@ -9,13 +9,14 @@ import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
 import services.recipe.{ Recipe, RecipeService }
 import slick.dbio.DBIO
-import slick.jdbc.PostgresProfile
+import slick.jdbc.{ JdbcBackend, PostgresProfile }
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 
 import java.util.UUID
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
+import services.common.Transactionally.syntax._
 
 class Live @Inject() (
     override protected val dbConfigProvider: DatabaseConfigProvider,
@@ -25,16 +26,16 @@ class Live @Inject() (
     with HasDatabaseConfigProvider[PostgresProfile] {
 
   override def all(userId: UserId): Future[Seq[ComplexFood]] =
-    db.run(companion.all(userId))
+    db.runTransactionally(companion.all(userId))
 
   override def get(userId: UserId, recipeId: RecipeId): Future[Option[ComplexFood]] =
-    db.run(companion.get(userId, recipeId))
+    db.runTransactionally(companion.get(userId, recipeId))
 
   override def create(
       userId: UserId,
       complexFood: ComplexFoodIncoming
   ): Future[ServerError.Or[ComplexFood]] =
-    db.run(companion.create(userId, complexFood))
+    db.runTransactionally(companion.create(userId, complexFood))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.ComplexFood.Creation(error.getMessage).asServerError)
@@ -44,14 +45,14 @@ class Live @Inject() (
       userId: UserId,
       complexFood: ComplexFoodIncoming
   ): Future[ServerError.Or[ComplexFood]] =
-    db.run(companion.update(userId, complexFood))
+    db.runTransactionally(companion.update(userId, complexFood))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.ComplexFood.Update(error.getMessage).asServerError)
       }
 
   override def delete(userId: UserId, recipeId: RecipeId): Future[Boolean] =
-    db.run(companion.delete(userId, recipeId))
+    db.runTransactionally(companion.delete(userId, recipeId))
       .recover { case _ =>
         false
       }

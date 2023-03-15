@@ -9,6 +9,7 @@ import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import security.Hash
 import security.jwt.JwtConfiguration
 import services.DBError
+import services.common.Transactionally.syntax._
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import utils.DBIOUtil.instances._
@@ -28,25 +29,29 @@ class Live @Inject() (
     executionContext: ExecutionContext
 ) extends UserService
     with HasDatabaseConfigProvider[PostgresProfile] {
-  override def get(userId: UserId): Future[Option[User]]             = db.run(companion.get(userId))
-  override def getByNickname(nickname: String): Future[Option[User]] = db.run(companion.getByNickname(nickname))
-  override def getByIdentifier(string: String): Future[Seq[User]]    = db.run(companion.getByIdentifier(string))
+  override def get(userId: UserId): Future[Option[User]] = db.runTransactionally(companion.get(userId))
+
+  override def getByNickname(nickname: String): Future[Option[User]] =
+    db.runTransactionally(companion.getByNickname(nickname))
+
+  override def getByIdentifier(string: String): Future[Seq[User]] =
+    db.runTransactionally(companion.getByIdentifier(string))
 
   override def add(user: User): Future[Boolean] =
-    db.run(companion.add(user))
+    db.runTransactionally(companion.add(user))
       .map(_ => true)
       .recover { case _ => false }
 
   override def update(userId: UserId, userUpdate: UserUpdate): Future[User] =
-    db.run(companion.update(userId, userUpdate))
+    db.runTransactionally(companion.update(userId, userUpdate))
 
   override def updatePassword(userId: UserId, password: String): Future[Boolean] =
-    db.run(companion.updatePassword(userId, password))
+    db.runTransactionally(companion.updatePassword(userId, password))
 
-  override def delete(userId: UserId): Future[Boolean] = db.run(companion.delete(userId))
+  override def delete(userId: UserId): Future[Boolean] = db.runTransactionally(companion.delete(userId))
 
   override def addSession(userId: UserId): Future[SessionId] =
-    db.run(
+    db.runTransactionally(
       companion.addSession(
         userId,
         UUID.randomUUID().transformInto[SessionId],
@@ -55,12 +60,13 @@ class Live @Inject() (
     )
 
   override def deleteSession(userId: UserId, sessionId: SessionId): Future[Boolean] =
-    db.run(companion.deleteSession(userId, sessionId))
+    db.runTransactionally(companion.deleteSession(userId, sessionId))
 
-  override def deleteAllSessions(userId: UserId): Future[Boolean] = db.run(companion.deleteAllSessions(userId))
+  override def deleteAllSessions(userId: UserId): Future[Boolean] =
+    db.runTransactionally(companion.deleteAllSessions(userId))
 
   override def existsSession(userId: UserId, sessionId: SessionId): Future[Boolean] =
-    db.run(companion.existsSession(userId, sessionId))
+    db.runTransactionally(companion.existsSession(userId, sessionId))
 
 }
 

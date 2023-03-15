@@ -8,6 +8,7 @@ import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
 import services.common.GeneralTableConstants
+import services.common.Transactionally.syntax._
 import services.recipe.{ AmountUnit, Ingredient }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
@@ -25,7 +26,7 @@ class Live @Inject() (
     with HasDatabaseConfigProvider[PostgresProfile] {
 
   override def all: Future[Seq[Nutrient]] =
-    db.run(companion.all)
+    db.runTransactionally(companion.all)
 
 }
 

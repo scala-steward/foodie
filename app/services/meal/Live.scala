@@ -9,6 +9,7 @@ import io.scalaland.chimney.dsl.TransformerOps
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
 import services.common.RequestInterval
+import services.common.Transactionally.syntax._
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import utils.DBIOUtil.instances._
@@ -27,45 +28,48 @@ class Live @Inject() (
     with HasDatabaseConfigProvider[PostgresProfile] {
 
   override def allMeals(userId: UserId, interval: RequestInterval): Future[Seq[Meal]] =
-    db.run(companion.allMeals(userId, interval))
+    db.runTransactionally(companion.allMeals(userId, interval))
 
-  override def getMeal(userId: UserId, id: MealId): Future[Option[Meal]] = db.run(companion.getMeal(userId, id))
+  override def getMeal(userId: UserId, id: MealId): Future[Option[Meal]] =
+    db.runTransactionally(companion.getMeal(userId, id))
 
   override def createMeal(userId: UserId, mealCreation: MealCreation): Future[ServerError.Or[Meal]] =
-    db.run(companion.createMeal(userId, UUID.randomUUID().transformInto[MealId], mealCreation))
+    db.runTransactionally(companion.createMeal(userId, UUID.randomUUID().transformInto[MealId], mealCreation))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.Meal.Creation(error.getMessage).asServerError)
       }
 
   override def updateMeal(userId: UserId, mealUpdate: MealUpdate): Future[ServerError.Or[Meal]] =
-    db.run(companion.updateMeal(userId, mealUpdate))
+    db.runTransactionally(companion.updateMeal(userId, mealUpdate))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.Meal.Update(error.getMessage).asServerError)
       }
 
-  override def deleteMeal(userId: UserId, id: MealId): Future[Boolean] = db.run(companion.deleteMeal(userId, id))
+  override def deleteMeal(userId: UserId, id: MealId): Future[Boolean] =
+    db.runTransactionally(companion.deleteMeal(userId, id))
 
   override def getMealEntries(userId: UserId, ids: Seq[MealId]): Future[Map[MealId, Seq[MealEntry]]] =
-    db.run(companion.getMealEntries(userId, ids))
+    db.runTransactionally(companion.getMealEntries(userId, ids))
 
   override def addMealEntry(userId: UserId, mealEntryCreation: MealEntryCreation): Future[ServerError.Or[MealEntry]] =
-    db.run(companion.addMealEntry(userId, UUID.randomUUID().transformInto[MealEntryId], mealEntryCreation))
-      .map(Right(_))
+    db.runTransactionally(
+      companion.addMealEntry(userId, UUID.randomUUID().transformInto[MealEntryId], mealEntryCreation)
+    ).map(Right(_))
       .recover { case error =>
         Left(ErrorContext.Meal.Entry.Creation(error.getMessage).asServerError)
       }
 
   override def updateMealEntry(userId: UserId, mealEntryUpdate: MealEntryUpdate): Future[ServerError.Or[MealEntry]] =
-    db.run(companion.updateMealEntry(userId, mealEntryUpdate))
+    db.runTransactionally(companion.updateMealEntry(userId, mealEntryUpdate))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.Meal.Entry.Update(error.getMessage).asServerError)
       }
 
   override def removeMealEntry(userId: UserId, mealEntryId: MealEntryId): Future[Boolean] =
-    db.run(companion.removeMealEntry(userId, mealEntryId))
+    db.runTransactionally(companion.removeMealEntry(userId, mealEntryId))
       .recover { _ => false }
 
 }
