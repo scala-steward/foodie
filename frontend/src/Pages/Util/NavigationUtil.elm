@@ -22,14 +22,13 @@ recipeEditorLinkButton configuration recipeId =
 
 recipeNutrientsLinkButton : Configuration -> RecipeId -> Html msg
 recipeNutrientsLinkButton configuration recipeId =
-    Links.linkButton
-        { url =
+    nutrientButtonWith
+        { address =
             recipeId
                 |> Addresses.Frontend.statisticsRecipeSelect.address
                 |> Links.frontendPage configuration
-        , attributes = [ Style.classes.button.nutrients ]
-        , children = [ text "Nutrients" ]
         }
+
 
 mealEditorLinkButton : Configuration -> RecipeId -> Html msg
 mealEditorLinkButton configuration mealId =
@@ -42,13 +41,31 @@ mealEditorLinkButton configuration mealId =
         , children = [ text "Meal" ]
         }
 
+
 mealNutrientsLinkButton : Configuration -> MealId -> Html msg
 mealNutrientsLinkButton configuration mealId =
-    Links.linkButton
-        { url =
+    nutrientButtonWith
+        { address =
             mealId
                 |> Addresses.Frontend.statisticsMealSelect.address
                 |> Links.frontendPage configuration
+        }
+
+
+complexFoodNutrientLinkButton : Configuration -> RecipeId -> Html msg
+complexFoodNutrientLinkButton configuration recipeId =
+    nutrientButtonWith
+        { address =
+            recipeId
+                |> Addresses.Frontend.statisticsComplexFoodSelect.address
+                |> Links.frontendPage configuration
+        }
+
+
+nutrientButtonWith : { address : String } -> Html msg
+nutrientButtonWith ps =
+    Links.linkButton
+        { url = ps.address
         , attributes = [ Style.classes.button.nutrients ]
         , children = [ text "Nutrients" ]
         }
