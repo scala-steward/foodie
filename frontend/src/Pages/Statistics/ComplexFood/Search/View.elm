@@ -1,6 +1,5 @@
 module Pages.Statistics.ComplexFood.Search.View exposing (view)
 
-import Addresses.Frontend
 import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Configuration exposing (Configuration)
@@ -10,7 +9,6 @@ import Pages.Statistics.ComplexFood.Search.Page as Page
 import Pages.Statistics.ComplexFood.Search.Pagination as Pagination
 import Pages.Statistics.StatisticsView as StatisticsView
 import Pages.Util.HtmlUtil as HtmlUtil
-import Pages.Util.Links as Links
 import Pages.Util.NavigationUtil as NavigationUtil
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
