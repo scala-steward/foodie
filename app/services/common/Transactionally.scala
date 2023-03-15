@@ -12,7 +12,7 @@ object Transactionally {
 
     implicit class WithRunTransactionally(private val databaseDef: PostgresProfile#Backend#Database) extends AnyVal {
 
-      def runTransactionally[A](dbio: DBIOAction[A, NoStream, Nothing]): Future[A] =
+      def runTransactionally[A](dbio: DBIO[A]): Future[A] =
         databaseDef.run(dbio.transactionally)
 
     }
