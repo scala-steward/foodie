@@ -2,31 +2,32 @@ package services.stats
 
 import algebra.ring.AdditiveMonoid
 import cats.data.OptionT
-import cats.syntax.traverse._
 import cats.syntax.contravariantSemigroupal._
+import cats.syntax.traverse._
 import db._
 import db.generated.Tables
 import io.scalaland.chimney.dsl.TransformerOps
-import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import services.common.RequestInterval
+import services.common.Transactionally.syntax._
 import services.complex.food.ComplexFoodService
 import services.complex.ingredient.ComplexIngredientService
-import services.meal.{ MealEntry, MealService }
+import services.meal.{MealEntry, MealService}
 import services.nutrient.NutrientService.ConversionFactorKey
-import services.nutrient.{ AmountEvaluation, Nutrient, NutrientMap, NutrientService }
-import services.recipe.{ Recipe, RecipeService }
+import services.nutrient.{AmountEvaluation, Nutrient, NutrientMap, NutrientService}
+import services.recipe.{Recipe, RecipeService}
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
+import spire.compat._
 import spire.implicits._
 import spire.math.Natural
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 import utils.collection.MapUtil
-import spire.compat._
 
 import javax.inject.Inject
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.chaining._
 
 class Live @Inject() (
@@ -38,34 +39,34 @@ class Live @Inject() (
     with HasDatabaseConfigProvider[PostgresProfile] {
 
   override def nutrientsOverTime(userId: UserId, requestInterval: RequestInterval): Future[Stats] =
-    db.run(companion.nutrientsOverTime(userId, requestInterval))
+    db.runTransactionally(companion.nutrientsOverTime(userId, requestInterval))
 
   override def nutrientsOfFood(foodId: FoodId): Future[Option[NutrientAmountMap]] =
-    db.run(companion.nutrientsOfFood(foodId))
+    db.runTransactionally(companion.nutrientsOfFood(foodId))
 
   override def nutrientsOfComplexFood(
       userId: UserId,
       complexFoodId: ComplexFoodId
   ): Future[Option[NutrientAmountMap]] =
-    db.run(companion.nutrientsOfComplexFood(userId, complexFoodId))
+    db.runTransactionally(companion.nutrientsOfComplexFood(userId, complexFoodId))
 
   override def nutrientsOfRecipe(userId: UserId, recipeId: RecipeId): Future[Option[NutrientAmountMap]] =
-    db.run(companion.nutrientsOfRecipe(userId, recipeId))
+    db.runTransactionally(companion.nutrientsOfRecipe(userId, recipeId))
 
   override def nutrientsOfMeal(userId: UserId, mealId: MealId): Future[NutrientAmountMap] =
-    db.run(companion.nutrientsOfMeal(userId, mealId))
+    db.runTransactionally(companion.nutrientsOfMeal(userId, mealId))
 
   override def weightOfRecipe(userId: UserId, recipeId: RecipeId): Future[Option[BigDecimal]] =
-    db.run(companion.weightOfRecipe(userId, recipeId))
+    db.runTransactionally(companion.weightOfRecipe(userId, recipeId))
 
   override def weightOfMeal(userId: UserId, mealId: MealId): Future[Option[BigDecimal]] =
-    db.run(companion.weightOfMeal(userId, mealId))
+    db.runTransactionally(companion.weightOfMeal(userId, mealId))
 
   override def weightOfMeals(userId: UserId, mealIds: Seq[MealId]): Future[Option[BigDecimal]] =
-    db.run(companion.weightOfMeals(userId, mealIds))
+    db.runTransactionally(companion.weightOfMeals(userId, mealIds))
 
   override def recipeOccurrences(userId: UserId): Future[Seq[RecipeOccurrence]] =
-    db.run(companion.recipeOccurrences(userId))
+    db.runTransactionally(companion.recipeOccurrences(userId))
 
 }
 

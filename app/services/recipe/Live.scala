@@ -2,7 +2,6 @@ package services.recipe
 
 import cats.Applicative
 import cats.data.OptionT
-import cats.syntax.traverse._
 import db.daos.recipe.RecipeKey
 import db.generated.Tables
 import db.{ FoodId, IngredientId, RecipeId, UserId }
@@ -11,6 +10,7 @@ import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
 import services.common.GeneralTableConstants
+import services.common.Transactionally.syntax._
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
@@ -30,25 +30,26 @@ class Live @Inject() (
 ) extends RecipeService
     with HasDatabaseConfigProvider[PostgresProfile] {
 
-  override def allFoods: Future[Seq[Food]] = db.run(companion.allFoods)
+  override def allFoods: Future[Seq[Food]] = db.runTransactionally(companion.allFoods)
 
-  override def getFoodInfo(foodId: FoodId): Future[Option[FoodInfo]] = db.run(companion.getFoodInfo(foodId))
+  override def getFoodInfo(foodId: FoodId): Future[Option[FoodInfo]] =
+    db.runTransactionally(companion.getFoodInfo(foodId))
 
-  override def allMeasures: Future[Seq[Measure]] = db.run(companion.allMeasures)
+  override def allMeasures: Future[Seq[Measure]] = db.runTransactionally(companion.allMeasures)
 
-  override def allRecipes(userId: UserId): Future[Seq[Recipe]] = db.run(companion.allRecipes(userId))
+  override def allRecipes(userId: UserId): Future[Seq[Recipe]] = db.runTransactionally(companion.allRecipes(userId))
 
   override def getRecipe(
       userId: UserId,
       id: RecipeId
   ): Future[Option[Recipe]] =
-    db.run(companion.getRecipe(userId, id))
+    db.runTransactionally(companion.getRecipe(userId, id))
 
   override def createRecipe(
       userId: UserId,
       recipeCreation: RecipeCreation
   ): Future[ServerError.Or[Recipe]] = {
-    db.run(companion.createRecipe(userId, UUID.randomUUID().transformInto[RecipeId], recipeCreation))
+    db.runTransactionally(companion.createRecipe(userId, UUID.randomUUID().transformInto[RecipeId], recipeCreation))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.Recipe.Creation(error.getMessage).asServerError)
@@ -59,7 +60,7 @@ class Live @Inject() (
       userId: UserId,
       recipeUpdate: RecipeUpdate
   ): Future[ServerError.Or[Recipe]] =
-    db.run(companion.updateRecipe(userId, recipeUpdate))
+    db.runTransactionally(companion.updateRecipe(userId, recipeUpdate))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.Recipe.Update(error.getMessage).asServerError)
@@ -68,17 +69,18 @@ class Live @Inject() (
   override def deleteRecipe(
       userId: UserId,
       id: RecipeId
-  ): Future[Boolean] = db.run(companion.deleteRecipe(userId, id))
+  ): Future[Boolean] = db.runTransactionally(companion.deleteRecipe(userId, id))
 
   override def getIngredients(userId: UserId, recipeId: RecipeId): Future[List[Ingredient]] =
-    db.run(companion.getIngredients(userId, recipeId))
+    db.runTransactionally(companion.getIngredients(userId, recipeId))
 
   override def addIngredient(
       userId: UserId,
       ingredientCreation: IngredientCreation
   ): Future[ServerError.Or[Ingredient]] =
-    db.run(companion.addIngredient(userId, UUID.randomUUID().transformInto[IngredientId], ingredientCreation))
-      .map(Right(_))
+    db.runTransactionally(
+      companion.addIngredient(userId, UUID.randomUUID().transformInto[IngredientId], ingredientCreation)
+    ).map(Right(_))
       .recover { case error =>
         Left(ErrorContext.Recipe.Ingredient.Creation(error.getMessage).asServerError)
       }
@@ -87,14 +89,14 @@ class Live @Inject() (
       userId: UserId,
       ingredientUpdate: IngredientUpdate
   ): Future[ServerError.Or[Ingredient]] =
-    db.run(companion.updateIngredient(userId, ingredientUpdate))
+    db.runTransactionally(companion.updateIngredient(userId, ingredientUpdate))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.Recipe.Ingredient.Update(error.getMessage).asServerError)
       }
 
   override def removeIngredient(userId: UserId, ingredientId: IngredientId): Future[Boolean] =
-    db.run(companion.removeIngredient(userId, ingredientId))
+    db.runTransactionally(companion.removeIngredient(userId, ingredientId))
       .recover { _ =>
         false
       }

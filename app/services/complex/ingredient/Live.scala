@@ -17,6 +17,7 @@ import utils.CycleCheck.Arc
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 import utils.collection.MapUtil
+import services.common.Transactionally.syntax._
 
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
@@ -29,13 +30,13 @@ class Live @Inject() (
     with HasDatabaseConfigProvider[PostgresProfile] {
 
   override def all(userId: UserId, recipeId: RecipeId): Future[Seq[ComplexIngredient]] =
-    db.run(companion.all(userId, Seq(recipeId)).map(_.values.flatten.toSeq))
+    db.runTransactionally(companion.all(userId, Seq(recipeId)).map(_.values.flatten.toSeq))
 
   override def create(
       userId: UserId,
       complexIngredient: ComplexIngredient
   ): Future[ServerError.Or[ComplexIngredient]] =
-    db.run(companion.create(userId, complexIngredient))
+    db.runTransactionally(companion.create(userId, complexIngredient))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.Recipe.ComplexIngredient.Creation(error.getMessage).asServerError)
@@ -45,14 +46,14 @@ class Live @Inject() (
       userId: UserId,
       complexIngredient: ComplexIngredient
   ): Future[ServerError.Or[ComplexIngredient]] =
-    db.run(companion.update(userId, complexIngredient))
+    db.runTransactionally(companion.update(userId, complexIngredient))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.Recipe.ComplexIngredient.Update(error.getMessage).asServerError)
       }
 
   override def delete(userId: UserId, recipeId: RecipeId, complexFoodId: ComplexFoodId): Future[Boolean] =
-    db.run(companion.delete(userId, recipeId, complexFoodId))
+    db.runTransactionally(companion.delete(userId, recipeId, complexFoodId))
 
 }
 
@@ -135,7 +136,7 @@ object Live {
         userId: UserId,
         recipeId: RecipeId,
         complexFoodId: ComplexFoodId
-    )(action: => DBIO[A])(implicit ec: ExecutionContext): DBIO[A] =
+    )(action: => DBIO[A]): DBIO[A] =
       for {
         recipeExists      <- recipeDao.exists(RecipeKey(userId, recipeId))
         complexFoodExists <- complexFoodDao.exists(complexFoodId)

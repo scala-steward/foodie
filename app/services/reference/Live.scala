@@ -10,7 +10,8 @@ import errors.{ ErrorContext, ServerError }
 import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
-import services.nutrient.{ NutrientTableConstants, Nutrient, ReferenceNutrientMap }
+import services.common.Transactionally.syntax._
+import services.nutrient.{ Nutrient, NutrientTableConstants, ReferenceNutrientMap }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
@@ -31,16 +32,16 @@ class Live @Inject() (
     with HasDatabaseConfigProvider[PostgresProfile] {
 
   override def allReferenceMaps(userId: UserId): Future[Seq[ReferenceMap]] =
-    db.run(companion.allReferenceMaps(userId))
+    db.runTransactionally(companion.allReferenceMaps(userId))
 
   override def getReferenceNutrientsMap(
       userId: UserId,
       referenceMapId: ReferenceMapId
   ): Future[Option[ReferenceNutrientMap]] =
-    db.run(companion.getReferenceNutrientsMap(userId, referenceMapId))
+    db.runTransactionally(companion.getReferenceNutrientsMap(userId, referenceMapId))
 
   override def getReferenceMap(userId: UserId, referenceMapId: ReferenceMapId): Future[Option[ReferenceMap]] =
-    db.run(companion.getReferenceMap(userId, referenceMapId))
+    db.runTransactionally(companion.getReferenceMap(userId, referenceMapId))
 
   override def allReferenceTrees(userId: UserId): Future[List[ReferenceTree]] = {
     val action = for {
@@ -52,14 +53,14 @@ class Live @Inject() (
       }
     }.toList
 
-    db.run(action.transactionally)
+    db.runTransactionally(action.transactionally)
   }
 
   override def createReferenceMap(
       userId: UserId,
       referenceMapCreation: ReferenceMapCreation
   ): Future[ServerError.Or[ReferenceMap]] =
-    db.run(
+    db.runTransactionally(
       companion.createReferenceMap(userId, UUID.randomUUID().transformInto[ReferenceMapId], referenceMapCreation)
     ).map(Right(_))
       .recover { case error =>
@@ -70,24 +71,24 @@ class Live @Inject() (
       userId: UserId,
       referenceMapUpdate: ReferenceMapUpdate
   ): Future[ServerError.Or[ReferenceMap]] =
-    db.run(companion.updateReferenceMap(userId, referenceMapUpdate))
+    db.runTransactionally(companion.updateReferenceMap(userId, referenceMapUpdate))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.ReferenceMap.Update(error.getMessage).asServerError)
       }
 
   override def delete(userId: UserId, referenceMapId: ReferenceMapId): Future[Boolean] =
-    db.run(companion.delete(userId, referenceMapId))
+    db.runTransactionally(companion.delete(userId, referenceMapId))
 
   override def allReferenceEntries(userId: UserId, referenceMapId: ReferenceMapId): Future[List[ReferenceEntry]] =
-    db.run(companion.allReferenceEntries(userId, Seq(referenceMapId)))
+    db.runTransactionally(companion.allReferenceEntries(userId, Seq(referenceMapId)))
       .map(_.values.flatten.toList)
 
   override def addReferenceEntry(
       userId: UserId,
       referenceEntryCreation: ReferenceEntryCreation
   ): Future[ServerError.Or[ReferenceEntry]] =
-    db.run(companion.addReferenceEntry(userId, referenceEntryCreation))
+    db.runTransactionally(companion.addReferenceEntry(userId, referenceEntryCreation))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.ReferenceMap.Entry.Creation(error.getMessage).asServerError)
@@ -97,7 +98,7 @@ class Live @Inject() (
       userId: UserId,
       referenceEntryUpdate: ReferenceEntryUpdate
   ): Future[ServerError.Or[ReferenceEntry]] =
-    db.run(companion.updateReferenceEntry(userId, referenceEntryUpdate))
+    db.runTransactionally(companion.updateReferenceEntry(userId, referenceEntryUpdate))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.ReferenceMap.Entry.Update(error.getMessage).asServerError)
@@ -108,7 +109,7 @@ class Live @Inject() (
       referenceMapId: ReferenceMapId,
       nutrientCode: NutrientCode
   ): Future[Boolean] =
-    db.run(companion.deleteReferenceEntry(userId, referenceMapId, nutrientCode))
+    db.runTransactionally(companion.deleteReferenceEntry(userId, referenceMapId, nutrientCode))
       .recover { _ => false }
 
 }
