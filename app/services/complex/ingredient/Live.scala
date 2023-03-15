@@ -136,7 +136,7 @@ object Live {
         userId: UserId,
         recipeId: RecipeId,
         complexFoodId: ComplexFoodId
-    )(action: => DBIO[A]): DBIO[A] =
+    )(action: => DBIO[A])(implicit ec: ExecutionContext): DBIO[A] =
       for {
         recipeExists      <- recipeDao.exists(RecipeKey(userId, recipeId))
         complexFoodExists <- complexFoodDao.exists(complexFoodId)
