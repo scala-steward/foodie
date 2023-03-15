@@ -105,7 +105,7 @@ viewComplexFoodLine configuration complexFood =
         [ td [ Style.classes.editable ]
             [ label [] [ text complexFood.name ] ]
         , td [ Style.classes.controls ]
-            [ NavigationUtil.recipeNutrientsLinkButton configuration complexFood.recipeId ]
+            [ NavigationUtil.complexFoodNutrientLinkButton configuration complexFood.recipeId ]
         , td [ Style.classes.controls ]
             [ NavigationUtil.recipeEditorLinkButton configuration complexFood.recipeId ]
         ]

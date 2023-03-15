@@ -3,6 +3,7 @@ module Pages.Statistics.Recipe.Select.View exposing (view)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
 import Html exposing (Html, div, label, table, td, text, tr)
+import Maybe.Extra
 import Pages.Statistics.Recipe.Select.Page as Page
 import Pages.Statistics.StatisticsView as StatisticsView
 import Pages.Util.Style as Style
@@ -71,7 +72,7 @@ viewMain configuration main =
                                 }
                         , nutrientBase = .base
                         , referenceTree = .statisticsEvaluation >> .referenceTree
-                        , tableLabel = "Nutrients per serving"
+                        , tableLabel = "Nutrients per serving" ++ (main.recipe.servingSize |> Maybe.Extra.unwrap "" (\size -> String.concat [ " ", "(", size, ")" ]))
                         }
                         main
                 )
