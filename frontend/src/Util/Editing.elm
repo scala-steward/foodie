@@ -2,7 +2,7 @@ module Util.Editing exposing (..)
 
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
-import Monocle.Optional exposing (Optional)
+import Monocle.Optional as Optional exposing (Optional)
 import Util.EditState as EditState exposing (EditState)
 
 
@@ -15,6 +15,7 @@ type alias Editing original update =
 lenses :
     { editState : Lens (Editing original update) (EditState update)
     , update : Optional (Editing original update) update
+    , toggle : Optional (Editing original update) Bool
     }
 lenses =
     let
@@ -25,11 +26,13 @@ lenses =
     , update =
         editState
             |> Compose.lensWithOptional EditState.lenses.update
+    , toggle =
+        editState |> Compose.lensWithOptional EditState.lenses.toggle
     }
 
 
 unpack :
-    { onView : original -> a
+    { onView : original -> Bool -> a
     , onUpdate : original -> update -> a
     , onDelete : original -> a
     }
@@ -58,7 +61,7 @@ toDelete =
 
 toView : Editing original update -> Editing original update
 toView =
-    lenses.editState.set EditState.View
+    lenses.editState.set (EditState.View False)
 
 
 extractUpdate : Editing original update -> Maybe update
@@ -71,5 +74,11 @@ extractUpdate =
 asView : element -> Editing element update
 asView element =
     { original = element
-    , editState = EditState.View
+    , editState = EditState.View False
     }
+
+
+toggleControls : Editing element update -> Editing element update
+toggleControls editing =
+    editing
+        |> Optional.modify lenses.toggle not

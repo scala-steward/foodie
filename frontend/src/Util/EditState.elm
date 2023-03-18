@@ -4,21 +4,23 @@ import Monocle.Optional exposing (Optional)
 
 
 type EditState update
-    = View
+    = View Bool
     | Update update
     | Delete
 
 
 lenses :
-    { update : Optional (EditState update) update
+    { toggle : Optional (EditState update) Bool
+    , update : Optional (EditState update) update
     }
 lenses =
-    { update = Optional toUpdate setUpdate
+    { toggle = Optional toToggle setToggle
+    , update = Optional toUpdate setUpdate
     }
 
 
 unpack :
-    { onView : a
+    { onView : Bool -> a
     , onUpdate : update -> a
     , onDelete : a
     }
@@ -26,8 +28,8 @@ unpack :
     -> a
 unpack fs editState =
     case editState of
-        View ->
-            fs.onView
+        View showControls ->
+            fs.onView showControls
 
         Update update ->
             fs.onUpdate update
@@ -51,6 +53,26 @@ setUpdate update editState =
     case editState of
         Update _ ->
             Update update
+
+        e ->
+            e
+
+
+toToggle : EditState update -> Maybe Bool
+toToggle editState =
+    case editState of
+        View toggle ->
+            Just toggle
+
+        _ ->
+            Nothing
+
+
+setToggle : Bool -> EditState update -> EditState update
+setToggle value editState =
+    case editState of
+        View _ ->
+            View value
 
         e ->
             e
