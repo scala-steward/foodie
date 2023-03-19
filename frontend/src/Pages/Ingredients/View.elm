@@ -143,7 +143,7 @@ viewMain configuration main =
                                             }
                                         ]
                                     ]
-                                , onClick = [ Page.ToggleRecipeControls |> onClick ]
+                                , toggleCommand = Page.ToggleRecipeControls
                                 , styles = []
                                 , showControls = showControls
                                 }
@@ -176,7 +176,7 @@ viewMain configuration main =
                                         [ text "Cancel" ]
                                     ]
                                 ]
-                            , onClick = []
+                            , toggleCommand = Page.ToggleRecipeControls
                             , styles = []
                             , showControls = True
                             }

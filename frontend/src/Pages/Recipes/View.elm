@@ -173,7 +173,7 @@ viewRecipeLine configuration recipe showControls =
                     }
                 ]
             ]
-        , onClick = [ Page.ToggleControls recipe.id |> onClick ]
+        , toggleCommand = Page.ToggleControls recipe.id
         , styles = [ Style.classes.editing ]
         , showControls = showControls
         }
@@ -192,7 +192,7 @@ deleteRecipeLine recipe =
                     [ text "Cancel" ]
                 ]
             ]
-        , onClick = [ Page.ToggleControls recipe.id |> onClick ]
+        , toggleCommand = Page.ToggleControls recipe.id
         , styles = [ Style.classes.editing ]
         , showControls = True
         }
@@ -201,7 +201,7 @@ deleteRecipeLine recipe =
 
 recipeLineWith :
     { controls : List (Html msg)
-    , onClick : List (Attribute msg)
+    , toggleCommand : msg
     , styles : List (Attribute msg)
     , showControls : Bool
     }
@@ -210,7 +210,7 @@ recipeLineWith :
 recipeLineWith ps recipe =
     let
         withOnClick =
-            (++) ps.onClick
+            (++) (ps.toggleCommand |> onClick |> List.singleton)
 
         infoRow =
             tr ps.styles
@@ -222,14 +222,7 @@ recipeLineWith ps recipe =
                     [ label [] [ text <| String.fromFloat <| recipe.numberOfServings ] ]
                 , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick)
                     [ label [] [ text <| Maybe.withDefault "" <| recipe.servingSize ] ]
-
-                {- Todo: This is a little awkward: The cell has the onClick command,
-                   but the button does not. If the button also has the command, the toggle fires twice, and there is no change.
-                   If only the button has the command, there is a tiny space around the button, which does not trigger the toggle.
-                   There is likely a better solution than this workaround.
-                -}
-                , td ([ Style.classes.toggle ] |> withOnClick)
-                    [ button [ Style.classes.button.menu ] [ HtmlUtil.menuIcon ] ]
+                , HtmlUtil.toggleControlsCell ps.toggleCommand
                 ]
 
         controlsRow =
@@ -332,11 +325,7 @@ editRecipeLineWith handling editedValue =
         commandToggle =
             handling.toggleCommand
                 |> Maybe.Extra.unwrap []
-                    (\cmd ->
-                        [ td [ Style.classes.toggle, cmd |> onClick ]
-                            [ button [ Style.classes.button.menu ] [ HtmlUtil.menuIcon ] ]
-                        ]
-                    )
+                    (HtmlUtil.toggleControlsCell >> List.singleton)
     in
     [ tr handling.rowStyles
         ([ td [ Style.classes.editable ]
