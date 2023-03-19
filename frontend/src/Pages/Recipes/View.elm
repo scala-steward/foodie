@@ -1,7 +1,6 @@
 module Pages.Recipes.View exposing (editRecipeLineWith, recipeLineWith, tableHeader, view)
 
 import Addresses.Frontend
-import Api.Auxiliary exposing (RecipeId)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
@@ -86,7 +85,7 @@ viewMain configuration main =
                         , searchString = main.searchString
                         }
                    , table [ Style.classes.elementsWithControlsTable ]
-                        (tableHeader { controlButtons = 4 }
+                        (tableHeader
                             ++ [ tbody []
                                     (creationLine
                                         ++ (viewEditRecipes |> Paginate.page |> List.concatMap viewRecipeState)
@@ -109,12 +108,8 @@ viewMain configuration main =
             )
 
 
-
---todo: Remove parameters
-
-
-tableHeader : { controlButtons : Int } -> List (Html msg)
-tableHeader ps =
+tableHeader : List (Html msg)
+tableHeader =
     [ colgroup []
         [ col [] []
         , col [] []
@@ -154,7 +149,7 @@ createRecipe maybeCreation =
 
 viewRecipeLine : Configuration -> Recipe -> Bool -> List (Html Page.LogicMsg)
 viewRecipeLine configuration recipe showControls =
-    recipeLineWith2
+    recipeLineWith
         { controls =
             [ td [ Style.classes.controls ]
                 [ button [ Style.classes.button.edit, Page.EnterEditRecipe recipe.id |> onClick ] [ text "Edit" ] ]
@@ -187,7 +182,7 @@ viewRecipeLine configuration recipe showControls =
 
 deleteRecipeLine : Recipe -> List (Html Page.LogicMsg)
 deleteRecipeLine recipe =
-    recipeLineWith2
+    recipeLineWith
         { controls =
             [ td [ Style.classes.controls ]
                 [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteRecipe recipe.id) ] [ text "Delete?" ] ]
@@ -197,26 +192,22 @@ deleteRecipeLine recipe =
                     [ text "Cancel" ]
                 ]
             ]
-        , onClick = []
+        , onClick = [ Page.ToggleControls recipe.id |> onClick ]
         , styles = [ Style.classes.editing ]
         , showControls = True
         }
         recipe
 
 
-
--- todo: Fuse back
-
-
-recipeLineWith2 :
-    { controls : List (Html Page.LogicMsg)
-    , onClick : List (Attribute Page.LogicMsg)
-    , styles : List (Attribute Page.LogicMsg)
+recipeLineWith :
+    { controls : List (Html msg)
+    , onClick : List (Attribute msg)
+    , styles : List (Attribute msg)
     , showControls : Bool
     }
     -> Recipe
-    -> List (Html Page.LogicMsg)
-recipeLineWith2 ps recipe =
+    -> List (Html msg)
+recipeLineWith ps recipe =
     let
         withOnClick =
             (++) ps.onClick
@@ -251,28 +242,6 @@ recipeLineWith2 ps recipe =
 
     else
         [ infoRow ]
-
-
-recipeLineWith :
-    { controls : List (Html msg)
-    , onClick : List (Attribute msg)
-    , styles : List (Attribute msg)
-    }
-    -> Recipe
-    -> Html msg
-recipeLineWith ps recipe =
-    let
-        withOnClick =
-            (++) ps.onClick
-    in
-    tr ps.styles
-        ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text recipe.name ] ]
-         , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
-         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| recipe.numberOfServings ] ]
-         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| Maybe.withDefault "" <| recipe.servingSize ] ]
-         ]
-            ++ ps.controls
-        )
 
 
 
