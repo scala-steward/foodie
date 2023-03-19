@@ -227,11 +227,13 @@ recipeLineWith ps recipe =
                 [ td [ colspan 4 ] [ table [ Style.classes.elementsWithControlsTable ] [ tr [] ps.controls ] ]
                 ]
     in
-    if ps.showControls then
-        [ infoRow, controlsRow ]
+    infoRow
+        :: (if ps.showControls then
+                [ controlsRow ]
 
-    else
-        [ infoRow ]
+            else
+                []
+           )
 
 
 updateRecipeLine : RecipeUpdateClientInput -> List (Html Page.LogicMsg)
