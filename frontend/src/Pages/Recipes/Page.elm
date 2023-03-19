@@ -100,6 +100,7 @@ type LogicMsg
     | UpdateRecipe RecipeUpdateClientInput
     | SaveRecipeEdit RecipeId
     | GotSaveRecipeResponse (Result Error Recipe)
+    | ToggleControls RecipeId
     | EnterEditRecipe RecipeId
     | ExitEditRecipeAt RecipeId
     | RequestDeleteRecipe RecipeId
