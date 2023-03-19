@@ -1,6 +1,6 @@
-module Pages.Util.HtmlUtil exposing (menuIcon, onEscape, searchAreaWith)
+module Pages.Util.HtmlUtil exposing (menuIcon, onEscape, searchAreaWith, toggleControlsCell)
 
-import Html exposing (Attribute, Html, button, div, input, label, text)
+import Html exposing (Attribute, Html, button, div, input, label, td, text)
 import Html.Attributes exposing (disabled, value)
 import Html.Events exposing (on, onClick, onInput)
 import Keyboard.Event exposing (KeyboardEvent)
@@ -50,3 +50,15 @@ mkEscapeEventMsg msg keyboardEvent =
 menuIcon : Html msg
 menuIcon =
     Material.Icons.list 20 Material.Icons.Types.Inherit
+
+
+{-| Todo: This is a little awkward:
+The cell has the onClick command, but the button does not.
+If the button also has the command, the toggle fires twice, and there is no change.
+If only the button has the command, there is a tiny space around the button, which does not trigger the toggle.
+There is likely a better solution than this workaround.
+-}
+toggleControlsCell : msg -> Html msg
+toggleControlsCell msg =
+    td [ Style.classes.toggle, msg |> onClick ]
+        [ button [ Style.classes.button.menu ] [ menuIcon ] ]
