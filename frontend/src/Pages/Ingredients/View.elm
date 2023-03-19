@@ -161,6 +161,7 @@ viewMain configuration main =
                             , cancelMsg = Page.ExitEditRecipe
                             , cancelName = "Cancel"
                             , rowStyles = []
+                            , toggleCommand = Just Page.ToggleRecipeControls
                             }
                             >> List.singleton
                             |> always

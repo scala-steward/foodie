@@ -244,10 +244,6 @@ recipeLineWith ps recipe =
         [ infoRow ]
 
 
-
--- todo: Consider adding the button for toggling the controls. If added, removing the controls should adjust the view state accordingly.
-
-
 updateRecipeLine : RecipeUpdateClientInput -> List (Html Page.LogicMsg)
 updateRecipeLine recipeUpdateClientInput =
     editRecipeLineWith
@@ -261,6 +257,7 @@ updateRecipeLine recipeUpdateClientInput =
         , cancelMsg = Page.ExitEditRecipeAt recipeUpdateClientInput.id
         , cancelName = "Cancel"
         , rowStyles = [ Style.classes.editLine ]
+        , toggleCommand = Page.ToggleControls recipeUpdateClientInput.id |> Just
         }
         recipeUpdateClientInput
 
@@ -278,11 +275,8 @@ createRecipeLine =
         , cancelMsg = Page.UpdateRecipeCreation Nothing
         , cancelName = "Cancel"
         , rowStyles = [ Style.classes.editLine ]
+        , toggleCommand = Nothing
         }
-
-
-
--- todo: Consider adding the toggle button to the edit state as well.
 
 
 editRecipeLineWith :
@@ -296,6 +290,7 @@ editRecipeLineWith :
     , cancelMsg : msg
     , cancelName : String
     , rowStyles : List (Attribute msg)
+    , toggleCommand : Maybe msg
     }
     -> editedValue
     -> List (Html msg)
@@ -333,9 +328,18 @@ editRecipeLineWith handling editedValue =
                         ]
                     ]
                 ]
+
+        commandToggle =
+            handling.toggleCommand
+                |> Maybe.Extra.unwrap []
+                    (\cmd ->
+                        [ td [ Style.classes.toggle, cmd |> onClick ]
+                            [ button [ Style.classes.button.menu ] [ HtmlUtil.menuIcon ] ]
+                        ]
+                    )
     in
     [ tr handling.rowStyles
-        [ td [ Style.classes.editable ]
+        ([ td [ Style.classes.editable ]
             [ input
                 ([ MaybeUtil.defined <| value <| .text <| handling.nameLens.get <| editedValue
                  , MaybeUtil.defined <|
@@ -349,7 +353,7 @@ editRecipeLineWith handling editedValue =
                 )
                 []
             ]
-        , td [ Style.classes.editable ]
+         , td [ Style.classes.editable ]
             [ input
                 ([ MaybeUtil.defined <| value <| Maybe.withDefault "" <| handling.descriptionLens.get <| editedValue
                  , MaybeUtil.defined <|
@@ -368,7 +372,7 @@ editRecipeLineWith handling editedValue =
                 )
                 []
             ]
-        , td [ Style.classes.numberCell ]
+         , td [ Style.classes.numberCell ]
             [ input
                 ([ MaybeUtil.defined <| value <| .text <| handling.numberOfServingsLens.get <| editedValue
                  , MaybeUtil.defined <|
@@ -387,7 +391,7 @@ editRecipeLineWith handling editedValue =
                 )
                 []
             ]
-        , td [ Style.classes.numberCell ]
+         , td [ Style.classes.numberCell ]
             [ input
                 ([ MaybeUtil.defined <| value <| Maybe.withDefault "" <| handling.servingSizeLens.get <| editedValue
                  , MaybeUtil.defined <|
@@ -407,6 +411,8 @@ editRecipeLineWith handling editedValue =
                 )
                 []
             ]
-        ]
+         ]
+            ++ commandToggle
+        )
     , controlsRow
     ]
