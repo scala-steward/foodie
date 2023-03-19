@@ -1,13 +1,13 @@
 module Pages.Recipes.View exposing (editRecipeLineWith, recipeLineWith, tableHeader, view)
 
 import Addresses.Frontend
+import Api.Auxiliary exposing (RecipeId)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
 import Either exposing (Either(..))
 import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (colspan, disabled, scope, value)
-import Html.Attributes.Extra exposing (stringProperty)
+import Html.Attributes exposing (colspan, disabled, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
@@ -75,7 +75,9 @@ viewMain configuration main =
                         main
 
             ( button, creationLine ) =
-                createRecipe main.recipeToAdd |> Either.unpack (\l -> ( [ l ], [] )) (\r -> ( [], [ r ] ))
+                createRecipe main.recipeToAdd
+                    |> Either.unpack (\l -> ( [ l ], [] )) (\r -> ( [], [ r ] ))
+                    |> Tuple.mapBoth List.concat List.concat
         in
         div [ Style.ids.addRecipeView ]
             (button
@@ -87,7 +89,7 @@ viewMain configuration main =
                         (tableHeader { controlButtons = 4 }
                             ++ [ tbody []
                                     (creationLine
-                                        ++ (viewEditRecipes |> Paginate.page |> List.map viewRecipeState)
+                                        ++ (viewEditRecipes |> Paginate.page |> List.concatMap viewRecipeState)
                                     )
                                ]
                         )
@@ -107,6 +109,10 @@ viewMain configuration main =
             )
 
 
+
+--todo: Remove parameters
+
+
 tableHeader : { controlButtons : Int } -> List (Html msg)
 tableHeader ps =
     [ colgroup []
@@ -114,47 +120,44 @@ tableHeader ps =
         , col [] []
         , col [] []
         , col [] []
-        , col [ stringProperty "span" (ps.controlButtons |> String.fromInt) ] []
+        , col [] []
         ]
     , thead []
         [ tr [ Style.classes.tableHeader, Style.classes.recipeEditTable ]
-            [ th [ scope "col" ] [ label [] [ text "Name" ] ]
-            , th [ scope "col" ] [ label [] [ text "Description" ] ]
-            , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Servings" ] ]
-            , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Serving size" ] ]
-            , th [ colspan ps.controlButtons, scope "colgroup", Style.classes.controlsGroup ] []
+            [ th [] [ label [] [ text "Name" ] ]
+            , th [] [ label [] [ text "Description" ] ]
+            , th [ Style.classes.numberLabel ] [ label [] [ text "Servings" ] ]
+            , th [ Style.classes.numberLabel ] [ label [] [ text "Serving size" ] ]
+            , th [ Style.classes.toggle ] []
             ]
         ]
     ]
 
 
-createRecipe : Maybe RecipeCreationClientInput -> Either (Html Page.LogicMsg) (Html Page.LogicMsg)
+createRecipe : Maybe RecipeCreationClientInput -> Either (List (Html Page.LogicMsg)) (List (Html Page.LogicMsg))
 createRecipe maybeCreation =
     case maybeCreation of
         Nothing ->
-            div [ Style.ids.add ]
+            [ div [ Style.ids.add ]
                 [ button
                     [ Style.classes.button.add
                     , onClick <| Page.UpdateRecipeCreation <| Just <| RecipeCreationClientInput.default
                     ]
                     [ text "New recipe" ]
                 ]
+            ]
                 |> Left
 
         Just creation ->
             createRecipeLine creation |> Right
 
 
-viewRecipeLine : Configuration -> Recipe -> Html Page.LogicMsg
-viewRecipeLine configuration recipe =
-    let
-        editMsg =
-            Page.EnterEditRecipe recipe.id |> onClick
-    in
-    recipeLineWith
+viewRecipeLine : Configuration -> Recipe -> Bool -> List (Html Page.LogicMsg)
+viewRecipeLine configuration recipe showControls =
+    recipeLineWith2
         { controls =
             [ td [ Style.classes.controls ]
-                [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
+                [ button [ Style.classes.button.edit, Page.EnterEditRecipe recipe.id |> onClick ] [ text "Edit" ] ]
             , td [ Style.classes.controls ]
                 [ Links.linkButton
                     { url = Links.frontendPage configuration <| Addresses.Frontend.ingredientEditor.address <| recipe.id
@@ -175,15 +178,16 @@ viewRecipeLine configuration recipe =
                     }
                 ]
             ]
-        , onClick = [ editMsg ]
+        , onClick = [ Page.ToggleControls recipe.id |> onClick ]
         , styles = [ Style.classes.editing ]
+        , showControls = showControls
         }
         recipe
 
 
-deleteRecipeLine : Recipe -> Html Page.LogicMsg
+deleteRecipeLine : Recipe -> List (Html Page.LogicMsg)
 deleteRecipeLine recipe =
-    recipeLineWith
+    recipeLineWith2
         { controls =
             [ td [ Style.classes.controls ]
                 [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteRecipe recipe.id) ] [ text "Delete?" ] ]
@@ -195,8 +199,58 @@ deleteRecipeLine recipe =
             ]
         , onClick = []
         , styles = [ Style.classes.editing ]
+        , showControls = True
         }
         recipe
+
+
+
+-- todo: Fuse back
+
+
+recipeLineWith2 :
+    { controls : List (Html Page.LogicMsg)
+    , onClick : List (Attribute Page.LogicMsg)
+    , styles : List (Attribute Page.LogicMsg)
+    , showControls : Bool
+    }
+    -> Recipe
+    -> List (Html Page.LogicMsg)
+recipeLineWith2 ps recipe =
+    let
+        withOnClick =
+            (++) ps.onClick
+
+        infoRow =
+            tr ps.styles
+                [ td ([ Style.classes.editable ] |> withOnClick)
+                    [ label [] [ text recipe.name ] ]
+                , td ([ Style.classes.editable ] |> withOnClick)
+                    [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
+                , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick)
+                    [ label [] [ text <| String.fromFloat <| recipe.numberOfServings ] ]
+                , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick)
+                    [ label [] [ text <| Maybe.withDefault "" <| recipe.servingSize ] ]
+
+                {- Todo: This is a little awkward: The cell has the onClick command,
+                   but the button does not. If the button also has the command, the toggle fires twice, and there is no change.
+                   If only the button has the command, there is a tiny space around the button, which does not trigger the toggle.
+                   There is likely a better solution than this workaround.
+                -}
+                , td ([ Style.classes.toggle ] |> withOnClick)
+                    [ button [ Style.classes.button.menu ] [ HtmlUtil.menuIcon ] ]
+                ]
+
+        controlsRow =
+            tr []
+                [ td [ colspan 4 ] [ table [ Style.classes.elementsWithControlsTable ] [ tr [] ps.controls ] ]
+                ]
+    in
+    if ps.showControls then
+        [ infoRow, controlsRow ]
+
+    else
+        [ infoRow ]
 
 
 recipeLineWith :
@@ -221,7 +275,11 @@ recipeLineWith ps recipe =
         )
 
 
-updateRecipeLine : RecipeUpdateClientInput -> Html Page.LogicMsg
+
+-- todo: Consider adding the button for toggling the controls. If added, removing the controls should adjust the view state accordingly.
+
+
+updateRecipeLine : RecipeUpdateClientInput -> List (Html Page.LogicMsg)
 updateRecipeLine recipeUpdateClientInput =
     editRecipeLineWith
         { saveMsg = Page.SaveRecipeEdit recipeUpdateClientInput.id
@@ -238,7 +296,7 @@ updateRecipeLine recipeUpdateClientInput =
         recipeUpdateClientInput
 
 
-createRecipeLine : RecipeCreationClientInput -> Html Page.LogicMsg
+createRecipeLine : RecipeCreationClientInput -> List (Html Page.LogicMsg)
 createRecipeLine =
     editRecipeLineWith
         { saveMsg = Page.CreateRecipe
@@ -254,6 +312,10 @@ createRecipeLine =
         }
 
 
+
+-- todo: Consider adding the toggle button to the edit state as well.
+
+
 editRecipeLineWith :
     { saveMsg : msg
     , nameLens : Lens editedValue (ValidatedInput String)
@@ -267,7 +329,7 @@ editRecipeLineWith :
     , rowStyles : List (Attribute msg)
     }
     -> editedValue
-    -> Html msg
+    -> List (Html msg)
 editRecipeLineWith handling editedValue =
     let
         validInput =
@@ -278,8 +340,32 @@ editRecipeLineWith handling editedValue =
 
         validatedSaveAction =
             MaybeUtil.optional validInput <| onEnter handling.saveMsg
+
+        controlsRow =
+            tr []
+                [ td [ colspan 4 ]
+                    [ table [ Style.classes.elementsWithControlsTable ]
+                        [ tr []
+                            [ td [ Style.classes.controls ]
+                                [ button
+                                    ([ MaybeUtil.defined <| Style.classes.button.confirm
+                                     , MaybeUtil.defined <| disabled <| not <| validInput
+                                     , MaybeUtil.optional validInput <| onClick handling.saveMsg
+                                     ]
+                                        |> Maybe.Extra.values
+                                    )
+                                    [ text handling.confirmName ]
+                                ]
+                            , td [ Style.classes.controls ]
+                                [ button [ Style.classes.button.cancel, onClick handling.cancelMsg ]
+                                    [ text handling.cancelName ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
     in
-    tr handling.rowStyles
+    [ tr handling.rowStyles
         [ td [ Style.classes.editable ]
             [ input
                 ([ MaybeUtil.defined <| value <| .text <| handling.nameLens.get <| editedValue
@@ -352,18 +438,6 @@ editRecipeLineWith handling editedValue =
                 )
                 []
             ]
-        , td [ Style.classes.controls ]
-            [ button
-                ([ MaybeUtil.defined <| Style.classes.button.confirm
-                 , MaybeUtil.defined <| disabled <| not <| validInput
-                 , MaybeUtil.optional validInput <| onClick handling.saveMsg
-                 ]
-                    |> Maybe.Extra.values
-                )
-                [ text handling.confirmName ]
-            ]
-        , td [ Style.classes.controls ]
-            [ button [ Style.classes.button.cancel, onClick handling.cancelMsg ]
-                [ text handling.cancelName ]
-            ]
         ]
+    , controlsRow
+    ]
