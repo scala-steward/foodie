@@ -17,6 +17,7 @@ classes :
         , editor : Attribute msg
         , error : Attribute msg
         , logout : Attribute msg
+        , menu : Attribute msg
         , navigation : Attribute msg
         , nutrients : Attribute msg
         , overview : Attribute msg
@@ -41,7 +42,6 @@ classes :
     , info : Attribute msg
     , intervalSelection : Attribute msg
     , meals : Attribute msg
-    , menu : Attribute msg
     , numberCell : Attribute msg
     , numberLabel : Attribute msg
     , nutrients : Attribute msg
@@ -74,6 +74,7 @@ classes =
         , editor = class "editorButton"
         , error = class "errorButton"
         , logout = class "logoutButton"
+        , menu = class "menu"
         , navigation = class "navigationButton"
         , nutrients = class "nutrientsButton"
         , overview = class "overviewButton"
@@ -98,7 +99,6 @@ classes =
     , info = class "info"
     , intervalSelection = class "intervalSection"
     , meals = class "meals"
-    , menu = class "menu"
     , numberCell = class "numberCell"
     , numberLabel = class "numberLabel"
     , nutrients = class "nutrients"
