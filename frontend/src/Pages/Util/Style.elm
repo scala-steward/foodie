@@ -60,6 +60,7 @@ classes :
         }
     , tableHeader : Attribute msg
     , time : Attribute msg
+    , toggle : Attribute msg
     }
 classes =
     { addElement = class "addElement"
@@ -117,6 +118,7 @@ classes =
         }
     , tableHeader = class "tableHeader"
     , time = class "time"
+    , toggle = class "toggle"
     }
 
 
