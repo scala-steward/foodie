@@ -892,10 +892,12 @@ confirmDeleteRecipe model =
     )
 
 
+{-| Todo: Check back, whether showControls is really fixed. Cf. same question for recipes
+-}
 cancelDeleteRecipe : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 cancelDeleteRecipe model =
     ( model
-        |> Tristate.mapMain (Lens.modify Page.lenses.main.recipe Editing.toView)
+        |> Tristate.mapMain (Lens.modify Page.lenses.main.recipe (Editing.toViewWith { showControls = True }))
     , Cmd.none
     )
 
