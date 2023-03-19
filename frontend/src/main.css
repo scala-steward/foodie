@@ -242,19 +242,19 @@ th {
     width: 5%
 }
 
-#ingredientEditor th:first-child:not(.recipeEditTable) {
+#ingredientEditor .ingredientEditTable th:first-child {
     width: 30%
 }
 
-#ingredientEditor th:nth-child(2):not(.recipeEditTable) {
+#ingredientEditor .ingredientEditTable th:nth-child(2) {
     width: 12%;
 }
 
-#ingredientEditor th:nth-child(3):not(.recipeEditTable) {
+#ingredientEditor .ingredientEditTable th:nth-child(3) {
     width: 30%;
 }
 
-#ingredientEditor th:nth-child(4):not(.recipeEditTable) {
+#ingredientEditor .ingredientEditTable th:nth-child(4) {
     width: 28%;
 }
 

@@ -40,6 +40,7 @@ classes :
     , ellipsis : Attribute msg
     , incomplete : Attribute msg
     , info : Attribute msg
+    , ingredientEditTable : Attribute msg
     , intervalSelection : Attribute msg
     , meals : Attribute msg
     , numberCell : Attribute msg
@@ -98,6 +99,7 @@ classes =
     , ellipsis = class "ellipsis"
     , incomplete = class "incomplete"
     , info = class "info"
+    , ingredientEditTable = class "ingredientEditTable"
     , intervalSelection = class "intervalSection"
     , meals = class "meals"
     , numberCell = class "numberCell"
