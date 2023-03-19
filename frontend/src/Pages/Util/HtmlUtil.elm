@@ -1,10 +1,12 @@
-module Pages.Util.HtmlUtil exposing (onEscape, searchAreaWith)
+module Pages.Util.HtmlUtil exposing (menuButton, onEscape, searchAreaWith)
 
 import Html exposing (Attribute, Html, button, div, input, label, text)
 import Html.Attributes exposing (disabled, value)
 import Html.Events exposing (on, onClick, onInput)
 import Keyboard.Event exposing (KeyboardEvent)
 import Keyboard.Key as Key
+import Material.Icons
+import Material.Icons.Types
 import Maybe.Extra
 import Pages.Util.Links as Links
 import Pages.Util.Style as Style
@@ -43,3 +45,8 @@ onEscape =
 mkEscapeEventMsg : msg -> KeyboardEvent -> Maybe msg
 mkEscapeEventMsg msg keyboardEvent =
     Just msg |> Maybe.Extra.filter (always (keyboardEvent.keyCode == Key.Escape))
+
+
+menuButton : Html msg
+menuButton =
+    label [] [ Material.Icons.list 20 Material.Icons.Types.Inherit ]
