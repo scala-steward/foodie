@@ -206,6 +206,7 @@ type LogicMsg
     | ChangeFoodsMode FoodsMode
     | SetIngredientsSearchString String
     | SetComplexIngredientsSearchString String
+    | ToggleRecipeControls
     | UpdateRecipe RecipeUpdateClientInput
     | SaveRecipeEdit
     | GotSaveRecipeResponse (Result Error Recipe)

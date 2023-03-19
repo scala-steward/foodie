@@ -187,6 +187,9 @@ updateLogic msg model =
         Page.SetComplexIngredientsSearchString string ->
             setComplexIngredientsSearchString model string
 
+        Page.ToggleRecipeControls ->
+            toggleRecipeControls model
+
         Page.UpdateRecipe recipeUpdateClientInput ->
             updateRecipe model recipeUpdateClientInput
 
@@ -785,6 +788,14 @@ setComplexIngredientsSearchString =
         { searchStringLens = Page.lenses.main.complexIngredientsSearchString
         , foodGroupLens = Page.lenses.main.complexIngredientsGroup
         }
+
+
+toggleRecipeControls : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+toggleRecipeControls model =
+    ( model
+        |> Tristate.mapMain (Lens.modify Page.lenses.main.recipe Editing.toggleControls)
+    , Cmd.none
+    )
 
 
 updateRecipe : Page.Model -> RecipeUpdateClientInput -> ( Page.Model, Cmd Page.LogicMsg )
