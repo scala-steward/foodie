@@ -207,7 +207,7 @@ recipeLineWith :
 recipeLineWith ps recipe =
     let
         withOnClick =
-            (++) (ps.toggleCommand |> onClick |> List.singleton)
+            (::) (ps.toggleCommand |> onClick)
 
         infoRow =
             tr [ Style.classes.editing ]
