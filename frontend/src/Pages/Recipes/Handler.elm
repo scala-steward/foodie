@@ -254,9 +254,13 @@ confirmDeleteRecipe model recipeId =
     )
 
 
+
+-- todo: Consider whether 'showControls' is possibly False.
+
+
 cancelDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.LogicMsg )
 cancelDeleteRecipe model recipeId =
-    ( model |> mapRecipeStateById recipeId Editing.toView
+    ( model |> mapRecipeStateById recipeId (Editing.toViewWith { showControls = True })
     , Cmd.none
     )
 
