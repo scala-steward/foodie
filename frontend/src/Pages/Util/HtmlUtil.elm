@@ -1,4 +1,4 @@
-module Pages.Util.HtmlUtil exposing (menuButton, onEscape, searchAreaWith)
+module Pages.Util.HtmlUtil exposing (menuIcon, onEscape, searchAreaWith)
 
 import Html exposing (Attribute, Html, button, div, input, label, text)
 import Html.Attributes exposing (disabled, value)
@@ -47,6 +47,6 @@ mkEscapeEventMsg msg keyboardEvent =
     Just msg |> Maybe.Extra.filter (always (keyboardEvent.keyCode == Key.Escape))
 
 
-menuButton : Html msg
-menuButton =
-    label [] [ Material.Icons.list 20 Material.Icons.Types.Inherit ]
+menuIcon : Html msg
+menuIcon =
+    Material.Icons.list 20 Material.Icons.Types.Inherit
