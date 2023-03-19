@@ -129,6 +129,10 @@ body, button, input {
     width: auto;
 }
 
+#addRecipeView table .toggle {
+    width: 35px;
+}
+
 select {
     white-space: nowrap;
     overflow: hidden;
@@ -176,10 +180,6 @@ th {
 }
 
 #addRecipeView th:nth-child(3) {
-    width: 12%;
-}
-
-#addRecipeView th:nth-child(4) {
     width: 12%;
 }
 
