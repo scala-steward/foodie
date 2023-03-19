@@ -58,6 +58,9 @@ updateLogic msg model =
         Page.GotSaveRecipeResponse dataOrError ->
             gotSaveRecipeResponse model dataOrError
 
+        Page.ToggleControls recipeId ->
+            toggleControls model recipeId
+
         Page.EnterEditRecipe recipeId ->
             enterEditRecipe model recipeId
 
@@ -193,8 +196,16 @@ gotSaveRecipeResponse model dataOrError =
             (\recipe ->
                 model
                     |> mapRecipeStateById recipe.id
-                        (always (Editing.asView recipe))
+                        (Editing.asViewWithElement recipe)
             )
+    , Cmd.none
+    )
+
+
+toggleControls : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.LogicMsg )
+toggleControls model recipeId =
+    ( model
+        |> mapRecipeStateById recipeId Editing.toggleControls
     , Cmd.none
     )
 
@@ -208,9 +219,13 @@ enterEditRecipe model recipeId =
     )
 
 
+
+-- todo: Consider whether 'showControls' is possibly False.
+
+
 exitEditRecipeAt : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.LogicMsg )
 exitEditRecipeAt model recipeId =
-    ( model |> mapRecipeStateById recipeId Editing.toView
+    ( model |> mapRecipeStateById recipeId (Editing.toViewWith { showControls = True })
     , Cmd.none
     )
 
