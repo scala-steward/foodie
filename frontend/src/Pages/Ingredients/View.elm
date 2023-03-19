@@ -144,7 +144,6 @@ viewMain configuration main =
                                         ]
                                     ]
                                 , toggleCommand = Page.ToggleRecipeControls
-                                , styles = []
                                 , showControls = showControls
                                 }
                                 o
@@ -177,7 +176,6 @@ viewMain configuration main =
                                     ]
                                 ]
                             , toggleCommand = Page.ToggleRecipeControls
-                            , styles = []
                             , showControls = True
                             }
                             >> List.singleton

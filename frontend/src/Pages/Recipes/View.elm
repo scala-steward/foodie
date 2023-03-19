@@ -174,7 +174,6 @@ viewRecipeLine configuration recipe showControls =
                 ]
             ]
         , toggleCommand = Page.ToggleControls recipe.id
-        , styles = [ Style.classes.editing ]
         , showControls = showControls
         }
         recipe
@@ -193,7 +192,6 @@ deleteRecipeLine recipe =
                 ]
             ]
         , toggleCommand = Page.ToggleControls recipe.id
-        , styles = [ Style.classes.editing ]
         , showControls = True
         }
         recipe
@@ -202,7 +200,6 @@ deleteRecipeLine recipe =
 recipeLineWith :
     { controls : List (Html msg)
     , toggleCommand : msg
-    , styles : List (Attribute msg)
     , showControls : Bool
     }
     -> Recipe
@@ -213,7 +210,7 @@ recipeLineWith ps recipe =
             (++) (ps.toggleCommand |> onClick |> List.singleton)
 
         infoRow =
-            tr ps.styles
+            tr [ Style.classes.editing ]
                 [ td ([ Style.classes.editable ] |> withOnClick)
                     [ label [] [ text recipe.name ] ]
                 , td ([ Style.classes.editable ] |> withOnClick)
