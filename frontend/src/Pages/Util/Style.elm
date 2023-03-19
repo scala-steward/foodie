@@ -41,6 +41,7 @@ classes :
     , info : Attribute msg
     , intervalSelection : Attribute msg
     , meals : Attribute msg
+    , menu : Attribute msg
     , numberCell : Attribute msg
     , numberLabel : Attribute msg
     , nutrients : Attribute msg
@@ -97,6 +98,7 @@ classes =
     , info = class "info"
     , intervalSelection = class "intervalSection"
     , meals = class "meals"
+    , menu = class "menu"
     , numberCell = class "numberCell"
     , numberLabel = class "numberLabel"
     , nutrients = class "nutrients"
