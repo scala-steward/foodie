@@ -66,14 +66,14 @@ viewMain configuration main =
         let
             viewIngredientState =
                 Editing.unpack
-                    { onView = viewIngredientLine main.ingredientsGroup.foods
+                    { onView = \o b -> viewIngredientLine main.ingredientsGroup.foods o
                     , onUpdate = updateIngredientLine main.ingredientsGroup.foods
                     , onDelete = deleteIngredientLine main.ingredientsGroup.foods
                     }
 
             viewComplexIngredientState =
                 Editing.unpack
-                    { onView = viewComplexIngredientLine configuration main.complexIngredientsGroup.foods
+                    { onView = \o b -> viewComplexIngredientLine configuration main.complexIngredientsGroup.foods o
                     , onUpdate = updateComplexIngredientLine main.complexIngredientsGroup.foods
                     , onDelete = deleteComplexIngredientLine main.complexIngredientsGroup.foods
                     }
@@ -125,26 +125,30 @@ viewMain configuration main =
             viewRecipe =
                 Editing.unpack
                     { onView =
-                        Pages.Recipes.View.recipeLineWith
-                            { controls =
-                                [ td [ Style.classes.controls ]
-                                    [ button [ Style.classes.button.edit, Page.EnterEditRecipe |> onClick ] [ text "Edit" ] ]
-                                , td [ Style.classes.controls ]
-                                    [ button
-                                        [ Style.classes.button.delete, Page.RequestDeleteRecipe |> onClick ]
-                                        [ text "Delete" ]
+                        \o showControls ->
+                            Pages.Recipes.View.recipeLineWith
+                                { controls =
+                                    [ td [ Style.classes.controls ]
+                                        [ button [ Style.classes.button.edit, Page.EnterEditRecipe |> onClick ] [ text "Edit" ] ]
+                                    , td [ Style.classes.controls ]
+                                        [ button
+                                            [ Style.classes.button.delete, Page.RequestDeleteRecipe |> onClick ]
+                                            [ text "Delete" ]
+                                        ]
+                                    , td [ Style.classes.controls ]
+                                        [ Links.linkButton
+                                            { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsRecipeSelect.address <| main.recipe.original.id
+                                            , attributes = [ Style.classes.button.nutrients ]
+                                            , children = [ text "Nutrients" ]
+                                            }
+                                        ]
                                     ]
-                                , td [ Style.classes.controls ]
-                                    [ Links.linkButton
-                                        { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsRecipeSelect.address <| main.recipe.original.id
-                                        , attributes = [ Style.classes.button.nutrients ]
-                                        , children = [ text "Nutrients" ]
-                                        }
-                                    ]
-                                ]
-                            , onClick = [ Page.EnterEditRecipe |> onClick ]
-                            , styles = []
-                            }
+                                , onClick = [ Page.ToggleRecipeControls |> onClick ]
+                                , styles = []
+                                , showControls = showControls
+                                }
+                                o
+                                |> List.singleton
                     , onUpdate =
                         Pages.Recipes.View.editRecipeLineWith
                             { saveMsg = Page.SaveRecipeEdit
@@ -158,6 +162,7 @@ viewMain configuration main =
                             , cancelName = "Cancel"
                             , rowStyles = []
                             }
+                            >> List.singleton
                             |> always
                     , onDelete =
                         Pages.Recipes.View.recipeLineWith
@@ -172,15 +177,17 @@ viewMain configuration main =
                                 ]
                             , onClick = []
                             , styles = []
+                            , showControls = True
                             }
+                            >> List.singleton
                     }
                     main.recipe
         in
         div [ Style.ids.ingredientEditor ]
             [ div []
                 [ table [ Style.classes.elementsWithControlsTable ]
-                    (Pages.Recipes.View.tableHeader { controlButtons = 3 }
-                        ++ [ tbody [] [ viewRecipe ]
+                    (Pages.Recipes.View.tableHeader
+                        ++ [ tbody [] (viewRecipe |> List.concat)
                            ]
                     )
                 ]
@@ -190,7 +197,7 @@ viewMain configuration main =
                     { msg = Page.SetIngredientsSearchString
                     , searchString = main.ingredientsSearchString
                     }
-                , table [ Style.classes.elementsWithControlsTable ]
+                , table [ Style.classes.elementsWithControlsTable, Style.classes.ingredientEditTable ]
                     [ colgroup []
                         [ col [] []
                         , col [] []
@@ -230,7 +237,7 @@ viewMain configuration main =
                     { msg = Page.SetComplexIngredientsSearchString
                     , searchString = main.complexIngredientsSearchString
                     }
-                , table [ Style.classes.elementsWithControlsTable ]
+                , table [ Style.classes.elementsWithControlsTable, Style.classes.ingredientEditTable ]
                     [ colgroup []
                         [ col [] []
                         , col [] []
