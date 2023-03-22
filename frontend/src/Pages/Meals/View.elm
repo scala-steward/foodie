@@ -124,7 +124,7 @@ tableHeader =
         , col [] []
         ]
     , thead []
-        [ tr [ Style.classes.tableHeader ]
+        [ tr [ Style.classes.tableHeader, Style.classes.mealEditTable ]
             [ th [ scope "col" ] [ label [] [ text "Date" ] ]
             , th [ scope "col" ] [ label [] [ text "Time" ] ]
             , th [ scope "col" ] [ label [] [ text "Name" ] ]

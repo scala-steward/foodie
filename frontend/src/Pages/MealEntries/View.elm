@@ -164,8 +164,7 @@ viewMain configuration main =
                     , searchString = main.entriesSearchString
                     }
 
-                -- todo: Likely wrong style
-                , table [ Style.classes.elementsWithControlsTable, Style.classes.mealEditTable ]
+                , table [ Style.classes.elementsWithControlsTable, Style.classes.mealEntryEditTable ]
                     [ colgroup []
                         [ col [] []
                         , col [] []
@@ -208,8 +207,7 @@ viewMain configuration main =
                         , searchString = main.recipesSearchString
                         }
 
-                    -- todo: Likely wrong style
-                    , table [ Style.classes.elementsWithControlsTable, Style.classes.mealEditTable ]
+                    , table [ Style.classes.elementsWithControlsTable ]
                         [ colgroup []
                             [ col [] []
                             , col [] []
