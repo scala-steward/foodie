@@ -187,12 +187,10 @@ th {
 }
 
 #addMealView th:first-child,
-#addMealView th:nth-child(2):not(input) {
+#addMealView th:nth-child(2):not(input),
+#mealEntryEditor th:first-child:not(.mealEditTable),
+#mealEntryEditor th:nth-child(2):not(.mealEditTable) {
     width: 15%;
-}
-
-#addMealView th:nth-child(3) {
-    width: 30%;
 }
 
 #addReferenceMapView th:first-child {
@@ -203,29 +201,19 @@ th {
     width: 10%;
 }
 
-/*todo: recipeEditTable is wrong here, it should be mealEditTable*/
-#mealEntryEditor th:first-child:not(.recipeEditTable),
-#mealEntryEditor th:nth-child(2):not(.recipeEditTable) {
-    width: 30%;
-}
-
-#mealEntryEditor th:nth-child(3):not(.recipeEditTable) {
-    width: 10%;
-}
-
-#mealEntryEditor .recipeEditTable th:first-child {
+#mealEntryEditor .mealEditTable th:first-child {
     width: 25%
 }
 
-#mealEntryEditor .recipeEditTable th:nth-child(2) {
+#mealEntryEditor .mealEditTable th:nth-child(2) {
     width: 25%
 }
 
-#mealEntryEditor .recipeEditTable th:nth-child(3) {
+#mealEntryEditor .mealEditTable th:nth-child(3) {
     width: 15%
 }
 
-#mealEntryEditor .recipeEditTable th:nth-child(4) {
+#mealEntryEditor .mealEditTable th:nth-child(4) {
     width: 10%
 }
 

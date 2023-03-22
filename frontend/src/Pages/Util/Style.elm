@@ -42,6 +42,7 @@ classes :
     , info : Attribute msg
     , ingredientEditTable : Attribute msg
     , intervalSelection : Attribute msg
+    , mealEditTable : Attribute msg
     , meals : Attribute msg
     , numberCell : Attribute msg
     , numberLabel : Attribute msg
@@ -101,6 +102,7 @@ classes =
     , info = class "info"
     , ingredientEditTable = class "ingredientEditTable"
     , intervalSelection = class "intervalSection"
+    , mealEditTable = class "mealEditTable"
     , meals = class "meals"
     , numberCell = class "numberCell"
     , numberLabel = class "numberLabel"
