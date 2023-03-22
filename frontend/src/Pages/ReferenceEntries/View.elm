@@ -31,12 +31,14 @@ import Util.Editing as Editing
 import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
+
 view : Page.Model -> Html Page.Msg
 view =
     Tristate.view
         { viewMain = viewMain
         , showLoginRedirect = True
         }
+
 
 viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
@@ -51,7 +53,7 @@ viewMain configuration main =
         let
             viewReferenceEntryState =
                 Editing.unpack
-                    { onView = viewReferenceEntryLine main.nutrients
+                    { onView = \o b -> viewReferenceEntryLine main.nutrients o
                     , onUpdate = updateReferenceEntryLine main.nutrients
                     , onDelete = deleteReferenceEntryLine main.nutrients
                     }
@@ -92,19 +94,21 @@ viewMain configuration main =
             viewReferenceMap =
                 Editing.unpack
                     { onView =
-                        Pages.ReferenceMaps.View.referenceMapLineWith
-                            { controls =
-                                [ td [ Style.classes.controls ]
-                                    [ button [ Style.classes.button.edit, Page.EnterEditReferenceMap |> onClick ] [ text "Edit" ] ]
-                                , td [ Style.classes.controls ]
-                                    [ button
-                                        [ Style.classes.button.delete, Page.RequestDeleteReferenceMap |> onClick ]
-                                        [ text "Delete" ]
+                        \referenceMap showControls ->
+                            Pages.ReferenceMaps.View.referenceMapLineWith
+                                { controls =
+                                    [ td [ Style.classes.controls ]
+                                        [ button [ Style.classes.button.edit, Page.EnterEditReferenceMap |> onClick ] [ text "Edit" ] ]
+                                    , td [ Style.classes.controls ]
+                                        [ button
+                                            [ Style.classes.button.delete, Page.RequestDeleteReferenceMap |> onClick ]
+                                            [ text "Delete" ]
+                                        ]
                                     ]
-                                ]
-                            , onClick = [ Page.EnterEditReferenceMap |> onClick ]
-                            , styles = []
-                            }
+                                , toggleCommand = Page.ToggleReferenceMapControls
+                                , showControls = showControls
+                                }
+                                referenceMap
                     , onUpdate =
                         Pages.ReferenceMaps.View.editReferenceMapLineWith
                             { saveMsg = Page.SaveReferenceMapEdit
@@ -114,6 +118,7 @@ viewMain configuration main =
                             , cancelMsg = Page.ExitEditReferenceMap
                             , cancelName = "Cancel"
                             , rowStyles = []
+                            , toggleCommand = Just Page.ToggleReferenceMapControls
                             }
                             |> always
                     , onDelete =
@@ -127,8 +132,8 @@ viewMain configuration main =
                                         [ text "Cancel" ]
                                     ]
                                 ]
-                            , onClick = []
-                            , styles = []
+                            , toggleCommand = Page.ToggleReferenceMapControls
+                            , showControls = True
                             }
                     }
                     main.referenceMap
@@ -136,8 +141,8 @@ viewMain configuration main =
         div [ Style.ids.referenceEntryEditor ]
             [ div []
                 [ table [ Style.classes.elementsWithControlsTable ]
-                    (Pages.ReferenceMaps.View.tableHeader { controlButtons = 2 }
-                        ++ [ tbody [] [ viewReferenceMap ]
+                    (Pages.ReferenceMaps.View.tableHeader
+                        ++ [ tbody [] viewReferenceMap
                            ]
                     )
                 ]
@@ -146,7 +151,7 @@ viewMain configuration main =
                     { msg = Page.SetReferenceEntriesSearchString
                     , searchString = main.referenceEntriesSearchString
                     }
-                , table [ Style.classes.elementsWithControlsTable ]
+                , table [ Style.classes.elementsWithControlsTable, Style.classes.referenceEntryEditTable ]
                     [ colgroup []
                         [ col [] []
                         , col [] []

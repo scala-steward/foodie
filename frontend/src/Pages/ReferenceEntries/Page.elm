@@ -151,6 +151,7 @@ type LogicMsg
     | SetNutrientsSearchString String
     | SetReferenceEntriesSearchString String
     | SetPagination Pagination
+    | ToggleReferenceMapControls
     | UpdateReferenceMap ReferenceMapUpdateClientInput
     | SaveReferenceMapEdit
     | GotSaveReferenceMapResponse (Result Error ReferenceMap)

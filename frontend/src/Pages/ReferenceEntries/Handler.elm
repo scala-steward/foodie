@@ -116,6 +116,9 @@ updateLogic msg model =
         Page.SetPagination pagination ->
             setPagination model pagination
 
+        Page.ToggleReferenceMapControls ->
+            toggleReferenceMapControls model
+
         Page.UpdateReferenceMap referenceMapUpdateClientInput ->
             updateReferenceMap model referenceMapUpdateClientInput
 
@@ -419,6 +422,14 @@ setReferenceEntriesSearchString model string =
 setPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.LogicMsg )
 setPagination model pagination =
     ( model |> Tristate.mapMain (Page.lenses.main.pagination.set pagination)
+    , Cmd.none
+    )
+
+
+toggleReferenceMapControls : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+toggleReferenceMapControls model =
+    ( model
+        |> Tristate.mapMain (Lens.modify Page.lenses.main.referenceMap Editing.toggleControls)
     , Cmd.none
     )
 
