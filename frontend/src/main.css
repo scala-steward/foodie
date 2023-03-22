@@ -187,46 +187,37 @@ th {
 }
 
 #addMealView th:first-child,
+#mealEntryEditor .mealEditTable th:first-child,
 #addMealView th:nth-child(2):not(input),
-#mealEntryEditor th:first-child:not(.mealEditTable),
-#mealEntryEditor th:nth-child(2):not(.mealEditTable) {
+#mealEntryEditor .mealEditTable th:nth-child(2):not(input) {
     width: 15%;
 }
 
-#addReferenceMapView th:first-child {
-    width: 30%;
-}
-
-#addReferenceMapView th:nth-child(2) {
-    width: 10%;
-}
-
-#mealEntryEditor .mealEditTable th:first-child {
+#mealEntryEditor .mealEntryEditTable th:first-child {
     width: 25%
 }
 
-#mealEntryEditor .mealEditTable th:nth-child(2) {
+#mealEntryEditor .mealEntryEditTable th:nth-child(2) {
     width: 25%
 }
 
-#mealEntryEditor .mealEditTable th:nth-child(3) {
+#mealEntryEditor .mealEntryEditTable th:nth-child(3) {
     width: 15%
 }
 
-#mealEntryEditor .mealEditTable th:nth-child(4) {
+#mealEntryEditor .mealEntryEditTable th:nth-child(4) {
     width: 10%
 }
 
-
-#referenceEntryEditor th:first-child {
+#referenceEntryEditor .referenceEntryEditTable th:first-child {
     width: 50%;
 }
 
-#referenceEntryEditor th:nth-child(2) {
+#referenceEntryEditor .referenceEntryEditTable th:nth-child(2) {
     width: 20%
 }
 
-#referenceEntryEditor th:nth-child(3) {
+#referenceEntryEditor .referenceEntryEditTable th:nth-child(3) {
     width: 5%
 }
 
