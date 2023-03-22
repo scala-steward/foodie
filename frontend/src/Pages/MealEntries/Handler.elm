@@ -113,6 +113,9 @@ updateLogic msg model =
         Page.SetPagination pagination ->
             setPagination model pagination
 
+        Page.ToggleMealControls ->
+            toggleMealControls model
+
         Page.UpdateMeal mealUpdateClientInput ->
             updateMeal model mealUpdateClientInput
 
@@ -379,6 +382,14 @@ setEntriesSearchString model string =
 setPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.LogicMsg )
 setPagination model pagination =
     ( model |> Tristate.mapMain (Page.lenses.main.pagination.set pagination)
+    , Cmd.none
+    )
+
+
+toggleMealControls : Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
+toggleMealControls model =
+    ( model
+        |> Tristate.mapMain (Lens.modify Page.lenses.main.meal Editing.toggleControls)
     , Cmd.none
     )
 

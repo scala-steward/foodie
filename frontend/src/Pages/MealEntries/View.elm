@@ -56,7 +56,7 @@ viewMain configuration main =
         let
             viewMealEntryState =
                 Editing.unpack
-                    { onView = viewMealEntryLine configuration main.recipes
+                    { onView = \o b -> viewMealEntryLine configuration main.recipes o
                     , onUpdate = updateEntryLine main.recipes
                     , onDelete = deleteMealEntryLine main.recipes
                     }
@@ -96,26 +96,28 @@ viewMain configuration main =
             viewMeal =
                 Editing.unpack
                     { onView =
-                        Pages.Meals.View.mealLineWith
-                            { controls =
-                                [ td [ Style.classes.controls ]
-                                    [ button [ Style.classes.button.edit, Page.EnterEditMeal |> onClick ] [ text "Edit" ] ]
-                                , td [ Style.classes.controls ]
-                                    [ button
-                                        [ Style.classes.button.delete, Page.RequestDeleteMeal |> onClick ]
-                                        [ text "Delete" ]
+                        \meal showControls ->
+                            Pages.Meals.View.mealLineWith
+                                { controls =
+                                    [ td [ Style.classes.controls ]
+                                        [ button [ Style.classes.button.edit, Page.EnterEditMeal |> onClick ] [ text "Edit" ] ]
+                                    , td [ Style.classes.controls ]
+                                        [ button
+                                            [ Style.classes.button.delete, Page.RequestDeleteMeal |> onClick ]
+                                            [ text "Delete" ]
+                                        ]
+                                    , td [ Style.classes.controls ]
+                                        [ Links.linkButton
+                                            { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsMealSelect.address <| main.meal.original.id
+                                            , attributes = [ Style.classes.button.nutrients ]
+                                            , children = [ text "Nutrients" ]
+                                            }
+                                        ]
                                     ]
-                                , td [ Style.classes.controls ]
-                                    [ Links.linkButton
-                                        { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsMealSelect.address <| main.meal.original.id
-                                        , attributes = [ Style.classes.button.nutrients ]
-                                        , children = [ text "Nutrients" ]
-                                        }
-                                    ]
-                                ]
-                            , onClick = [ Page.EnterEditMeal |> onClick ]
-                            , styles = []
-                            }
+                                , toggleCommand = Page.ToggleMealControls
+                                , showControls = showControls
+                                }
+                                meal
                     , onUpdate =
                         Pages.Meals.View.editMealLineWith
                             { saveMsg = Page.SaveMealEdit
@@ -127,6 +129,7 @@ viewMain configuration main =
                             , cancelMsg = Page.ExitEditMeal
                             , cancelName = "Cancel"
                             , rowStyles = []
+                            , toggleCommand = Just Page.ToggleMealControls
                             }
                             |> always
                     , onDelete =
@@ -140,8 +143,8 @@ viewMain configuration main =
                                         [ text "Cancel" ]
                                     ]
                                 ]
-                            , onClick = []
-                            , styles = []
+                            , toggleCommand = Page.ToggleMealControls
+                            , showControls = True
                             }
                     }
                     main.meal
@@ -149,8 +152,8 @@ viewMain configuration main =
         div [ Style.ids.mealEntryEditor ]
             [ div []
                 [ table [ Style.classes.elementsWithControlsTable ]
-                    (Pages.Meals.View.tableHeader { controlButtons = 3 }
-                        ++ [ tbody [] [ viewMeal ]
+                    (Pages.Meals.View.tableHeader
+                        ++ [ tbody [] viewMeal
                            ]
                     )
                 ]
@@ -160,7 +163,9 @@ viewMain configuration main =
                     { msg = Page.SetEntriesSearchString
                     , searchString = main.entriesSearchString
                     }
-                , table [ Style.classes.elementsWithControlsTable, Style.classes.recipeEditTable ]
+
+                -- todo: Likely wrong style
+                , table [ Style.classes.elementsWithControlsTable, Style.classes.mealEditTable ]
                     [ colgroup []
                         [ col [] []
                         , col [] []
@@ -202,7 +207,9 @@ viewMain configuration main =
                         { msg = Page.SetRecipesSearchString
                         , searchString = main.recipesSearchString
                         }
-                    , table [ Style.classes.elementsWithControlsTable, Style.classes.recipeEditTable ]
+
+                    -- todo: Likely wrong style
+                    , table [ Style.classes.elementsWithControlsTable, Style.classes.mealEditTable ]
                         [ colgroup []
                             [ col [] []
                             , col [] []

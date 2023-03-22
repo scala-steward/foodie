@@ -125,7 +125,7 @@ viewMain configuration main =
             viewRecipe =
                 Editing.unpack
                     { onView =
-                        \o showControls ->
+                        \recipe showControls ->
                             Pages.Recipes.View.recipeLineWith
                                 { controls =
                                     [ td [ Style.classes.controls ]
@@ -146,8 +146,7 @@ viewMain configuration main =
                                 , toggleCommand = Page.ToggleRecipeControls
                                 , showControls = showControls
                                 }
-                                o
-                                |> List.singleton
+                                recipe
                     , onUpdate =
                         Pages.Recipes.View.editRecipeLineWith
                             { saveMsg = Page.SaveRecipeEdit
@@ -162,7 +161,6 @@ viewMain configuration main =
                             , rowStyles = []
                             , toggleCommand = Just Page.ToggleRecipeControls
                             }
-                            >> List.singleton
                             |> always
                     , onDelete =
                         Pages.Recipes.View.recipeLineWith
@@ -178,7 +176,6 @@ viewMain configuration main =
                             , toggleCommand = Page.ToggleRecipeControls
                             , showControls = True
                             }
-                            >> List.singleton
                     }
                     main.recipe
         in
@@ -186,7 +183,7 @@ viewMain configuration main =
             [ div []
                 [ table [ Style.classes.elementsWithControlsTable ]
                     (Pages.Recipes.View.tableHeader
-                        ++ [ tbody [] (viewRecipe |> List.concat)
+                        ++ [ tbody [] viewRecipe
                            ]
                     )
                 ]

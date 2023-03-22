@@ -4,7 +4,6 @@ import Api.Auxiliary exposing (JWT, MealEntryId, MealId, RecipeId)
 import Api.Types.Meal exposing (Meal)
 import Api.Types.MealEntry exposing (MealEntry)
 import Api.Types.Recipe exposing (Recipe)
-import Basics.Extra exposing (flip)
 import Monocle.Lens exposing (Lens)
 import Pages.MealEntries.MealEntryCreationClientInput exposing (MealEntryCreationClientInput)
 import Pages.MealEntries.MealEntryUpdateClientInput exposing (MealEntryUpdateClientInput)
@@ -126,11 +125,6 @@ lenses =
     }
 
 
-descriptionOrEmpty : RecipeMap -> RecipeId -> String
-descriptionOrEmpty recipeMap =
-    flip DictList.get recipeMap >> Maybe.andThen .description >> Maybe.withDefault ""
-
-
 type alias Msg =
     Tristate.Msg LogicMsg
 
@@ -156,6 +150,7 @@ type LogicMsg
     | SetRecipesSearchString String
     | SetEntriesSearchString String
     | SetPagination Pagination
+    | ToggleMealControls
     | UpdateMeal MealUpdateClientInput
     | SaveMealEdit
     | GotSaveMealResponse (Result Error Meal)
