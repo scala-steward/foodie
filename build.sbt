@@ -26,7 +26,7 @@ lazy val root = (project in file("."))
       "com.typesafe.slick"    %% "slick-hikaricp"    % slickVersion,
       "com.typesafe.slick"    %% "slick-codegen"     % slickVersion,
       "org.postgresql"         % "postgresql"        % "42.5.4",
-      "ch.qos.logback"         % "logback-classic"   % "1.4.5",
+      "ch.qos.logback"         % "logback-classic"   % "1.4.6",
       "io.circe"              %% "circe-core"        % circeVersion,
       "io.circe"              %% "circe-generic"     % circeVersion,
       "io.circe"              %% "circe-parser"      % circeVersion,
