@@ -27,15 +27,15 @@ type alias Main =
 
 
 type alias Initial =
-    { jwt : JWT
-    , referenceMaps : Maybe ReferenceMapStateMap
+    { referenceMaps : Maybe ReferenceMapStateMap
+    , jwt : JWT
     }
 
 
 initial : AuthorizedAccess -> Model
 initial authorizedAccess =
-    { jwt = authorizedAccess.jwt
-    , referenceMaps = Nothing
+    { referenceMaps = Nothing
+    , jwt = authorizedAccess.jwt
     }
         |> Tristate.createInitial authorizedAccess.configuration
 
@@ -63,9 +63,7 @@ type alias ReferenceMapStateMap =
 
 
 lenses :
-    { initial :
-        { referenceMaps : Lens Initial (Maybe ReferenceMapStateMap)
-        }
+    { initial : { referenceMaps : Lens Initial (Maybe ReferenceMapStateMap) }
     , main :
         { referenceMaps : Lens Main ReferenceMapStateMap
         , referenceMapToAdd : Lens Main (Maybe ReferenceMapCreationClientInput)
@@ -74,7 +72,9 @@ lenses :
         }
     }
 lenses =
-    { initial = { referenceMaps = Lens .referenceMaps (\b a -> { a | referenceMaps = b }) }
+    { initial =
+        { referenceMaps = Lens .referenceMaps (\b a -> { a | referenceMaps = b })
+        }
     , main =
         { referenceMaps = Lens .referenceMaps (\b a -> { a | referenceMaps = b })
         , referenceMapToAdd = Lens .referenceMapToAdd (\b a -> { a | referenceMapToAdd = b })
@@ -100,6 +100,7 @@ type LogicMsg
     | UpdateReferenceMap ReferenceMapUpdateClientInput
     | SaveReferenceMapEdit ReferenceMapId
     | GotSaveReferenceMapResponse (Result Error ReferenceMap)
+    | ToggleControls ReferenceMapId
     | EnterEditReferenceMap ReferenceMapId
     | ExitEditReferenceMapAt ReferenceMapId
     | RequestDeleteReferenceMap ReferenceMapId

@@ -53,6 +53,9 @@ updateLogic msg model =
         Page.GotSaveReferenceMapResponse dataOrError ->
             gotSaveReferenceMapResponse model dataOrError
 
+        Page.ToggleControls referenceMapId ->
+            toggleControls model referenceMapId
+
         Page.EnterEditReferenceMap referenceMapId ->
             enterEditReferenceMap model referenceMapId
 
@@ -173,8 +176,16 @@ gotSaveReferenceMapResponse model dataOrError =
             (\referenceMap ->
                 model
                     |> mapReferenceMapStateById referenceMap.id
-                        (referenceMap |> Editing.asView |> always)
+                        (referenceMap |> Editing.asViewWithElement)
             )
+    , Cmd.none
+    )
+
+
+toggleControls : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.LogicMsg )
+toggleControls model referenceMapId =
+    ( model
+        |> mapReferenceMapStateById referenceMapId Editing.toggleControls
     , Cmd.none
     )
 
@@ -190,7 +201,7 @@ enterEditReferenceMap model referenceMapId =
 
 exitEditReferenceMapAt : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.LogicMsg )
 exitEditReferenceMapAt model referenceMapId =
-    ( model |> mapReferenceMapStateById referenceMapId Editing.toView
+    ( model |> mapReferenceMapStateById referenceMapId (Editing.toViewWith { showControls = True })
     , Cmd.none
     )
 
@@ -221,7 +232,7 @@ confirmDeleteReferenceMap model referenceMapId =
 
 cancelDeleteReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.LogicMsg )
 cancelDeleteReferenceMap model referenceMapId =
-    ( model |> mapReferenceMapStateById referenceMapId Editing.toView
+    ( model |> mapReferenceMapStateById referenceMapId (Editing.toViewWith { showControls = True })
     , Cmd.none
     )
 
