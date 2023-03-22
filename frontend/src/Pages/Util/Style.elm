@@ -43,6 +43,7 @@ classes :
     , ingredientEditTable : Attribute msg
     , intervalSelection : Attribute msg
     , mealEditTable : Attribute msg
+    , mealEntryEditTable : Attribute msg
     , meals : Attribute msg
     , numberCell : Attribute msg
     , numberLabel : Attribute msg
@@ -56,6 +57,8 @@ classes :
         }
     , request : Attribute msg
     , recipeEditTable : Attribute msg
+    , referenceEntryEditTable : Attribute msg
+    , referenceMapEditTable : Attribute msg
     , search :
         { area : Attribute msg
         , field : Attribute msg
@@ -103,6 +106,7 @@ classes =
     , ingredientEditTable = class "ingredientEditTable"
     , intervalSelection = class "intervalSection"
     , mealEditTable = class "mealEditTable"
+    , mealEntryEditTable = class "mealEntryEditTable"
     , meals = class "meals"
     , numberCell = class "numberCell"
     , numberLabel = class "numberLabel"
@@ -116,6 +120,8 @@ classes =
         }
     , request = class "request"
     , recipeEditTable = class "recipeEditTable"
+    , referenceEntryEditTable = class "referenceEntryEditTable"
+    , referenceMapEditTable = class "referenceMapEditTable"
     , search =
         { area = class "searchArea"
         , field = class "searchField"
