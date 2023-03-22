@@ -8,7 +8,6 @@ import Configuration exposing (Configuration)
 import Either exposing (Either(..))
 import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, disabled, scope, type_, value)
-import Html.Attributes.Extra exposing (stringProperty)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
@@ -79,7 +78,9 @@ viewMain configuration main =
                         main
 
             ( button, creationLine ) =
-                createMeal main.mealToAdd |> Either.unpack (\l -> ( [ l ], [] )) (\r -> ( [], [ r ] ))
+                createMeal main.mealToAdd
+                    |> Either.unpack (\l -> ( [ l ], [] )) (\r -> ( [], [ r ] ))
+                    |> Tuple.mapBoth List.concat List.concat
         in
         div [ Style.ids.addMealView ]
             (button
@@ -88,12 +89,12 @@ viewMain configuration main =
                         , searchString = main.searchString
                         }
                    , table [ Style.classes.elementsWithControlsTable ]
-                        (tableHeader { controlButtons = 4 }
+                        (tableHeader
                             ++ [ tbody []
                                     (creationLine
                                         ++ (viewMeals
                                                 |> Paginate.page
-                                                |> List.map viewMealState
+                                                |> List.concatMap viewMealState
                                            )
                                     )
                                ]
@@ -114,51 +115,48 @@ viewMain configuration main =
             )
 
 
-tableHeader : { controlButtons : Int } -> List (Html msg)
-tableHeader ps =
+tableHeader : List (Html msg)
+tableHeader =
     [ colgroup []
         [ col [] []
         , col [] []
         , col [] []
-        , col [ stringProperty "span" <| String.fromInt <| ps.controlButtons ] []
+        , col [] []
         ]
     , thead []
         [ tr [ Style.classes.tableHeader ]
             [ th [ scope "col" ] [ label [] [ text "Date" ] ]
             , th [ scope "col" ] [ label [] [ text "Time" ] ]
             , th [ scope "col" ] [ label [] [ text "Name" ] ]
-            , th [ colspan ps.controlButtons, scope "colgroup", Style.classes.controlsGroup ] []
+            , th [ Style.classes.toggle ] []
             ]
         ]
     ]
 
 
-createMeal : Maybe MealCreationClientInput -> Either (Html Page.LogicMsg) (Html Page.LogicMsg)
+createMeal : Maybe MealCreationClientInput -> Either (List (Html Page.LogicMsg)) (List (Html Page.LogicMsg))
 createMeal maybeCreation =
     case maybeCreation of
         Nothing ->
-            div [ Style.ids.add ]
+            [ div [ Style.ids.add ]
                 [ button
                     [ Style.classes.button.add
                     , onClick (MealCreationClientInput.default |> Just |> Page.UpdateMealCreation)
                     ]
                     [ text "New meal" ]
                 ]
+            ]
                 |> Left
 
         Just creation ->
             createMealLine creation |> Right
 
 
-viewMealLine : Configuration -> Meal -> Html Page.LogicMsg
-viewMealLine configuration meal =
-    let
-        editMsg =
-            Page.EnterEditMeal meal.id |> onClick
-    in
+viewMealLine : Configuration -> Meal -> Bool -> List (Html Page.LogicMsg)
+viewMealLine configuration meal showControls =
     mealLineWith
         { controls =
-            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, Page.EnterEditMeal meal.id |> onClick ] [ text "Edit" ] ]
             , td [ Style.classes.controls ]
                 [ Links.linkButton
                     { url = Links.frontendPage configuration <| Addresses.Frontend.mealEntryEditor.address <| meal.id
@@ -176,47 +174,66 @@ viewMealLine configuration meal =
                     }
                 ]
             ]
-        , onClick = [ editMsg ]
-        , styles = [ Style.classes.editing ]
+        , toggleCommand = Page.ToggleControls meal.id
+        , showControls = showControls
         }
         meal
 
 
-deleteMealLine : Meal -> Html Page.LogicMsg
+deleteMealLine : Meal -> List (Html Page.LogicMsg)
 deleteMealLine meal =
     mealLineWith
         { controls =
-            [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteMeal meal.id) ] [ text "Delete?" ] ]
-            , td [ Style.classes.controls ] [ button [ Style.classes.button.confirm, onClick (Page.CancelDeleteMeal meal.id) ] [ text "Cancel" ] ]
+            [ td [ Style.classes.controls ]
+                [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteMeal meal.id) ] [ text "Delete?" ] ]
+            , td [ Style.classes.controls ]
+                [ button [ Style.classes.button.confirm, onClick (Page.CancelDeleteMeal meal.id) ] [ text "Cancel" ] ]
             ]
-        , onClick = []
-        , styles = [ Style.classes.editing ]
+        , toggleCommand = Page.ToggleControls meal.id
+        , showControls = True
         }
         meal
+
+
+
+-- todo: Check back for duplication (cf. recipeLineWith).
 
 
 mealLineWith :
     { controls : List (Html msg)
-    , onClick : List (Attribute msg)
-    , styles : List (Attribute msg)
+    , toggleCommand : msg
+    , showControls : Bool
     }
     -> Meal
-    -> Html msg
+    -> List (Html msg)
 mealLineWith ps meal =
     let
         withOnClick =
-            (++) ps.onClick
+            (::) (ps.toggleCommand |> onClick)
+
+        infoRow =
+            tr [ Style.classes.editing ]
+                [ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| DateUtil.dateToString <| meal.date.date ] ]
+                , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.Extra.unwrap "" DateUtil.timeToString <| meal.date.time ] ]
+                , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.withDefault "" <| meal.name ] ]
+                , HtmlUtil.toggleControlsCell ps.toggleCommand
+                ]
+
+        controlsRow =
+            tr []
+                [ td [ colspan 3 ] [ table [ Style.classes.elementsWithControlsTable ] [ tr [] ps.controls ] ]
+                ]
     in
-    tr ps.styles
-        ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| DateUtil.dateToString <| meal.date.date ] ]
-         , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.Extra.unwrap "" DateUtil.timeToString <| meal.date.time ] ]
-         , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.withDefault "" <| meal.name ] ]
-         ]
-            ++ ps.controls
-        )
+    infoRow
+        :: (if ps.showControls then
+                [ controlsRow ]
+
+            else
+                []
+           )
 
 
-updateMealLine : MealUpdateClientInput -> Html Page.LogicMsg
+updateMealLine : MealUpdateClientInput -> List (Html Page.LogicMsg)
 updateMealLine mealUpdateClientInput =
     editMealLineWith
         { saveMsg = Page.SaveMealEdit mealUpdateClientInput.id
@@ -228,11 +245,12 @@ updateMealLine mealUpdateClientInput =
         , cancelMsg = Page.ExitEditMealAt mealUpdateClientInput.id
         , cancelName = "Cancel"
         , rowStyles = [ Style.classes.editLine ]
+        , toggleCommand = Page.ToggleControls mealUpdateClientInput.id |> Just
         }
         mealUpdateClientInput
 
 
-createMealLine : MealCreationClientInput -> Html Page.LogicMsg
+createMealLine : MealCreationClientInput -> List (Html Page.LogicMsg)
 createMealLine mealCreation =
     editMealLineWith
         { saveMsg = Page.CreateMeal
@@ -244,6 +262,7 @@ createMealLine mealCreation =
         , cancelMsg = Page.UpdateMealCreation Nothing
         , cancelName = "Cancel"
         , rowStyles = [ Style.classes.editLine ]
+        , toggleCommand = Nothing
         }
         mealCreation
 
@@ -258,9 +277,10 @@ editMealLineWith :
     , cancelMsg : msg
     , cancelName : String
     , rowStyles : List (Attribute msg)
+    , toggleCommand : Maybe msg
     }
     -> editedValue
-    -> Html msg
+    -> List (Html msg)
 editMealLineWith handling editedValue =
     let
         date =
@@ -312,9 +332,39 @@ editMealLineWith handling editedValue =
 
         validInput =
             Maybe.Extra.isJust <| date.date
+
+        -- todo: Check back, whether it is sensible to extract this block (cf. same block for recipes).
+        controlsRow =
+            tr []
+                [ td [ colspan 3 ]
+                    [ table [ Style.classes.elementsWithControlsTable ]
+                        [ tr []
+                            [ td [ Style.classes.controls ]
+                                [ button
+                                    ([ MaybeUtil.defined <| Style.classes.button.confirm
+                                     , MaybeUtil.defined <| disabled <| not <| validInput
+                                     , MaybeUtil.optional validInput <| onClick handling.saveMsg
+                                     ]
+                                        |> Maybe.Extra.values
+                                    )
+                                    [ text handling.confirmName ]
+                                ]
+                            , td [ Style.classes.controls ]
+                                [ button [ Style.classes.button.cancel, onClick handling.cancelMsg ]
+                                    [ text handling.cancelName ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+
+        commandToggle =
+            handling.toggleCommand
+                |> Maybe.Extra.unwrap []
+                    (HtmlUtil.toggleControlsCell >> List.singleton)
     in
-    tr handling.rowStyles
-        [ td [ Style.classes.editable, Style.classes.date ]
+    [ tr handling.rowStyles
+        ([ td [ Style.classes.editable, Style.classes.date ]
             [ input
                 ([ type_ "date"
                  , Style.classes.date
@@ -325,7 +375,7 @@ editMealLineWith handling editedValue =
                 )
                 []
             ]
-        , td [ Style.classes.editable, Style.classes.time ]
+         , td [ Style.classes.editable, Style.classes.time ]
             [ input
                 ([ type_ "time"
                  , Style.classes.time
@@ -336,7 +386,7 @@ editMealLineWith handling editedValue =
                 )
                 []
             ]
-        , td [ Style.classes.editable ]
+         , td [ Style.classes.editable ]
             [ input
                 ([ MaybeUtil.defined <| value <| name
                  , MaybeUtil.defined <|
@@ -350,18 +400,8 @@ editMealLineWith handling editedValue =
                 )
                 []
             ]
-        , td [ Style.classes.controls ]
-            [ button
-                ([ MaybeUtil.defined <| Style.classes.button.confirm
-                 , MaybeUtil.defined <| disabled <| not <| validInput
-                 , MaybeUtil.optional validInput <| onClick handling.saveMsg
-                 ]
-                    |> Maybe.Extra.values
-                )
-                [ text handling.confirmName ]
-            ]
-        , td [ Style.classes.controls ]
-            [ button [ Style.classes.button.cancel, onClick handling.cancelMsg ]
-                [ text handling.cancelName ]
-            ]
-        ]
+         ]
+            ++ commandToggle
+        )
+    , controlsRow
+    ]

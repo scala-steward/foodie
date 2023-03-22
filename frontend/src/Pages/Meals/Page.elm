@@ -72,7 +72,9 @@ lenses :
         }
     }
 lenses =
-    { initial = { meals = Lens .meals (\b a -> { a | meals = b }) }
+    { initial =
+        { meals = Lens .meals (\b a -> { a | meals = b })
+        }
     , main =
         { meals = Lens .meals (\b a -> { a | meals = b })
         , mealToAdd = Lens .mealToAdd (\b a -> { a | mealToAdd = b })
@@ -98,6 +100,7 @@ type LogicMsg
     | UpdateMeal MealUpdateClientInput
     | SaveMealEdit MealId
     | GotSaveMealResponse (Result Error Meal)
+    | ToggleControls MealId
     | EnterEditMeal MealId
     | ExitEditMealAt MealId
     | RequestDeleteMeal MealId
