@@ -54,9 +54,9 @@ viewMain configuration main =
         let
             viewComplexFoodState =
                 Editing.unpack
-                    { onView = viewComplexFoodLine configuration main.recipes
+                    { onView = viewComplexFoodLine configuration
                     , onUpdate = updateComplexFoodLine
-                    , onDelete = deleteComplexFoodLine main.recipes
+                    , onDelete = deleteComplexFoodLine
                     }
 
             viewComplexFoods =
@@ -103,20 +103,20 @@ viewMain configuration main =
                         [ col [] []
                         , col [] []
                         , col [] []
-                        , col [ stringProperty "span" "4" ] []
+                        , col [] []
                         ]
                     , thead []
                         [ tr [ Style.classes.tableHeader ]
-                            [ th [ scope "col" ] [ label [] [ text "Name" ] ]
-                            , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Amount in g" ] ]
-                            , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Amount in ml" ] ]
-                            , th [ colspan 4, scope "colgroup", Style.classes.controlsGroup ] []
+                            [ th [] [ label [] [ text "Name" ] ]
+                            , th [ Style.classes.numberLabel ] [ label [] [ text "Amount in g" ] ]
+                            , th [ Style.classes.numberLabel ] [ label [] [ text "Amount in ml" ] ]
+                            , th [ Style.classes.toggle ] []
                             ]
                         ]
                     , tbody []
                         (viewComplexFoods
                             |> Paginate.page
-                            |> List.map viewComplexFoodState
+                            |> List.concatMap viewComplexFoodState
                         )
                     ]
                 , div [ Style.classes.pagination ]
@@ -176,115 +176,162 @@ viewMain configuration main =
             ]
 
 
-viewComplexFoodLine : Configuration -> Page.RecipeMap -> ComplexFood -> Html Page.LogicMsg
-viewComplexFoodLine configuration recipeMap complexFood =
-    let
-        editMsg =
-            Page.EnterEditComplexFood complexFood.recipeId |> onClick
-    in
+viewComplexFoodLine : Configuration -> ComplexFood -> Bool -> List (Html Page.LogicMsg)
+viewComplexFoodLine configuration complexFood showControls =
     complexFoodLineWith
         { controls =
-            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, Page.EnterEditComplexFood complexFood.recipeId |> onClick ] [ text "Edit" ] ]
             , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.RequestDeleteComplexFood complexFood.recipeId) ] [ text "Delete" ] ]
             , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration complexFood.recipeId ]
             , td [ Style.classes.controls ] [ NavigationUtil.recipeNutrientsLinkButton configuration complexFood.recipeId ]
             ]
-        , onClick = [ editMsg ]
-        , recipeMap = recipeMap
+        , toggleCommand = Page.ToggleComplexFoodControls complexFood.recipeId
+        , showControls = showControls
         }
         complexFood
 
 
-deleteComplexFoodLine : Page.RecipeMap -> ComplexFood -> Html Page.LogicMsg
-deleteComplexFoodLine recipeMap complexFood =
+deleteComplexFoodLine : ComplexFood -> List (Html Page.LogicMsg)
+deleteComplexFoodLine complexFood =
     complexFoodLineWith
         { controls =
             [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteComplexFood complexFood.recipeId) ] [ text "Delete?" ] ]
             , td [ Style.classes.controls ] [ button [ Style.classes.button.confirm, onClick (Page.CancelDeleteComplexFood complexFood.recipeId) ] [ text "Cancel" ] ]
             ]
-        , onClick = []
-        , recipeMap = recipeMap
+        , toggleCommand = Page.ToggleComplexFoodControls complexFood.recipeId
+        , showControls = True
         }
         complexFood
 
 
 complexFoodLineWith :
-    { controls : List (Html Page.LogicMsg)
-    , onClick : List (Attribute Page.LogicMsg)
-    , recipeMap : Page.RecipeMap
+    { controls : List (Html msg)
+    , toggleCommand : msg
+    , showControls : Bool
     }
     -> ComplexFood
-    -> Html Page.LogicMsg
+    -> List (Html msg)
 complexFoodLineWith ps complexFood =
     let
         withOnClick =
-            (++) ps.onClick
+            (::) (ps.toggleCommand |> onClick)
+
+        infoRow =
+            tr [ Style.classes.editing ]
+                [ td ([ Style.classes.editable ] |> withOnClick)
+                    [ label [] [ text <| .name <| complexFood ] ]
+                , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick)
+                    [ label [] [ text <| String.fromFloat <| complexFood.amountGrams ] ]
+                , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick)
+                    [ label [] [ text <| Maybe.Extra.unwrap "" String.fromFloat <| complexFood.amountMilliLitres ] ]
+                , HtmlUtil.toggleControlsCell ps.toggleCommand
+                ]
+
+        controlsRow =
+            tr []
+                [ td [ colspan 3 ] [ table [ Style.classes.elementsWithControlsTable ] [ tr [] ps.controls ] ]
+                ]
     in
-    tr [ Style.classes.editing ]
-        ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| .name <| complexFood ] ]
-         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| complexFood.amountGrams ] ]
-         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| Maybe.Extra.unwrap "" String.fromFloat <| complexFood.amountMilliLitres ] ]
-         ]
-            ++ ps.controls
-        )
+    infoRow
+        :: (if ps.showControls then
+                [ controlsRow ]
+
+            else
+                []
+           )
 
 
-updateComplexFoodLine : ComplexFood -> ComplexFoodClientInput -> Html Page.LogicMsg
+updateComplexFoodLine : ComplexFood -> ComplexFoodClientInput -> List (Html Page.LogicMsg)
 updateComplexFoodLine complexFood complexFoodClientInput =
     let
+        validInput =
+            List.all identity
+                [ complexFoodClientInput.amountGrams |> ValidatedInput.isValid
+                , complexFoodClientInput.amountMilliLitres |> ValidatedInput.isValid
+                ]
+
         saveMsg =
             Page.SaveComplexFoodEdit complexFoodClientInput
 
+        validatedSaveAction =
+            MaybeUtil.optional validInput <| onEnter saveMsg
+
         cancelMsg =
             Page.ExitEditComplexFood complexFood.recipeId
+
+        controlsRow =
+            tr []
+                [ td [ colspan 3 ]
+                    [ table [ Style.classes.elementsWithControlsTable ]
+                        [ tr []
+                            [ td []
+                                [ button
+                                    ([ MaybeUtil.defined <| Style.classes.button.confirm
+                                     , MaybeUtil.defined <| disabled <| not <| validInput
+                                     , MaybeUtil.optional validInput <| onClick saveMsg
+                                     ]
+                                        |> Maybe.Extra.values
+                                    )
+                                    [ text "Save" ]
+                                ]
+                            , td []
+                                [ button [ Style.classes.button.cancel, onClick cancelMsg ]
+                                    [ text "Cancel" ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+
+        commandToggle =
+            Page.ToggleComplexFoodControls complexFood.recipeId
+                |> HtmlUtil.toggleControlsCell
     in
-    tr [ Style.classes.editLine ]
+    [ tr [ Style.classes.editLine ]
         [ td [] [ label [] [ text <| .name <| complexFood ] ]
         , td [ Style.classes.numberCell ]
             [ input
-                [ value
-                    complexFoodClientInput.amountGrams.text
-                , onInput
-                    (flip
-                        (ValidatedInput.lift
-                            ComplexFoodClientInput.lenses.amountGrams
-                        ).set
-                        complexFoodClientInput
-                        >> Page.UpdateComplexFood
-                    )
-                , onEnter saveMsg
-                , HtmlUtil.onEscape cancelMsg
-                , Style.classes.numberLabel
-                ]
+                ([ MaybeUtil.defined <| value <| complexFoodClientInput.amountGrams.text
+                 , MaybeUtil.defined <|
+                    onInput
+                        (flip
+                            (ValidatedInput.lift
+                                ComplexFoodClientInput.lenses.amountGrams
+                            ).set
+                            complexFoodClientInput
+                            >> Page.UpdateComplexFood
+                        )
+                 , validatedSaveAction
+                 , MaybeUtil.defined <| HtmlUtil.onEscape cancelMsg
+                 , MaybeUtil.defined <| Style.classes.numberLabel
+                 ]
+                    |> Maybe.Extra.values
+                )
                 []
             ]
         , td [ Style.classes.numberCell ]
             [ input
-                [ value
-                    complexFoodClientInput.amountMilliLitres.text
-                , onInput
-                    (flip
-                        (ValidatedInput.lift
-                            ComplexFoodClientInput.lenses.amountMilliLitres
-                        ).set
-                        complexFoodClientInput
-                        >> Page.UpdateComplexFood
-                    )
-                , onEnter saveMsg
-                , HtmlUtil.onEscape cancelMsg
-                , Style.classes.numberLabel
-                ]
+                ([ MaybeUtil.defined <| value <| complexFoodClientInput.amountMilliLitres.text
+                 , MaybeUtil.defined <|
+                    onInput <|
+                        flip
+                            (ValidatedInput.lift
+                                ComplexFoodClientInput.lenses.amountMilliLitres
+                            ).set
+                            complexFoodClientInput
+                            >> Page.UpdateComplexFood
+                 , validatedSaveAction
+                 , MaybeUtil.defined <| HtmlUtil.onEscape cancelMsg
+                 , MaybeUtil.defined <| Style.classes.numberLabel
+                 ]
+                    |> Maybe.Extra.values
+                )
                 []
             ]
-        , td []
-            [ button [ Style.classes.button.confirm, onClick saveMsg ]
-                [ text "Save" ]
-            ]
-        , td []
-            [ button [ Style.classes.button.cancel, onClick cancelMsg ]
-                [ text "Cancel" ]
-            ]
+        , commandToggle
         ]
+    , controlsRow
+    ]
 
 
 viewRecipeLine : Configuration -> Page.CreateComplexFoodsMap -> Page.ComplexFoodStateMap -> Recipe -> Html Page.LogicMsg

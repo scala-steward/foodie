@@ -305,19 +305,7 @@ th {
 }
 
 #complexFoodEditor th:first-child {
-    width: 30%
-}
-
-#complexFoodEditor th:nth-child(2) {
-    width: 15%
-}
-
-#complexFoodEditor th:nth-child(3) {
-    width: 15%
-}
-
-#complexFoodEditor th:nth-child(4) {
-    width: 30%
+    width: 60%
 }
 
 #statisticsRecipeOccurrence th:first-child {

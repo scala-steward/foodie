@@ -120,6 +120,7 @@ type LogicMsg
     = UpdateComplexFoodCreation ComplexFoodClientInput
     | CreateComplexFood RecipeId
     | GotCreateComplexFoodResponse (Result Error ComplexFood)
+    | ToggleComplexFoodControls ComplexFoodId
     | UpdateComplexFood ComplexFoodClientInput
     | SaveComplexFoodEdit ComplexFoodClientInput
     | GotSaveComplexFoodResponse (Result Error ComplexFood)
@@ -131,6 +132,7 @@ type LogicMsg
     | GotDeleteComplexFoodResponse ComplexFoodId (Result Error ())
     | GotFetchRecipesResponse (Result Error (List Recipe))
     | GotFetchComplexFoodsResponse (Result Error (List ComplexFood))
+    | ToggleRecipeControls RecipeId
     | SelectRecipe Recipe
     | DeselectRecipe RecipeId
     | SetRecipesSearchString String

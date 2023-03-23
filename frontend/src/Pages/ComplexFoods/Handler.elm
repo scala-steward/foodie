@@ -4,6 +4,7 @@ import Api.Auxiliary exposing (ComplexFoodId, RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.Recipe exposing (Recipe)
 import Monocle.Compose as Compose
+import Monocle.Lens as Lens
 import Monocle.Optional
 import Pages.ComplexFoods.ComplexFoodClientInput as ComplexFoodClientInput exposing (ComplexFoodClientInput)
 import Pages.ComplexFoods.Page as Page
@@ -52,6 +53,9 @@ updateLogic msg model =
         Page.GotCreateComplexFoodResponse result ->
             gotCreateComplexFoodResponse model result
 
+        Page.ToggleComplexFoodControls complexFoodId ->
+            toggleComplexFoodControls model complexFoodId
+
         Page.UpdateComplexFood complexFoodClientInput ->
             updateComplexFood model complexFoodClientInput
 
@@ -84,6 +88,9 @@ updateLogic msg model =
 
         Page.GotFetchComplexFoodsResponse result ->
             gotFetchComplexFoodsResponse model result
+
+        Page.ToggleRecipeControls recipeId ->
+            toggleRecipeControls model recipeId
 
         Page.SelectRecipe recipe ->
             selectRecipe model recipe
@@ -146,6 +153,14 @@ gotCreateComplexFoodResponse model result =
                     |> Tristate.mapMain (LensUtil.insertAtId complexFood.recipeId Page.lenses.main.complexFoods (complexFood |> Editing.asView))
                     |> Tristate.mapMain (LensUtil.deleteAtId complexFood.recipeId Page.lenses.main.complexFoodsToCreate)
             )
+    , Cmd.none
+    )
+
+
+toggleComplexFoodControls : Page.Model -> ComplexFoodId -> ( Page.Model, Cmd Page.LogicMsg )
+toggleComplexFoodControls model complexFoodId =
+    ( model
+        |> mapComplexFoodStateByRecipeId complexFoodId Editing.toggleControls
     , Cmd.none
     )
 
@@ -269,6 +284,15 @@ gotFetchComplexFoodsResponse model result =
                     |> Tristate.mapInitial (Page.lenses.initial.complexFoods.set (complexFoods |> List.map Editing.asView |> DictList.fromListWithKey (.original >> .recipeId) |> Just))
                     |> Tristate.fromInitToMain Page.initialToMain
             )
+    , Cmd.none
+    )
+
+--todo: Add correct implementation, this is just a placeholder!
+
+toggleRecipeControls : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.LogicMsg )
+toggleRecipeControls model recipeId =
+    ( model
+        -- |> Tristate.mapMain (LensUtil.updateById recipeId Page.lenses.main.recipes Editing.toggleControls)
     , Cmd.none
     )
 
