@@ -350,6 +350,9 @@ updateComplexFoodLine complexFood complexFoodClientInput =
 viewRecipeLine2 : Configuration -> Page.ComplexFoodStateMap -> Recipe -> Bool -> List (Html Page.LogicMsg)
 viewRecipeLine2 configuration complexFoods recipe showControls =
     let
+        toggleCommand =
+            Page.ToggleRecipeControls recipe.id
+
         exists =
             DictListUtil.existsValue (\complexFood -> complexFood.original.recipeId == recipe.id) complexFoods
 
@@ -367,10 +370,10 @@ viewRecipeLine2 configuration complexFoods recipe showControls =
             , td [ Style.classes.controls ] [ NavigationUtil.recipeNutrientsLinkButton configuration recipe.id ]
             ]
         , extraCells =
-            [ td [] []
-            , td [] []
+            [ td [ onClick <| toggleCommand ] []
+            , td [ onClick <| toggleCommand ] []
             ]
-        , toggleCommand = Page.ToggleRecipeControls recipe.id
+        , toggleCommand = toggleCommand
         , showControls = showControls
         }
         recipe
@@ -391,29 +394,21 @@ editComplexFoodCreation recipe complexFoodToAdd =
                 , complexFoodToAdd.amountMilliLitres |> ValidatedInput.isValid
                 ]
 
-        controlsRow =
-            tr []
-                [ td [ colspan 6 ]
-                    [ table [ Style.classes.elementsWithControlsTable ]
-                        [ tr
-                            []
-                            [ td [ Style.classes.controls ]
-                                [ button
-                                    ([ MaybeUtil.defined <| Style.classes.button.confirm
-                                     , MaybeUtil.defined <| disabled <| not <| validInput
-                                     , MaybeUtil.optional validInput <| onClick createMsg
-                                     ]
-                                        |> Maybe.Extra.values
-                                    )
-                                    [ text <| "Add"
-                                    ]
-                                ]
-                            , td [ Style.classes.controls ]
-                                [ button [ Style.classes.button.cancel, onClick cancelMsg ] [ text "Cancel" ] ]
-                            ]
-                        ]
+        controls =
+            [ td [ Style.classes.controls ]
+                [ button
+                    ([ MaybeUtil.defined <| Style.classes.button.confirm
+                     , MaybeUtil.defined <| disabled <| not <| validInput
+                     , MaybeUtil.optional validInput <| onClick createMsg
+                     ]
+                        |> Maybe.Extra.values
+                    )
+                    [ text <| "Add"
                     ]
                 ]
+            , td [ Style.classes.controls ]
+                [ button [ Style.classes.button.cancel, onClick cancelMsg ] [ text "Cancel" ] ]
+            ]
 
         inputCells =
             [ td [ Style.classes.numberCell ]
@@ -456,13 +451,13 @@ editComplexFoodCreation recipe complexFoodToAdd =
                 ]
             ]
     in
-    [ Pages.Recipes.View.recipeInfoLineWith
-        { toggleCommand = Page.ToggleRecipeControls complexFoodToAdd.recipeId
+    Pages.Recipes.View.recipeLineWith
+        { controls = controls
         , extraCells = inputCells
+        , toggleCommand = Page.ToggleRecipeControls complexFoodToAdd.recipeId
+        , showControls = True
         }
         recipe
-    , controlsRow
-    ]
 
 
 viewRecipeLine : Configuration -> Page.CreateComplexFoodsMap -> Page.ComplexFoodStateMap -> Recipe -> Html Page.LogicMsg
