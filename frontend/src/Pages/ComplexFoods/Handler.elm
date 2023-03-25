@@ -92,8 +92,8 @@ updateLogic msg model =
         Page.ToggleRecipeControls recipeId ->
             toggleRecipeControls model recipeId
 
-        Page.SelectRecipe recipe ->
-            selectRecipe model recipe
+        Page.SelectRecipe recipeId ->
+            selectRecipe model recipeId
 
         Page.DeselectRecipe recipeId ->
             deselectRecipe model recipeId
@@ -111,12 +111,8 @@ updateLogic msg model =
 updateComplexFoodCreation : Page.Model -> ComplexFoodClientInput -> ( Page.Model, Cmd Page.LogicMsg )
 updateComplexFoodCreation model complexFoodClientInput =
     ( model
-        |> Tristate.mapMain
-            ((Page.lenses.main.complexFoodsToCreate
-                |> Compose.lensWithOptional (LensUtil.dictByKey complexFoodClientInput.recipeId)
-             ).set
-                complexFoodClientInput
-            )
+        |> mapComplexFoodStateByRecipeId complexFoodClientInput.recipeId
+            (Editing.lenses.update.set complexFoodClientInput)
     , Cmd.none
     )
 
@@ -129,8 +125,9 @@ createComplexFood model recipeId =
         |> Maybe.andThen
             (\main ->
                 main
-                    |> (Page.lenses.main.complexFoodsToCreate
+                    |> (Page.lenses.main.complexFoods
                             |> Compose.lensWithOptional (LensUtil.dictByKey recipeId)
+                            |> Compose.optionalWithOptional Editing.lenses.update
                        ).getOption
                     |> Maybe.map
                         (ComplexFoodClientInput.to
@@ -151,7 +148,6 @@ gotCreateComplexFoodResponse model result =
             (\complexFood ->
                 model
                     |> Tristate.mapMain (LensUtil.insertAtId complexFood.recipeId Page.lenses.main.complexFoods (complexFood |> Editing.asView))
-                    |> Tristate.mapMain (LensUtil.deleteAtId complexFood.recipeId Page.lenses.main.complexFoodsToCreate)
             )
     , Cmd.none
     )
@@ -197,7 +193,6 @@ gotSaveComplexFoodResponse model result =
             (\complexFood ->
                 model
                     |> mapComplexFoodStateByRecipeId complexFood.recipeId (always complexFood >> Editing.asView)
-                    |> Tristate.mapMain (LensUtil.deleteAtId complexFood.recipeId Page.lenses.main.complexFoodsToCreate)
             )
     , Cmd.none
     )
@@ -261,6 +256,10 @@ gotDeleteComplexFoodResponse model complexFoodId result =
     )
 
 
+
+--todo: Check back for duplication - exactly the same implementation as in Recipes.Handler
+
+
 gotFetchRecipesResponse : Page.Model -> Result Error (List Recipe) -> ( Page.Model, Cmd Page.LogicMsg )
 gotFetchRecipesResponse model result =
     ( result
@@ -268,7 +267,13 @@ gotFetchRecipesResponse model result =
             (\recipes ->
                 model
                     |> Tristate.mapInitial
-                        (Page.lenses.initial.recipes.set (recipes |> DictList.fromListWithKey .id |> Just))
+                        (Page.lenses.initial.recipes.set
+                            (recipes
+                                |> List.map Editing.asView
+                                |> DictList.fromListWithKey (.original >> .id)
+                                |> Just
+                            )
+                        )
                     |> Tristate.fromInitToMain Page.initialToMain
             )
     , Cmd.none
@@ -287,24 +292,19 @@ gotFetchComplexFoodsResponse model result =
     , Cmd.none
     )
 
---todo: Add correct implementation, this is just a placeholder!
 
 toggleRecipeControls : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.LogicMsg )
 toggleRecipeControls model recipeId =
     ( model
-        -- |> Tristate.mapMain (LensUtil.updateById recipeId Page.lenses.main.recipes Editing.toggleControls)
+        |> Tristate.mapMain (LensUtil.updateById recipeId Page.lenses.main.recipes Editing.toggleControls)
     , Cmd.none
     )
 
 
-selectRecipe : Page.Model -> Recipe -> ( Page.Model, Cmd Page.LogicMsg )
-selectRecipe model recipe =
+selectRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.LogicMsg )
+selectRecipe model recipeId =
     ( model
-        |> Tristate.mapMain
-            (LensUtil.insertAtId recipe.id
-                Page.lenses.main.complexFoodsToCreate
-                (ComplexFoodClientInput.default recipe.id)
-            )
+        |> Tristate.mapMain (LensUtil.updateById recipeId Page.lenses.main.recipes (ComplexFoodClientInput.withSuggestion |> Editing.toUpdate))
     , Cmd.none
     )
 
@@ -312,7 +312,7 @@ selectRecipe model recipe =
 deselectRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.LogicMsg )
 deselectRecipe model recipeId =
     ( model
-        |> Tristate.mapMain (LensUtil.deleteAtId recipeId Page.lenses.main.complexFoodsToCreate)
+        |> Tristate.mapMain (LensUtil.updateById recipeId Page.lenses.main.recipes Editing.toView)
     , Cmd.none
     )
 

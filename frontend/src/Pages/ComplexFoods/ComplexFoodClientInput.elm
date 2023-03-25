@@ -3,6 +3,7 @@ module Pages.ComplexFoods.ComplexFoodClientInput exposing (..)
 import Api.Auxiliary exposing (RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.ComplexFoodIncoming exposing (ComplexFoodIncoming)
+import Api.Types.Recipe exposing (Recipe)
 import Maybe.Extra
 import Monocle.Lens exposing (Lens)
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
@@ -19,6 +20,21 @@ default : RecipeId -> ComplexFoodClientInput
 default recipeId =
     { recipeId = recipeId
     , amountGrams = ValidatedInput.positive
+    , amountMilliLitres = ValidatedInput.maybePositive
+    }
+
+
+withSuggestion : Recipe -> ComplexFoodClientInput
+withSuggestion recipe =
+    let
+        modifier =
+            recipe.servingSize
+                |> Maybe.Extra.filter ((==) "100g")
+                |> Maybe.map (\_ -> 100 * recipe.numberOfServings)
+                |> Maybe.Extra.unwrap identity ValidatedInput.lenses.value.set
+    in
+    { recipeId = recipe.id
+    , amountGrams = ValidatedInput.positive |> modifier
     , amountMilliLitres = ValidatedInput.maybePositive
     }
 

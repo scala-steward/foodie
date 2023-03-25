@@ -19,9 +19,8 @@ type alias Model =
 
 type alias Main =
     { jwt : JWT
-    , recipes : RecipeMap
+    , recipes : RecipeStateMap
     , complexFoods : ComplexFoodStateMap
-    , complexFoodsToCreate : CreateComplexFoodsMap
     , recipesSearchString : String
     , complexFoodsSearchString : String
     , pagination : Pagination
@@ -29,7 +28,7 @@ type alias Main =
 
 
 type alias Initial =
-    { recipes : Maybe RecipeMap
+    { recipes : Maybe RecipeStateMap
     , complexFoods : Maybe ComplexFoodStateMap
     , jwt : JWT
     }
@@ -51,7 +50,6 @@ initialToMain i =
             { jwt = i.jwt
             , recipes = recipes
             , complexFoods = complexFoods
-            , complexFoodsToCreate = DictList.empty
             , recipesSearchString = ""
             , complexFoodsSearchString = ""
             , pagination = Pagination.initial
@@ -73,19 +71,18 @@ type alias CreateComplexFoodsMap =
     DictList ComplexFoodId ComplexFoodClientInput
 
 
-type alias RecipeMap =
-    DictList RecipeId Recipe
+type alias RecipeStateMap =
+    DictList RecipeId (Editing Recipe ComplexFoodClientInput)
 
 
 lenses :
     { initial :
-        { recipes : Lens Initial (Maybe RecipeMap)
+        { recipes : Lens Initial (Maybe RecipeStateMap)
         , complexFoods : Lens Initial (Maybe ComplexFoodStateMap)
         }
     , main :
-        { recipes : Lens Main RecipeMap
+        { recipes : Lens Main RecipeStateMap
         , complexFoods : Lens Main ComplexFoodStateMap
-        , complexFoodsToCreate : Lens Main CreateComplexFoodsMap
         , recipesSearchString : Lens Main String
         , complexFoodsSearchString : Lens Main String
         , pagination : Lens Main Pagination
@@ -99,7 +96,6 @@ lenses =
     , main =
         { recipes = Lens .recipes (\b a -> { a | recipes = b })
         , complexFoods = Lens .complexFoods (\b a -> { a | complexFoods = b })
-        , complexFoodsToCreate = Lens .complexFoodsToCreate (\b a -> { a | complexFoodsToCreate = b })
         , recipesSearchString = Lens .recipesSearchString (\b a -> { a | recipesSearchString = b })
         , complexFoodsSearchString = Lens .complexFoodsSearchString (\b a -> { a | complexFoodsSearchString = b })
         , pagination = Lens .pagination (\b a -> { a | pagination = b })
@@ -133,7 +129,7 @@ type LogicMsg
     | GotFetchRecipesResponse (Result Error (List Recipe))
     | GotFetchComplexFoodsResponse (Result Error (List ComplexFood))
     | ToggleRecipeControls RecipeId
-    | SelectRecipe Recipe
+    | SelectRecipe RecipeId
     | DeselectRecipe RecipeId
     | SetRecipesSearchString String
     | SetComplexFoodsSearchString String

@@ -1,14 +1,11 @@
 module Pages.ComplexFoods.View exposing (..)
 
-import Addresses.Frontend
-import Api.Auxiliary exposing (RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
 import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (colspan, disabled, scope, value)
-import Html.Attributes.Extra exposing (stringProperty)
+import Html.Attributes exposing (colspan, disabled, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
@@ -17,9 +14,9 @@ import Monocle.Lens exposing (Lens)
 import Pages.ComplexFoods.ComplexFoodClientInput as ComplexFoodClientInput exposing (ComplexFoodClientInput)
 import Pages.ComplexFoods.Page as Page
 import Pages.ComplexFoods.Pagination as Pagination
+import Pages.Recipes.View
 import Pages.Util.DictListUtil as DictListUtil
 import Pages.Util.HtmlUtil as HtmlUtil
-import Pages.Util.Links as Links
 import Pages.Util.NavigationUtil as NavigationUtil
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
@@ -72,17 +69,22 @@ viewMain configuration main =
             viewRecipes =
                 main.recipes
                     |> DictList.values
-                    |> List.filter (.name >> SearchUtil.search main.recipesSearchString)
-                    |> List.sortBy .name
+                    |> List.filter (.original >> .name >> SearchUtil.search main.recipesSearchString)
+                    |> List.sortBy (.original >> .name)
                     |> ViewUtil.paginate
                         { pagination = Page.lenses.main.pagination |> Compose.lensWithLens Pagination.lenses.recipes
                         }
                         main
 
             anySelection =
-                main.complexFoodsToCreate
-                    |> DictList.isEmpty
-                    |> not
+                main.recipes
+                    |> DictListUtil.existsValue
+                        (Editing.unpack
+                            { onView = \_ _ -> False
+                            , onUpdate = \_ _ -> True
+                            , onDelete = \_ -> False
+                            }
+                        )
 
             ( amountGrams, amountMillilitres ) =
                 if anySelection then
@@ -143,20 +145,31 @@ viewMain configuration main =
                             [ col [] []
                             , col [] []
                             , col [] []
-                            , col [ stringProperty "span" "3" ] []
+                            , col [] []
+                            , col [] []
+                            , col [] []
                             ]
                         , thead []
                             [ tr [ Style.classes.tableHeader ]
-                                [ th [ scope "col" ] [ label [] [ text "Name" ] ]
-                                , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text amountGrams ] ]
-                                , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text amountMillilitres ] ]
-                                , th [ colspan 3, scope "colgroup", Style.classes.controlsGroup ] []
+                                [ th [] [ label [] [ text "Name" ] ]
+                                , th [] [ label [] [ text "Description" ] ]
+                                , th [] [ label [] [ text "Number of servings" ] ]
+                                , th [] [ label [] [ text "Serving size" ] ]
+                                , th [ Style.classes.numberLabel ] [ label [] [ text amountGrams ] ]
+                                , th [ Style.classes.numberLabel ] [ label [] [ text amountMillilitres ] ]
+                                , th [ Style.classes.controlsGroup ] []
                                 ]
                             ]
                         , tbody []
                             (viewRecipes
                                 |> Paginate.page
-                                |> List.map (viewRecipeLine configuration main.complexFoodsToCreate main.complexFoods)
+                                |> List.concatMap
+                                    (Editing.unpack
+                                        { onView = viewRecipeLine2 configuration main.complexFoods
+                                        , onUpdate = editComplexFoodCreation
+                                        , onDelete = \_ -> []
+                                        }
+                                    )
                             )
                         ]
                     , div [ Style.classes.pagination ]
@@ -334,6 +347,124 @@ updateComplexFoodLine complexFood complexFoodClientInput =
     ]
 
 
+viewRecipeLine2 : Configuration -> Page.ComplexFoodStateMap -> Recipe -> Bool -> List (Html Page.LogicMsg)
+viewRecipeLine2 configuration complexFoods recipe showControls =
+    let
+        exists =
+            DictListUtil.existsValue (\complexFood -> complexFood.original.recipeId == recipe.id) complexFoods
+
+        ( buttonText, buttonAttributes ) =
+            if exists then
+                ( "Added", [ Style.classes.button.edit, disabled <| True ] )
+
+            else
+                ( "Select", [ Style.classes.button.select, onClick <| Page.SelectRecipe recipe.id ] )
+    in
+    Pages.Recipes.View.recipeLineWith
+        { controls =
+            [ td [ Style.classes.controls ] [ button buttonAttributes [ text <| buttonText ] ]
+            , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration recipe.id ]
+            , td [ Style.classes.controls ] [ NavigationUtil.recipeNutrientsLinkButton configuration recipe.id ]
+            ]
+        , extraCells =
+            [ td [] []
+            , td [] []
+            ]
+        , toggleCommand = Page.ToggleRecipeControls recipe.id
+        , showControls = showControls
+        }
+        recipe
+
+
+editComplexFoodCreation : Recipe -> ComplexFoodClientInput -> List (Html Page.LogicMsg)
+editComplexFoodCreation recipe complexFoodToAdd =
+    let
+        createMsg =
+            Page.CreateComplexFood recipe.id
+
+        cancelMsg =
+            Page.DeselectRecipe recipe.id
+
+        validInput =
+            List.all identity
+                [ complexFoodToAdd.amountGrams |> ValidatedInput.isValid
+                , complexFoodToAdd.amountMilliLitres |> ValidatedInput.isValid
+                ]
+
+        controlsRow =
+            tr []
+                [ td [ colspan 6 ]
+                    [ table [ Style.classes.elementsWithControlsTable ]
+                        [ tr
+                            []
+                            [ td [ Style.classes.controls ]
+                                [ button
+                                    ([ MaybeUtil.defined <| Style.classes.button.confirm
+                                     , MaybeUtil.defined <| disabled <| not <| validInput
+                                     , MaybeUtil.optional validInput <| onClick createMsg
+                                     ]
+                                        |> Maybe.Extra.values
+                                    )
+                                    [ text <| "Add"
+                                    ]
+                                ]
+                            , td [ Style.classes.controls ]
+                                [ button [ Style.classes.button.cancel, onClick cancelMsg ] [ text "Cancel" ] ]
+                            ]
+                        ]
+                    ]
+                ]
+
+        inputCells =
+            [ td [ Style.classes.numberCell ]
+                [ input
+                    ([ MaybeUtil.defined <| value complexFoodToAdd.amountGrams.text
+                     , MaybeUtil.defined <|
+                        onInput <|
+                            flip
+                                (ValidatedInput.lift
+                                    ComplexFoodClientInput.lenses.amountGrams
+                                ).set
+                                complexFoodToAdd
+                                >> Page.UpdateComplexFoodCreation
+                     , MaybeUtil.defined <| Style.classes.numberLabel
+                     , MaybeUtil.defined <| HtmlUtil.onEscape cancelMsg
+                     , MaybeUtil.optional validInput <| onEnter createMsg
+                     ]
+                        |> Maybe.Extra.values
+                    )
+                    []
+                ]
+            , td [ Style.classes.numberCell ]
+                [ input
+                    ([ MaybeUtil.defined <| value complexFoodToAdd.amountMilliLitres.text
+                     , MaybeUtil.defined <|
+                        onInput <|
+                            flip
+                                (ValidatedInput.lift
+                                    ComplexFoodClientInput.lenses.amountMilliLitres
+                                ).set
+                                complexFoodToAdd
+                                >> Page.UpdateComplexFoodCreation
+                     , MaybeUtil.defined <| Style.classes.numberLabel
+                     , MaybeUtil.defined <| HtmlUtil.onEscape cancelMsg
+                     , MaybeUtil.optional validInput <| onEnter createMsg
+                     ]
+                        |> Maybe.Extra.values
+                    )
+                    []
+                ]
+            ]
+    in
+    [ Pages.Recipes.View.recipeInfoLineWith
+        { toggleCommand = Page.ToggleRecipeControls complexFoodToAdd.recipeId
+        , extraCells = inputCells
+        }
+        recipe
+    , controlsRow
+    ]
+
+
 viewRecipeLine : Configuration -> Page.CreateComplexFoodsMap -> Page.ComplexFoodStateMap -> Recipe -> Html Page.LogicMsg
 viewRecipeLine configuration complexFoodsToCreate complexFoods recipe =
     let
@@ -341,7 +472,7 @@ viewRecipeLine configuration complexFoodsToCreate complexFoods recipe =
             Page.CreateComplexFood recipe.id
 
         selectMsg =
-            Page.SelectRecipe recipe
+            Page.SelectRecipe recipe.id
 
         cancelMsg =
             Page.DeselectRecipe recipe.id

@@ -1,4 +1,4 @@
-module Pages.Recipes.View exposing (editRecipeLineWith, recipeLineWith, tableHeader, view)
+module Pages.Recipes.View exposing (editRecipeLineWith, recipeInfoLineWith, recipeLineWith, tableHeader, view)
 
 import Addresses.Frontend
 import Api.Types.Recipe exposing (Recipe)
@@ -173,6 +173,7 @@ viewRecipeLine configuration recipe showControls =
                     }
                 ]
             ]
+        , extraCells = []
         , toggleCommand = Page.ToggleControls recipe.id
         , showControls = showControls
         }
@@ -191,45 +192,59 @@ deleteRecipeLine recipe =
                     [ text "Cancel" ]
                 ]
             ]
+        , extraCells = []
         , toggleCommand = Page.ToggleControls recipe.id
         , showControls = True
         }
         recipe
 
 
+recipeInfoLineWith :
+    { toggleCommand : msg
+    , extraCells : List (Html msg)
+    }
+    -> Recipe
+    -> Html msg
+recipeInfoLineWith ps recipe =
+    let
+        withOnClick =
+            (::) (ps.toggleCommand |> onClick)
+    in
+    tr [ Style.classes.editing ]
+        ([ td ([ Style.classes.editable ] |> withOnClick)
+            [ label [] [ text recipe.name ] ]
+         , td ([ Style.classes.editable ] |> withOnClick)
+            [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
+         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick)
+            [ label [] [ text <| String.fromFloat <| recipe.numberOfServings ] ]
+         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick)
+            [ label [] [ text <| Maybe.withDefault "" <| recipe.servingSize ] ]
+         ]
+            ++ ps.extraCells
+            ++ [ HtmlUtil.toggleControlsCell ps.toggleCommand
+               ]
+        )
+
+
 recipeLineWith :
     { controls : List (Html msg)
+    , extraCells : List (Html msg)
     , toggleCommand : msg
     , showControls : Bool
     }
     -> Recipe
     -> List (Html msg)
 recipeLineWith ps recipe =
-    let
-        withOnClick =
-            (::) (ps.toggleCommand |> onClick)
-
-        infoRow =
-            tr [ Style.classes.editing ]
-                [ td ([ Style.classes.editable ] |> withOnClick)
-                    [ label [] [ text recipe.name ] ]
-                , td ([ Style.classes.editable ] |> withOnClick)
-                    [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
-                , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick)
-                    [ label [] [ text <| String.fromFloat <| recipe.numberOfServings ] ]
-                , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick)
-                    [ label [] [ text <| Maybe.withDefault "" <| recipe.servingSize ] ]
-                , HtmlUtil.toggleControlsCell ps.toggleCommand
-                ]
-
-        controlsRow =
-            tr []
-                [ td [ colspan 4 ] [ table [ Style.classes.elementsWithControlsTable ] [ tr [] ps.controls ] ]
-                ]
-    in
-    infoRow
+    recipeInfoLineWith
+        { toggleCommand = ps.toggleCommand
+        , extraCells = ps.extraCells
+        }
+        recipe
         :: (if ps.showControls then
-                [ controlsRow ]
+                [ tr []
+                    [ td [ colspan (4 + (ps.extraCells |> List.length)) ] [ table [ Style.classes.elementsWithControlsTable ] [ tr [] ps.controls ] ]
+                    ]
+                ]
 
             else
                 []

@@ -143,6 +143,7 @@ viewMain configuration main =
                                             }
                                         ]
                                     ]
+                                , extraCells = []
                                 , toggleCommand = Page.ToggleRecipeControls
                                 , showControls = showControls
                                 }
@@ -174,6 +175,7 @@ viewMain configuration main =
                                     ]
                                 ]
                             , toggleCommand = Page.ToggleRecipeControls
+                            , extraCells = []
                             , showControls = True
                             }
                     }
