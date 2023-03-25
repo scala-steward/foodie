@@ -3,13 +3,12 @@ module Pages.Ingredients.FoodGroup exposing (..)
 import Monocle.Lens exposing (Lens)
 import Pages.Ingredients.Pagination as Pagination exposing (Pagination)
 import Util.DictList as DictList exposing (DictList)
-import Util.Editing exposing (Editing)
+import Util.Editing as Editing exposing (Editing)
 
 
 type alias Main ingredientId ingredient update foodId food creation =
     { ingredients : DictList ingredientId (IngredientState ingredient update)
-    , foods : DictList foodId food
-    , foodsToAdd : DictList foodId creation
+    , foods : DictList foodId (Editing food creation)
     , pagination : Pagination
     , foodsSearchString : String
     }
@@ -33,8 +32,7 @@ initialToMain i =
     Maybe.map2
         (\ingredients foods ->
             { ingredients = ingredients
-            , foods = foods
-            , foodsToAdd = DictList.empty
+            , foods = foods |> DictList.map Editing.asView
             , pagination = Pagination.initial
             , foodsSearchString = ""
             }
@@ -54,8 +52,7 @@ lenses :
         }
     , main :
         { ingredients : Lens (Main ingredientId ingredient update foodId food creation) (DictList ingredientId (IngredientState ingredient update))
-        , foods : Lens (Main ingredientId ingredient update foodId food creation) (DictList foodId food)
-        , foodsToAdd : Lens (Main ingredientId ingredient update foodId food creation) (DictList foodId creation)
+        , foods : Lens (Main ingredientId ingredient update foodId food creation) (DictList foodId (Editing food creation))
         , pagination : Lens (Main ingredientId ingredient update foodId food creation) Pagination
         , foodsSearchString : Lens (Main ingredientId ingredient update foodId food creation) String
         }
@@ -68,7 +65,6 @@ lenses =
     , main =
         { ingredients = Lens .ingredients (\b a -> { a | ingredients = b })
         , foods = Lens .foods (\b a -> { a | foods = b })
-        , foodsToAdd = Lens .foodsToAdd (\b a -> { a | foodsToAdd = b })
         , pagination = Lens .pagination (\b a -> { a | pagination = b })
         , foodsSearchString = Lens .foodsSearchString (\b a -> { a | foodsSearchString = b })
         }
