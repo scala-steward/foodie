@@ -100,7 +100,7 @@ viewMain configuration main =
                     { msg = Page.SetComplexFoodsSearchString
                     , searchString = main.complexFoodsSearchString
                     }
-                , table [ Style.classes.elementsWithControlsTable ]
+                , table [ Style.classes.complexFoodEditTable, Style.classes.elementsWithControlsTable ]
                     [ colgroup []
                         [ col [] []
                         , col [] []
@@ -140,7 +140,7 @@ viewMain configuration main =
                         { msg = Page.SetRecipesSearchString
                         , searchString = main.recipesSearchString
                         }
-                    , table [ Style.classes.elementsWithControlsTable ]
+                    , table [ Style.classes.complexFoodCreateTable, Style.classes.elementsWithControlsTable ]
                         [ colgroup []
                             [ col [] []
                             , col [] []
@@ -153,11 +153,11 @@ viewMain configuration main =
                             [ tr [ Style.classes.tableHeader ]
                                 [ th [] [ label [] [ text "Name" ] ]
                                 , th [] [ label [] [ text "Description" ] ]
-                                , th [] [ label [] [ text "Number of servings" ] ]
-                                , th [] [ label [] [ text "Serving size" ] ]
+                                , th [ Style.classes.numberLabel ] [ label [] [ text "Number of servings" ] ]
+                                , th [ Style.classes.numberLabel ] [ label [] [ text "Serving size" ] ]
                                 , th [ Style.classes.numberLabel ] [ label [] [ text amountGrams ] ]
                                 , th [ Style.classes.numberLabel ] [ label [] [ text amountMillilitres ] ]
-                                , th [ Style.classes.controlsGroup ] []
+                                , th [ Style.classes.toggle ] []
                                 ]
                             ]
                         , tbody []

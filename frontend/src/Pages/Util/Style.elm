@@ -26,6 +26,8 @@ classes :
         }
     , choices : Attribute msg
     , choiceTable : Attribute msg
+    , complexFoodCreateTable : Attribute msg
+    , complexFoodEditTable : Attribute msg
     , confirm : Attribute msg
     , controlsGroup : Attribute msg
     , controls : Attribute msg
@@ -89,6 +91,8 @@ classes =
         }
     , choices = class "choices"
     , choiceTable = class "choiceTable"
+    , complexFoodCreateTable = class "complexFoodCreateTable"
+    , complexFoodEditTable = class "complexFoodEditTable"
     , confirm = class "confirm"
     , controlsGroup = class "controlsGroup"
     , controls = class "controls"

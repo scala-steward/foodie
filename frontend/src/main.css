@@ -304,8 +304,28 @@ th {
     width: 35%;
 }
 
-#complexFoodEditor th:first-child {
+#complexFoodEditor .complexFoodEditTable th:first-child {
     width: 50%
+}
+
+#complexFoodEditor .complexFoodCreateTable th:first-child {
+    width: 25%
+}
+
+#complexFoodEditor .complexFoodCreateTable th:nth-child(2) {
+    width: 25%
+}
+
+#complexFoodEditor .complexFoodCreateTable th:nth-child(3) {
+    width: 10%
+}
+
+#complexFoodEditor .complexFoodCreateTable th:nth-child(4) {
+    width: 10%
+}
+
+#complexFoodEditor .complexFoodCreateTable th:nth-child(5) {
+    width: 10%
 }
 
 #statisticsRecipeOccurrence th:first-child {
