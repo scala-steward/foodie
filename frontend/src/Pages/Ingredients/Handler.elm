@@ -294,11 +294,7 @@ gotSaveIngredientResponse model result =
             (\ingredient ->
                 model
                     |> mapIngredientStateById ingredient.id
-                        (Editing.asView ingredient |> always)
-                    |> Tristate.mapMain
-                        (LensUtil.deleteAtId ingredient.foodId
-                            (Page.lenses.main.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.foodsToAdd)
-                        )
+                        (Editing.asViewWithElement ingredient)
             )
     , Cmd.none
     )
@@ -311,11 +307,7 @@ gotSaveComplexIngredientResponse model result =
             (\complexIngredient ->
                 model
                     |> mapComplexIngredientStateById complexIngredient.complexFoodId
-                        (Editing.asView complexIngredient |> always)
-                    |> Tristate.mapMain
-                        (LensUtil.deleteAtId complexIngredient.complexFoodId
-                            (Page.lenses.main.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.foodsToAdd)
-                        )
+                        (Editing.asViewWithElement complexIngredient)
             )
     , Cmd.none
     )
@@ -602,9 +594,9 @@ selectFood model food =
         |> Tristate.mapMain
             (\main ->
                 main
-                    |> LensUtil.insertAtId food.id
-                        (Page.lenses.main.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.foodsToAdd)
-                        (IngredientCreationClientInput.default main.recipe.original.id food.id (food.measures |> List.head |> Maybe.Extra.unwrap 0 .id))
+                    |> LensUtil.updateById food.id
+                        (Page.lenses.main.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.foods)
+                        (Editing.toUpdate (\_ -> IngredientCreationClientInput.default main.recipe.original.id food.id (food.measures |> List.head |> Maybe.Extra.unwrap 0 .id)))
             )
     , Cmd.none
     )
@@ -614,9 +606,9 @@ selectComplexFood : Page.Model -> ComplexFood -> ( Page.Model, Cmd msg )
 selectComplexFood model complexFood =
     ( model
         |> Tristate.mapMain
-            (LensUtil.insertAtId complexFood.recipeId
-                (Page.lenses.main.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.foodsToAdd)
-                (ComplexIngredientClientInput.fromFood complexFood)
+            (LensUtil.updateById complexFood.recipeId
+                (Page.lenses.main.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.foods)
+                (Editing.toUpdate (\_ -> ComplexIngredientClientInput.fromFood complexFood))
             )
     , Cmd.none
     )
@@ -625,7 +617,11 @@ selectComplexFood model complexFood =
 deselectFood : Page.Model -> FoodId -> ( Page.Model, Cmd Page.LogicMsg )
 deselectFood model foodId =
     ( model
-        |> Tristate.mapMain (LensUtil.deleteAtId foodId (Page.lenses.main.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.foodsToAdd))
+        |> Tristate.mapMain
+            (LensUtil.updateById foodId
+                (Page.lenses.main.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.foods)
+                Editing.toView
+            )
     , Cmd.none
     )
 
@@ -633,7 +629,11 @@ deselectFood model foodId =
 deselectComplexFood : Page.Model -> ComplexFoodId -> ( Page.Model, Cmd Page.LogicMsg )
 deselectComplexFood model complexFoodId =
     ( model
-        |> Tristate.mapMain (LensUtil.deleteAtId complexFoodId (Page.lenses.main.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.foodsToAdd))
+        |> Tristate.mapMain
+            (LensUtil.updateById complexFoodId
+                (Page.lenses.main.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.foods)
+                Editing.toView
+            )
     , Cmd.none
     )
 
@@ -647,8 +647,9 @@ addFood model foodId =
             (\main ->
                 main
                     |> (Page.lenses.main.ingredientsGroup
-                            |> Compose.lensWithLens FoodGroup.lenses.main.foodsToAdd
+                            |> Compose.lensWithLens FoodGroup.lenses.main.foods
                             |> Compose.lensWithOptional (LensUtil.dictByKey foodId)
+                            |> Compose.optionalWithOptional Editing.lenses.update
                        ).getOption
                     |> Maybe.map
                         (IngredientCreationClientInput.toCreation
@@ -671,8 +672,9 @@ addComplexFood model complexFoodId =
             (\main ->
                 main
                     |> (Page.lenses.main.complexIngredientsGroup
-                            |> Compose.lensWithLens FoodGroup.lenses.main.foodsToAdd
+                            |> Compose.lensWithLens FoodGroup.lenses.main.foods
                             |> Compose.lensWithOptional (LensUtil.dictByKey complexFoodId)
+                            |> Compose.optionalWithOptional Editing.lenses.update
                        ).getOption
                     |> Maybe.map
                         (ComplexIngredientClientInput.to
@@ -697,10 +699,9 @@ gotAddFoodResponse model result =
                         (LensUtil.insertAtId ingredient.id
                             (Page.lenses.main.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.ingredients)
                             (ingredient |> Editing.asView)
-                        )
-                    |> Tristate.mapMain
-                        (LensUtil.deleteAtId ingredient.foodId
-                            (Page.lenses.main.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.foodsToAdd)
+                            >> LensUtil.updateById ingredient.foodId
+                                (Page.lenses.main.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.foods)
+                                Editing.toView
                         )
             )
     , Cmd.none
@@ -717,10 +718,9 @@ gotAddComplexFoodResponse model result =
                         (LensUtil.insertAtId complexIngredient.complexFoodId
                             (Page.lenses.main.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.ingredients)
                             (complexIngredient |> Editing.asView)
-                        )
-                    |> Tristate.mapMain
-                        (LensUtil.deleteAtId complexIngredient.complexFoodId
-                            (Page.lenses.main.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.foodsToAdd)
+                            >> LensUtil.updateById complexIngredient.complexFoodId
+                                (Page.lenses.main.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.foods)
+                                Editing.toView
                         )
             )
     , Cmd.none
@@ -731,9 +731,9 @@ updateAddFood : Page.Model -> IngredientCreationClientInput -> ( Page.Model, Cmd
 updateAddFood model ingredientCreationClientInput =
     ( model
         |> Tristate.mapMain
-            (LensUtil.insertAtId ingredientCreationClientInput.foodId
-                (Page.lenses.main.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.foodsToAdd)
-                ingredientCreationClientInput
+            (LensUtil.updateById ingredientCreationClientInput.foodId
+                (Page.lenses.main.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.foods)
+                (Editing.lenses.update.set ingredientCreationClientInput)
             )
     , Cmd.none
     )
@@ -743,9 +743,9 @@ updateAddComplexFood : Page.Model -> ComplexIngredientClientInput -> ( Page.Mode
 updateAddComplexFood model complexIngredientClientInput =
     ( model
         |> Tristate.mapMain
-            (LensUtil.insertAtId complexIngredientClientInput.complexFoodId
-                (Page.lenses.main.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.foodsToAdd)
-                complexIngredientClientInput
+            (LensUtil.updateById complexIngredientClientInput.complexFoodId
+                (Page.lenses.main.complexIngredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.foods)
+                (Editing.lenses.update.set complexIngredientClientInput)
             )
     , Cmd.none
     )
