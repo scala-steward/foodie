@@ -8,7 +8,7 @@ import Pages.ComplexFoods.ComplexFoodClientInput exposing (ComplexFoodClientInpu
 import Pages.ComplexFoods.Pagination as Pagination exposing (Pagination)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.View.Tristate as Tristate
-import Util.DictList as DictList exposing (DictList)
+import Util.DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
 
@@ -71,8 +71,12 @@ type alias CreateComplexFoodsMap =
     DictList ComplexFoodId ComplexFoodClientInput
 
 
+type alias RecipeState =
+    Editing Recipe ComplexFoodClientInput
+
+
 type alias RecipeStateMap =
-    DictList RecipeId (Editing Recipe ComplexFoodClientInput)
+    DictList RecipeId RecipeState
 
 
 lenses :

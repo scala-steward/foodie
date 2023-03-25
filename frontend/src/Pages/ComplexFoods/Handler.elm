@@ -4,7 +4,7 @@ import Api.Auxiliary exposing (ComplexFoodId, RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.Recipe exposing (Recipe)
 import Monocle.Compose as Compose
-import Monocle.Lens as Lens
+import Monocle.Lens
 import Monocle.Optional
 import Pages.ComplexFoods.ComplexFoodClientInput as ComplexFoodClientInput exposing (ComplexFoodClientInput)
 import Pages.ComplexFoods.Page as Page
@@ -111,7 +111,7 @@ updateLogic msg model =
 updateComplexFoodCreation : Page.Model -> ComplexFoodClientInput -> ( Page.Model, Cmd Page.LogicMsg )
 updateComplexFoodCreation model complexFoodClientInput =
     ( model
-        |> mapComplexFoodStateByRecipeId complexFoodClientInput.recipeId
+        |> mapRecipeStateById complexFoodClientInput.recipeId
             (Editing.lenses.update.set complexFoodClientInput)
     , Cmd.none
     )
@@ -296,7 +296,7 @@ gotFetchComplexFoodsResponse model result =
 toggleRecipeControls : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.LogicMsg )
 toggleRecipeControls model recipeId =
     ( model
-        |> Tristate.mapMain (LensUtil.updateById recipeId Page.lenses.main.recipes Editing.toggleControls)
+        |> mapRecipeStateById recipeId Editing.toggleControls
     , Cmd.none
     )
 
@@ -304,7 +304,7 @@ toggleRecipeControls model recipeId =
 selectRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.LogicMsg )
 selectRecipe model recipeId =
     ( model
-        |> Tristate.mapMain (LensUtil.updateById recipeId Page.lenses.main.recipes (ComplexFoodClientInput.withSuggestion |> Editing.toUpdate))
+        |> mapRecipeStateById recipeId (ComplexFoodClientInput.withSuggestion |> Editing.toUpdate)
     , Cmd.none
     )
 
@@ -312,7 +312,7 @@ selectRecipe model recipeId =
 deselectRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.LogicMsg )
 deselectRecipe model recipeId =
     ( model
-        |> Tristate.mapMain (LensUtil.updateById recipeId Page.lenses.main.recipes Editing.toView)
+        |> mapRecipeStateById recipeId Editing.toView
     , Cmd.none
     )
 
@@ -360,4 +360,10 @@ setPagination model pagination =
 mapComplexFoodStateByRecipeId : ComplexFoodId -> (Page.ComplexFoodState -> Page.ComplexFoodState) -> Page.Model -> Page.Model
 mapComplexFoodStateByRecipeId recipeId =
     LensUtil.updateById recipeId Page.lenses.main.complexFoods
+        >> Tristate.mapMain
+
+
+mapRecipeStateById : RecipeId -> (Page.RecipeState -> Page.RecipeState) -> Page.Model -> Page.Model
+mapRecipeStateById recipeId =
+    LensUtil.updateById recipeId Page.lenses.main.recipes
         >> Tristate.mapMain
