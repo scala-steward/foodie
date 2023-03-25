@@ -46,6 +46,15 @@ unpack fs editing =
         editing.editState
 
 
+isUpdate : Editing a b -> Bool
+isUpdate =
+    unpack
+        { onView = \_ _ -> False
+        , onUpdate = \_ _ -> True
+        , onDelete = \_ -> False
+        }
+
+
 toUpdate : (original -> update) -> Editing original update -> Editing original update
 toUpdate to editing =
     lenses.editState.set
