@@ -125,7 +125,7 @@ createComplexFood model recipeId =
         |> Maybe.andThen
             (\main ->
                 main
-                    |> (Page.lenses.main.complexFoods
+                    |> (Page.lenses.main.recipes
                             |> Compose.lensWithOptional (LensUtil.dictByKey recipeId)
                             |> Compose.optionalWithOptional Editing.lenses.update
                        ).getOption
@@ -147,7 +147,10 @@ gotCreateComplexFoodResponse model result =
         |> Result.Extra.unpack (Tristate.toError model)
             (\complexFood ->
                 model
-                    |> Tristate.mapMain (LensUtil.insertAtId complexFood.recipeId Page.lenses.main.complexFoods (complexFood |> Editing.asView))
+                    |> Tristate.mapMain
+                        (LensUtil.insertAtId complexFood.recipeId Page.lenses.main.complexFoods (complexFood |> Editing.asView)
+                            >> LensUtil.updateById complexFood.recipeId Page.lenses.main.recipes Editing.toView
+                        )
             )
     , Cmd.none
     )
