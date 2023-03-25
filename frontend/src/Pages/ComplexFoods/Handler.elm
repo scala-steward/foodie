@@ -195,7 +195,7 @@ gotSaveComplexFoodResponse model result =
         |> Result.Extra.unpack (Tristate.toError model)
             (\complexFood ->
                 model
-                    |> mapComplexFoodStateByRecipeId complexFood.recipeId (always complexFood >> Editing.asView)
+                    |> mapComplexFoodStateByRecipeId complexFood.recipeId (complexFood |> Editing.asViewWithElement)
             )
     , Cmd.none
     )
