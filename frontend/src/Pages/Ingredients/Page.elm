@@ -163,7 +163,9 @@ type LogicMsg
     | SaveComplexIngredientEdit ComplexIngredientClientInput
     | GotSaveIngredientResponse (Result Error Ingredient)
     | GotSaveComplexIngredientResponse (Result Error ComplexIngredient)
+    | ToggleIngredientControls IngredientId
     | EnterEditIngredient IngredientId
+    | ToggleComplexIngredientControls ComplexIngredientId
     | EnterEditComplexIngredient ComplexIngredientId
     | ExitEditIngredientAt IngredientId
     | ExitEditComplexIngredientAt ComplexIngredientId

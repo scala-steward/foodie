@@ -82,8 +82,14 @@ updateLogic msg model =
         Page.GotSaveComplexIngredientResponse result ->
             gotSaveComplexIngredientResponse model result
 
+        Page.ToggleIngredientControls ingredientId ->
+            toggleIngredientControls model ingredientId
+
         Page.EnterEditIngredient ingredientId ->
             enterEditIngredient model ingredientId
+
+        Page.ToggleComplexIngredientControls complexIngredientId ->
+            toggleComplexIngredientControls model complexIngredientId
 
         Page.EnterEditComplexIngredient complexIngredientId ->
             enterEditComplexIngredient model complexIngredientId
@@ -313,10 +319,26 @@ gotSaveComplexIngredientResponse model result =
     )
 
 
+toggleIngredientControls : Page.Model -> IngredientId -> ( Page.Model, Cmd Page.LogicMsg )
+toggleIngredientControls model ingredientId =
+    ( model
+        |> mapIngredientStateById ingredientId Editing.toggleControls
+    , Cmd.none
+    )
+
+
 enterEditIngredient : Page.Model -> IngredientId -> ( Page.Model, Cmd Page.LogicMsg )
 enterEditIngredient model ingredientId =
     ( model
         |> mapIngredientStateById ingredientId (Editing.toUpdate IngredientUpdateClientInput.from)
+    , Cmd.none
+    )
+
+
+toggleComplexIngredientControls : Page.Model -> ComplexIngredientId -> ( Page.Model, Cmd Page.LogicMsg )
+toggleComplexIngredientControls model complexIngredientId =
+    ( model
+        |> mapComplexIngredientStateById complexIngredientId Editing.toggleControls
     , Cmd.none
     )
 
