@@ -66,8 +66,8 @@ viewMain configuration main =
         let
             viewIngredientState =
                 Editing.unpack
-                    { onView = \o b -> viewIngredientLine main.ingredientsGroup.foods o
-                    , onUpdate = updateIngredientLine main.ingredientsGroup.foods
+                    { onView = viewIngredientLine main.ingredientsGroup.foods
+                    , onUpdate = \o u -> updateIngredientLine main.ingredientsGroup.foods o u |> List.singleton
                     , onDelete = deleteIngredientLine main.ingredientsGroup.foods
                     }
 
@@ -206,20 +206,20 @@ viewMain configuration main =
                         [ col [] []
                         , col [] []
                         , col [] []
-                        , col [ stringProperty "span" "2" ] []
+                        , col [] []
                         ]
                     , thead []
                         [ tr [ Style.classes.tableHeader ]
-                            [ th [ scope "col" ] [ label [] [ text "Name" ] ]
-                            , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Amount" ] ]
-                            , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Unit" ] ]
-                            , th [ colspan 2, scope "colgroup", Style.classes.controlsGroup ] []
+                            [ th [] [ label [] [ text "Name" ] ]
+                            , th [ Style.classes.numberLabel ] [ label [] [ text "Amount" ] ]
+                            , th [ Style.classes.numberLabel ] [ label [] [ text "Unit" ] ]
+                            , th [ Style.classes.toggle ] []
                             ]
                         ]
                     , tbody []
                         (viewIngredients
                             |> Paginate.page
-                            |> List.map viewIngredientState
+                            |> List.concatMap viewIngredientState
                         )
                     ]
                 , div [ Style.classes.pagination ]
@@ -246,14 +246,14 @@ viewMain configuration main =
                         [ col [] []
                         , col [] []
                         , col [] []
-                        , col [ stringProperty "span" "3" ] []
+                        , col [] []
                         ]
                     , thead []
                         [ tr [ Style.classes.tableHeader ]
-                            [ th [ scope "col" ] [ label [] [ text "Name" ] ]
-                            , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Factor" ] ]
-                            , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text "Amount" ] ]
-                            , th [ colspan 3, scope "colgroup", Style.classes.controlsGroup ] []
+                            [ th [] [ label [] [ text "Name" ] ]
+                            , th [ Style.classes.numberLabel ] [ label [] [ text "Factor" ] ]
+                            , th [ Style.classes.numberLabel ] [ label [] [ text "Amount" ] ]
+                            , th [ Style.classes.toggle ] []
                             ]
                         ]
                     , tbody []
@@ -430,8 +430,8 @@ viewComplex configuration main =
         ]
 
 
-viewIngredientLine : Page.FoodMap -> Ingredient -> Html Page.LogicMsg
-viewIngredientLine foodMap ingredient =
+viewIngredientLine : Page.FoodMap -> Ingredient -> Bool -> List (Html Page.LogicMsg)
+viewIngredientLine foodMap ingredient showControls =
     let
         editMsg =
             Page.EnterEditIngredient ingredient.id |> onClick
@@ -441,21 +441,23 @@ viewIngredientLine foodMap ingredient =
             [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
             , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.RequestDeleteIngredient ingredient.id) ] [ text "Delete" ] ]
             ]
-        , onClick = [ editMsg ]
         , foodMap = foodMap
+        , toggleCommand = Page.ToggleIngredientControls ingredient.id
+        , showControls = showControls
         }
         ingredient
 
 
-deleteIngredientLine : Page.FoodMap -> Ingredient -> Html Page.LogicMsg
+deleteIngredientLine : Page.FoodMap -> Ingredient -> List (Html Page.LogicMsg)
 deleteIngredientLine foodMap ingredient =
     ingredientLineWith
         { controls =
             [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteIngredient ingredient.id) ] [ text "Delete?" ] ]
             , td [ Style.classes.controls ] [ button [ Style.classes.button.confirm, onClick (Page.CancelDeleteIngredient ingredient.id) ] [ text "Cancel" ] ]
             ]
-        , onClick = []
         , foodMap = foodMap
+        , toggleCommand = Page.ToggleIngredientControls ingredient.id
+        , showControls = True
         }
         ingredient
 
@@ -468,34 +470,48 @@ measureOfFood measureId food =
 
 
 ingredientLineWith :
-    { controls : List (Html Page.LogicMsg)
-    , onClick : List (Attribute Page.LogicMsg)
+    { controls : List (Html msg)
     , foodMap : Page.FoodMap
+    , toggleCommand : msg
+    , showControls : Bool
     }
     -> Ingredient
-    -> Html Page.LogicMsg
+    -> List (Html msg)
 ingredientLineWith ps ingredient =
     let
         withOnClick =
-            (++) ps.onClick
+            (::) (ps.toggleCommand |> onClick)
 
         food =
             DictList.get ingredient.foodId ps.foodMap |> Maybe.map .original
-    in
-    tr [ Style.classes.editing ]
-        ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.Extra.unwrap "" .name <| food ] ]
-         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| ingredient.amountUnit.factor ] ]
-         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick)
-            [ label []
-                [ text <|
-                    Maybe.Extra.unwrap "" .name <|
-                        Maybe.andThen (measureOfFood ingredient.amountUnit.measureId) <|
-                            food
+
+        infoRow =
+            tr [ Style.classes.editing ]
+                [ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.Extra.unwrap "" .name <| food ] ]
+                , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| ingredient.amountUnit.factor ] ]
+                , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick)
+                    [ label []
+                        [ text <|
+                            Maybe.Extra.unwrap "" .name <|
+                                Maybe.andThen (measureOfFood ingredient.amountUnit.measureId) <|
+                                    food
+                        ]
+                    ]
+                , HtmlUtil.toggleControlsCell ps.toggleCommand
                 ]
-            ]
-         ]
-            ++ ps.controls
-        )
+
+        controlsRow =
+            tr []
+                [ td [ colspan 3 ] [ table [ Style.classes.elementsWithControlsTable ] [ tr [] ps.controls ] ]
+                ]
+    in
+    infoRow
+        :: (if ps.showControls then
+                [ controlsRow ]
+
+            else
+                []
+           )
 
 
 viewComplexIngredientLine : Configuration -> Page.ComplexFoodMap -> ComplexIngredient -> Html Page.LogicMsg

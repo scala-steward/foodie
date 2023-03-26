@@ -222,19 +222,11 @@ th {
 }
 
 #ingredientEditor .ingredientEditTable th:first-child {
-    width: 30%
+    width: 60%
 }
 
 #ingredientEditor .ingredientEditTable th:nth-child(2) {
-    width: 12%;
-}
-
-#ingredientEditor .ingredientEditTable th:nth-child(3) {
-    width: 30%;
-}
-
-#ingredientEditor .ingredientEditTable th:nth-child(4) {
-    width: 28%;
+    width: 15%;
 }
 
 #statistics .intervalSelection th:first-child,
