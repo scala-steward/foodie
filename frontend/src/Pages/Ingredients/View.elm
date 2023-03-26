@@ -29,7 +29,7 @@ import Pages.Ingredients.Page as Page
 import Pages.Ingredients.Pagination as Pagination exposing (Pagination)
 import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput
 import Pages.Recipes.View
-import Pages.Util.DictListUtil as DictUtil
+import Pages.Util.DictListUtil as DictListUtil
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Links as Links
 import Pages.Util.NavigationUtil as NavigationUtil
@@ -40,7 +40,7 @@ import Pages.Util.ViewUtil as ViewUtil
 import Pages.View.Tristate as Tristate
 import Paginate exposing (PaginatedList)
 import Util.DictList as DictList exposing (DictList)
-import Util.Editing as Editing
+import Util.Editing as Editing exposing (Editing)
 import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
@@ -81,16 +81,15 @@ viewMain configuration main =
             viewIngredientsWith :
                 (IngredientState ingredient update -> Bool)
                 -> Lens Page.Main (FoodGroup.Main ingredientId ingredient update foodId food creation)
-                -> (ingredient -> foodId)
-                -> DictList foodId { a | name : String }
+                -> (ingredient -> String)
                 -> PaginatedList (IngredientState ingredient update)
-            viewIngredientsWith searchFilter groupLens idOf nameMap =
+            viewIngredientsWith searchFilter groupLens nameOf =
                 main
                     |> groupLens.get
                     |> .ingredients
                     |> DictList.values
                     |> List.filter searchFilter
-                    |> List.sortBy (.original >> idOf >> DictUtil.nameOrEmpty nameMap >> String.toLower)
+                    |> List.sortBy (.original >> nameOf >> String.toLower)
                     |> ViewUtil.paginate
                         { pagination =
                             groupLens
@@ -99,28 +98,35 @@ viewMain configuration main =
                         }
                         main
 
+            -- todo: Remove duplication!
             viewIngredients =
                 viewIngredientsWith
                     (.original
                         >> .foodId
-                        >> DictUtil.nameOrEmpty main.ingredientsGroup.foods
+                        >> flip DictList.get main.ingredientsGroup.foods
+                        >> Maybe.Extra.unwrap "" (.original >> .name)
                         >> SearchUtil.search main.ingredientsSearchString
                     )
                     Page.lenses.main.ingredientsGroup
-                    .foodId
-                    main.ingredientsGroup.foods
+                    (.foodId
+                        >> flip DictList.get main.ingredientsGroup.foods
+                        >> Maybe.Extra.unwrap "" (.original >> .name)
+                    )
 
+            -- todo: Remove duplication!
             viewComplexIngredients =
                 viewIngredientsWith
                     (.original
                         >> .complexFoodId
-                        >> (\id -> complexFoodInfo id main.complexIngredientsGroup.foods)
-                        >> .name
+                        >> flip DictList.get main.complexIngredientsGroup.foods
+                        >> Maybe.Extra.unwrap "" (.original >> .name)
                         >> SearchUtil.search main.complexIngredientsSearchString
                     )
                     Page.lenses.main.complexIngredientsGroup
-                    .complexFoodId
-                    main.complexIngredientsGroup.foods
+                    (.complexFoodId
+                        >> flip DictList.get main.complexIngredientsGroup.foods
+                        >> Maybe.Extra.unwrap "" (.original >> .name)
+                    )
 
             viewRecipe =
                 Editing.unpack
@@ -298,8 +304,8 @@ viewPlain configuration main =
         viewFoods =
             main.ingredientsGroup.foods
                 |> DictList.values
-                |> List.filter (.name >> SearchUtil.search main.ingredientsGroup.foodsSearchString)
-                |> List.sortBy .name
+                |> List.filter (.original >> .name >> SearchUtil.search main.ingredientsGroup.foodsSearchString)
+                |> List.sortBy (.original >> .name)
                 |> ViewUtil.paginate
                     { pagination =
                         Page.lenses.main.ingredientsGroup
@@ -339,7 +345,7 @@ viewPlain configuration main =
                 , tbody []
                     (viewFoods
                         |> Paginate.page
-                        |> List.map (viewFoodLine configuration main.ingredientsGroup.foods main.ingredientsGroup.foodsToAdd main.ingredientsGroup.ingredients)
+                        |> List.map (viewFoodLine configuration main.ingredientsGroup.ingredients)
                     )
                 ]
             , div [ Style.classes.pagination ]
@@ -364,8 +370,8 @@ viewComplex configuration main =
         viewComplexFoods =
             main.complexIngredientsGroup.foods
                 |> DictList.values
-                |> List.filter (.name >> SearchUtil.search main.complexIngredientsGroup.foodsSearchString)
-                |> List.sortBy .name
+                |> List.filter (.original >> .name >> SearchUtil.search main.complexIngredientsGroup.foodsSearchString)
+                |> List.sortBy (.original >> .name)
                 |> ViewUtil.paginate
                     { pagination =
                         Page.lenses.main.complexIngredientsGroup
@@ -405,7 +411,7 @@ viewComplex configuration main =
                 , tbody []
                     (viewComplexFoods
                         |> Paginate.page
-                        |> List.map (viewComplexFoodLine configuration main.complexIngredientsGroup.foods main.complexIngredientsGroup.foodsToAdd main.complexIngredientsGroup.ingredients)
+                        |> List.map (viewComplexFoodLine configuration main.complexIngredientsGroup.ingredients)
                     )
                 ]
             , div [ Style.classes.pagination ]
@@ -474,7 +480,7 @@ ingredientLineWith ps ingredient =
             (++) ps.onClick
 
         food =
-            DictList.get ingredient.foodId ps.foodMap
+            DictList.get ingredient.foodId ps.foodMap |> Maybe.map .original
     in
     tr [ Style.classes.editing ]
         ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.Extra.unwrap "" .name <| food ] ]
@@ -535,16 +541,25 @@ complexIngredientLineWith ps complexIngredient =
         withOnClick =
             (++) ps.onClick
 
-        info =
-            complexFoodInfo complexIngredient.complexFoodId ps.complexFoodMap
+        --todo: Flatten maybe uses
+        complexFood =
+            DictList.get complexIngredient.complexFoodId ps.complexFoodMap |> Maybe.map .original
 
         amountInfo =
-            Maybe.Extra.unwrap info.amountGrams
-                (\amountMillilitres -> String.concat [ info.amountGrams, " = ", amountMillilitres ])
-                info.amountMilliLitres
+            complexFood
+                |> Maybe.Extra.unwrap ""
+                    (\cf ->
+                        String.concat
+                            [ cf.amountGrams |> String.fromFloat
+                            , "g"
+                            , Maybe.Extra.unwrap ""
+                                (\amountMillilitres -> String.concat [ " = ", amountMillilitres |> String.fromFloat, "ml" ])
+                                cf.amountMilliLitres
+                            ]
+                    )
     in
     tr [ Style.classes.editing ]
-        ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| info.name ] ]
+        ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.Extra.unwrap "" .name <| complexFood ] ]
          , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| complexIngredient.factor ] ]
          , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| amountInfo ] ]
          ]
@@ -565,8 +580,9 @@ updateIngredientLine foodMap ingredient ingredientUpdateClientInput =
             ingredientUpdateClientInput.amountUnit.factor |> ValidatedInput.isValid
 
         food =
-            DictList.get ingredient.foodId foodMap
+            DictList.get ingredient.foodId foodMap |> Maybe.map .original
 
+        -- todo: Flatten maybe uses
         maybeMeasure =
             food
                 |> Maybe.andThen
@@ -638,11 +654,12 @@ updateComplexIngredientLine complexFoodMap complexIngredient complexIngredientUp
         cancelMsg =
             Page.ExitEditComplexIngredientAt complexIngredient.complexFoodId
 
-        info =
-            complexFoodInfo complexIngredient.complexFoodId complexFoodMap
+        -- todo: Flatten maybes
+        complexFood =
+            DictList.get complexIngredient.complexFoodId complexFoodMap |> Maybe.map .original
     in
     tr [ Style.classes.editLine ]
-        [ td [] [ label [] [ text <| info.name ] ]
+        [ td [] [ label [] [ text <| Maybe.Extra.unwrap "" .name <| complexFood ] ]
         , td [ Style.classes.numberCell ]
             [ input
                 [ value
@@ -662,7 +679,7 @@ updateComplexIngredientLine complexFoodMap complexIngredient complexIngredientUp
                 []
             ]
         , td [ Style.classes.numberCell ]
-            [ label [ Style.classes.editable, Style.classes.numberLabel ] [ text <| amountInfoOf <| info ]
+            [ label [ Style.classes.editable, Style.classes.numberLabel ] [ text <| Maybe.Extra.unwrap "" amountInfoOf <| complexFood ]
             ]
         , td []
             [ button [ Style.classes.button.confirm, onClick saveMsg ]
@@ -679,7 +696,7 @@ unitDropdown : Page.FoodMap -> FoodId -> List Dropdown.Item
 unitDropdown fm fId =
     fm
         |> DictList.get fId
-        |> Maybe.Extra.unwrap [] .measures
+        |> Maybe.Extra.unwrap [] (.original >> .measures)
         |> List.map (\m -> { value = String.fromInt m.id, text = m.name, enabled = True })
 
 
@@ -713,48 +730,36 @@ type alias ComplexFoodInfo =
     }
 
 
-complexFoodInfo : ComplexFoodId -> Page.ComplexFoodMap -> ComplexFoodInfo
-complexFoodInfo complexFoodId complexFoodMap =
-    let
-        complexFood =
-            DictList.get complexFoodId complexFoodMap
-    in
-    { name = complexFood |> Maybe.Extra.unwrap "" .name
-    , amountGrams =
-        complexFood
-            |> Maybe.Extra.unwrap "" (\cf -> String.concat [ cf.amountGrams |> String.fromFloat, "g" ])
-    , amountMilliLitres =
-        complexFood
-            |> Maybe.andThen .amountMilliLitres
-            |> Maybe.map (\amount -> String.concat [ amount |> String.fromFloat, "ml" ])
-    }
-
-
-amountInfoOf : ComplexFoodInfo -> String
-amountInfoOf info =
+amountInfoOf : ComplexFood -> String
+amountInfoOf complexFood =
     let
         suffix =
             Maybe.Extra.unwrap ""
-                (\amountMillilitres -> String.concat [ " = ", amountMillilitres ])
-                info.amountMilliLitres
+                (\amountMillilitres -> String.concat [ " = ", amountMillilitres |> String.fromFloat ])
+                complexFood.amountMilliLitres
     in
-    info.amountGrams ++ suffix
+    (complexFood.amountGrams |> String.fromFloat) ++ suffix
 
 
-viewFoodLine : Configuration -> Page.FoodMap -> Page.AddFoodsMap -> Page.PlainIngredientStateMap -> Food -> Html Page.LogicMsg
-viewFoodLine configuration foodMap ingredientsToAdd ingredients food =
+viewFoodLine : Configuration -> Page.PlainIngredientStateMap -> Editing Food IngredientCreationClientInput -> Html Page.LogicMsg
+viewFoodLine configuration ingredients food =
     let
         addMsg =
-            Page.AddFood food.id
+            Page.AddFood food.original.id
 
         selectMsg =
-            Page.SelectFood food
+            Page.SelectFood food.original
 
         cancelMsg =
-            Page.DeselectFood food.id
+            Page.DeselectFood food.original.id
 
         maybeIngredientToAdd =
-            DictList.get food.id ingredientsToAdd
+            Editing.unpack
+                { onView = \_ _ -> Nothing
+                , onUpdate = \_ u -> Just u
+                , onDelete = \_ -> Nothing
+                }
+                food
 
         rowClickAction =
             if Maybe.Extra.isJust maybeIngredientToAdd then
@@ -771,7 +776,7 @@ viewFoodLine configuration foodMap ingredientsToAdd ingredients food =
                     , td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick selectMsg ] [ text "Select" ] ]
                     , td [ Style.classes.controls ]
                         [ Links.linkButton
-                            { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsFoodSelect.address <| food.id
+                            { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsFoodSelect.address <| food.original.id
                             , attributes = [ Style.classes.button.nutrients ]
                             , children = [ text "Nutrients" ]
                             }
@@ -784,7 +789,7 @@ viewFoodLine configuration foodMap ingredientsToAdd ingredients food =
                             ingredientToAdd.amountUnit.factor |> ValidatedInput.isValid
 
                         ( confirmName, confirmStyle ) =
-                            if DictUtil.existsValue (\ingredient -> ingredient.original.foodId == ingredientToAdd.foodId) ingredients then
+                            if DictListUtil.existsValue (\ingredient -> ingredient.original.foodId == ingredientToAdd.foodId) ingredients then
                                 ( "Add again", Style.classes.button.edit )
 
                             else
@@ -815,7 +820,10 @@ viewFoodLine configuration foodMap ingredientsToAdd ingredients food =
                         ]
                     , td [ Style.classes.numberCell ]
                         [ dropdown
-                            { items = unitDropdown foodMap food.id
+                            { items =
+                                --todo: Check duplication with unitDropdown
+                                food.original.measures
+                                    |> List.map (\m -> { value = String.fromInt m.id, text = m.name, enabled = True })
                             , emptyItem = Nothing
                             , onChange =
                                 onChangeDropdown
@@ -844,25 +852,30 @@ viewFoodLine configuration foodMap ingredientsToAdd ingredients food =
                     ]
     in
     tr ([ Style.classes.editing ] ++ rowClickAction)
-        (td [ Style.classes.editable ] [ label [] [ text food.name ] ]
+        (td [ Style.classes.editable ] [ label [] [ text food.original.name ] ]
             :: process
         )
 
 
-viewComplexFoodLine : Configuration -> Page.ComplexFoodMap -> Page.AddComplexFoodsMap -> Page.ComplexIngredientStateMap -> ComplexFood -> Html Page.LogicMsg
-viewComplexFoodLine configuration complexFoodMap complexIngredientsToAdd complexIngredients complexFood =
+viewComplexFoodLine : Configuration -> Page.ComplexIngredientStateMap -> Editing ComplexFood ComplexIngredientClientInput -> Html Page.LogicMsg
+viewComplexFoodLine configuration complexIngredients complexFood =
     let
         addMsg =
-            Page.AddComplexFood complexFood.recipeId
+            Page.AddComplexFood complexFood.original.recipeId
 
         selectMsg =
-            Page.SelectComplexFood complexFood
+            Page.SelectComplexFood complexFood.original
 
         cancelMsg =
-            Page.DeselectComplexFood complexFood.recipeId
+            Page.DeselectComplexFood complexFood.original.recipeId
 
         maybeComplexIngredientToAdd =
-            DictList.get complexFood.recipeId complexIngredientsToAdd
+            complexFood
+                |> Editing.unpack
+                    { onView = \_ _ -> Nothing
+                    , onUpdate = \_ u -> Just u
+                    , onDelete = \_ -> Nothing
+                    }
 
         rowClickAction =
             if Maybe.Extra.isJust maybeComplexIngredientToAdd then
@@ -871,23 +884,20 @@ viewComplexFoodLine configuration complexFoodMap complexIngredientsToAdd complex
             else
                 [ onClick selectMsg ]
 
-        info =
-            complexFoodInfo complexFood.recipeId complexFoodMap
-
         process =
             case maybeComplexIngredientToAdd of
                 Nothing ->
                     [ td [ Style.classes.editable, Style.classes.numberCell ] []
                     , td [ Style.classes.editable, Style.classes.numberCell ] []
                     , td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick selectMsg ] [ text "Select" ] ]
-                    , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration complexFood.recipeId ]
-                    , td [ Style.classes.controls ] [ NavigationUtil.recipeNutrientsLinkButton configuration complexFood.recipeId ]
+                    , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration complexFood.original.recipeId ]
+                    , td [ Style.classes.controls ] [ NavigationUtil.recipeNutrientsLinkButton configuration complexFood.original.recipeId ]
                     ]
 
                 Just complexIngredientToAdd ->
                     let
                         exists =
-                            DictUtil.existsValue (\complexIngredient -> complexIngredient.original.complexFoodId == complexIngredientToAdd.complexFoodId) complexIngredients
+                            DictListUtil.existsValue (\complexIngredient -> complexIngredient.original.complexFoodId == complexIngredientToAdd.complexFoodId) complexIngredients
 
                         validInput =
                             List.all identity
@@ -921,7 +931,7 @@ viewComplexFoodLine configuration complexFoodMap complexIngredientsToAdd complex
                          ]
                             |> List.filter (exists |> not |> always)
                         )
-                    , td [ Style.classes.editable, Style.classes.numberLabel, onClick selectMsg ] [ label [] [ text <| amountInfoOf <| info ] ]
+                    , td [ Style.classes.editable, Style.classes.numberLabel, onClick selectMsg ] [ label [] [ text <| amountInfoOf <| complexFood.original ] ]
                     , td [ Style.classes.controls ]
                         [ button
                             ([ MaybeUtil.defined <| confirmStyle
@@ -938,13 +948,12 @@ viewComplexFoodLine configuration complexFoodMap complexIngredientsToAdd complex
                     ]
     in
     tr ([ Style.classes.editing ] ++ rowClickAction)
-        (td [ Style.classes.editable ] [ label [] [ text info.name ] ]
+        (td [ Style.classes.editable ] [ label [] [ text complexFood.original.name ] ]
             :: process
         )
 
 
 anySelection : Lens Page.Main (FoodGroup.Main ingredientId ingredient update foodId food creation) -> Page.Main -> Bool
 anySelection foodGroupLens =
-    (foodGroupLens |> Compose.lensWithLens FoodGroup.lenses.main.foodsToAdd).get
-        >> DictList.isEmpty
-        >> not
+    (foodGroupLens |> Compose.lensWithLens FoodGroup.lenses.main.foods).get
+        >> DictListUtil.existsValue Editing.isUpdate

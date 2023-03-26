@@ -96,23 +96,15 @@ type alias ComplexIngredientState =
 
 
 type alias FoodMap =
-    DictList FoodId Food
+    DictList FoodId (Editing Food IngredientCreationClientInput)
 
 
 type alias ComplexFoodMap =
-    DictList ComplexFoodId ComplexFood
+    DictList ComplexFoodId (Editing ComplexFood ComplexIngredientClientInput)
 
 
 type alias RecipeMap =
     DictList RecipeId Recipe
-
-
-type alias AddFoodsMap =
-    DictList FoodId IngredientCreationClientInput
-
-
-type alias AddComplexFoodsMap =
-    DictList ComplexFoodId ComplexIngredientClientInput
 
 
 type alias PlainIngredientStateMap =
