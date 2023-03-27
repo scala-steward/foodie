@@ -4,7 +4,6 @@ import Api.Auxiliary exposing (JWT, RecipeId)
 import Api.Types.Recipe exposing (Recipe)
 import Monocle.Lens exposing (Lens)
 import Pages.Recipes.RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
-import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.View.Tristate as Tristate
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
@@ -23,12 +22,6 @@ type alias Main =
 type alias Initial =
     { jwt : JWT
     , recipe : Maybe (Editing Recipe RecipeUpdateClientInput)
-    }
-
-
-type alias Flags =
-    { authorizedAccess : AuthorizedAccess
-    , recipeId : RecipeId
     }
 
 
