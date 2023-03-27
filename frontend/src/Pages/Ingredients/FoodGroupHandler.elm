@@ -173,7 +173,7 @@ updateLogic ps msg model =
             , Cmd.none
             )
 
-        addFood foodId =
+        create foodId =
             ( model
             , model
                 |> Tristate.lenses.main.getOption
@@ -194,7 +194,7 @@ updateLogic ps msg model =
                 |> Maybe.withDefault Cmd.none
             )
 
-        gotAddFoodResponse result =
+        gotCreateResponse result =
             ( result
                 |> Result.Extra.unpack (Tristate.toError model)
                     (\ingredient ->
@@ -211,7 +211,7 @@ updateLogic ps msg model =
             , Cmd.none
             )
 
-        updateAddFood ingredientCreationClientInput =
+        updateCreation ingredientCreationClientInput =
             ( model
                 |> Tristate.mapMain
                     (LensUtil.updateById (ingredientCreationClientInput |> ps.foodIdOfCreation)
@@ -299,14 +299,14 @@ updateLogic ps msg model =
         FoodGroup.DeselectFood foodId ->
             deselectFood foodId
 
-        FoodGroup.AddFood foodId ->
-            addFood foodId
+        FoodGroup.Create foodId ->
+            create foodId
 
-        FoodGroup.GotAddFoodResponse result ->
-            gotAddFoodResponse result
+        FoodGroup.GotCreateResponse result ->
+            gotCreateResponse result
 
-        FoodGroup.UpdateAddFood creation ->
-            updateAddFood creation
+        FoodGroup.UpdateCreation creation ->
+            updateCreation creation
 
         FoodGroup.SetIngredientsPagination pagination ->
             setIngredientsPagination pagination

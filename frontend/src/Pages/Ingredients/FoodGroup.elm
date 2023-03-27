@@ -96,12 +96,9 @@ type LogicMsg ingredientId ingredient update foodId food creation
     | GotFetchFoodsResponse (Result Error (List food))
     | SelectFood food
     | DeselectFood foodId
-      -- todo: Rename - this should be CreateIngredient
-    | AddFood foodId
-      -- todo: Rename - this should be GotCreateIngredientResponse
-    | GotAddFoodResponse (Result Error ingredient)
-      -- todo: Rename - this should be UpdateCreateIngredient or EditCreateIngredient
-    | UpdateAddFood creation
+    | Create foodId
+    | GotCreateResponse (Result Error ingredient)
+    | UpdateCreation creation
     | SetIngredientsPagination Pagination
     | SetIngredientsSearchString String
     | SetFoodsSearchString String
