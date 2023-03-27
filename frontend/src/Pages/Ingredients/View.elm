@@ -27,6 +27,7 @@ import Pages.Ingredients.IngredientCreationClientInput as IngredientCreationClie
 import Pages.Ingredients.IngredientUpdateClientInput as IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
 import Pages.Ingredients.Page as Page
 import Pages.Ingredients.Pagination as Pagination exposing (Pagination)
+import Pages.Ingredients.Recipe.View
 import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput
 import Pages.Recipes.View
 import Pages.Util.DictListUtil as DictListUtil
@@ -127,73 +128,11 @@ viewMain configuration main =
                         >> flip DictList.get main.complexIngredientsGroup.foods
                         >> Maybe.Extra.unwrap "" (.original >> .name)
                     )
-
-            viewRecipe =
-                Editing.unpack
-                    { onView =
-                        \recipe showControls ->
-                            Pages.Recipes.View.recipeLineWith
-                                { controls =
-                                    [ td [ Style.classes.controls ]
-                                        [ button [ Style.classes.button.edit, Page.EnterEditRecipe |> onClick ] [ text "Edit" ] ]
-                                    , td [ Style.classes.controls ]
-                                        [ button
-                                            [ Style.classes.button.delete, Page.RequestDeleteRecipe |> onClick ]
-                                            [ text "Delete" ]
-                                        ]
-                                    , td [ Style.classes.controls ]
-                                        [ Links.linkButton
-                                            { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsRecipeSelect.address <| main.recipe.original.id
-                                            , attributes = [ Style.classes.button.nutrients ]
-                                            , children = [ text "Nutrients" ]
-                                            }
-                                        ]
-                                    ]
-                                , extraCells = []
-                                , toggleCommand = Page.ToggleRecipeControls
-                                , showControls = showControls
-                                }
-                                recipe
-                    , onUpdate =
-                        Pages.Recipes.View.editRecipeLineWith
-                            { saveMsg = Page.SaveRecipeEdit
-                            , nameLens = RecipeUpdateClientInput.lenses.name
-                            , descriptionLens = RecipeUpdateClientInput.lenses.description
-                            , numberOfServingsLens = RecipeUpdateClientInput.lenses.numberOfServings
-                            , servingSizeLens = RecipeUpdateClientInput.lenses.servingSize
-                            , updateMsg = Page.UpdateRecipe
-                            , confirmName = "Save"
-                            , cancelMsg = Page.ExitEditRecipe
-                            , cancelName = "Cancel"
-                            , rowStyles = []
-                            , toggleCommand = Just Page.ToggleRecipeControls
-                            }
-                            |> always
-                    , onDelete =
-                        Pages.Recipes.View.recipeLineWith
-                            { controls =
-                                [ td [ Style.classes.controls ]
-                                    [ button [ Style.classes.button.delete, onClick <| Page.ConfirmDeleteRecipe ] [ text "Delete?" ] ]
-                                , td [ Style.classes.controls ]
-                                    [ button
-                                        [ Style.classes.button.confirm, onClick <| Page.CancelDeleteRecipe ]
-                                        [ text "Cancel" ]
-                                    ]
-                                ]
-                            , toggleCommand = Page.ToggleRecipeControls
-                            , extraCells = []
-                            , showControls = True
-                            }
-                    }
-                    main.recipe
         in
         div [ Style.ids.ingredientEditor ]
             [ div []
-                [ table [ Style.classes.elementsWithControlsTable ]
-                    (Pages.Recipes.View.tableHeader
-                        ++ [ tbody [] viewRecipe
-                           ]
-                    )
+                [ Pages.Ingredients.Recipe.View.viewMain configuration main.recipe
+                    |> Html.map Page.RecipeMsg
                 ]
             , div [ Style.classes.elements ] [ label [] [ text "Ingredients" ] ]
             , div [ Style.classes.choices ]

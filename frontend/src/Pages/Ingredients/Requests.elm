@@ -7,7 +7,6 @@ module Pages.Ingredients.Requests exposing
     , fetchComplexIngredients
     , fetchFoods
     , fetchIngredients
-    , fetchRecipe
     , saveComplexIngredient
     , saveIngredient
     )
@@ -44,11 +43,6 @@ fetchComplexIngredients flags recipeId =
         { body = Http.emptyBody
         , expect = HttpUtil.expectJson Page.GotFetchComplexIngredientsResponse (Decode.list decoderComplexIngredient)
         }
-
-
-fetchRecipe : Page.Flags -> Cmd Page.LogicMsg
-fetchRecipe =
-    Pages.Util.Requests.fetchRecipeWith Page.GotFetchRecipeResponse
 
 
 fetchFoods : AuthorizedAccess -> Cmd Page.LogicMsg

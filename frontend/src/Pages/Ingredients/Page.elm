@@ -12,9 +12,9 @@ import Pages.Ingredients.FoodGroup as FoodGroup
 import Pages.Ingredients.IngredientCreationClientInput exposing (IngredientCreationClientInput)
 import Pages.Ingredients.IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
 import Pages.Ingredients.Pagination exposing (Pagination)
-import Pages.Recipes.RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
+import Pages.Ingredients.Recipe.Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Pages.View.Tristate as Tristate
+import Pages.View.Tristate as Tristate exposing (Status(..))
 import Util.DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
@@ -26,7 +26,7 @@ type alias Model =
 
 type alias Main =
     { jwt : JWT
-    , recipe : Editing Recipe RecipeUpdateClientInput
+    , recipe : Pages.Ingredients.Recipe.Page.Main
     , ingredientsGroup : IngredientsGroup
     , complexIngredientsGroup : ComplexIngredientsGroup
     , foodsMode : FoodsMode
@@ -37,16 +37,34 @@ type alias Main =
 
 type alias Initial =
     { jwt : JWT
-    , recipe : Maybe (Editing Recipe RecipeUpdateClientInput)
+    , recipe : Pages.Ingredients.Recipe.Page.Initial
     , ingredientsGroup : FoodGroup.Initial IngredientId Ingredient IngredientUpdateClientInput FoodId Food
     , complexIngredientsGroup : FoodGroup.Initial ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood
+    }
+
+
+recipeSubModel : Model -> Pages.Ingredients.Recipe.Page.Model
+recipeSubModel model =
+    { configuration = model.configuration
+    , status =
+        Tristate.fold
+            { onInitial = .recipe >> Tristate.Initial
+            , onMain = .recipe >> Tristate.Main
+            , onError =
+                \es ->
+                    Tristate.Error
+                        { errorExplanation = es.errorExplanation
+                        , previousMain = es.previousMain |> Maybe.map .recipe
+                        }
+            }
+            model
     }
 
 
 initial : AuthorizedAccess -> Model
 initial authorizedAccess =
     { jwt = authorizedAccess.jwt
-    , recipe = Nothing
+    , recipe = Pages.Ingredients.Recipe.Page.initialWith authorizedAccess.jwt
     , ingredientsGroup = FoodGroup.initial
     , complexIngredientsGroup = FoodGroup.initial
     }
@@ -56,6 +74,7 @@ initial authorizedAccess =
 initialToMain : Initial -> Maybe Main
 initialToMain i =
     i.recipe
+        |> Pages.Ingredients.Recipe.Page.initialToMain
         |> Maybe.andThen
             (\recipe ->
                 i.ingredientsGroup
@@ -124,12 +143,12 @@ lenses :
     { initial :
         { ingredientsGroup : Lens Initial (FoodGroup.Initial IngredientId Ingredient IngredientUpdateClientInput FoodId Food)
         , complexIngredientsGroup : Lens Initial (FoodGroup.Initial ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood)
-        , recipe : Lens Initial (Maybe (Editing Recipe RecipeUpdateClientInput))
+        , recipe : Lens Initial Pages.Ingredients.Recipe.Page.Initial
         }
     , main :
         { ingredientsGroup : Lens Main IngredientsGroup
         , complexIngredientsGroup : Lens Main ComplexIngredientsGroup
-        , recipe : Lens Main (Editing Recipe RecipeUpdateClientInput)
+        , recipe : Lens Main Pages.Ingredients.Recipe.Page.Main
         , foodsMode : Lens Main FoodsMode
         , ingredientsSearchString : Lens Main String
         , complexIngredientsSearchString : Lens Main String
@@ -181,7 +200,6 @@ type LogicMsg
     | GotFetchComplexIngredientsResponse (Result Error (List ComplexIngredient))
     | GotFetchFoodsResponse (Result Error (List Food))
     | GotFetchComplexFoodsResponse (Result Error (List ComplexFood))
-    | GotFetchRecipeResponse (Result Error Recipe)
     | SelectFood Food
     | SelectComplexFood ComplexFood
     | DeselectFood FoodId
@@ -200,16 +218,7 @@ type LogicMsg
     | ChangeFoodsMode FoodsMode
     | SetIngredientsSearchString String
     | SetComplexIngredientsSearchString String
-    | ToggleRecipeControls
-    | UpdateRecipe RecipeUpdateClientInput
-    | SaveRecipeEdit
-    | GotSaveRecipeResponse (Result Error Recipe)
-    | EnterEditRecipe
-    | ExitEditRecipe
-    | RequestDeleteRecipe
-    | ConfirmDeleteRecipe
-    | CancelDeleteRecipe
-    | GotDeleteRecipeResponse (Result Error ())
+    | RecipeMsg Pages.Ingredients.Recipe.Page.LogicMsg
 
 
 type alias Flags =
