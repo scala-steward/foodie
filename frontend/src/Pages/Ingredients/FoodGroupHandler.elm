@@ -33,14 +33,14 @@ updateLogic :
     -> ( FoodGroup.Model ingredientId ingredient update foodId food creation, Cmd (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation) )
 updateLogic ps msg model =
     let
-        editIngredient update =
+        edit update =
             ( model
                 |> mapIngredientStateById (update |> ps.idOfUpdate)
                     (Editing.lenses.update.set update)
             , Cmd.none
             )
 
-        saveIngredientEdit ingredientUpdateClientInput =
+        saveEdit ingredientUpdateClientInput =
             ( model
             , model
                 |> Tristate.foldMain Cmd.none
@@ -53,7 +53,7 @@ updateLogic ps msg model =
                     )
             )
 
-        gotSaveIngredientResponse result =
+        gotSaveEditResponse result =
             ( result
                 |> Result.Extra.unpack (Tristate.toError model)
                     (\ingredient ->
@@ -70,25 +70,25 @@ updateLogic ps msg model =
             , Cmd.none
             )
 
-        enterEditIngredient ingredientId =
+        enterEdit ingredientId =
             ( model
                 |> mapIngredientStateById ingredientId (Editing.toUpdate ps.toUpdate)
             , Cmd.none
             )
 
-        exitEditIngredient ingredientId =
+        exitEdit ingredientId =
             ( model
                 |> mapIngredientStateById ingredientId Editing.toView
             , Cmd.none
             )
 
-        requestDeleteIngredient ingredientId =
+        requestDelete ingredientId =
             ( model
                 |> mapIngredientStateById ingredientId Editing.toDelete
             , Cmd.none
             )
 
-        confirmDeleteIngredient ingredientId =
+        confirmDelete ingredientId =
             ( model
             , model
                 |> Tristate.foldMain Cmd.none
@@ -101,13 +101,13 @@ updateLogic ps msg model =
                     )
             )
 
-        cancelDeleteIngredient ingredientId =
+        cancelDelete ingredientId =
             ( model
                 |> mapIngredientStateById ingredientId Editing.toView
             , Cmd.none
             )
 
-        gotDeleteIngredientResponse ingredientId result =
+        gotDeleteResponse ingredientId result =
             ( result
                 |> Result.Extra.unpack (Tristate.toError model)
                     (model
@@ -120,7 +120,7 @@ updateLogic ps msg model =
             , Cmd.none
             )
 
-        gotFetchIngredientsResponse result =
+        gotFetchResponse result =
             ( result
                 |> Result.Extra.unpack (Tristate.toError model)
                     (\ingredients ->
@@ -257,38 +257,38 @@ updateLogic ps msg model =
             )
     in
     case msg of
-        FoodGroup.EditIngredient update ->
-            editIngredient update
+        FoodGroup.Edit update ->
+            edit update
 
-        FoodGroup.SaveIngredientEdit update ->
-            saveIngredientEdit update
+        FoodGroup.SaveEdit update ->
+            saveEdit update
 
-        FoodGroup.GotSaveIngredientResponse result ->
-            gotSaveIngredientResponse result
+        FoodGroup.GotSaveEditResponse result ->
+            gotSaveEditResponse result
 
         FoodGroup.ToggleControls ingredientId ->
             toggleControls ingredientId
 
-        FoodGroup.EnterEditIngredient ingredientId ->
-            enterEditIngredient ingredientId
+        FoodGroup.EnterEdit ingredientId ->
+            enterEdit ingredientId
 
-        FoodGroup.ExitEditIngredient ingredientId ->
-            exitEditIngredient ingredientId
+        FoodGroup.ExitEdit ingredientId ->
+            exitEdit ingredientId
 
-        FoodGroup.RequestDeleteIngredient ingredientId ->
-            requestDeleteIngredient ingredientId
+        FoodGroup.RequestDelete ingredientId ->
+            requestDelete ingredientId
 
-        FoodGroup.ConfirmDeleteIngredient ingredientId ->
-            confirmDeleteIngredient ingredientId
+        FoodGroup.ConfirmDelete ingredientId ->
+            confirmDelete ingredientId
 
-        FoodGroup.CancelDeleteIngredient ingredientId ->
-            cancelDeleteIngredient ingredientId
+        FoodGroup.CancelDelete ingredientId ->
+            cancelDelete ingredientId
 
-        FoodGroup.GotDeleteIngredientResponse ingredientId result ->
-            gotDeleteIngredientResponse ingredientId result
+        FoodGroup.GotDeleteResponse ingredientId result ->
+            gotDeleteResponse ingredientId result
 
-        FoodGroup.GotFetchIngredientsResponse result ->
-            gotFetchIngredientsResponse result
+        FoodGroup.GotFetchResponse result ->
+            gotFetchResponse result
 
         FoodGroup.GotFetchFoodsResponse result ->
             gotFetchFoodsResponse result

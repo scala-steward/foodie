@@ -82,17 +82,17 @@ lenses =
 
 
 type LogicMsg ingredientId ingredient update foodId food creation
-    = EditIngredient update
-    | SaveIngredientEdit update
-    | GotSaveIngredientResponse (Result Error ingredient)
+    = Edit update
+    | SaveEdit update
+    | GotSaveEditResponse (Result Error ingredient)
     | ToggleControls ingredientId
-    | EnterEditIngredient ingredientId
-    | ExitEditIngredient ingredientId
-    | RequestDeleteIngredient ingredientId
-    | ConfirmDeleteIngredient ingredientId
-    | CancelDeleteIngredient ingredientId
-    | GotDeleteIngredientResponse ingredientId (Result Error ())
-    | GotFetchIngredientsResponse (Result Error (List ingredient))
+    | EnterEdit ingredientId
+    | ExitEdit ingredientId
+    | RequestDelete ingredientId
+    | ConfirmDelete ingredientId
+    | CancelDelete ingredientId
+    | GotDeleteResponse ingredientId (Result Error ())
+    | GotFetchResponse (Result Error (List ingredient))
     | GotFetchFoodsResponse (Result Error (List food))
     | SelectFood food
     | DeselectFood foodId
