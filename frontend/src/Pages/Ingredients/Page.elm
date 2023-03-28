@@ -14,6 +14,7 @@ import Pages.Ingredients.IngredientUpdateClientInput exposing (IngredientUpdateC
 import Pages.Ingredients.Recipe.Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.View.Tristate as Tristate exposing (Status(..))
+import Pages.View.TristateUtil as TristateUtil
 import Util.DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 
@@ -42,57 +43,27 @@ type alias Initial =
 
 
 recipeSubModel : Model -> Pages.Ingredients.Recipe.Page.Model
-recipeSubModel model =
-    { configuration = model.configuration
-    , status =
-        Tristate.fold
-            { onInitial = .recipe >> Tristate.Initial
-            , onMain = .recipe >> Tristate.Main
-            , onError =
-                \es ->
-                    Tristate.Error
-                        { errorExplanation = es.errorExplanation
-                        , previousMain = es.previousMain |> Maybe.map .recipe
-                        }
-            }
-            model
-    }
+recipeSubModel =
+    TristateUtil.subModelWith
+        { initialLens = lenses.initial.recipe
+        , mainLens = lenses.main.recipe
+        }
 
 
 ingredientsGroupSubModel : Model -> IngredientsGroupModel
-ingredientsGroupSubModel model =
-    { configuration = model.configuration
-    , status =
-        Tristate.fold
-            { onInitial = .ingredientsGroup >> Tristate.Initial
-            , onMain = .ingredientsGroup >> Tristate.Main
-            , onError =
-                \es ->
-                    Tristate.Error
-                        { errorExplanation = es.errorExplanation
-                        , previousMain = es.previousMain |> Maybe.map .ingredientsGroup
-                        }
-            }
-            model
-    }
+ingredientsGroupSubModel =
+    TristateUtil.subModelWith
+        { initialLens = lenses.initial.ingredientsGroup
+        , mainLens = lenses.main.ingredientsGroup
+        }
 
 
 complexIngredientsGroupSubModel : Model -> ComplexIngredientsGroupModel
-complexIngredientsGroupSubModel model =
-    { configuration = model.configuration
-    , status =
-        Tristate.fold
-            { onInitial = .complexIngredientsGroup >> Tristate.Initial
-            , onMain = .complexIngredientsGroup >> Tristate.Main
-            , onError =
-                \es ->
-                    Tristate.Error
-                        { errorExplanation = es.errorExplanation
-                        , previousMain = es.previousMain |> Maybe.map .complexIngredientsGroup
-                        }
-            }
-            model
-    }
+complexIngredientsGroupSubModel =
+    TristateUtil.subModelWith
+        { initialLens = lenses.initial.complexIngredientsGroup
+        , mainLens = lenses.main.complexIngredientsGroup
+        }
 
 
 initial : AuthorizedAccess -> RecipeId -> Model

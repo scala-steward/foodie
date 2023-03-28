@@ -49,3 +49,26 @@ updateFromSubModel ps msg model =
                     model
     in
     ( newModel, newCmd )
+
+
+subModelWith :
+    { initialLens : Lens initial initialSubModel
+    , mainLens : Lens main mainSubModel
+    }
+    -> Tristate.Model main initial
+    -> Tristate.Model mainSubModel initialSubModel
+subModelWith ps model =
+    { configuration = model.configuration
+    , status =
+        Tristate.fold
+            { onInitial = ps.initialLens.get >> Tristate.Initial
+            , onMain = ps.mainLens.get >> Tristate.Main
+            , onError =
+                \es ->
+                    Tristate.Error
+                        { errorExplanation = es.errorExplanation
+                        , previousMain = es.previousMain |> Maybe.map ps.mainLens.get
+                        }
+            }
+            model
+    }
