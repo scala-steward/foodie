@@ -58,6 +58,10 @@ initialToMain i =
         i.foods
 
 
+
+-- todo: Consider replacing this type with "Editing" directly
+
+
 type alias IngredientState ingredient update =
     Editing ingredient update
 
