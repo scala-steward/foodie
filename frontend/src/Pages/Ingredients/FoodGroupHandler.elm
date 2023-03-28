@@ -1,6 +1,7 @@
 module Pages.Ingredients.FoodGroupHandler exposing (updateLogic)
 
-import Api.Auxiliary exposing (JWT)
+import Api.Auxiliary exposing (RecipeId)
+import Basics.Extra exposing (flip)
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
 import Pages.Ingredients.FoodGroup as FoodGroup
@@ -21,12 +22,11 @@ updateLogic :
     , foodIdOfIngredient : ingredient -> foodId
     , foodIdOfCreation : creation -> foodId
     , toUpdate : ingredient -> update
-    , toCreation : food -> creation
-    , createIngredient : AuthorizedAccess -> creation -> Cmd (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation)
-    , saveIngredient : AuthorizedAccess -> update -> Cmd (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation)
-    , deleteIngredient : AuthorizedAccess -> ingredientId -> Cmd (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation)
+    , toCreation : food -> RecipeId -> creation
+    , createIngredient : AuthorizedAccess -> RecipeId -> creation -> Cmd (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation)
+    , saveIngredient : AuthorizedAccess -> RecipeId -> update -> Cmd (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation)
+    , deleteIngredient : AuthorizedAccess -> RecipeId -> ingredientId -> Cmd (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation)
     , storeFoods : List food -> Cmd (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation)
-    , jwtOf : FoodGroup.Main ingredientId ingredient update foodId food creation -> JWT
     }
     -> FoodGroup.LogicMsg ingredientId ingredient update foodId food creation
     -> FoodGroup.Model ingredientId ingredient update foodId food creation
@@ -48,8 +48,9 @@ updateLogic ps msg model =
                         ingredientUpdateClientInput
                             |> ps.saveIngredient
                                 { configuration = model.configuration
-                                , jwt = main |> ps.jwtOf
+                                , jwt = main.jwt
                                 }
+                                main.recipeId
                     )
             )
 
@@ -95,8 +96,9 @@ updateLogic ps msg model =
                     (\main ->
                         ps.deleteIngredient
                             { configuration = model.configuration
-                            , jwt = main |> ps.jwtOf
+                            , jwt = main.jwt
                             }
+                            main.recipeId
                             ingredientId
                     )
             )
@@ -158,7 +160,7 @@ updateLogic ps msg model =
                         main
                             |> LensUtil.updateById (food |> ps.idOfFood)
                                 FoodGroup.lenses.main.foods
-                                (Editing.toUpdate ps.toCreation)
+                                (Editing.toUpdate (flip ps.toCreation main.recipeId))
                     )
             , Cmd.none
             )
@@ -187,8 +189,9 @@ updateLogic ps msg model =
                             |> Maybe.map
                                 (ps.createIngredient
                                     { configuration = model.configuration
-                                    , jwt = main |> ps.jwtOf
+                                    , jwt = main.jwt
                                     }
+                                    main.recipeId
                                 )
                     )
                 |> Maybe.withDefault Cmd.none

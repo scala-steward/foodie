@@ -11,13 +11,11 @@ import Pages.Ingredients.ComplexIngredientClientInput exposing (ComplexIngredien
 import Pages.Ingredients.FoodGroup as FoodGroup
 import Pages.Ingredients.IngredientCreationClientInput exposing (IngredientCreationClientInput)
 import Pages.Ingredients.IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
-import Pages.Ingredients.Pagination exposing (Pagination)
 import Pages.Ingredients.Recipe.Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.View.Tristate as Tristate exposing (Status(..))
 import Util.DictList exposing (DictList)
 import Util.Editing exposing (Editing)
-import Util.HttpUtil exposing (Error)
 
 
 type alias Model =
@@ -61,12 +59,48 @@ recipeSubModel model =
     }
 
 
-initial : AuthorizedAccess -> Model
-initial authorizedAccess =
+ingredientsGroupSubModel : Model -> IngredientsGroupModel
+ingredientsGroupSubModel model =
+    { configuration = model.configuration
+    , status =
+        Tristate.fold
+            { onInitial = .ingredientsGroup >> Tristate.Initial
+            , onMain = .ingredientsGroup >> Tristate.Main
+            , onError =
+                \es ->
+                    Tristate.Error
+                        { errorExplanation = es.errorExplanation
+                        , previousMain = es.previousMain |> Maybe.map .ingredientsGroup
+                        }
+            }
+            model
+    }
+
+
+complexIngredientsGroupSubModel : Model -> ComplexIngredientsGroupModel
+complexIngredientsGroupSubModel model =
+    { configuration = model.configuration
+    , status =
+        Tristate.fold
+            { onInitial = .complexIngredientsGroup >> Tristate.Initial
+            , onMain = .complexIngredientsGroup >> Tristate.Main
+            , onError =
+                \es ->
+                    Tristate.Error
+                        { errorExplanation = es.errorExplanation
+                        , previousMain = es.previousMain |> Maybe.map .complexIngredientsGroup
+                        }
+            }
+            model
+    }
+
+
+initial : AuthorizedAccess -> RecipeId -> Model
+initial authorizedAccess recipeId =
     { jwt = authorizedAccess.jwt
     , recipe = Pages.Ingredients.Recipe.Page.initialWith authorizedAccess.jwt
-    , ingredientsGroup = FoodGroup.initial
-    , complexIngredientsGroup = FoodGroup.initial
+    , ingredientsGroup = FoodGroup.initialWith authorizedAccess.jwt recipeId
+    , complexIngredientsGroup = FoodGroup.initialWith authorizedAccess.jwt recipeId
     }
         |> Tristate.createInitial authorizedAccess.configuration
 
@@ -102,8 +136,24 @@ type alias IngredientsGroup =
     FoodGroup.Main IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput
 
 
+type alias IngredientsGroupMsg =
+    FoodGroup.LogicMsg IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput
+
+
+type alias IngredientsGroupModel =
+    FoodGroup.Model IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput
+
+
 type alias ComplexIngredientsGroup =
     FoodGroup.Main ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood ComplexIngredientClientInput
+
+
+type alias ComplexIngredientsGroupMsg =
+    FoodGroup.LogicMsg ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood ComplexIngredientClientInput
+
+
+type alias ComplexIngredientsGroupModel =
+    FoodGroup.Model ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood ComplexIngredientClientInput
 
 
 type alias PlainIngredientState =
@@ -176,48 +226,10 @@ type alias Msg =
 
 
 type LogicMsg
-    = UpdateIngredient IngredientUpdateClientInput
-    | UpdateComplexIngredient ComplexIngredientClientInput
-    | SaveIngredientEdit IngredientUpdateClientInput
-    | SaveComplexIngredientEdit ComplexIngredientClientInput
-    | GotSaveIngredientResponse (Result Error Ingredient)
-    | GotSaveComplexIngredientResponse (Result Error ComplexIngredient)
-    | ToggleIngredientControls IngredientId
-    | EnterEditIngredient IngredientId
-    | ToggleComplexIngredientControls ComplexIngredientId
-    | EnterEditComplexIngredient ComplexIngredientId
-    | ExitEditIngredientAt IngredientId
-    | ExitEditComplexIngredientAt ComplexIngredientId
-    | RequestDeleteIngredient IngredientId
-    | ConfirmDeleteIngredient IngredientId
-    | CancelDeleteIngredient IngredientId
-    | RequestDeleteComplexIngredient ComplexIngredientId
-    | ConfirmDeleteComplexIngredient ComplexIngredientId
-    | CancelDeleteComplexIngredient ComplexIngredientId
-    | GotDeleteIngredientResponse IngredientId (Result Error ())
-    | GotDeleteComplexIngredientResponse ComplexIngredientId (Result Error ())
-    | GotFetchIngredientsResponse (Result Error (List Ingredient))
-    | GotFetchComplexIngredientsResponse (Result Error (List ComplexIngredient))
-    | GotFetchFoodsResponse (Result Error (List Food))
-    | GotFetchComplexFoodsResponse (Result Error (List ComplexFood))
-    | SelectFood Food
-    | SelectComplexFood ComplexFood
-    | DeselectFood FoodId
-    | DeselectComplexFood ComplexFoodId
-    | AddFood FoodId
-    | AddComplexFood ComplexFoodId
-    | GotAddFoodResponse (Result Error Ingredient)
-    | GotAddComplexFoodResponse (Result Error ComplexIngredient)
-    | UpdateAddFood IngredientCreationClientInput
-    | UpdateAddComplexFood ComplexIngredientClientInput
-    | UpdateFoods String
-    | SetFoodsSearchString String
-    | SetComplexFoodsSearchString String
-    | SetIngredientsPagination Pagination
-    | SetComplexIngredientsPagination Pagination
+    = UpdateFoods String
     | ChangeFoodsMode FoodsMode
-    | SetIngredientsSearchString String
-    | SetComplexIngredientsSearchString String
+    | IngredientMsg IngredientsGroupMsg
+    | ComplexIngredientMsg ComplexIngredientsGroupMsg
     | RecipeMsg Pages.Ingredients.Recipe.Page.LogicMsg
 
 

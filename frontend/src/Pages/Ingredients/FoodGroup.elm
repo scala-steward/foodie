@@ -1,5 +1,6 @@
 module Pages.Ingredients.FoodGroup exposing (..)
 
+import Api.Auxiliary exposing (JWT, RecipeId)
 import Monocle.Lens exposing (Lens)
 import Pages.Ingredients.Pagination as Pagination exposing (Pagination)
 import Pages.View.Tristate as Tristate
@@ -13,7 +14,9 @@ type alias Model ingredientId ingredient update foodId food creation =
 
 
 type alias Main ingredientId ingredient update foodId food creation =
-    { ingredients : DictList ingredientId (IngredientState ingredient update)
+    { jwt : JWT
+    , recipeId : RecipeId
+    , ingredients : DictList ingredientId (IngredientState ingredient update)
     , foods : DictList foodId (Editing food creation)
     , pagination : Pagination
     , foodsSearchString : String
@@ -22,14 +25,18 @@ type alias Main ingredientId ingredient update foodId food creation =
 
 
 type alias Initial ingredientId ingredient update foodId food =
-    { ingredients : Maybe (DictList ingredientId (IngredientState ingredient update))
+    { jwt : JWT
+    , recipeId : RecipeId
+    , ingredients : Maybe (DictList ingredientId (IngredientState ingredient update))
     , foods : Maybe (DictList foodId food)
     }
 
 
-initial : Initial ingredientId ingredient update foodId food
-initial =
-    { ingredients = Nothing
+initialWith : JWT -> RecipeId -> Initial ingredientId ingredient update foodId food
+initialWith jwt recipeId =
+    { jwt = jwt
+    , recipeId = recipeId
+    , ingredients = Nothing
     , foods = Nothing
     }
 
@@ -38,7 +45,9 @@ initialToMain : Initial ingredientId ingredient update foodId food -> Maybe (Mai
 initialToMain i =
     Maybe.map2
         (\ingredients foods ->
-            { ingredients = ingredients
+            { jwt = i.jwt
+            , recipeId = i.recipeId
+            , ingredients = ingredients
             , foods = foods |> DictList.map Editing.asView
             , pagination = Pagination.initial
             , foodsSearchString = ""
