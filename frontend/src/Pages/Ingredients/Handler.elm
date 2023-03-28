@@ -1,30 +1,23 @@
 module Pages.Ingredients.Handler exposing (init, update)
 
 import Api.Auxiliary exposing (ComplexFoodId, ComplexIngredientId, FoodId, IngredientId, JWT, MeasureId, RecipeId)
-import Api.Types.ComplexFood exposing (ComplexFood)
-import Api.Types.ComplexIngredient exposing (ComplexIngredient)
-import Api.Types.Food exposing (Food, decoderFood, encoderFood)
-import Api.Types.Ingredient exposing (Ingredient)
+import Api.Types.Food exposing (Food, decoderFood)
 import Json.Decode as Decode
-import Json.Encode as Encode
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
 import Monocle.Optional
-import Pages.Ingredients.ComplexIngredientClientInput as ComplexIngredientClientInput exposing (ComplexIngredientClientInput)
+import Pages.Ingredients.Complex.Handler
 import Pages.Ingredients.FoodGroup as FoodGroup
-import Pages.Ingredients.FoodGroupHandler as FoodGroupHandler
-import Pages.Ingredients.IngredientCreationClientInput as IngredientCreationClientInput exposing (IngredientCreationClientInput)
-import Pages.Ingredients.IngredientUpdateClientInput as IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
 import Pages.Ingredients.Page as Page
 import Pages.Ingredients.Pagination as Pagination exposing (Pagination)
+import Pages.Ingredients.Plain.Handler
+import Pages.Ingredients.Plain.Requests
 import Pages.Ingredients.Recipe.Handler
-import Pages.Ingredients.Requests as Requests
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.View.Tristate as Tristate
 import Pages.View.TristateUtil as TristateUtil
-import Ports exposing (doFetchFoods, storeFoods)
 import Result.Extra
 import Util.DictList as DictList
 import Util.HttpUtil as HttpUtil exposing (Error)
@@ -43,11 +36,9 @@ init flags =
 initialFetch : AuthorizedAccess -> RecipeId -> Cmd Page.LogicMsg
 initialFetch authorizedAccess recipeId =
     Cmd.batch
-        [ Requests.fetchIngredients authorizedAccess recipeId |> Cmd.map Page.IngredientMsg
-        , Requests.fetchComplexIngredients authorizedAccess recipeId |> Cmd.map Page.ComplexIngredientMsg
-        , Pages.Ingredients.Recipe.Handler.initialFetch authorizedAccess recipeId |> Cmd.map Page.RecipeMsg
-        , doFetchFoods ()
-        , Requests.fetchComplexFoods authorizedAccess |> Cmd.map Page.ComplexIngredientMsg
+        [ Pages.Ingredients.Recipe.Handler.initialFetch authorizedAccess recipeId |> Cmd.map Page.RecipeMsg
+        , Pages.Ingredients.Plain.Handler.initialFetch authorizedAccess recipeId |> Cmd.map Page.IngredientMsg
+        , Pages.Ingredients.Complex.Handler.initialFetch authorizedAccess recipeId |> Cmd.map Page.ComplexIngredientMsg
         ]
 
 
@@ -66,64 +57,24 @@ updateLogic msg model =
             changeFoodsMode model foodsMode
 
         Page.IngredientMsg ingredientsGroupMsg ->
-            let
-                -- Todo: Most likely it is sensible to extract this function to a sub-model.
-                updateSubModel =
-                    FoodGroupHandler.updateLogic
-                        { idOfIngredient = .id
-                        , idOfUpdate = .ingredientId
-                        , idOfFood = .id
-                        , foodIdOfIngredient = .foodId
-                        , foodIdOfCreation = .foodId
-                        , toUpdate = IngredientUpdateClientInput.from
-                        , toCreation = \food recipeId -> IngredientCreationClientInput.default recipeId food.id (food.measures |> List.head |> Maybe.Extra.unwrap 0 .id)
-                        , createIngredient = \authorizedAccess _ -> IngredientCreationClientInput.toCreation >> Requests.createIngredient authorizedAccess
-                        , saveIngredient = \authorizedAccess _ updateInput -> IngredientUpdateClientInput.to updateInput |> Requests.saveIngredient authorizedAccess
-                        , deleteIngredient = \authorizedAccess _ -> Requests.deleteIngredient authorizedAccess
-                        , storeFoods =
-                            Encode.list encoderFood
-                                >> Encode.encode 0
-                                >> storeFoods
-                        }
-            in
             TristateUtil.updateFromSubModel
                 { initialSubModelLens = Page.lenses.initial.ingredientsGroup
                 , mainSubModelLens = Page.lenses.main.ingredientsGroup
                 , subModelOf = Page.ingredientsGroupSubModel
                 , fromInitToMain = Page.initialToMain
-                , updateSubModel = updateSubModel
+                , updateSubModel = Pages.Ingredients.Plain.Handler.updateLogic
                 , toMsg = Page.IngredientMsg
                 }
                 ingredientsGroupMsg
                 model
 
         Page.ComplexIngredientMsg complexIngredientsGroupMsg ->
-            let
-                -- Todo: Most likely it is sensible to extract this function to a sub-model.
-                updateSubModel =
-                    FoodGroupHandler.updateLogic
-                        { idOfIngredient = .complexFoodId
-                        , idOfUpdate = .complexFoodId
-                        , idOfFood = .recipeId
-                        , foodIdOfIngredient = .complexFoodId
-                        , foodIdOfCreation = .complexFoodId
-                        , toUpdate = ComplexIngredientClientInput.from
-                        , toCreation = \food _ -> ComplexIngredientClientInput.fromFood food
-                        , createIngredient =
-                            \authorizedAccess recipeId ->
-                                ComplexIngredientClientInput.to
-                                    >> Requests.createComplexIngredient authorizedAccess recipeId
-                        , saveIngredient = \authorizedAccess recipeId updateInput -> ComplexIngredientClientInput.to updateInput |> Requests.saveComplexIngredient authorizedAccess recipeId
-                        , deleteIngredient = Requests.deleteComplexIngredient
-                        , storeFoods = \_ -> Cmd.none
-                        }
-            in
             TristateUtil.updateFromSubModel
                 { initialSubModelLens = Page.lenses.initial.complexIngredientsGroup
                 , mainSubModelLens = Page.lenses.main.complexIngredientsGroup
                 , subModelOf = Page.complexIngredientsGroupSubModel
                 , fromInitToMain = Page.initialToMain
-                , updateSubModel = updateSubModel
+                , updateSubModel = Pages.Ingredients.Complex.Handler.updateLogic
                 , toMsg = Page.ComplexIngredientMsg
                 }
                 complexIngredientsGroupMsg
@@ -158,7 +109,7 @@ updateFoods model =
                     |> Maybe.Extra.filter (always (foods |> List.isEmpty))
                     |> Maybe.Extra.unwrap Cmd.none
                         (\initial ->
-                            Requests.fetchFoods
+                            Pages.Ingredients.Plain.Requests.fetchFoods
                                 { configuration = model.configuration
                                 , jwt = initial.jwt
                                 }

@@ -61,10 +61,6 @@ lenses =
     }
 
 
-type alias Msg =
-    Tristate.Msg LogicMsg
-
-
 type LogicMsg
     = GotFetchResponse (Result Error Recipe)
     | Edit RecipeUpdateClientInput

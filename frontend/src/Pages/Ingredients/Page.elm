@@ -5,12 +5,13 @@ import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.ComplexIngredient exposing (ComplexIngredient)
 import Api.Types.Food exposing (Food)
 import Api.Types.Ingredient exposing (Ingredient)
-import Api.Types.Recipe exposing (Recipe)
 import Monocle.Lens exposing (Lens)
+import Pages.Ingredients.Complex.Page
 import Pages.Ingredients.ComplexIngredientClientInput exposing (ComplexIngredientClientInput)
 import Pages.Ingredients.FoodGroup as FoodGroup
 import Pages.Ingredients.IngredientCreationClientInput exposing (IngredientCreationClientInput)
 import Pages.Ingredients.IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
+import Pages.Ingredients.Plain.Page
 import Pages.Ingredients.Recipe.Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.View.Tristate as Tristate exposing (Status(..))
@@ -26,8 +27,8 @@ type alias Model =
 type alias Main =
     { jwt : JWT
     , recipe : Pages.Ingredients.Recipe.Page.Main
-    , ingredientsGroup : IngredientsGroup
-    , complexIngredientsGroup : ComplexIngredientsGroup
+    , ingredientsGroup : Pages.Ingredients.Plain.Page.Main
+    , complexIngredientsGroup : Pages.Ingredients.Complex.Page.Main
     , foodsMode : FoodsMode
     , ingredientsSearchString : String
     , complexIngredientsSearchString : String
@@ -50,7 +51,7 @@ recipeSubModel =
         }
 
 
-ingredientsGroupSubModel : Model -> IngredientsGroupModel
+ingredientsGroupSubModel : Model -> Pages.Ingredients.Plain.Page.Model
 ingredientsGroupSubModel =
     TristateUtil.subModelWith
         { initialLens = lenses.initial.ingredientsGroup
@@ -58,7 +59,7 @@ ingredientsGroupSubModel =
         }
 
 
-complexIngredientsGroupSubModel : Model -> ComplexIngredientsGroupModel
+complexIngredientsGroupSubModel : Model -> Pages.Ingredients.Complex.Page.Model
 complexIngredientsGroupSubModel =
     TristateUtil.subModelWith
         { initialLens = lenses.initial.complexIngredientsGroup
@@ -103,30 +104,6 @@ initialToMain i =
             )
 
 
-type alias IngredientsGroup =
-    FoodGroup.Main IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput
-
-
-type alias IngredientsGroupMsg =
-    FoodGroup.LogicMsg IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput
-
-
-type alias IngredientsGroupModel =
-    FoodGroup.Model IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput
-
-
-type alias ComplexIngredientsGroup =
-    FoodGroup.Main ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood ComplexIngredientClientInput
-
-
-type alias ComplexIngredientsGroupMsg =
-    FoodGroup.LogicMsg ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood ComplexIngredientClientInput
-
-
-type alias ComplexIngredientsGroupModel =
-    FoodGroup.Model ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood ComplexIngredientClientInput
-
-
 type alias PlainIngredientState =
     FoodGroup.IngredientState Ingredient IngredientUpdateClientInput
 
@@ -141,10 +118,6 @@ type alias FoodMap =
 
 type alias ComplexFoodMap =
     DictList ComplexFoodId (Editing ComplexFood ComplexIngredientClientInput)
-
-
-type alias RecipeMap =
-    DictList RecipeId Recipe
 
 
 type alias PlainIngredientStateMap =
@@ -167,8 +140,8 @@ lenses :
         , recipe : Lens Initial Pages.Ingredients.Recipe.Page.Initial
         }
     , main :
-        { ingredientsGroup : Lens Main IngredientsGroup
-        , complexIngredientsGroup : Lens Main ComplexIngredientsGroup
+        { ingredientsGroup : Lens Main Pages.Ingredients.Plain.Page.Main
+        , complexIngredientsGroup : Lens Main Pages.Ingredients.Complex.Page.Main
         , recipe : Lens Main Pages.Ingredients.Recipe.Page.Main
         , foodsMode : Lens Main FoodsMode
         , ingredientsSearchString : Lens Main String
@@ -199,8 +172,8 @@ type alias Msg =
 type LogicMsg
     = UpdateFoods String
     | ChangeFoodsMode FoodsMode
-    | IngredientMsg IngredientsGroupMsg
-    | ComplexIngredientMsg ComplexIngredientsGroupMsg
+    | IngredientMsg Pages.Ingredients.Plain.Page.LogicMsg
+    | ComplexIngredientMsg Pages.Ingredients.Complex.Page.LogicMsg
     | RecipeMsg Pages.Ingredients.Recipe.Page.LogicMsg
 
 
