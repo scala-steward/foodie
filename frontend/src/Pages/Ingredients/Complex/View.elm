@@ -194,6 +194,6 @@ amountInfoOf complexFood =
         [ complexFood.amountGrams |> String.fromFloat
         , "g"
         , Maybe.Extra.unwrap ""
-            (\amountMillilitres -> String.concat [ " = ", amountMillilitres |> String.fromFloat ])
+            (\amountMillilitres -> String.concat [ " = ", amountMillilitres |> String.fromFloat, "ml" ])
             complexFood.amountMilliLitres
         ]
