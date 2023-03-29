@@ -27,6 +27,7 @@ import Pages.Ingredients.IngredientCreationClientInput as IngredientCreationClie
 import Pages.Ingredients.IngredientUpdateClientInput as IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
 import Pages.Ingredients.Page as Page
 import Pages.Ingredients.Pagination as Pagination exposing (Pagination)
+import Pages.Ingredients.Plain.View
 import Pages.Ingredients.Recipe.View
 import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput
 import Pages.Recipes.View
@@ -65,13 +66,6 @@ viewMain configuration main =
         main
     <|
         let
-            viewIngredientState =
-                Editing.unpack
-                    { onView = viewIngredientLine main.ingredientsGroup.foods
-                    , onUpdate = \o u -> updateIngredientLine main.ingredientsGroup.foods o u |> List.singleton
-                    , onDelete = deleteIngredientLine main.ingredientsGroup.foods
-                    }
-
             viewComplexIngredientState =
                 Editing.unpack
                     { onView = \o b -> viewComplexIngredientLine configuration main.complexIngredientsGroup.foods o
@@ -100,21 +94,6 @@ viewMain configuration main =
                         main
 
             -- todo: Remove duplication!
-            viewIngredients =
-                viewIngredientsWith
-                    (.original
-                        >> .foodId
-                        >> flip DictList.get main.ingredientsGroup.foods
-                        >> Maybe.Extra.unwrap "" (.original >> .name)
-                        >> SearchUtil.search main.ingredientsSearchString
-                    )
-                    Page.lenses.main.ingredientsGroup
-                    (.foodId
-                        >> flip DictList.get main.ingredientsGroup.foods
-                        >> Maybe.Extra.unwrap "" (.original >> .name)
-                    )
-
-            -- todo: Remove duplication!
             viewComplexIngredients =
                 viewIngredientsWith
                     (.original
@@ -135,45 +114,7 @@ viewMain configuration main =
                     |> Html.map Page.RecipeMsg
                 ]
             , div [ Style.classes.elements ] [ label [] [ text "Ingredients" ] ]
-            , div [ Style.classes.choices ]
-                [ HtmlUtil.searchAreaWith
-                    { msg = Page.SetIngredientsSearchString
-                    , searchString = main.ingredientsSearchString
-                    }
-                , table [ Style.classes.elementsWithControlsTable, Style.classes.ingredientEditTable ]
-                    [ colgroup []
-                        [ col [] []
-                        , col [] []
-                        , col [] []
-                        , col [] []
-                        ]
-                    , thead []
-                        [ tr [ Style.classes.tableHeader ]
-                            [ th [] [ label [] [ text "Name" ] ]
-                            , th [ Style.classes.numberLabel ] [ label [] [ text "Amount" ] ]
-                            , th [ Style.classes.numberLabel ] [ label [] [ text "Unit" ] ]
-                            , th [ Style.classes.toggle ] []
-                            ]
-                        ]
-                    , tbody []
-                        (viewIngredients
-                            |> Paginate.page
-                            |> List.concatMap viewIngredientState
-                        )
-                    ]
-                , div [ Style.classes.pagination ]
-                    [ ViewUtil.pagerButtons
-                        { msg =
-                            PaginationSettings.updateCurrentPage
-                                { pagination = Page.lenses.main.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.pagination
-                                , items = Pagination.lenses.ingredients
-                                }
-                                main
-                                >> Page.SetIngredientsPagination
-                        , elements = viewIngredients
-                        }
-                    ]
-                ]
+            , Pages.Ingredients.Plain.View.viewMain main.ingredientsGroup |> Html.map Page.IngredientMsg
             , div [ Style.classes.elements ] [ label [] [ text "Complex ingredients" ] ]
             , div [ Style.classes.choices ]
                 [ HtmlUtil.searchAreaWith
@@ -230,77 +171,11 @@ viewMain configuration main =
                 ]
             , case main.foodsMode of
                 Page.Plain ->
-                    viewPlain configuration main
+                    Pages.Ingredients.Plain.View.viewFoods configuration main
 
                 Page.Complex ->
                     viewComplex configuration main
             ]
-
-
-viewPlain : Configuration -> Page.Main -> Html Page.LogicMsg
-viewPlain configuration main =
-    let
-        viewFoods =
-            main.ingredientsGroup.foods
-                |> DictList.values
-                |> List.filter (.original >> .name >> SearchUtil.search main.ingredientsGroup.foodsSearchString)
-                |> List.sortBy (.original >> .name)
-                |> ViewUtil.paginate
-                    { pagination =
-                        Page.lenses.main.ingredientsGroup
-                            |> Compose.lensWithLens FoodGroup.lenses.main.pagination
-                            |> Compose.lensWithLens Pagination.lenses.foods
-                    }
-                    main
-
-        ( amount, unit ) =
-            if anySelection Page.lenses.main.ingredientsGroup main then
-                ( "Amount", "Unit" )
-
-            else
-                ( "", "" )
-    in
-    div [ Style.classes.addView ]
-        [ div [ Style.classes.addElement ]
-            [ HtmlUtil.searchAreaWith
-                { msg = Page.SetFoodsSearchString
-                , searchString = main.ingredientsGroup.foodsSearchString
-                }
-            , table [ Style.classes.elementsWithControlsTable ]
-                [ colgroup []
-                    [ col [] []
-                    , col [] []
-                    , col [] []
-                    , col [ stringProperty "span" "2" ] []
-                    ]
-                , thead []
-                    [ tr [ Style.classes.tableHeader ]
-                        [ th [ scope "col" ] [ label [] [ text "Name" ] ]
-                        , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text amount ] ]
-                        , th [ scope "col", Style.classes.numberLabel ] [ label [] [ text unit ] ]
-                        , th [ colspan 2, scope "colgroup", Style.classes.controlsGroup ] []
-                        ]
-                    ]
-                , tbody []
-                    (viewFoods
-                        |> Paginate.page
-                        |> List.map (viewFoodLine configuration main.ingredientsGroup.ingredients)
-                    )
-                ]
-            , div [ Style.classes.pagination ]
-                [ ViewUtil.pagerButtons
-                    { msg =
-                        PaginationSettings.updateCurrentPage
-                            { pagination = Page.lenses.main.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.main.pagination
-                            , items = Pagination.lenses.foods
-                            }
-                            main
-                            >> Page.SetIngredientsPagination
-                    , elements = viewFoods
-                    }
-                ]
-            ]
-        ]
 
 
 viewComplex : Configuration -> Page.Main -> Html Page.LogicMsg
@@ -367,90 +242,6 @@ viewComplex configuration main =
                 ]
             ]
         ]
-
-
-viewIngredientLine : Page.FoodMap -> Ingredient -> Bool -> List (Html Page.LogicMsg)
-viewIngredientLine foodMap ingredient showControls =
-    let
-        editMsg =
-            Page.EnterEditIngredient ingredient.id |> onClick
-    in
-    ingredientLineWith
-        { controls =
-            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
-            , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.RequestDeleteIngredient ingredient.id) ] [ text "Delete" ] ]
-            ]
-        , foodMap = foodMap
-        , toggleCommand = Page.ToggleIngredientControls ingredient.id
-        , showControls = showControls
-        }
-        ingredient
-
-
-deleteIngredientLine : Page.FoodMap -> Ingredient -> List (Html Page.LogicMsg)
-deleteIngredientLine foodMap ingredient =
-    ingredientLineWith
-        { controls =
-            [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteIngredient ingredient.id) ] [ text "Delete?" ] ]
-            , td [ Style.classes.controls ] [ button [ Style.classes.button.confirm, onClick (Page.CancelDeleteIngredient ingredient.id) ] [ text "Cancel" ] ]
-            ]
-        , foodMap = foodMap
-        , toggleCommand = Page.ToggleIngredientControls ingredient.id
-        , showControls = True
-        }
-        ingredient
-
-
-measureOfFood : MeasureId -> Food -> Maybe Measure
-measureOfFood measureId food =
-    food
-        |> .measures
-        |> List.Extra.find (\measure -> measure.id == measureId)
-
-
-ingredientLineWith :
-    { controls : List (Html msg)
-    , foodMap : Page.FoodMap
-    , toggleCommand : msg
-    , showControls : Bool
-    }
-    -> Ingredient
-    -> List (Html msg)
-ingredientLineWith ps ingredient =
-    let
-        withOnClick =
-            (::) (ps.toggleCommand |> onClick)
-
-        food =
-            DictList.get ingredient.foodId ps.foodMap |> Maybe.map .original
-
-        infoRow =
-            tr [ Style.classes.editing ]
-                [ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.Extra.unwrap "" .name <| food ] ]
-                , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick) [ label [] [ text <| String.fromFloat <| ingredient.amountUnit.factor ] ]
-                , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick)
-                    [ label []
-                        [ text <|
-                            Maybe.Extra.unwrap "" .name <|
-                                Maybe.andThen (measureOfFood ingredient.amountUnit.measureId) <|
-                                    food
-                        ]
-                    ]
-                , HtmlUtil.toggleControlsCell ps.toggleCommand
-                ]
-
-        controlsRow =
-            tr []
-                [ td [ colspan 3 ] [ table [ Style.classes.elementsWithControlsTable ] [ tr [] ps.controls ] ]
-                ]
-    in
-    infoRow
-        :: (if ps.showControls then
-                [ controlsRow ]
-
-            else
-                []
-           )
 
 
 viewComplexIngredientLine : Configuration -> Page.ComplexFoodMap -> ComplexIngredient -> Html Page.LogicMsg
@@ -522,84 +313,6 @@ complexIngredientLineWith ps complexIngredient =
         )
 
 
-updateIngredientLine : Page.FoodMap -> Ingredient -> IngredientUpdateClientInput -> Html Page.LogicMsg
-updateIngredientLine foodMap ingredient ingredientUpdateClientInput =
-    let
-        saveMsg =
-            Page.SaveIngredientEdit ingredientUpdateClientInput
-
-        cancelMsg =
-            Page.ExitEditIngredientAt ingredient.id
-
-        validInput =
-            ingredientUpdateClientInput.amountUnit.factor |> ValidatedInput.isValid
-
-        food =
-            DictList.get ingredient.foodId foodMap |> Maybe.map .original
-
-        -- todo: Flatten maybe uses
-        maybeMeasure =
-            food
-                |> Maybe.andThen
-                    (measureOfFood ingredient.amountUnit.measureId)
-    in
-    tr [ Style.classes.editLine ]
-        [ td [] [ label [] [ text <| Maybe.Extra.unwrap "" .name <| food ] ]
-        , td [ Style.classes.numberCell ]
-            [ input
-                [ value
-                    ingredientUpdateClientInput.amountUnit.factor.text
-                , onInput
-                    (flip
-                        (ValidatedInput.lift
-                            (IngredientUpdateClientInput.lenses.amountUnit
-                                |> Compose.lensWithLens AmountUnitClientInput.lenses.factor
-                            )
-                        ).set
-                        ingredientUpdateClientInput
-                        >> Page.UpdateIngredient
-                    )
-                , onEnter saveMsg
-                , HtmlUtil.onEscape cancelMsg
-                , Style.classes.numberLabel
-                ]
-                []
-            ]
-        , td [ Style.classes.numberCell ]
-            [ dropdown
-                { items = unitDropdown foodMap ingredient.foodId
-                , emptyItem =
-                    Maybe.map startingDropdownUnit <| maybeMeasure
-                , onChange =
-                    onChangeDropdown
-                        { amountUnitLens = IngredientUpdateClientInput.lenses.amountUnit
-                        , measureIdOf = .amountUnit >> .measureId
-                        , mkMsg = Page.UpdateIngredient
-                        , input = ingredientUpdateClientInput
-                        }
-                }
-                [ Style.classes.numberLabel, HtmlUtil.onEscape cancelMsg ]
-                (maybeMeasure
-                    |> Maybe.map .name
-                )
-            ]
-        , td []
-            [ button
-                ([ MaybeUtil.defined <| Style.classes.button.confirm
-                 , MaybeUtil.defined <| disabled <| not <| validInput
-                 , MaybeUtil.optional validInput <| onClick saveMsg
-                 ]
-                    |> Maybe.Extra.values
-                )
-                [ text "Save" ]
-            ]
-        , td []
-            [ button [ Style.classes.button.cancel, onClick cancelMsg ]
-                [ text "Cancel" ]
-            ]
-        ]
-
-
 updateComplexIngredientLine : Page.ComplexFoodMap -> ComplexIngredient -> ComplexIngredientClientInput -> Html Page.LogicMsg
 updateComplexIngredientLine complexFoodMap complexIngredient complexIngredientUpdateClientInput =
     let
@@ -647,37 +360,6 @@ updateComplexIngredientLine complexFoodMap complexIngredient complexIngredientUp
         ]
 
 
-unitDropdown : Page.FoodMap -> FoodId -> List Dropdown.Item
-unitDropdown fm fId =
-    fm
-        |> DictList.get fId
-        |> Maybe.Extra.unwrap [] (.original >> .measures)
-        |> List.map (\m -> { value = String.fromInt m.id, text = m.name, enabled = True })
-
-
-startingDropdownUnit : Measure -> Dropdown.Item
-startingDropdownUnit measure =
-    { value = String.fromInt measure.id
-    , text = measure.name
-    , enabled = True
-    }
-
-
-onChangeDropdown :
-    { amountUnitLens : Lens input AmountUnitClientInput.AmountUnitClientInput
-    , measureIdOf : input -> MeasureId
-    , input : input
-    , mkMsg : input -> Page.LogicMsg
-    }
-    -> Maybe String
-    -> Page.LogicMsg
-onChangeDropdown ps =
-    Maybe.andThen String.toInt
-        >> Maybe.withDefault (ps.measureIdOf ps.input)
-        >> flip (ps.amountUnitLens |> Compose.lensWithLens AmountUnitClientInput.lenses.measureId).set ps.input
-        >> ps.mkMsg
-
-
 type alias ComplexFoodInfo =
     { name : String
     , amountGrams : String
@@ -694,122 +376,6 @@ amountInfoOf complexFood =
                 complexFood.amountMilliLitres
     in
     (complexFood.amountGrams |> String.fromFloat) ++ suffix
-
-
-viewFoodLine : Configuration -> Page.PlainIngredientStateMap -> Editing Food IngredientCreationClientInput -> Html Page.LogicMsg
-viewFoodLine configuration ingredients food =
-    let
-        addMsg =
-            Page.AddFood food.original.id
-
-        selectMsg =
-            Page.SelectFood food.original
-
-        cancelMsg =
-            Page.DeselectFood food.original.id
-
-        maybeIngredientToAdd =
-            Editing.unpack
-                { onView = \_ _ -> Nothing
-                , onUpdate = \_ u -> Just u
-                , onDelete = \_ -> Nothing
-                }
-                food
-
-        rowClickAction =
-            if Maybe.Extra.isJust maybeIngredientToAdd then
-                []
-
-            else
-                [ onClick selectMsg ]
-
-        process =
-            case maybeIngredientToAdd of
-                Nothing ->
-                    [ td [ Style.classes.editable, Style.classes.numberCell ] []
-                    , td [ Style.classes.editable, Style.classes.numberCell ] []
-                    , td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick selectMsg ] [ text "Select" ] ]
-                    , td [ Style.classes.controls ]
-                        [ Links.linkButton
-                            { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsFoodSelect.address <| food.original.id
-                            , attributes = [ Style.classes.button.nutrients ]
-                            , children = [ text "Nutrients" ]
-                            }
-                        ]
-                    ]
-
-                Just ingredientToAdd ->
-                    let
-                        validInput =
-                            ingredientToAdd.amountUnit.factor |> ValidatedInput.isValid
-
-                        ( confirmName, confirmStyle ) =
-                            if DictListUtil.existsValue (\ingredient -> ingredient.original.foodId == ingredientToAdd.foodId) ingredients then
-                                ( "Add again", Style.classes.button.edit )
-
-                            else
-                                ( "Add"
-                                , Style.classes.button.confirm
-                                )
-                    in
-                    [ td [ Style.classes.numberCell ]
-                        [ input
-                            ([ MaybeUtil.defined <| value ingredientToAdd.amountUnit.factor.text
-                             , MaybeUtil.defined <|
-                                onInput <|
-                                    flip
-                                        (ValidatedInput.lift
-                                            (IngredientCreationClientInput.amountUnit
-                                                |> Compose.lensWithLens AmountUnitClientInput.lenses.factor
-                                            )
-                                        ).set
-                                        ingredientToAdd
-                                        >> Page.UpdateAddFood
-                             , MaybeUtil.defined <| Style.classes.numberLabel
-                             , MaybeUtil.defined <| HtmlUtil.onEscape cancelMsg
-                             , MaybeUtil.optional validInput <| onEnter addMsg
-                             ]
-                                |> Maybe.Extra.values
-                            )
-                            []
-                        ]
-                    , td [ Style.classes.numberCell ]
-                        [ dropdown
-                            { items =
-                                --todo: Check duplication with unitDropdown
-                                food.original.measures
-                                    |> List.map (\m -> { value = String.fromInt m.id, text = m.name, enabled = True })
-                            , emptyItem = Nothing
-                            , onChange =
-                                onChangeDropdown
-                                    { amountUnitLens = IngredientCreationClientInput.amountUnit
-                                    , measureIdOf = .amountUnit >> .measureId
-                                    , mkMsg = Page.UpdateAddFood
-                                    , input = ingredientToAdd
-                                    }
-                            }
-                            [ Style.classes.numberLabel
-                            , HtmlUtil.onEscape cancelMsg
-                            ]
-                            (ingredientToAdd.amountUnit.measureId |> String.fromInt |> Just)
-                        ]
-                    , td [ Style.classes.controls ]
-                        [ button
-                            [ confirmStyle
-                            , disabled <| not <| validInput
-                            , onClick addMsg
-                            ]
-                            [ text confirmName
-                            ]
-                        ]
-                    , td [ Style.classes.controls ]
-                        [ button [ Style.classes.button.cancel, onClick cancelMsg ] [ text "Cancel" ] ]
-                    ]
-    in
-    tr ([ Style.classes.editing ] ++ rowClickAction)
-        (td [ Style.classes.editable ] [ label [] [ text food.original.name ] ]
-            :: process
-        )
 
 
 viewComplexFoodLine : Configuration -> Page.ComplexIngredientStateMap -> Editing ComplexFood ComplexIngredientClientInput -> Html Page.LogicMsg
