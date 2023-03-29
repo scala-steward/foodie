@@ -1,4 +1,4 @@
-module Pages.Util.Choice.ChoiceGroupView exposing (..)
+module Pages.Util.Choice.View exposing (..)
 
 import Basics.Extra exposing (flip)
 import Html exposing (Attribute, Html, button, div, label, table, tbody, td, text, th, thead, tr)
@@ -7,7 +7,7 @@ import Html.Events exposing (onClick)
 import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
 import Monocle.Compose as Compose
-import Pages.Util.Choice.ChoiceGroup as ChoiceGroup
+import Pages.Util.Choice.Page as ChoiceGroup
 import Pages.Util.Choice.Pagination as Pagination exposing (Pagination)
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.PaginationSettings as PaginationSettings

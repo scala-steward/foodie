@@ -5,7 +5,7 @@ import Api.Types.Food exposing (Food)
 import Api.Types.Ingredient exposing (Ingredient)
 import Pages.Ingredients.IngredientCreationClientInput exposing (IngredientCreationClientInput)
 import Pages.Ingredients.IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
-import Pages.Util.Choice.ChoiceGroup as ChoiceGroup
+import Pages.Util.Choice.Page as ChoiceGroup
 import Pages.View.Tristate as Tristate
 
 

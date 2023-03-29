@@ -4,7 +4,7 @@ import Api.Auxiliary exposing (ComplexFoodId, ComplexIngredientId, RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.ComplexIngredient exposing (ComplexIngredient)
 import Pages.Ingredients.ComplexIngredientClientInput exposing (ComplexIngredientClientInput)
-import Pages.Util.Choice.ChoiceGroup as ChoiceGroup
+import Pages.Util.Choice.Page as ChoiceGroup
 import Pages.View.Tristate as Tristate
 
 

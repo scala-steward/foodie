@@ -9,7 +9,7 @@ import Http
 import Json.Decode as Decode
 import Pages.Ingredients.Plain.Page as Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Pages.Util.Choice.ChoiceGroup as ChoiceGroup
+import Pages.Util.Choice.Page as ChoiceGroup
 import Pages.Util.Requests
 import Util.HttpUtil as HttpUtil exposing (Error)
 

@@ -20,8 +20,8 @@ import Pages.Ingredients.AmountUnitClientInput as AmountUnitClientInput
 import Pages.Ingredients.IngredientCreationClientInput as IngredientCreationClientInput
 import Pages.Ingredients.IngredientUpdateClientInput as IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
 import Pages.Ingredients.Plain.Page as Page
-import Pages.Util.Choice.ChoiceGroup as ChoiceGroup
-import Pages.Util.Choice.ChoiceGroupView as ChoiceGroupView
+import Pages.Util.Choice.Page as ChoiceGroup
+import Pages.Util.Choice.View as ChoiceGroupView
 import Pages.Util.DictListUtil as DictListUtil
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Links as Links

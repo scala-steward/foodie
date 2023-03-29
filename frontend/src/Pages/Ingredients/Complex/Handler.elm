@@ -5,7 +5,7 @@ import Pages.Ingredients.Complex.Page as Page
 import Pages.Ingredients.Complex.Requests as Requests
 import Pages.Ingredients.ComplexIngredientClientInput as ComplexIngredientClientInput
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Pages.Util.Choice.ChoiceGroupHandler as ChoiceGroupHandler
+import Pages.Util.Choice.Handler as ChoiceGroupHandler
 
 
 initialFetch : AuthorizedAccess -> RecipeId -> Cmd Page.LogicMsg

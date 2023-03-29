@@ -1,10 +1,10 @@
-module Pages.Util.Choice.ChoiceGroupHandler exposing (updateLogic)
+module Pages.Util.Choice.Handler exposing (updateLogic)
 
 import Basics.Extra exposing (flip)
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Pages.Util.Choice.ChoiceGroup as ChoiceGroup
+import Pages.Util.Choice.Page as ChoiceGroup
 import Pages.Util.Choice.Pagination as Pagination
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.View.Tristate as Tristate

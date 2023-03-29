@@ -1,4 +1,4 @@
-module Pages.Util.Choice.ChoiceGroup exposing (..)
+module Pages.Util.Choice.Page exposing (..)
 
 import Api.Auxiliary exposing (JWT)
 import Monocle.Lens exposing (Lens)

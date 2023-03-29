@@ -13,7 +13,7 @@ import Pages.Ingredients.IngredientUpdateClientInput exposing (IngredientUpdateC
 import Pages.Ingredients.Plain.Page
 import Pages.Ingredients.Recipe.Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Pages.Util.Choice.ChoiceGroup as ChoiceGroup
+import Pages.Util.Choice.Page as ChoiceGroup
 import Pages.View.Tristate as Tristate exposing (Status(..))
 import Pages.View.TristateUtil as TristateUtil
 import Util.DictList exposing (DictList)

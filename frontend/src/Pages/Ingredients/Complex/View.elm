@@ -9,8 +9,8 @@ import Html.Events exposing (onClick, onInput)
 import Maybe.Extra
 import Pages.Ingredients.Complex.Page as Page
 import Pages.Ingredients.ComplexIngredientClientInput as ComplexIngredientClientInput
-import Pages.Util.Choice.ChoiceGroup as ChoiceGroup
-import Pages.Util.Choice.ChoiceGroupView as ChoiceGroupView
+import Pages.Util.Choice.Page as ChoiceGroup
+import Pages.Util.Choice.View as ChoiceGroupView
 import Pages.Util.DictListUtil as DictListUtil
 import Pages.Util.NavigationUtil as NavigationUtil
 import Pages.Util.Style as Style

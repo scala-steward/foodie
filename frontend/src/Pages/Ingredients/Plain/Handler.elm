@@ -5,12 +5,12 @@ import Api.Types.Food exposing (Food, encoderFood)
 import Api.Types.Ingredient exposing (Ingredient)
 import Json.Encode as Encode
 import Maybe.Extra
-import Pages.Util.Choice.ChoiceGroupHandler as ChoiceGroupHandler
 import Pages.Ingredients.IngredientCreationClientInput as IngredientCreationClientInput exposing (IngredientCreationClientInput)
 import Pages.Ingredients.IngredientUpdateClientInput as IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
 import Pages.Ingredients.Plain.Page as Page
 import Pages.Ingredients.Plain.Requests as Requests
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.Choice.Handler as ChoiceGroupHandler
 import Ports exposing (doFetchFoods, storeFoods)
 
 

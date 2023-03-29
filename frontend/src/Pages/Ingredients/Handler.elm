@@ -13,9 +13,7 @@ import Pages.Ingredients.Plain.Handler
 import Pages.Ingredients.Plain.Requests
 import Pages.Ingredients.Recipe.Handler
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Pages.Util.Choice.ChoiceGroup as ChoiceGroup
-import Pages.Util.Choice.Pagination as Pagination exposing (Pagination)
-import Pages.Util.PaginationSettings as PaginationSettings
+import Pages.Util.Choice.Page as ChoiceGroup
 import Pages.View.Tristate as Tristate
 import Pages.View.TristateUtil as TristateUtil
 import Result.Extra
