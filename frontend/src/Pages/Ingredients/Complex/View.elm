@@ -24,14 +24,14 @@ import Util.SearchUtil as SearchUtil
 viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ChoiceGroupView.viewMain
-        { nameOfFood = .name
-        , foodIdOfIngredient = .complexFoodId
-        , idOfIngredient = .complexFoodId
+        { nameOfChoice = .name
+        , choiceIdOfElement = .complexFoodId
+        , idOfElement = .complexFoodId
         , info =
             \complexIngredient ->
                 let
                     complexFood =
-                        DictList.get complexIngredient.complexFoodId main.foods |> Maybe.map .original
+                        DictList.get complexIngredient.complexFoodId main.choices |> Maybe.map .original
 
                     amountInfo =
                         complexFood
@@ -56,7 +56,7 @@ viewMain configuration main =
             \complexIngredient complexIngredientUpdateClientInput ->
                 let
                     complexFood =
-                        DictList.get complexIngredient.complexFoodId main.foods |> Maybe.map .original
+                        DictList.get complexIngredient.complexFoodId main.choices |> Maybe.map .original
                 in
                 [ { attributes = []
                   , children =
@@ -95,23 +95,23 @@ viewFoods : Configuration -> Page.Main -> Html Page.LogicMsg
 viewFoods configuration main =
     let
         ( factor, amount ) =
-            if DictListUtil.existsValue Editing.isUpdate main.foods then
+            if DictListUtil.existsValue Editing.isUpdate main.choices then
                 ( "Factor", "Amount" )
 
             else
                 ( "", "" )
     in
-    ChoiceGroupView.viewFoods
+    ChoiceGroupView.viewChoices
         { matchesSearchText = \string -> .name >> SearchUtil.search string
         , sortBy = .name
-        , foodHeaderColumns =
+        , choiceHeaderColumns =
             [ th [] [ label [] [ text "Name" ] ]
             , th [ Style.classes.numberLabel ] [ label [] [ text factor ] ]
             , th [ Style.classes.numberLabel ] [ label [] [ text amount ] ]
             ]
-        , idOfFood = .recipeId
-        , nameOfFood = .name
-        , ingredientCreationLine =
+        , idOfChoice = .recipeId
+        , nameOfChoice = .name
+        , elementCreationLine =
             \complexFood creation ->
                 [ td [ Style.classes.numberCell ]
                     [ input
@@ -128,10 +128,10 @@ viewFoods configuration main =
                         ]
                         []
                     ]
-                , td [ Style.classes.editable, Style.classes.numberLabel, onClick <| ChoiceGroup.SelectFood <| complexFood ]
+                , td [ Style.classes.editable, Style.classes.numberLabel, onClick <| ChoiceGroup.SelectChoice <| complexFood ]
                     [ label [] [ text <| amountInfoOf <| complexFood ] ]
                 ]
-        , ingredientCreationControls =
+        , elementCreationControls =
             \food creation ->
                 let
                     validInput =
@@ -149,11 +149,11 @@ viewFoods configuration main =
                         ]
                     ]
                 , td [ Style.classes.controls ]
-                    [ button [ Style.classes.button.cancel, onClick <| ChoiceGroup.DeselectFood <| food.recipeId ]
+                    [ button [ Style.classes.button.cancel, onClick <| ChoiceGroup.DeselectChoice <| food.recipeId ]
                         [ text "Cancel" ]
                     ]
                 ]
-        , viewFoodLine =
+        , viewChoiceLine =
             \_ ->
                 [ { attributes = [ Style.classes.editable, Style.classes.numberCell ]
                   , children = []
@@ -162,18 +162,18 @@ viewFoods configuration main =
                   , children = []
                   }
                 ]
-        , viewFoodLineControls =
+        , viewChoiceLineControls =
             \complexFood ->
                 let
                     exists =
-                        DictListUtil.existsValue (\complexIngredient -> complexIngredient.original.complexFoodId == complexFood.recipeId) main.ingredients
+                        DictListUtil.existsValue (\complexIngredient -> complexIngredient.original.complexFoodId == complexFood.recipeId) main.elements
 
                     ( selectName, selectStyles ) =
                         if exists then
                             ( "Added", [ Style.classes.button.edit, disabled True ] )
 
                         else
-                            ( "Select", [ Style.classes.button.confirm, onClick <| ChoiceGroup.SelectFood <| complexFood ] )
+                            ( "Select", [ Style.classes.button.confirm, onClick <| ChoiceGroup.SelectChoice <| complexFood ] )
                 in
                 [ td [ Style.classes.controls ] [ button selectStyles [ text <| selectName ] ]
                 , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration complexFood.recipeId ]

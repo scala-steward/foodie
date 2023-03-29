@@ -7,7 +7,7 @@ import Html.Events exposing (onClick)
 import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
 import Monocle.Compose as Compose
-import Pages.Util.Choice.ChoiceGroup as ChoiceGroup exposing (IngredientState)
+import Pages.Util.Choice.ChoiceGroup as ChoiceGroup
 import Pages.Util.Choice.Pagination as Pagination exposing (Pagination)
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.PaginationSettings as PaginationSettings
@@ -21,54 +21,54 @@ import Util.SearchUtil as SearchUtil
 
 
 viewMain :
-    { nameOfFood : food -> String
-    , foodIdOfIngredient : ingredient -> foodId
-    , idOfIngredient : ingredient -> ingredientId
-    , info : ingredient -> List (Column (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
-    , controls : ingredient -> List (Html (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
+    { nameOfChoice : choice -> String
+    , choiceIdOfElement : element -> choiceId
+    , idOfElement : element -> elementId
+    , info : element -> List (Column (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    , controls : element -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
     , isValidInput : update -> Bool
-    , edit : ingredient -> update -> List (Column (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
+    , edit : element -> update -> List (Column (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
     , fitControlsToColumns : Int
     }
-    -> ChoiceGroup.Main ingredientId ingredient update foodId food creation
-    -> Html (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation)
+    -> ChoiceGroup.Main elementId element update choiceId choice creation
+    -> Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation)
 viewMain ps main =
     let
-        viewIngredientState =
+        viewElementState =
             Editing.unpack
                 { onView =
-                    viewIngredientLine
-                        { idOfIngredient = ps.idOfIngredient
+                    viewElementLine
+                        { idOfElement = ps.idOfElement
                         , controls = ps.controls
                         , info = ps.info
                         }
                 , onUpdate =
-                    editIngredientLine
-                        { idOfIngredient = ps.idOfIngredient
+                    editElementLine
+                        { idOfElement = ps.idOfElement
                         , isValidInput = ps.isValidInput
                         , edit = ps.edit
                         , fitControlsToColumns = ps.fitControlsToColumns
                         }
                 , onDelete =
-                    deleteIngredientLine
-                        { idOfIngredient = ps.idOfIngredient
+                    deleteElementLine
+                        { idOfElement = ps.idOfElement
                         , info = ps.info
                         }
                 }
 
         extractedName =
             .original
-                >> ps.foodIdOfIngredient
-                >> flip DictList.get main.foods
-                >> Maybe.Extra.unwrap "" (.original >> ps.nameOfFood)
+                >> ps.choiceIdOfElement
+                >> flip DictList.get main.choices
+                >> Maybe.Extra.unwrap "" (.original >> ps.nameOfChoice)
 
-        paginatedIngredients =
+        paginatedElements =
             main
-                |> .ingredients
+                |> .elements
                 |> DictList.values
                 |> List.filter
                     (extractedName
-                        >> SearchUtil.search main.ingredientsSearchString
+                        >> SearchUtil.search main.elementsSearchString
                     )
                 |> List.sortBy
                     (extractedName
@@ -77,16 +77,16 @@ viewMain ps main =
                 |> ViewUtil.paginate
                     { pagination =
                         ChoiceGroup.lenses.main.pagination
-                            |> Compose.lensWithLens Pagination.lenses.ingredients
+                            |> Compose.lensWithLens Pagination.lenses.elements
                     }
                     main
     in
     div [ Style.classes.choices ]
         [ HtmlUtil.searchAreaWith
-            { msg = ChoiceGroup.SetIngredientsSearchString
-            , searchString = main.ingredientsSearchString
+            { msg = ChoiceGroup.SetElementsSearchString
+            , searchString = main.elementsSearchString
             }
-        , table [ Style.classes.elementsWithControlsTable, Style.classes.ingredientEditTable ]
+        , table [ Style.classes.elementsWithControlsTable, Style.classes.elementEditTable ]
             [ thead []
                 [ tr [ Style.classes.tableHeader ]
                     [ th [] [ label [] [ text "Name" ] ]
@@ -96,9 +96,9 @@ viewMain ps main =
                     ]
                 ]
             , tbody []
-                (paginatedIngredients
+                (paginatedElements
                     |> Paginate.page
-                    |> List.concatMap viewIngredientState
+                    |> List.concatMap viewElementState
                 )
             ]
         , div [ Style.classes.pagination ]
@@ -106,75 +106,75 @@ viewMain ps main =
                 { msg =
                     PaginationSettings.updateCurrentPage
                         { pagination = ChoiceGroup.lenses.main.pagination
-                        , items = Pagination.lenses.ingredients
+                        , items = Pagination.lenses.elements
                         }
                         main
-                        >> ChoiceGroup.SetIngredientsPagination
-                , elements = paginatedIngredients
+                        >> ChoiceGroup.SetPagination
+                , elements = paginatedElements
                 }
             ]
         ]
 
 
-viewFoods :
-    { matchesSearchText : String -> food -> Bool
-    , sortBy : food -> comparable
-    , foodHeaderColumns : List (Html (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
-    , idOfFood : food -> foodId
-    , nameOfFood : food -> String
-    , ingredientCreationLine : food -> creation -> List (Html (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
-    , ingredientCreationControls : food -> creation -> List (Html (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
-    , viewFoodLine : food -> List (Column (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
-    , viewFoodLineControls : food -> List (Html (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
+viewChoices :
+    { matchesSearchText : String -> choice -> Bool
+    , sortBy : choice -> comparable
+    , choiceHeaderColumns : List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    , idOfChoice : choice -> choiceId
+    , nameOfChoice : choice -> String
+    , elementCreationLine : choice -> creation -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    , elementCreationControls : choice -> creation -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    , viewChoiceLine : choice -> List (Column (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    , viewChoiceLineControls : choice -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
     }
-    -> ChoiceGroup.Main ingredientId ingredient update foodId food creation
-    -> Html (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation)
-viewFoods ps main =
+    -> ChoiceGroup.Main elementId element update choiceId choice creation
+    -> Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation)
+viewChoices ps main =
     let
-        paginatedFoods =
+        paginatedChoices =
             main
-                |> .foods
+                |> .choices
                 |> DictList.values
-                |> List.filter (.original >> ps.matchesSearchText main.foodsSearchString)
+                |> List.filter (.original >> ps.matchesSearchText main.choicesSearchString)
                 |> List.sortBy (.original >> ps.sortBy)
                 |> ViewUtil.paginate
                     { pagination =
                         ChoiceGroup.lenses.main.pagination
-                            |> Compose.lensWithLens Pagination.lenses.foods
+                            |> Compose.lensWithLens Pagination.lenses.choices
                     }
                     main
     in
     div [ Style.classes.addView ]
         [ div [ Style.classes.addElement ]
             [ HtmlUtil.searchAreaWith
-                { msg = ChoiceGroup.SetFoodsSearchString
-                , searchString = main.foodsSearchString
+                { msg = ChoiceGroup.SetChoicesSearchString
+                , searchString = main.choicesSearchString
                 }
             , table [ Style.classes.elementsWithControlsTable ]
                 [ thead []
                     [ tr [ Style.classes.tableHeader ]
-                        (ps.foodHeaderColumns
+                        (ps.choiceHeaderColumns
                             ++ [ th [ Style.classes.toggle ] [] ]
                         )
                     ]
                 , tbody []
-                    (paginatedFoods
+                    (paginatedChoices
                         |> Paginate.page
                         |> List.concatMap
                             (Editing.unpack
                                 { onView =
-                                    viewFoodLine
-                                        { nameOfFood = ps.nameOfFood
-                                        , idOfFood = ps.idOfFood
-                                        , foodOnView = ps.viewFoodLine
-                                        , foodControls = ps.viewFoodLineControls
+                                    viewChoiceLine
+                                        { nameOfChoice = ps.nameOfChoice
+                                        , idOfChoice = ps.idOfChoice
+                                        , choiceOnView = ps.viewChoiceLine
+                                        , choiceControls = ps.viewChoiceLineControls
                                         }
                                 , onUpdate =
-                                    editIngredientCreation
-                                        { idOfFood = ps.idOfFood
-                                        , nameOfFood = ps.nameOfFood
-                                        , ingredientCreationLine = ps.ingredientCreationLine
-                                        , ingredientCreationControls = ps.ingredientCreationControls
+                                    editElementCreation
+                                        { idOfChoice = ps.idOfChoice
+                                        , nameOfChoice = ps.nameOfChoice
+                                        , elementCreationLine = ps.elementCreationLine
+                                        , elementCreationControls = ps.elementCreationControls
                                         }
                                 , onDelete = always []
                                 }
@@ -186,53 +186,53 @@ viewFoods ps main =
                     { msg =
                         PaginationSettings.updateCurrentPage
                             { pagination = ChoiceGroup.lenses.main.pagination
-                            , items = Pagination.lenses.foods
+                            , items = Pagination.lenses.choices
                             }
                             main
-                            >> ChoiceGroup.SetIngredientsPagination
-                    , elements = paginatedFoods
+                            >> ChoiceGroup.SetPagination
+                    , elements = paginatedChoices
                     }
                 ]
             ]
         ]
 
 
-viewIngredientLine :
-    { idOfIngredient : ingredient -> ingredientId
-    , info : ingredient -> List (Column (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
-    , controls : ingredient -> List (Html (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
+viewElementLine :
+    { idOfElement : element -> elementId
+    , info : element -> List (Column (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    , controls : element -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
     }
-    -> ingredient
+    -> element
     -> Bool
-    -> List (Html (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
-viewIngredientLine ps ingredient showControls =
-    ingredientLineWith
-        { idOfIngredient = ps.idOfIngredient
+    -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+viewElementLine ps element showControls =
+    elementLineWith
+        { idOfElement = ps.idOfElement
         , info = ps.info
         , controls = ps.controls
         , showControls = showControls
         }
-        ingredient
+        element
 
 
-deleteIngredientLine :
-    { idOfIngredient : ingredient -> ingredientId
-    , info : ingredient -> List (Column (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
+deleteElementLine :
+    { idOfElement : element -> elementId
+    , info : element -> List (Column (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
     }
-    -> ingredient
-    -> List (Html (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
-deleteIngredientLine ps =
-    ingredientLineWith
-        { idOfIngredient = ps.idOfIngredient
+    -> element
+    -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+deleteElementLine ps =
+    elementLineWith
+        { idOfElement = ps.idOfElement
         , info = ps.info
         , controls =
-            \ingredient ->
+            \element ->
                 let
-                    ingredientId =
-                        ingredient |> ps.idOfIngredient
+                    elementId =
+                        element |> ps.idOfElement
                 in
-                [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick <| ChoiceGroup.ConfirmDelete <| ingredientId ] [ text "Delete?" ] ]
-                , td [ Style.classes.controls ] [ button [ Style.classes.button.confirm, onClick <| ChoiceGroup.CancelDelete <| ingredientId ] [ text "Cancel" ] ]
+                [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick <| ChoiceGroup.ConfirmDelete <| elementId ] [ text "Delete?" ] ]
+                , td [ Style.classes.controls ] [ button [ Style.classes.button.confirm, onClick <| ChoiceGroup.CancelDelete <| elementId ] [ text "Cancel" ] ]
                 ]
         , showControls = True
         }
@@ -249,21 +249,21 @@ withExtraAttributes extra column =
     td (column.attributes ++ extra) column.children
 
 
-ingredientLineWith :
-    { idOfIngredient : ingredient -> ingredientId
-    , info : ingredient -> List (Column (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
-    , controls : ingredient -> List (Html (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
+elementLineWith :
+    { idOfElement : element -> elementId
+    , info : element -> List (Column (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    , controls : element -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
     , showControls : Bool
     }
-    -> ingredient
-    -> List (Html (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
-ingredientLineWith ps ingredient =
+    -> element
+    -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+elementLineWith ps element =
     let
         toggleCommand =
-            ChoiceGroup.ToggleControls <| ps.idOfIngredient <| ingredient
+            ChoiceGroup.ToggleControls <| ps.idOfElement <| element
 
         infoColumns =
-            ps.info ingredient
+            ps.info element
 
         infoCells =
             infoColumns |> List.map (withExtraAttributes [ toggleCommand |> onClick ])
@@ -276,7 +276,7 @@ ingredientLineWith ps ingredient =
 
         controlsRow =
             tr []
-                [ td [ colspan <| List.length <| infoColumns ] [ table [ Style.classes.elementsWithControlsTable ] [ tr [] (ps.controls <| ingredient) ] ]
+                [ td [ colspan <| List.length <| infoColumns ] [ table [ Style.classes.elementsWithControlsTable ] [ tr [] (ps.controls <| element) ] ]
                 ]
     in
     infoRow
@@ -288,32 +288,32 @@ ingredientLineWith ps ingredient =
            )
 
 
-editIngredientLine :
-    { idOfIngredient : ingredient -> ingredientId
+editElementLine :
+    { idOfElement : element -> elementId
     , isValidInput : update -> Bool
-    , edit : ingredient -> update -> List (Column (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
+    , edit : element -> update -> List (Column (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
     , fitControlsToColumns : Int
     }
-    -> ingredient
+    -> element
     -> update
-    -> List (Html (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
-editIngredientLine ps ingredient ingredientUpdateClientInput =
+    -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+editElementLine ps element elementUpdateClientInput =
     let
         saveMsg =
-            ChoiceGroup.SaveEdit ingredientUpdateClientInput
+            ChoiceGroup.SaveEdit elementUpdateClientInput
 
-        ingredientId =
-            ingredient |> ps.idOfIngredient
+        elementId =
+            element |> ps.idOfElement
 
         cancelMsg =
-            ChoiceGroup.ExitEdit <| ingredientId
+            ChoiceGroup.ExitEdit <| elementId
 
         validInput =
-            ingredientUpdateClientInput |> ps.isValidInput
+            elementUpdateClientInput |> ps.isValidInput
 
         editRow =
             tr [ Style.classes.editLine ]
-                ((ps.edit ingredient ingredientUpdateClientInput
+                ((ps.edit element elementUpdateClientInput
                     |> List.map
                         (withExtraAttributes
                             [ onEnter saveMsg
@@ -321,7 +321,7 @@ editIngredientLine ps ingredient ingredientUpdateClientInput =
                             ]
                         )
                  )
-                    ++ [ HtmlUtil.toggleControlsCell <| ChoiceGroup.ToggleControls <| ingredientId ]
+                    ++ [ HtmlUtil.toggleControlsCell <| ChoiceGroup.ToggleControls <| elementId ]
                 )
 
         controlsRow =
@@ -351,33 +351,33 @@ editIngredientLine ps ingredient ingredientUpdateClientInput =
     [ editRow, controlsRow ]
 
 
-viewFoodLine :
-    { nameOfFood : food -> String
-    , idOfFood : food -> foodId
-    , foodOnView : food -> List (Column (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
-    , foodControls : food -> List (Html (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
+viewChoiceLine :
+    { nameOfChoice : choice -> String
+    , idOfChoice : choice -> choiceId
+    , choiceOnView : choice -> List (Column (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    , choiceControls : choice -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
     }
-    -> food
+    -> choice
     -> Bool
-    -> List (Html (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
-viewFoodLine ps food showControls =
+    -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+viewChoiceLine ps choice showControls =
     let
         toggleCommand =
-            ChoiceGroup.ToggleFoodControls <| ps.idOfFood <| food
+            ChoiceGroup.ToggleChoiceControls <| ps.idOfChoice <| choice
 
         columns =
-            ps.foodOnView food |> List.map (withExtraAttributes [ onClick toggleCommand ])
+            ps.choiceOnView choice |> List.map (withExtraAttributes [ onClick toggleCommand ])
 
         infoRow =
             tr [ Style.classes.editing ]
-                (td [ Style.classes.editable, onClick toggleCommand ] [ label [] [ text <| ps.nameOfFood <| food ] ]
+                (td [ Style.classes.editable, onClick toggleCommand ] [ label [] [ text <| ps.nameOfChoice <| choice ] ]
                     :: (columns ++ [ HtmlUtil.toggleControlsCell toggleCommand ])
                 )
 
         -- Extra column because the name is fixed
         controlsRow =
             tr []
-                [ td [ colspan <| (+) 1 <| List.length <| columns ] [ table [ Style.classes.elementsWithControlsTable ] [ tr [] (ps.foodControls <| food) ] ]
+                [ td [ colspan <| (+) 1 <| List.length <| columns ] [ table [ Style.classes.elementsWithControlsTable ] [ tr [] (ps.choiceControls <| choice) ] ]
                 ]
     in
     infoRow
@@ -389,32 +389,32 @@ viewFoodLine ps food showControls =
            )
 
 
-editIngredientCreation :
-    { idOfFood : food -> foodId
-    , nameOfFood : food -> String
-    , ingredientCreationLine : food -> creation -> List (Html (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
-    , ingredientCreationControls : food -> creation -> List (Html (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
+editElementCreation :
+    { idOfChoice : choice -> choiceId
+    , nameOfChoice : choice -> String
+    , elementCreationLine : choice -> creation -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    , elementCreationControls : choice -> creation -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
     }
-    -> food
+    -> choice
     -> creation
-    -> List (Html (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation))
-editIngredientCreation ps food creation =
+    -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+editElementCreation ps choice creation =
     let
-        foodId =
-            food |> ps.idOfFood
+        choiceId =
+            choice |> ps.idOfChoice
 
         toggleMsg =
-            ChoiceGroup.ToggleFoodControls <| foodId
+            ChoiceGroup.ToggleChoiceControls <| choiceId
 
         creationRow =
             tr []
-                (td [ Style.classes.editable ] [ label [] [ text <| ps.nameOfFood <| food ] ]
-                    :: ps.ingredientCreationLine food creation
+                (td [ Style.classes.editable ] [ label [] [ text <| ps.nameOfChoice <| choice ] ]
+                    :: ps.elementCreationLine choice creation
                     ++ [ HtmlUtil.toggleControlsCell <| toggleMsg ]
                 )
 
         columns =
-            ps.ingredientCreationLine food creation
+            ps.elementCreationLine choice creation
 
         -- Extra column because the name is fixed
         controlsRow =
@@ -422,7 +422,7 @@ editIngredientCreation ps food creation =
                 [ td [ colspan <| (+) 1 <| List.length <| columns ]
                     [ table [ Style.classes.elementsWithControlsTable ]
                         [ tr []
-                            (ps.ingredientCreationControls food creation)
+                            (ps.elementCreationControls choice creation)
                         ]
                     ]
                 ]

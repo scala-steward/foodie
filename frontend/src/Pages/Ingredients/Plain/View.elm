@@ -17,11 +17,10 @@ import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
 import Pages.Ingredients.AmountUnitClientInput as AmountUnitClientInput
-import Pages.Util.Choice.ChoiceGroup as ChoiceGroup exposing (IngredientState)
-import Pages.Util.Choice.ChoiceGroup
 import Pages.Ingredients.IngredientCreationClientInput as IngredientCreationClientInput
 import Pages.Ingredients.IngredientUpdateClientInput as IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
 import Pages.Ingredients.Plain.Page as Page
+import Pages.Util.Choice.ChoiceGroup as ChoiceGroup
 import Pages.Util.Choice.ChoiceGroupView as ChoiceGroupView
 import Pages.Util.DictListUtil as DictListUtil
 import Pages.Util.HtmlUtil as HtmlUtil
@@ -38,7 +37,7 @@ viewMain : Page.Main -> Html Page.LogicMsg
 viewMain main =
     let
         unitDropdown foodId =
-            main.foods
+            main.choices
                 |> DictList.get foodId
                 |> Maybe.Extra.unwrap [] (.original >> .measures)
                 |> List.map
@@ -50,14 +49,14 @@ viewMain main =
                     )
     in
     ChoiceGroupView.viewMain
-        { nameOfFood = .name
-        , foodIdOfIngredient = .foodId
-        , idOfIngredient = .id
+        { nameOfChoice = .name
+        , choiceIdOfElement = .foodId
+        , idOfElement = .id
         , info =
             \ingredient ->
                 let
                     food =
-                        DictList.get ingredient.foodId main.foods |> Maybe.map .original
+                        DictList.get ingredient.foodId main.choices |> Maybe.map .original
                 in
                 [ { attributes = [ Style.classes.editable ]
                   , children = [ label [] [ text <| Maybe.Extra.unwrap "" .name <| food ] ]
@@ -86,7 +85,7 @@ viewMain main =
             \ingredient ingredientUpdateClientInput ->
                 let
                     food =
-                        DictList.get ingredient.foodId main.foods |> Maybe.map .original
+                        DictList.get ingredient.foodId main.choices |> Maybe.map .original
 
                     maybeMeasure =
                         food
@@ -146,30 +145,30 @@ viewFoods : Configuration -> Page.Main -> Html Page.LogicMsg
 viewFoods configuration main =
     let
         ( amount, unit ) =
-            if DictListUtil.existsValue Editing.isUpdate main.foods then
+            if DictListUtil.existsValue Editing.isUpdate main.choices then
                 ( "Amount", "Unit" )
 
             else
                 ( "", "" )
     in
-    ChoiceGroupView.viewFoods
+    ChoiceGroupView.viewChoices
         { matchesSearchText = \string -> .name >> SearchUtil.search string
         , sortBy = .name
-        , foodHeaderColumns =
+        , choiceHeaderColumns =
             [ th [] [ label [] [ text "Name" ] ]
             , th [ Style.classes.numberLabel ] [ label [] [ text amount ] ]
             , th [ Style.classes.numberLabel ] [ label [] [ text unit ] ]
             ]
-        , idOfFood = .id
-        , nameOfFood = .name
-        , ingredientCreationLine =
+        , idOfChoice = .id
+        , nameOfChoice = .name
+        , elementCreationLine =
             \food creation ->
                 let
                     addMsg =
                         ChoiceGroup.Create food.id
 
                     cancelMsg =
-                        ChoiceGroup.DeselectFood food.id
+                        ChoiceGroup.DeselectChoice food.id
 
                     validInput =
                         creation.amountUnit.factor |> ValidatedInput.isValid
@@ -216,20 +215,20 @@ viewFoods configuration main =
                         (creation.amountUnit.measureId |> String.fromInt |> Just)
                     ]
                 ]
-        , ingredientCreationControls =
+        , elementCreationControls =
             \food creation ->
                 let
                     addMsg =
                         ChoiceGroup.Create food.id
 
                     cancelMsg =
-                        ChoiceGroup.DeselectFood food.id
+                        ChoiceGroup.DeselectChoice food.id
 
                     validInput =
                         creation.amountUnit.factor |> ValidatedInput.isValid
 
                     ( confirmName, confirmStyle ) =
-                        if DictListUtil.existsValue (\ingredient -> ingredient.original.foodId == creation.foodId) main.ingredients then
+                        if DictListUtil.existsValue (\ingredient -> ingredient.original.foodId == creation.foodId) main.elements then
                             ( "Add again", Style.classes.button.edit )
 
                         else
@@ -249,7 +248,7 @@ viewFoods configuration main =
                 , td [ Style.classes.controls ]
                     [ button [ Style.classes.button.cancel, onClick cancelMsg ] [ text "Cancel" ] ]
                 ]
-        , viewFoodLine =
+        , viewChoiceLine =
             \_ ->
                 [ { attributes = [ Style.classes.editable, Style.classes.numberCell ]
                   , children = []
@@ -258,9 +257,9 @@ viewFoods configuration main =
                   , children = []
                   }
                 ]
-        , viewFoodLineControls =
+        , viewChoiceLineControls =
             \food ->
-                [ td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick <| ChoiceGroup.SelectFood <| food ] [ text "Select" ] ]
+                [ td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick <| ChoiceGroup.SelectChoice <| food ] [ text "Select" ] ]
                 , td [ Style.classes.controls ]
                     [ Links.linkButton
                         { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsFoodSelect.address <| food.id

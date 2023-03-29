@@ -18,13 +18,13 @@ fetchComplexIngredients flags recipeId =
         flags
         (Addresses.Backend.recipes.complexIngredients.allOf recipeId)
         { body = Http.emptyBody
-        , expect = HttpUtil.expectJson ChoiceGroup.GotFetchResponse (Decode.list decoderComplexIngredient)
+        , expect = HttpUtil.expectJson ChoiceGroup.GotFetchElementsResponse (Decode.list decoderComplexIngredient)
         }
 
 
 fetchComplexFoods : AuthorizedAccess -> Cmd Page.LogicMsg
 fetchComplexFoods =
-    Pages.Util.Requests.fetchComplexFoodsWith ChoiceGroup.GotFetchFoodsResponse
+    Pages.Util.Requests.fetchComplexFoodsWith ChoiceGroup.GotFetchChoicesResponse
 
 
 createComplexIngredient :

@@ -19,18 +19,18 @@ initialFetch authorizedAccess recipeId =
 updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 updateLogic =
     ChoiceGroupHandler.updateLogic
-        { idOfIngredient = .complexFoodId
+        { idOfElement = .complexFoodId
         , idOfUpdate = .complexFoodId
-        , idOfFood = .recipeId
-        , foodIdOfIngredient = .complexFoodId
-        , foodIdOfCreation = .complexFoodId
+        , idOfChoice = .recipeId
+        , choiceIdOfElement = .complexFoodId
+        , choiceIdOfCreation = .complexFoodId
         , toUpdate = ComplexIngredientClientInput.from
         , toCreation = \food _ -> ComplexIngredientClientInput.fromFood food
-        , createIngredient =
+        , createElement =
             \authorizedAccess recipeId ->
                 ComplexIngredientClientInput.to
                     >> Requests.createComplexIngredient authorizedAccess recipeId
-        , saveIngredient = \authorizedAccess recipeId updateInput -> ComplexIngredientClientInput.to updateInput |> Requests.saveComplexIngredient authorizedAccess recipeId
-        , deleteIngredient = Requests.deleteComplexIngredient
-        , storeFoods = \_ -> Cmd.none
+        , saveElement = \authorizedAccess recipeId updateInput -> ComplexIngredientClientInput.to updateInput |> Requests.saveComplexIngredient authorizedAccess recipeId
+        , deleteElement = Requests.deleteComplexIngredient
+        , storeChoices = \_ -> Cmd.none
         }

@@ -5,24 +5,23 @@ import Pages.Util.PaginationSettings as PaginationSettings exposing (PaginationS
 
 
 type alias Pagination =
-    { ingredients : PaginationSettings
-    , foods : PaginationSettings
+    { elements : PaginationSettings
+    , choices : PaginationSettings
     }
 
 
 initial : Pagination
 initial =
-    { ingredients = PaginationSettings.initial
-    , foods = PaginationSettings.initial
+    { elements = PaginationSettings.initial
+    , choices = PaginationSettings.initial
     }
 
 
 lenses :
-    { ingredients : Lens Pagination PaginationSettings
-    , foods : Lens Pagination PaginationSettings
+    { elements : Lens Pagination PaginationSettings
+    , choices : Lens Pagination PaginationSettings
     }
 lenses =
-    { ingredients = Lens .ingredients (\b a -> { a | ingredients = b })
-    , foods = Lens .foods (\b a -> { a | foods = b })
+    { elements = Lens .elements (\b a -> { a | elements = b })
+    , choices = Lens .choices (\b a -> { a | choices = b })
     }
-

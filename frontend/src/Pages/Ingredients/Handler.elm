@@ -100,7 +100,7 @@ updateFoods model =
             (\foods ->
                 ( model
                     |> Tristate.mapInitial
-                        ((Page.lenses.initial.ingredientsGroup |> Compose.lensWithLens ChoiceGroup.lenses.initial.foods).set
+                        ((Page.lenses.initial.ingredientsGroup |> Compose.lensWithLens ChoiceGroup.lenses.initial.choices).set
                             (foods |> Just |> Maybe.Extra.filter (List.isEmpty >> not) |> Maybe.map (DictList.fromListWithKey .id))
                         )
                     |> Tristate.fromInitToMain Page.initialToMain
@@ -143,7 +143,7 @@ setSearchString lenses model string =
                 , paginationSettingsLens =
                     lenses.foodGroupLens
                         |> Compose.lensWithLens ChoiceGroup.lenses.main.pagination
-                        |> Compose.lensWithLens Pagination.lenses.ingredients
+                        |> Compose.lensWithLens Pagination.lenses.elements
                 }
                 string
             )

@@ -25,17 +25,17 @@ initialFetch authorizedAccess recipeId =
 updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 updateLogic =
     ChoiceGroupHandler.updateLogic
-        { idOfIngredient = .id
+        { idOfElement = .id
         , idOfUpdate = .ingredientId
-        , idOfFood = .id
-        , foodIdOfIngredient = .foodId
-        , foodIdOfCreation = .foodId
+        , idOfChoice = .id
+        , choiceIdOfElement = .foodId
+        , choiceIdOfCreation = .foodId
         , toUpdate = IngredientUpdateClientInput.from
         , toCreation = \food recipeId -> IngredientCreationClientInput.default recipeId food.id (food.measures |> List.head |> Maybe.Extra.unwrap 0 .id)
-        , createIngredient = \authorizedAccess _ -> IngredientCreationClientInput.toCreation >> Requests.createIngredient authorizedAccess
-        , saveIngredient = \authorizedAccess _ updateInput -> IngredientUpdateClientInput.to updateInput |> Requests.saveIngredient authorizedAccess
-        , deleteIngredient = \authorizedAccess _ -> Requests.deleteIngredient authorizedAccess
-        , storeFoods =
+        , createElement = \authorizedAccess _ -> IngredientCreationClientInput.toCreation >> Requests.createIngredient authorizedAccess
+        , saveElement = \authorizedAccess _ updateInput -> IngredientUpdateClientInput.to updateInput |> Requests.saveIngredient authorizedAccess
+        , deleteElement = \authorizedAccess _ -> Requests.deleteIngredient authorizedAccess
+        , storeChoices =
             Encode.list encoderFood
                 >> Encode.encode 0
                 >> storeFoods

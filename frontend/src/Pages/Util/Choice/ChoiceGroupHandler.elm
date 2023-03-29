@@ -4,49 +4,49 @@ import Api.Auxiliary exposing (RecipeId)
 import Basics.Extra exposing (flip)
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
+import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.Choice.ChoiceGroup as ChoiceGroup
 import Pages.Util.Choice.Pagination as Pagination
-import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.View.Tristate as Tristate
 import Result.Extra
 import Util.DictList as DictList
-import Util.Editing as Editing
+import Util.Editing as Editing exposing (Editing)
 import Util.LensUtil as LensUtil
 
 
 updateLogic :
-    { idOfIngredient : ingredient -> ingredientId
-    , idOfUpdate : update -> ingredientId
-    , idOfFood : food -> foodId
-    , foodIdOfIngredient : ingredient -> foodId
-    , foodIdOfCreation : creation -> foodId
-    , toUpdate : ingredient -> update
-    , toCreation : food -> RecipeId -> creation
-    , createIngredient : AuthorizedAccess -> RecipeId -> creation -> Cmd (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation)
-    , saveIngredient : AuthorizedAccess -> RecipeId -> update -> Cmd (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation)
-    , deleteIngredient : AuthorizedAccess -> RecipeId -> ingredientId -> Cmd (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation)
-    , storeFoods : List food -> Cmd (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation)
+    { idOfElement : element -> elementId
+    , idOfUpdate : update -> elementId
+    , idOfChoice : choice -> choiceId
+    , choiceIdOfElement : element -> choiceId
+    , choiceIdOfCreation : creation -> choiceId
+    , toUpdate : element -> update
+    , toCreation : choice -> RecipeId -> creation
+    , createElement : AuthorizedAccess -> RecipeId -> creation -> Cmd (ChoiceGroup.LogicMsg elementId element update choiceId choice creation)
+    , saveElement : AuthorizedAccess -> RecipeId -> update -> Cmd (ChoiceGroup.LogicMsg elementId element update choiceId choice creation)
+    , deleteElement : AuthorizedAccess -> RecipeId -> elementId -> Cmd (ChoiceGroup.LogicMsg elementId element update choiceId choice creation)
+    , storeChoices : List choice -> Cmd (ChoiceGroup.LogicMsg elementId element update choiceId choice creation)
     }
-    -> ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation
-    -> ChoiceGroup.Model ingredientId ingredient update foodId food creation
-    -> ( ChoiceGroup.Model ingredientId ingredient update foodId food creation, Cmd (ChoiceGroup.LogicMsg ingredientId ingredient update foodId food creation) )
+    -> ChoiceGroup.LogicMsg elementId element update choiceId choice creation
+    -> ChoiceGroup.Model elementId element update choiceId choice creation
+    -> ( ChoiceGroup.Model elementId element update choiceId choice creation, Cmd (ChoiceGroup.LogicMsg elementId element update choiceId choice creation) )
 updateLogic ps msg model =
     let
         edit update =
             ( model
-                |> mapIngredientStateById (update |> ps.idOfUpdate)
+                |> mapElementStateById (update |> ps.idOfUpdate)
                     (Editing.lenses.update.set update)
             , Cmd.none
             )
 
-        saveEdit ingredientUpdateClientInput =
+        saveEdit elementUpdateClientInput =
             ( model
             , model
                 |> Tristate.foldMain Cmd.none
                     (\main ->
-                        ingredientUpdateClientInput
-                            |> ps.saveIngredient
+                        elementUpdateClientInput
+                            |> ps.saveElement
                                 { configuration = model.configuration
                                 , jwt = main.jwt
                                 }
@@ -57,81 +57,81 @@ updateLogic ps msg model =
         gotSaveEditResponse result =
             ( result
                 |> Result.Extra.unpack (Tristate.toError model)
-                    (\ingredient ->
+                    (\element ->
                         model
-                            |> mapIngredientStateById (ingredient |> ps.idOfIngredient)
-                                (Editing.asViewWithElement ingredient)
+                            |> mapElementStateById (element |> ps.idOfElement)
+                                (Editing.asViewWithElement element)
                     )
             , Cmd.none
             )
 
-        toggleControls ingredientId =
+        toggleControls elementId =
             ( model
-                |> mapIngredientStateById ingredientId Editing.toggleControls
+                |> mapElementStateById elementId Editing.toggleControls
             , Cmd.none
             )
 
-        enterEdit ingredientId =
+        enterEdit elementId =
             ( model
-                |> mapIngredientStateById ingredientId (Editing.toUpdate ps.toUpdate)
+                |> mapElementStateById elementId (Editing.toUpdate ps.toUpdate)
             , Cmd.none
             )
 
-        exitEdit ingredientId =
+        exitEdit elementId =
             ( model
-                |> mapIngredientStateById ingredientId Editing.toView
+                |> mapElementStateById elementId Editing.toView
             , Cmd.none
             )
 
-        requestDelete ingredientId =
+        requestDelete elementId =
             ( model
-                |> mapIngredientStateById ingredientId Editing.toDelete
+                |> mapElementStateById elementId Editing.toDelete
             , Cmd.none
             )
 
-        confirmDelete ingredientId =
+        confirmDelete elementId =
             ( model
             , model
                 |> Tristate.foldMain Cmd.none
                     (\main ->
-                        ps.deleteIngredient
+                        ps.deleteElement
                             { configuration = model.configuration
                             , jwt = main.jwt
                             }
                             main.recipeId
-                            ingredientId
+                            elementId
                     )
             )
 
-        cancelDelete ingredientId =
+        cancelDelete elementId =
             ( model
-                |> mapIngredientStateById ingredientId Editing.toView
+                |> mapElementStateById elementId Editing.toView
             , Cmd.none
             )
 
-        gotDeleteResponse ingredientId result =
+        gotDeleteResponse elementId result =
             ( result
                 |> Result.Extra.unpack (Tristate.toError model)
                     (model
                         |> Tristate.mapMain
-                            (LensUtil.deleteAtId ingredientId
-                                ChoiceGroup.lenses.main.ingredients
+                            (LensUtil.deleteAtId elementId
+                                ChoiceGroup.lenses.main.elements
                             )
                         |> always
                     )
             , Cmd.none
             )
 
-        gotFetchResponse result =
+        gotFetchElementsResponse result =
             ( result
                 |> Result.Extra.unpack (Tristate.toError model)
-                    (\ingredients ->
+                    (\elements ->
                         model
                             |> Tristate.mapInitial
-                                (ChoiceGroup.lenses.initial.ingredients.set
-                                    (ingredients
+                                (ChoiceGroup.lenses.initial.elements.set
+                                    (elements
                                         |> List.map Editing.asView
-                                        |> DictList.fromListWithKey (.original >> ps.idOfIngredient)
+                                        |> DictList.fromListWithKey (.original >> ps.idOfElement)
                                         |> Just
                                     )
                                 )
@@ -139,61 +139,61 @@ updateLogic ps msg model =
             , Cmd.none
             )
 
-        gotFetchFoodsResponse result =
+        gotFetchChoicesResponse result =
             result
                 |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
-                    (\foods ->
+                    (\choices ->
                         ( model
                             |> Tristate.mapInitial
-                                (ChoiceGroup.lenses.initial.foods.set
-                                    (foods |> DictList.fromListWithKey ps.idOfFood |> Just)
+                                (ChoiceGroup.lenses.initial.choices.set
+                                    (choices |> DictList.fromListWithKey ps.idOfChoice |> Just)
                                 )
-                        , foods
-                            |> ps.storeFoods
+                        , choices
+                            |> ps.storeChoices
                         )
                     )
 
-        toggleFoodControls foodId =
+        toggleChoiceControls choiceId =
             ( model
-                |> Tristate.mapMain (LensUtil.updateById foodId ChoiceGroup.lenses.main.foods Editing.toggleControls)
+                |> Tristate.mapMain (LensUtil.updateById choiceId ChoiceGroup.lenses.main.choices Editing.toggleControls)
             , Cmd.none
             )
 
-        selectFood food =
+        selectChoice choice =
             ( model
                 |> Tristate.mapMain
                     (\main ->
                         main
-                            |> LensUtil.updateById (food |> ps.idOfFood)
-                                ChoiceGroup.lenses.main.foods
+                            |> LensUtil.updateById (choice |> ps.idOfChoice)
+                                ChoiceGroup.lenses.main.choices
                                 (Editing.toUpdate (flip ps.toCreation main.recipeId))
                     )
             , Cmd.none
             )
 
-        deselectFood foodId =
+        deselectChoice choiceId =
             ( model
                 |> Tristate.mapMain
-                    (LensUtil.updateById foodId
-                        ChoiceGroup.lenses.main.foods
+                    (LensUtil.updateById choiceId
+                        ChoiceGroup.lenses.main.choices
                         Editing.toView
                     )
             , Cmd.none
             )
 
-        create foodId =
+        create choiceId =
             ( model
             , model
                 |> Tristate.lenses.main.getOption
                 |> Maybe.andThen
                     (\main ->
                         main
-                            |> (ChoiceGroup.lenses.main.foods
-                                    |> Compose.lensWithOptional (LensUtil.dictByKey foodId)
+                            |> (ChoiceGroup.lenses.main.choices
+                                    |> Compose.lensWithOptional (LensUtil.dictByKey choiceId)
                                     |> Compose.optionalWithOptional Editing.lenses.update
                                ).getOption
                             |> Maybe.map
-                                (ps.createIngredient
+                                (ps.createElement
                                     { configuration = model.configuration
                                     , jwt = main.jwt
                                     }
@@ -206,59 +206,59 @@ updateLogic ps msg model =
         gotCreateResponse result =
             ( result
                 |> Result.Extra.unpack (Tristate.toError model)
-                    (\ingredient ->
+                    (\element ->
                         model
                             |> Tristate.mapMain
-                                (LensUtil.insertAtId (ingredient |> ps.idOfIngredient)
-                                    ChoiceGroup.lenses.main.ingredients
-                                    (ingredient |> Editing.asView)
-                                    >> LensUtil.updateById (ingredient |> ps.foodIdOfIngredient)
-                                        ChoiceGroup.lenses.main.foods
+                                (LensUtil.insertAtId (element |> ps.idOfElement)
+                                    ChoiceGroup.lenses.main.elements
+                                    (element |> Editing.asView)
+                                    >> LensUtil.updateById (element |> ps.choiceIdOfElement)
+                                        ChoiceGroup.lenses.main.choices
                                         Editing.toView
                                 )
                     )
             , Cmd.none
             )
 
-        updateCreation ingredientCreationClientInput =
+        updateCreation elementCreationClientInput =
             ( model
                 |> Tristate.mapMain
-                    (LensUtil.updateById (ingredientCreationClientInput |> ps.foodIdOfCreation)
-                        ChoiceGroup.lenses.main.foods
-                        (Editing.lenses.update.set ingredientCreationClientInput)
+                    (LensUtil.updateById (elementCreationClientInput |> ps.choiceIdOfCreation)
+                        ChoiceGroup.lenses.main.choices
+                        (Editing.lenses.update.set elementCreationClientInput)
                     )
             , Cmd.none
             )
 
-        setIngredientsPagination pagination =
+        setPagination pagination =
             ( model
                 |> Tristate.mapMain (ChoiceGroup.lenses.main.pagination.set pagination)
             , Cmd.none
             )
 
-        setIngredientsSearchString string =
+        setElementsSearchString string =
             ( model
                 |> Tristate.mapMain
                     (PaginationSettings.setSearchStringAndReset
                         { searchStringLens =
-                            ChoiceGroup.lenses.main.ingredientsSearchString
+                            ChoiceGroup.lenses.main.elementsSearchString
                         , paginationSettingsLens =
-                            ChoiceGroup.lenses.main.pagination |> Compose.lensWithLens Pagination.lenses.ingredients
+                            ChoiceGroup.lenses.main.pagination |> Compose.lensWithLens Pagination.lenses.elements
                         }
                         string
                     )
             , Cmd.none
             )
 
-        setFoodsSearchString string =
+        setChoicesSearchString string =
             ( model
                 |> Tristate.mapMain
                     (PaginationSettings.setSearchStringAndReset
                         { searchStringLens =
-                            ChoiceGroup.lenses.main.foodsSearchString
+                            ChoiceGroup.lenses.main.choicesSearchString
                         , paginationSettingsLens =
                             ChoiceGroup.lenses.main.pagination
-                                |> Compose.lensWithLens Pagination.lenses.foods
+                                |> Compose.lensWithLens Pagination.lenses.choices
                         }
                         string
                     )
@@ -275,44 +275,44 @@ updateLogic ps msg model =
         ChoiceGroup.GotSaveEditResponse result ->
             gotSaveEditResponse result
 
-        ChoiceGroup.ToggleControls ingredientId ->
-            toggleControls ingredientId
+        ChoiceGroup.ToggleControls elementId ->
+            toggleControls elementId
 
-        ChoiceGroup.EnterEdit ingredientId ->
-            enterEdit ingredientId
+        ChoiceGroup.EnterEdit elementId ->
+            enterEdit elementId
 
-        ChoiceGroup.ExitEdit ingredientId ->
-            exitEdit ingredientId
+        ChoiceGroup.ExitEdit elementId ->
+            exitEdit elementId
 
-        ChoiceGroup.RequestDelete ingredientId ->
-            requestDelete ingredientId
+        ChoiceGroup.RequestDelete elementId ->
+            requestDelete elementId
 
-        ChoiceGroup.ConfirmDelete ingredientId ->
-            confirmDelete ingredientId
+        ChoiceGroup.ConfirmDelete elementId ->
+            confirmDelete elementId
 
-        ChoiceGroup.CancelDelete ingredientId ->
-            cancelDelete ingredientId
+        ChoiceGroup.CancelDelete elementId ->
+            cancelDelete elementId
 
-        ChoiceGroup.GotDeleteResponse ingredientId result ->
-            gotDeleteResponse ingredientId result
+        ChoiceGroup.GotDeleteResponse elementId result ->
+            gotDeleteResponse elementId result
 
-        ChoiceGroup.GotFetchResponse result ->
-            gotFetchResponse result
+        ChoiceGroup.GotFetchElementsResponse result ->
+            gotFetchElementsResponse result
 
-        ChoiceGroup.GotFetchFoodsResponse result ->
-            gotFetchFoodsResponse result
+        ChoiceGroup.GotFetchChoicesResponse result ->
+            gotFetchChoicesResponse result
 
-        ChoiceGroup.ToggleFoodControls foodId ->
-            toggleFoodControls foodId
+        ChoiceGroup.ToggleChoiceControls choiceId ->
+            toggleChoiceControls choiceId
 
-        ChoiceGroup.SelectFood food ->
-            selectFood food
+        ChoiceGroup.SelectChoice choice ->
+            selectChoice choice
 
-        ChoiceGroup.DeselectFood foodId ->
-            deselectFood foodId
+        ChoiceGroup.DeselectChoice choiceId ->
+            deselectChoice choiceId
 
-        ChoiceGroup.Create foodId ->
-            create foodId
+        ChoiceGroup.Create choiceId ->
+            create choiceId
 
         ChoiceGroup.GotCreateResponse result ->
             gotCreateResponse result
@@ -320,23 +320,23 @@ updateLogic ps msg model =
         ChoiceGroup.UpdateCreation creation ->
             updateCreation creation
 
-        ChoiceGroup.SetIngredientsPagination pagination ->
-            setIngredientsPagination pagination
+        ChoiceGroup.SetPagination pagination ->
+            setPagination pagination
 
-        ChoiceGroup.SetIngredientsSearchString string ->
-            setIngredientsSearchString string
+        ChoiceGroup.SetElementsSearchString string ->
+            setElementsSearchString string
 
-        ChoiceGroup.SetFoodsSearchString string ->
-            setFoodsSearchString string
+        ChoiceGroup.SetChoicesSearchString string ->
+            setChoicesSearchString string
 
 
-mapIngredientStateById :
-    ingredientId
-    -> (ChoiceGroup.IngredientState ingredient update -> ChoiceGroup.IngredientState ingredient update)
-    -> ChoiceGroup.Model ingredientId ingredient update foodId food creation
-    -> ChoiceGroup.Model ingredientId ingredient update foodId food creation
-mapIngredientStateById ingredientId =
-    (ChoiceGroup.lenses.main.ingredients
-        |> LensUtil.updateById ingredientId
+mapElementStateById :
+    elementId
+    -> (Editing element update -> Editing element update)
+    -> ChoiceGroup.Model elementId element update choiceId choice creation
+    -> ChoiceGroup.Model elementId element update choiceId choice creation
+mapElementStateById elementId =
+    (ChoiceGroup.lenses.main.elements
+        |> LensUtil.updateById elementId
     )
         >> Tristate.mapMain

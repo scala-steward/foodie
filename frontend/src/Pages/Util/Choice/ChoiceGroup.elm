@@ -9,110 +9,115 @@ import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
 
 
-type alias Model ingredientId ingredient update foodId food creation =
-    Tristate.Model (Main ingredientId ingredient update foodId food creation) (Initial ingredientId ingredient update foodId food)
+{-|
+
+  - elements are the values
+  - elements are chosen from a given list of choices
+  - a choice is made via a creation, i.e. 'creation' turns a choice into an element
+  - an element can be updated with an 'update'
+  - elements (may) belong to a parent
+
+-}
+type alias Model elementId element update choiceId choice creation =
+    Tristate.Model (Main elementId element update choiceId choice creation) (Initial elementId element update choiceId choice)
 
 
-type alias Main ingredientId ingredient update foodId food creation =
+type alias Main elementId element update choiceId choice creation =
     { jwt : JWT
     , recipeId : RecipeId
-    , ingredients : DictList ingredientId (IngredientState ingredient update)
-    , foods : DictList foodId (Editing food creation)
+    , elements : DictList elementId (Editing element update)
+    , choices : DictList choiceId (Editing choice creation)
     , pagination : Pagination
-    , foodsSearchString : String
-    , ingredientsSearchString : String
+    , choicesSearchString : String
+    , elementsSearchString : String
     }
 
 
-type alias Initial ingredientId ingredient update foodId food =
+
+-- todo: Remove update, it should be processed while turning Initial into Main
+
+
+type alias Initial elementId element update choiceId choice =
     { jwt : JWT
     , recipeId : RecipeId
-    , ingredients : Maybe (DictList ingredientId (IngredientState ingredient update))
-    , foods : Maybe (DictList foodId food)
+    , elements : Maybe (DictList elementId (Editing element update))
+    , choices : Maybe (DictList choiceId choice)
     }
 
 
-initialWith : JWT -> RecipeId -> Initial ingredientId ingredient update foodId food
+initialWith : JWT -> RecipeId -> Initial elementId element update choiceId choice
 initialWith jwt recipeId =
     { jwt = jwt
     , recipeId = recipeId
-    , ingredients = Nothing
-    , foods = Nothing
+    , elements = Nothing
+    , choices = Nothing
     }
 
 
-initialToMain : Initial ingredientId ingredient update foodId food -> Maybe (Main ingredientId ingredient update foodId food creation)
+initialToMain : Initial elementId element update choiceId choice -> Maybe (Main elementId element update choiceId choice creation)
 initialToMain i =
     Maybe.map2
-        (\ingredients foods ->
+        (\elements choices ->
             { jwt = i.jwt
             , recipeId = i.recipeId
-            , ingredients = ingredients
-            , foods = foods |> DictList.map Editing.asView
+            , elements = elements
+            , choices = choices |> DictList.map Editing.asView
             , pagination = Pagination.initial
-            , foodsSearchString = ""
-            , ingredientsSearchString = ""
+            , choicesSearchString = ""
+            , elementsSearchString = ""
             }
         )
-        i.ingredients
-        i.foods
-
-
-
--- todo: Consider replacing this type with "Editing" directly
-
-
-type alias IngredientState ingredient update =
-    Editing ingredient update
+        i.elements
+        i.choices
 
 
 lenses :
     { initial :
-        { ingredients : Lens (Initial ingredientId ingredient update foodId food) (Maybe (DictList ingredientId (IngredientState ingredient update)))
-        , foods : Lens (Initial ingredientId ingredient update foodId food) (Maybe (DictList foodId food))
+        { elements : Lens (Initial elementId element update choiceId choice) (Maybe (DictList elementId (Editing element update)))
+        , choices : Lens (Initial elementId element update choiceId choice) (Maybe (DictList choiceId choice))
         }
     , main :
-        { ingredients : Lens (Main ingredientId ingredient update foodId food creation) (DictList ingredientId (IngredientState ingredient update))
-        , foods : Lens (Main ingredientId ingredient update foodId food creation) (DictList foodId (Editing food creation))
-        , pagination : Lens (Main ingredientId ingredient update foodId food creation) Pagination
-        , foodsSearchString : Lens (Main ingredientId ingredient update foodId food creation) String
-        , ingredientsSearchString : Lens (Main ingredientId ingredient update foodId food creation) String
+        { elements : Lens (Main elementId element update choiceId choice creation) (DictList elementId (Editing element update))
+        , choices : Lens (Main elementId element update choiceId choice creation) (DictList choiceId (Editing choice creation))
+        , pagination : Lens (Main elementId element update choiceId choice creation) Pagination
+        , choicesSearchString : Lens (Main elementId element update choiceId choice creation) String
+        , elementsSearchString : Lens (Main elementId element update choiceId choice creation) String
         }
     }
 lenses =
     { initial =
-        { ingredients = Lens .ingredients (\b a -> { a | ingredients = b })
-        , foods = Lens .foods (\b a -> { a | foods = b })
+        { elements = Lens .elements (\b a -> { a | elements = b })
+        , choices = Lens .choices (\b a -> { a | choices = b })
         }
     , main =
-        { ingredients = Lens .ingredients (\b a -> { a | ingredients = b })
-        , foods = Lens .foods (\b a -> { a | foods = b })
+        { elements = Lens .elements (\b a -> { a | elements = b })
+        , choices = Lens .choices (\b a -> { a | choices = b })
         , pagination = Lens .pagination (\b a -> { a | pagination = b })
-        , foodsSearchString = Lens .foodsSearchString (\b a -> { a | foodsSearchString = b })
-        , ingredientsSearchString = Lens .ingredientsSearchString (\b a -> { a | ingredientsSearchString = b })
+        , choicesSearchString = Lens .choicesSearchString (\b a -> { a | choicesSearchString = b })
+        , elementsSearchString = Lens .elementsSearchString (\b a -> { a | elementsSearchString = b })
         }
     }
 
 
-type LogicMsg ingredientId ingredient update foodId food creation
+type LogicMsg elementId element update choiceId choice creation
     = Edit update
     | SaveEdit update
-    | GotSaveEditResponse (Result Error ingredient)
-    | ToggleControls ingredientId
-    | EnterEdit ingredientId
-    | ExitEdit ingredientId
-    | RequestDelete ingredientId
-    | ConfirmDelete ingredientId
-    | CancelDelete ingredientId
-    | GotDeleteResponse ingredientId (Result Error ())
-    | GotFetchResponse (Result Error (List ingredient))
-    | GotFetchFoodsResponse (Result Error (List food))
-    | ToggleFoodControls foodId
-    | SelectFood food
-    | DeselectFood foodId
-    | Create foodId
-    | GotCreateResponse (Result Error ingredient)
+    | GotSaveEditResponse (Result Error element)
+    | ToggleControls elementId
+    | EnterEdit elementId
+    | ExitEdit elementId
+    | RequestDelete elementId
+    | ConfirmDelete elementId
+    | CancelDelete elementId
+    | GotDeleteResponse elementId (Result Error ())
+    | GotFetchElementsResponse (Result Error (List element))
+    | GotFetchChoicesResponse (Result Error (List choice))
+    | ToggleChoiceControls choiceId
+    | SelectChoice choice
+    | DeselectChoice choiceId
+    | Create choiceId
+    | GotCreateResponse (Result Error element)
     | UpdateCreation creation
-    | SetIngredientsPagination Pagination
-    | SetIngredientsSearchString String
-    | SetFoodsSearchString String
+    | SetPagination Pagination
+    | SetElementsSearchString String
+    | SetChoicesSearchString String

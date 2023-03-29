@@ -105,11 +105,11 @@ initialToMain i =
 
 
 type alias PlainIngredientState =
-    ChoiceGroup.IngredientState Ingredient IngredientUpdateClientInput
+    Editing Ingredient IngredientUpdateClientInput
 
 
 type alias ComplexIngredientState =
-    ChoiceGroup.IngredientState ComplexIngredient ComplexIngredientClientInput
+    Editing ComplexIngredient ComplexIngredientClientInput
 
 
 type alias FoodMap =
