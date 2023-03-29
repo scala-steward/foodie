@@ -153,6 +153,12 @@ updateLogic ps msg model =
                         )
                     )
 
+        toggleFoodControls foodId =
+            ( model
+                |> Tristate.mapMain (LensUtil.updateById foodId FoodGroup.lenses.main.foods Editing.toggleControls)
+            , Cmd.none
+            )
+
         selectFood food =
             ( model
                 |> Tristate.mapMain
@@ -295,6 +301,9 @@ updateLogic ps msg model =
 
         FoodGroup.GotFetchFoodsResponse result ->
             gotFetchFoodsResponse result
+
+        FoodGroup.ToggleFoodControls foodId ->
+            toggleFoodControls foodId
 
         FoodGroup.SelectFood food ->
             selectFood food

@@ -135,15 +135,7 @@ viewMain configuration main =
                         , searchString = main.recipesSearchString
                         }
                     , table [ Style.classes.complexFoodCreateTable, Style.classes.elementsWithControlsTable ]
-                        [ colgroup []
-                            [ col [] []
-                            , col [] []
-                            , col [] []
-                            , col [] []
-                            , col [] []
-                            , col [] []
-                            ]
-                        , thead []
+                        [ thead []
                             [ tr [ Style.classes.tableHeader ]
                                 [ th [] [ label [] [ text "Name" ] ]
                                 , th [] [ label [] [ text "Description" ] ]
@@ -159,7 +151,7 @@ viewMain configuration main =
                                 |> Paginate.page
                                 |> List.concatMap
                                     (Editing.unpack
-                                        { onView = viewRecipeLine2 configuration main.complexFoods
+                                        { onView = viewRecipeLine configuration main.complexFoods
                                         , onUpdate = editComplexFoodCreation
                                         , onDelete = \_ -> []
                                         }
@@ -341,8 +333,8 @@ updateComplexFoodLine complexFood complexFoodClientInput =
     ]
 
 
-viewRecipeLine2 : Configuration -> Page.ComplexFoodStateMap -> Recipe -> Bool -> List (Html Page.LogicMsg)
-viewRecipeLine2 configuration complexFoods recipe showControls =
+viewRecipeLine : Configuration -> Page.ComplexFoodStateMap -> Recipe -> Bool -> List (Html Page.LogicMsg)
+viewRecipeLine configuration complexFoods recipe showControls =
     let
         toggleCommand =
             Page.ToggleRecipeControls recipe.id

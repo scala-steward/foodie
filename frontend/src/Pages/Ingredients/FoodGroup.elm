@@ -107,6 +107,7 @@ type LogicMsg ingredientId ingredient update foodId food creation
     | GotDeleteResponse ingredientId (Result Error ())
     | GotFetchResponse (Result Error (List ingredient))
     | GotFetchFoodsResponse (Result Error (List food))
+    | ToggleFoodControls foodId
     | SelectFood food
     | DeselectFood foodId
     | Create foodId

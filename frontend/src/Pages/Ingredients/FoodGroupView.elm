@@ -126,9 +126,15 @@ viewFoods :
     { matchesSearchText : String -> food -> Bool
     , sortBy : food -> comparable
     , foodHeaderColumns : List (Html (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation))
+    , idOfFood : food -> foodId
     , nameOfFood : food -> String
-    , elementsIfSelected : food -> creation -> List (Html (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation))
-    , elementsIfNotSelected : food -> List (Html (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation))
+    , ingredientCreationLine : food -> creation -> List (Html (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation))
+    , ingredientCreationControls : food -> creation -> List (Html (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation))
+
+    -- todo: Unused - use or remove!
+    , validCreation : creation -> Bool
+    , viewFoodLine : food -> List (Column (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation))
+    , viewFoodLineControls : food -> List (Html (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation))
     }
     -> FoodGroup.Main ingredientId ingredient update foodId food creation
     -> Html (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation)
@@ -162,11 +168,23 @@ viewFoods ps main =
                 , tbody []
                     (paginatedFoods
                         |> Paginate.page
-                        |> List.map
-                            (viewFoodLine
-                                { nameOfFood = ps.nameOfFood
-                                , elementsIfNotSelected = ps.elementsIfNotSelected
-                                , elementsIfSelected = ps.elementsIfSelected
+                        |> List.concatMap
+                            (Editing.unpack
+                                { onView =
+                                    viewFoodLine
+                                        { nameOfFood = ps.nameOfFood
+                                        , idOfFood = ps.idOfFood
+                                        , foodOnView = ps.viewFoodLine
+                                        , foodControls = ps.viewFoodLineControls
+                                        }
+                                , onUpdate =
+                                    editIngredientCreation
+                                        { idOfFood = ps.idOfFood
+                                        , nameOfFood = ps.nameOfFood
+                                        , ingredientCreationLine = ps.ingredientCreationLine
+                                        , ingredientCreationControls = ps.ingredientCreationControls
+                                        }
+                                , onDelete = always []
                                 }
                             )
                     )
@@ -211,28 +229,32 @@ deleteIngredientLine :
     }
     -> ingredient
     -> List (Html (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation))
-deleteIngredientLine ps ingredient =
-    let
-        ingredientId =
-            ingredient |> ps.idOfIngredient
-    in
+deleteIngredientLine ps =
     ingredientLineWith
         { idOfIngredient = ps.idOfIngredient
         , info = ps.info
         , controls =
-            \_ ->
+            \ingredient ->
+                let
+                    ingredientId =
+                        ingredient |> ps.idOfIngredient
+                in
                 [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick <| FoodGroup.ConfirmDelete <| ingredientId ] [ text "Delete?" ] ]
                 , td [ Style.classes.controls ] [ button [ Style.classes.button.confirm, onClick <| FoodGroup.CancelDelete <| ingredientId ] [ text "Cancel" ] ]
                 ]
         , showControls = True
         }
-        ingredient
 
 
 type alias Column msg =
     { attributes : List (Attribute msg)
     , children : List (Html msg)
     }
+
+
+withExtraAttributes : List (Attribute msg) -> Column msg -> Html msg
+withExtraAttributes extra column =
+    td (column.attributes ++ extra) column.children
 
 
 ingredientLineWith :
@@ -248,14 +270,11 @@ ingredientLineWith ps ingredient =
         toggleCommand =
             FoodGroup.ToggleControls <| ps.idOfIngredient <| ingredient
 
-        withOnClick =
-            (::) (toggleCommand |> onClick)
-
         infoColumns =
             ps.info ingredient
 
         infoCells =
-            infoColumns |> List.map (\c -> td (c.attributes |> withOnClick) c.children)
+            infoColumns |> List.map (withExtraAttributes [ toggleCommand |> onClick ])
 
         infoRow =
             tr [ Style.classes.editing ]
@@ -304,14 +323,10 @@ editIngredientLine ps ingredient ingredientUpdateClientInput =
             tr [ Style.classes.editLine ]
                 ((ps.edit ingredient ingredientUpdateClientInput
                     |> List.map
-                        (\column ->
-                            td
-                                (column.attributes
-                                    ++ [ onEnter saveMsg
-                                       , HtmlUtil.onEscape cancelMsg
-                                       ]
-                                )
-                                column.children
+                        (withExtraAttributes
+                            [ onEnter saveMsg
+                            , HtmlUtil.onEscape cancelMsg
+                            ]
                         )
                  )
                     ++ [ HtmlUtil.toggleControlsCell <| FoodGroup.ToggleControls <| ingredientId ]
@@ -346,23 +361,78 @@ editIngredientLine ps ingredient ingredientUpdateClientInput =
 
 viewFoodLine :
     { nameOfFood : food -> String
-    , elementsIfSelected : food -> creation -> List (Html (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation))
-    , elementsIfNotSelected : food -> List (Html (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation))
+    , idOfFood : food -> foodId
+    , foodOnView : food -> List (Column (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation))
+    , foodControls : food -> List (Html (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation))
     }
-    -> Editing food creation
-    -> Html (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation)
-viewFoodLine ps food =
+    -> food
+    -> Bool
+    -> List (Html (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation))
+viewFoodLine ps food showControls =
     let
-        process =
-            case Editing.lenses.update.getOption food of
-                Nothing ->
-                    ps.elementsIfNotSelected food.original
+        toggleCommand =
+            FoodGroup.ToggleFoodControls <| ps.idOfFood <| food
 
-                Just ingredientToAdd ->
-                    ps.elementsIfSelected food.original ingredientToAdd
+        columns =
+            ps.foodOnView food |> List.map (withExtraAttributes [ onClick toggleCommand ])
+
+        infoRow =
+            tr [ Style.classes.editing ]
+                (td [ Style.classes.editable, onClick toggleCommand ] [ label [] [ text <| ps.nameOfFood <| food ] ]
+                    :: (columns ++ [ HtmlUtil.toggleControlsCell toggleCommand ])
+                )
+
+        -- Extra column because the name is fixed
+        controlsRow =
+            tr []
+                [ td [ colspan <| (+) 1 <| List.length <| columns ] [ table [ Style.classes.elementsWithControlsTable ] [ tr [] (ps.foodControls <| food) ] ]
+                ]
     in
-    --todo: Move controls into separate row
-    tr [ Style.classes.editing ]
-        (td [ Style.classes.editable ] [ label [] [ text <| ps.nameOfFood <| food.original ] ]
-            :: process
-        )
+    infoRow
+        :: (if showControls then
+                [ controlsRow ]
+
+            else
+                []
+           )
+
+
+editIngredientCreation :
+    { idOfFood : food -> foodId
+    , nameOfFood : food -> String
+    , ingredientCreationLine : food -> creation -> List (Html (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation))
+    , ingredientCreationControls : food -> creation -> List (Html (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation))
+    }
+    -> food
+    -> creation
+    -> List (Html (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation))
+editIngredientCreation ps food creation =
+    let
+        foodId =
+            food |> ps.idOfFood
+
+        toggleMsg =
+            FoodGroup.ToggleFoodControls <| foodId
+
+        creationRow =
+            tr []
+                (td [ Style.classes.editable ] [ label [] [ text <| ps.nameOfFood <| food ] ]
+                    :: ps.ingredientCreationLine food creation
+                    ++ [ HtmlUtil.toggleControlsCell <| toggleMsg ]
+                )
+
+        columns =
+            ps.ingredientCreationLine food creation
+
+        -- Extra column because the name is fixed
+        controlsRow =
+            tr []
+                [ td [ colspan <| (+) 1 <| List.length <| columns ]
+                    [ table [ Style.classes.elementsWithControlsTable ]
+                        [ tr []
+                            (ps.ingredientCreationControls food creation)
+                        ]
+                    ]
+                ]
+    in
+    [ creationRow, controlsRow ]

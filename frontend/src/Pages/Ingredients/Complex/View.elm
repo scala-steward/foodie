@@ -17,6 +17,7 @@ import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput
 import Util.DictList as DictList
 import Util.Editing as Editing
+import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
 
@@ -90,7 +91,11 @@ viewMain configuration main =
         }
         main
 
+
+
 -- Todo: Controls for the selection case are missing
+
+
 viewFoods : Configuration -> Page.Main -> Html Page.LogicMsg
 viewFoods configuration main =
     let
@@ -109,16 +114,10 @@ viewFoods configuration main =
             , th [ Style.classes.numberLabel ] [ label [] [ text factor ] ]
             , th [ Style.classes.numberLabel ] [ label [] [ text amount ] ]
             ]
+        , idOfFood = .recipeId
         , nameOfFood = .name
-        , elementsIfSelected =
+        , ingredientCreationLine =
             \complexFood creation ->
-                let
-                    validInput =
-                        List.all identity
-                            [ creation.factor |> ValidatedInput.isValid
-                            ]
-                in
-                -- todo: Validation is missing!
                 [ td [ Style.classes.numberCell ]
                     [ input
                         [ value creation.factor.text
@@ -134,9 +133,48 @@ viewFoods configuration main =
                         ]
                         []
                     ]
-                , td [ Style.classes.editable, Style.classes.numberLabel, onClick <| FoodGroup.SelectFood <| complexFood ] [ label [] [ text <| amountInfoOf <| complexFood ] ]
+                , td [ Style.classes.editable, Style.classes.numberLabel, onClick <| FoodGroup.SelectFood <| complexFood ]
+                    [ label [] [ text <| amountInfoOf <| complexFood ] ]
                 ]
-        , elementsIfNotSelected =
+        , ingredientCreationControls =
+            \food creation ->
+                let
+                    validInput =
+                        creation.factor |> ValidatedInput.isValid
+
+                    createMsg =
+                        FoodGroup.Create food.recipeId
+
+                    cancelMsg =
+                        FoodGroup.DeselectFood food.recipeId
+                in
+                [ td [ Style.classes.controls ]
+                    [ button
+                        ([ MaybeUtil.defined <| Style.classes.button.confirm
+                         , MaybeUtil.defined <| disabled <| not <| validInput
+                         , MaybeUtil.optional validInput <| onClick createMsg
+                         ]
+                            |> Maybe.Extra.values
+                        )
+                        [ text <| "Add"
+                        ]
+                    ]
+                , td [ Style.classes.controls ]
+                    [ button [ Style.classes.button.cancel, onClick cancelMsg ]
+                        [ text "Cancel" ]
+                    ]
+                ]
+        , validCreation = .factor >> ValidatedInput.isValid
+        , viewFoodLine =
+            \_ ->
+                [ { attributes = [ Style.classes.editable, Style.classes.numberCell ]
+                  , children = []
+                  }
+                , { attributes = [ Style.classes.editable, Style.classes.numberCell ]
+                  , children = []
+                  }
+                ]
+        , viewFoodLineControls =
             \complexFood ->
                 let
                     exists =
@@ -149,9 +187,7 @@ viewFoods configuration main =
                         else
                             ( "Select", [ Style.classes.button.confirm, onClick <| FoodGroup.SelectFood <| complexFood ] )
                 in
-                [ td [ Style.classes.editable, Style.classes.numberCell ] []
-                , td [ Style.classes.editable, Style.classes.numberCell ] []
-                , td [ Style.classes.controls ] [ button (Style.classes.button.select :: selectStyles) [ text <| selectName ] ]
+                [ td [ Style.classes.controls ] [ button selectStyles [ text <| selectName ] ]
                 , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration complexFood.recipeId ]
                 , td [ Style.classes.controls ] [ NavigationUtil.recipeNutrientsLinkButton configuration complexFood.recipeId ]
                 ]

@@ -159,8 +159,9 @@ viewFoods configuration main =
             , th [ Style.classes.numberLabel ] [ label [] [ text amount ] ]
             , th [ Style.classes.numberLabel ] [ label [] [ text unit ] ]
             ]
+        , idOfFood = .id
         , nameOfFood = .name
-        , elementsIfSelected =
+        , ingredientCreationLine =
             \food creation ->
                 let
                     addMsg =
@@ -171,15 +172,6 @@ viewFoods configuration main =
 
                     validInput =
                         creation.amountUnit.factor |> ValidatedInput.isValid
-
-                    ( confirmName, confirmStyle ) =
-                        if DictListUtil.existsValue (\ingredient -> ingredient.original.foodId == creation.foodId) main.ingredients then
-                            ( "Add again", Style.classes.button.edit )
-
-                        else
-                            ( "Add"
-                            , Style.classes.button.confirm
-                            )
                 in
                 [ td [ Style.classes.numberCell ]
                     [ input
@@ -222,7 +214,29 @@ viewFoods configuration main =
                         ]
                         (creation.amountUnit.measureId |> String.fromInt |> Just)
                     ]
-                , td [ Style.classes.controls ]
+                ]
+        , ingredientCreationControls =
+            \food creation ->
+                let
+                    addMsg =
+                        FoodGroup.Create food.id
+
+                    cancelMsg =
+                        FoodGroup.DeselectFood food.id
+
+                    validInput =
+                        creation.amountUnit.factor |> ValidatedInput.isValid
+
+                    ( confirmName, confirmStyle ) =
+                        if DictListUtil.existsValue (\ingredient -> ingredient.original.foodId == creation.foodId) main.ingredients then
+                            ( "Add again", Style.classes.button.edit )
+
+                        else
+                            ( "Add"
+                            , Style.classes.button.confirm
+                            )
+                in
+                [ td [ Style.classes.controls ]
                     [ button
                         [ confirmStyle
                         , disabled <| not <| validInput
@@ -234,11 +248,19 @@ viewFoods configuration main =
                 , td [ Style.classes.controls ]
                     [ button [ Style.classes.button.cancel, onClick cancelMsg ] [ text "Cancel" ] ]
                 ]
-        , elementsIfNotSelected =
+        , validCreation = .amountUnit >> .factor >> ValidatedInput.isValid
+        , viewFoodLine =
+            \_ ->
+                [ { attributes = [ Style.classes.editable, Style.classes.numberCell ]
+                  , children = []
+                  }
+                , { attributes = [ Style.classes.editable, Style.classes.numberCell ]
+                  , children = []
+                  }
+                ]
+        , viewFoodLineControls =
             \food ->
-                [ td [ Style.classes.editable, Style.classes.numberCell ] []
-                , td [ Style.classes.editable, Style.classes.numberCell ] []
-                , td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick <| FoodGroup.SelectFood <| food ] [ text "Select" ] ]
+                [ td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick <| FoodGroup.SelectFood <| food ] [ text "Select" ] ]
                 , td [ Style.classes.controls ]
                     [ Links.linkButton
                         { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsFoodSelect.address <| food.id
