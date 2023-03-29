@@ -5,7 +5,7 @@ import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
 import Either exposing (Either(..))
-import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Attribute, Html, button, div, input, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, disabled, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
@@ -110,14 +110,7 @@ viewMain configuration main =
 
 tableHeader : List (Html msg)
 tableHeader =
-    [ colgroup []
-        [ col [] []
-        , col [] []
-        , col [] []
-        , col [] []
-        , col [] []
-        ]
-    , thead []
+    [ thead []
         [ tr [ Style.classes.tableHeader, Style.classes.recipeEditTable ]
             [ th [] [ label [] [ text "Name" ] ]
             , th [] [ label [] [ text "Description" ] ]
