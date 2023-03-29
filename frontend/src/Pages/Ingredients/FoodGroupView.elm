@@ -1,7 +1,7 @@
 module Pages.Ingredients.FoodGroupView exposing (..)
 
 import Basics.Extra exposing (flip)
-import Html exposing (Attribute, Html, button, col, colgroup, div, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Attribute, Html, button, div, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, disabled)
 import Html.Events exposing (onClick)
 import Html.Events.Extra exposing (onEnter)
@@ -62,7 +62,7 @@ viewMain ps main =
                 >> flip DictList.get main.foods
                 >> Maybe.Extra.unwrap "" (.original >> ps.nameOfFood)
 
-        viewIngredients =
+        paginatedIngredients =
             main
                 |> .ingredients
                 |> DictList.values
@@ -87,13 +87,7 @@ viewMain ps main =
             , searchString = main.ingredientsSearchString
             }
         , table [ Style.classes.elementsWithControlsTable, Style.classes.ingredientEditTable ]
-            [ colgroup []
-                [ col [] []
-                , col [] []
-                , col [] []
-                , col [] []
-                ]
-            , thead []
+            [ thead []
                 [ tr [ Style.classes.tableHeader ]
                     [ th [] [ label [] [ text "Name" ] ]
                     , th [ Style.classes.numberLabel ] [ label [] [ text "Amount" ] ]
@@ -102,7 +96,7 @@ viewMain ps main =
                     ]
                 ]
             , tbody []
-                (viewIngredients
+                (paginatedIngredients
                     |> Paginate.page
                     |> List.concatMap viewIngredientState
                 )
@@ -116,7 +110,7 @@ viewMain ps main =
                         }
                         main
                         >> FoodGroup.SetIngredientsPagination
-                , elements = viewIngredients
+                , elements = paginatedIngredients
                 }
             ]
         ]
@@ -138,7 +132,8 @@ viewFoods :
 viewFoods ps main =
     let
         paginatedFoods =
-            main.foods
+            main
+                |> .foods
                 |> DictList.values
                 |> List.filter (.original >> ps.matchesSearchText main.foodsSearchString)
                 |> List.sortBy (.original >> ps.sortBy)
