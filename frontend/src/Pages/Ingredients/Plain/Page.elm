@@ -3,9 +3,9 @@ module Pages.Ingredients.Plain.Page exposing (..)
 import Api.Auxiliary exposing (FoodId, IngredientId, JWT, RecipeId)
 import Api.Types.Food exposing (Food)
 import Api.Types.Ingredient exposing (Ingredient)
-import Pages.Util.Choice.ChoiceGroup as ChoiceGroup
 import Pages.Ingredients.IngredientCreationClientInput exposing (IngredientCreationClientInput)
 import Pages.Ingredients.IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
+import Pages.Util.Choice.ChoiceGroup as ChoiceGroup
 import Pages.View.Tristate as Tristate
 
 
@@ -14,7 +14,7 @@ type alias Model =
 
 
 type alias Initial =
-    ChoiceGroup.Initial RecipeId IngredientId Ingredient IngredientUpdateClientInput FoodId Food
+    ChoiceGroup.Initial RecipeId IngredientId Ingredient FoodId Food
 
 
 type alias Main =

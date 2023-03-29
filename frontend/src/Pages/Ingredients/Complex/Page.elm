@@ -17,7 +17,7 @@ type alias Main =
 
 
 type alias Initial =
-    ChoiceGroup.Initial RecipeId ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood
+    ChoiceGroup.Initial RecipeId ComplexIngredientId ComplexIngredient ComplexFoodId ComplexFood
 
 
 type alias LogicMsg =

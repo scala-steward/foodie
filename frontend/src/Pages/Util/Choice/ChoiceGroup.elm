@@ -19,7 +19,7 @@ import Util.HttpUtil exposing (Error)
 
 -}
 type alias Model parentId elementId element update choiceId choice creation =
-    Tristate.Model (Main parentId elementId element update choiceId choice creation) (Initial parentId elementId element update choiceId choice)
+    Tristate.Model (Main parentId elementId element update choiceId choice creation) (Initial parentId elementId element choiceId choice)
 
 
 type alias Main parentId elementId element update choiceId choice creation =
@@ -33,19 +33,15 @@ type alias Main parentId elementId element update choiceId choice creation =
     }
 
 
-
--- todo: Remove update, it should be processed while turning Initial into Main
-
-
-type alias Initial parentId elementId element update choiceId choice =
+type alias Initial parentId elementId element choiceId choice =
     { jwt : JWT
     , parentId : parentId
-    , elements : Maybe (DictList elementId (Editing element update))
+    , elements : Maybe (DictList elementId element)
     , choices : Maybe (DictList choiceId choice)
     }
 
 
-initialWith : JWT -> parentId -> Initial parentId elementId element update choiceId choice
+initialWith : JWT -> parentId -> Initial parentId elementId element choiceId choice
 initialWith jwt parentId =
     { jwt = jwt
     , parentId = parentId
@@ -54,13 +50,13 @@ initialWith jwt parentId =
     }
 
 
-initialToMain : Initial parentId elementId element update choiceId choice -> Maybe (Main parentId elementId element update choiceId choice creation)
+initialToMain : Initial parentId elementId element choiceId choice -> Maybe (Main parentId elementId element update choiceId choice creation)
 initialToMain i =
     Maybe.map2
         (\elements choices ->
             { jwt = i.jwt
             , parentId = i.parentId
-            , elements = elements
+            , elements = elements |> DictList.map Editing.asView
             , choices = choices |> DictList.map Editing.asView
             , pagination = Pagination.initial
             , choicesSearchString = ""
@@ -73,8 +69,8 @@ initialToMain i =
 
 lenses :
     { initial :
-        { elements : Lens (Initial parentId elementId element update choiceId choice) (Maybe (DictList elementId (Editing element update)))
-        , choices : Lens (Initial parentId elementId element update choiceId choice) (Maybe (DictList choiceId choice))
+        { elements : Lens (Initial parentId elementId element choiceId choice) (Maybe (DictList elementId element))
+        , choices : Lens (Initial parentId elementId element choiceId choice) (Maybe (DictList choiceId choice))
         }
     , main :
         { elements : Lens (Main parentId elementId element update choiceId choice creation) (DictList elementId (Editing element update))

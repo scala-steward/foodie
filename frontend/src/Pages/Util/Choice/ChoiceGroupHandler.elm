@@ -129,8 +129,7 @@ updateLogic ps msg model =
                             |> Tristate.mapInitial
                                 (ChoiceGroup.lenses.initial.elements.set
                                     (elements
-                                        |> List.map Editing.asView
-                                        |> DictList.fromListWithKey (.original >> ps.idOfElement)
+                                        |> DictList.fromListWithKey ps.idOfElement
                                         |> Just
                                     )
                                 )
