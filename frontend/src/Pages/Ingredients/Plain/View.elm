@@ -248,7 +248,6 @@ viewFoods configuration main =
                 , td [ Style.classes.controls ]
                     [ button [ Style.classes.button.cancel, onClick cancelMsg ] [ text "Cancel" ] ]
                 ]
-        , validCreation = .amountUnit >> .factor >> ValidatedInput.isValid
         , viewFoodLine =
             \_ ->
                 [ { attributes = [ Style.classes.editable, Style.classes.numberCell ]

@@ -55,7 +55,6 @@ viewMain configuration main =
         , edit =
             \complexIngredient complexIngredientUpdateClientInput ->
                 let
-                    -- todo: Flatten maybes
                     complexFood =
                         DictList.get complexIngredient.complexFoodId main.foods |> Maybe.map .original
                 in
@@ -90,10 +89,6 @@ viewMain configuration main =
         , fitControlsToColumns = 3
         }
         main
-
-
-
--- Todo: Controls for the selection case are missing
 
 
 viewFoods : Configuration -> Page.Main -> Html Page.LogicMsg
@@ -141,30 +136,23 @@ viewFoods configuration main =
                 let
                     validInput =
                         creation.factor |> ValidatedInput.isValid
-
-                    createMsg =
-                        FoodGroup.Create food.recipeId
-
-                    cancelMsg =
-                        FoodGroup.DeselectFood food.recipeId
                 in
                 [ td [ Style.classes.controls ]
                     [ button
                         ([ MaybeUtil.defined <| Style.classes.button.confirm
                          , MaybeUtil.defined <| disabled <| not <| validInput
-                         , MaybeUtil.optional validInput <| onClick createMsg
+                         , MaybeUtil.optional validInput <| onClick <| FoodGroup.Create <| food.recipeId
                          ]
                             |> Maybe.Extra.values
                         )
-                        [ text <| "Add"
+                        [ text "Add"
                         ]
                     ]
                 , td [ Style.classes.controls ]
-                    [ button [ Style.classes.button.cancel, onClick cancelMsg ]
+                    [ button [ Style.classes.button.cancel, onClick <| FoodGroup.DeselectFood <| food.recipeId ]
                         [ text "Cancel" ]
                     ]
                 ]
-        , validCreation = .factor >> ValidatedInput.isValid
         , viewFoodLine =
             \_ ->
                 [ { attributes = [ Style.classes.editable, Style.classes.numberCell ]

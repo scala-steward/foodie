@@ -130,9 +130,6 @@ viewFoods :
     , nameOfFood : food -> String
     , ingredientCreationLine : food -> creation -> List (Html (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation))
     , ingredientCreationControls : food -> creation -> List (Html (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation))
-
-    -- todo: Unused - use or remove!
-    , validCreation : creation -> Bool
     , viewFoodLine : food -> List (Column (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation))
     , viewFoodLineControls : food -> List (Html (FoodGroup.LogicMsg ingredientId ingredient update foodId food creation))
     }
