@@ -1,6 +1,6 @@
 module Pages.Ingredients.Complex.Page exposing (..)
 
-import Api.Auxiliary exposing (ComplexFoodId, ComplexIngredientId)
+import Api.Auxiliary exposing (ComplexFoodId, ComplexIngredientId, RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.ComplexIngredient exposing (ComplexIngredient)
 import Pages.Ingredients.ComplexIngredientClientInput exposing (ComplexIngredientClientInput)
@@ -13,11 +13,11 @@ type alias Model =
 
 
 type alias Main =
-    ChoiceGroup.Main ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood ComplexIngredientClientInput
+    ChoiceGroup.Main RecipeId ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood ComplexIngredientClientInput
 
 
 type alias Initial =
-    ChoiceGroup.Initial ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood
+    ChoiceGroup.Initial RecipeId ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood
 
 
 type alias LogicMsg =

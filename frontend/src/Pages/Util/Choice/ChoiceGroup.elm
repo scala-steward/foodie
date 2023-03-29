@@ -1,6 +1,6 @@
 module Pages.Util.Choice.ChoiceGroup exposing (..)
 
-import Api.Auxiliary exposing (JWT, RecipeId)
+import Api.Auxiliary exposing (JWT)
 import Monocle.Lens exposing (Lens)
 import Pages.Util.Choice.Pagination as Pagination exposing (Pagination)
 import Pages.View.Tristate as Tristate
@@ -18,13 +18,13 @@ import Util.HttpUtil exposing (Error)
   - elements (may) belong to a parent
 
 -}
-type alias Model elementId element update choiceId choice creation =
-    Tristate.Model (Main elementId element update choiceId choice creation) (Initial elementId element update choiceId choice)
+type alias Model parentId elementId element update choiceId choice creation =
+    Tristate.Model (Main parentId elementId element update choiceId choice creation) (Initial parentId elementId element update choiceId choice)
 
 
-type alias Main elementId element update choiceId choice creation =
+type alias Main parentId elementId element update choiceId choice creation =
     { jwt : JWT
-    , recipeId : RecipeId
+    , parentId : parentId
     , elements : DictList elementId (Editing element update)
     , choices : DictList choiceId (Editing choice creation)
     , pagination : Pagination
@@ -37,29 +37,29 @@ type alias Main elementId element update choiceId choice creation =
 -- todo: Remove update, it should be processed while turning Initial into Main
 
 
-type alias Initial elementId element update choiceId choice =
+type alias Initial parentId elementId element update choiceId choice =
     { jwt : JWT
-    , recipeId : RecipeId
+    , parentId : parentId
     , elements : Maybe (DictList elementId (Editing element update))
     , choices : Maybe (DictList choiceId choice)
     }
 
 
-initialWith : JWT -> RecipeId -> Initial elementId element update choiceId choice
-initialWith jwt recipeId =
+initialWith : JWT -> parentId -> Initial parentId elementId element update choiceId choice
+initialWith jwt parentId =
     { jwt = jwt
-    , recipeId = recipeId
+    , parentId = parentId
     , elements = Nothing
     , choices = Nothing
     }
 
 
-initialToMain : Initial elementId element update choiceId choice -> Maybe (Main elementId element update choiceId choice creation)
+initialToMain : Initial parentId elementId element update choiceId choice -> Maybe (Main parentId elementId element update choiceId choice creation)
 initialToMain i =
     Maybe.map2
         (\elements choices ->
             { jwt = i.jwt
-            , recipeId = i.recipeId
+            , parentId = i.parentId
             , elements = elements
             , choices = choices |> DictList.map Editing.asView
             , pagination = Pagination.initial
@@ -73,15 +73,15 @@ initialToMain i =
 
 lenses :
     { initial :
-        { elements : Lens (Initial elementId element update choiceId choice) (Maybe (DictList elementId (Editing element update)))
-        , choices : Lens (Initial elementId element update choiceId choice) (Maybe (DictList choiceId choice))
+        { elements : Lens (Initial parentId elementId element update choiceId choice) (Maybe (DictList elementId (Editing element update)))
+        , choices : Lens (Initial parentId elementId element update choiceId choice) (Maybe (DictList choiceId choice))
         }
     , main :
-        { elements : Lens (Main elementId element update choiceId choice creation) (DictList elementId (Editing element update))
-        , choices : Lens (Main elementId element update choiceId choice creation) (DictList choiceId (Editing choice creation))
-        , pagination : Lens (Main elementId element update choiceId choice creation) Pagination
-        , choicesSearchString : Lens (Main elementId element update choiceId choice creation) String
-        , elementsSearchString : Lens (Main elementId element update choiceId choice creation) String
+        { elements : Lens (Main parentId elementId element update choiceId choice creation) (DictList elementId (Editing element update))
+        , choices : Lens (Main parentId elementId element update choiceId choice creation) (DictList choiceId (Editing choice creation))
+        , pagination : Lens (Main parentId elementId element update choiceId choice creation) Pagination
+        , choicesSearchString : Lens (Main parentId elementId element update choiceId choice creation) String
+        , elementsSearchString : Lens (Main parentId elementId element update choiceId choice creation) String
         }
     }
 lenses =

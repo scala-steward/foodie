@@ -125,27 +125,3 @@ changeFoodsMode model foodsMode =
         |> Tristate.mapMain (Page.lenses.main.foodsMode.set foodsMode)
     , Cmd.none
     )
-
-
-setSearchString :
-    { searchStringLens : Lens Page.Main String
-    , foodGroupLens : Lens Page.Main (ChoiceGroup.Main ingredientId ingredient update foodId food creation)
-    }
-    -> Page.Model
-    -> String
-    -> ( Page.Model, Cmd Page.LogicMsg )
-setSearchString lenses model string =
-    ( model
-        |> Tristate.mapMain
-            (PaginationSettings.setSearchStringAndReset
-                { searchStringLens =
-                    lenses.searchStringLens
-                , paginationSettingsLens =
-                    lenses.foodGroupLens
-                        |> Compose.lensWithLens ChoiceGroup.lenses.main.pagination
-                        |> Compose.lensWithLens Pagination.lenses.elements
-                }
-                string
-            )
-    , Cmd.none
-    )

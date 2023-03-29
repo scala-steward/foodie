@@ -38,8 +38,8 @@ type alias Main =
 type alias Initial =
     { jwt : JWT
     , recipe : Pages.Ingredients.Recipe.Page.Initial
-    , ingredientsGroup : ChoiceGroup.Initial IngredientId Ingredient IngredientUpdateClientInput FoodId Food
-    , complexIngredientsGroup : ChoiceGroup.Initial ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood
+    , ingredientsGroup : ChoiceGroup.Initial RecipeId IngredientId Ingredient IngredientUpdateClientInput FoodId Food
+    , complexIngredientsGroup : ChoiceGroup.Initial RecipeId ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood
     }
 
 
@@ -135,8 +135,8 @@ type FoodsMode
 
 lenses :
     { initial :
-        { ingredientsGroup : Lens Initial (ChoiceGroup.Initial IngredientId Ingredient IngredientUpdateClientInput FoodId Food)
-        , complexIngredientsGroup : Lens Initial (ChoiceGroup.Initial ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood)
+        { ingredientsGroup : Lens Initial (ChoiceGroup.Initial RecipeId IngredientId Ingredient IngredientUpdateClientInput FoodId Food)
+        , complexIngredientsGroup : Lens Initial (ChoiceGroup.Initial RecipeId ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood)
         , recipe : Lens Initial Pages.Ingredients.Recipe.Page.Initial
         }
     , main :

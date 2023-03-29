@@ -1,6 +1,6 @@
 module Pages.Ingredients.Plain.Page exposing (..)
 
-import Api.Auxiliary exposing (FoodId, IngredientId, JWT)
+import Api.Auxiliary exposing (FoodId, IngredientId, JWT, RecipeId)
 import Api.Types.Food exposing (Food)
 import Api.Types.Ingredient exposing (Ingredient)
 import Pages.Util.Choice.ChoiceGroup as ChoiceGroup
@@ -14,11 +14,11 @@ type alias Model =
 
 
 type alias Initial =
-    ChoiceGroup.Initial IngredientId Ingredient IngredientUpdateClientInput FoodId Food
+    ChoiceGroup.Initial RecipeId IngredientId Ingredient IngredientUpdateClientInput FoodId Food
 
 
 type alias Main =
-    ChoiceGroup.Main IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput
+    ChoiceGroup.Main RecipeId IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput
 
 
 type alias LogicMsg =

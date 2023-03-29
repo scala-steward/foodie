@@ -30,7 +30,7 @@ viewMain :
     , edit : element -> update -> List (Column (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
     , fitControlsToColumns : Int
     }
-    -> ChoiceGroup.Main elementId element update choiceId choice creation
+    -> ChoiceGroup.Main parentId elementId element update choiceId choice creation
     -> Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation)
 viewMain ps main =
     let
@@ -127,7 +127,7 @@ viewChoices :
     , viewChoiceLine : choice -> List (Column (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
     , viewChoiceLineControls : choice -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
     }
-    -> ChoiceGroup.Main elementId element update choiceId choice creation
+    -> ChoiceGroup.Main parentId elementId element update choiceId choice creation
     -> Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation)
 viewChoices ps main =
     let

@@ -1,6 +1,5 @@
 module Pages.Util.Choice.ChoiceGroupHandler exposing (updateLogic)
 
-import Api.Auxiliary exposing (RecipeId)
 import Basics.Extra exposing (flip)
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
@@ -22,15 +21,15 @@ updateLogic :
     , choiceIdOfElement : element -> choiceId
     , choiceIdOfCreation : creation -> choiceId
     , toUpdate : element -> update
-    , toCreation : choice -> RecipeId -> creation
-    , createElement : AuthorizedAccess -> RecipeId -> creation -> Cmd (ChoiceGroup.LogicMsg elementId element update choiceId choice creation)
-    , saveElement : AuthorizedAccess -> RecipeId -> update -> Cmd (ChoiceGroup.LogicMsg elementId element update choiceId choice creation)
-    , deleteElement : AuthorizedAccess -> RecipeId -> elementId -> Cmd (ChoiceGroup.LogicMsg elementId element update choiceId choice creation)
+    , toCreation : choice -> parentId -> creation
+    , createElement : AuthorizedAccess -> parentId -> creation -> Cmd (ChoiceGroup.LogicMsg elementId element update choiceId choice creation)
+    , saveElement : AuthorizedAccess -> parentId -> update -> Cmd (ChoiceGroup.LogicMsg elementId element update choiceId choice creation)
+    , deleteElement : AuthorizedAccess -> parentId -> elementId -> Cmd (ChoiceGroup.LogicMsg elementId element update choiceId choice creation)
     , storeChoices : List choice -> Cmd (ChoiceGroup.LogicMsg elementId element update choiceId choice creation)
     }
     -> ChoiceGroup.LogicMsg elementId element update choiceId choice creation
-    -> ChoiceGroup.Model elementId element update choiceId choice creation
-    -> ( ChoiceGroup.Model elementId element update choiceId choice creation, Cmd (ChoiceGroup.LogicMsg elementId element update choiceId choice creation) )
+    -> ChoiceGroup.Model parentId elementId element update choiceId choice creation
+    -> ( ChoiceGroup.Model parentId elementId element update choiceId choice creation, Cmd (ChoiceGroup.LogicMsg elementId element update choiceId choice creation) )
 updateLogic ps msg model =
     let
         edit update =
@@ -50,7 +49,7 @@ updateLogic ps msg model =
                                 { configuration = model.configuration
                                 , jwt = main.jwt
                                 }
-                                main.recipeId
+                                main.parentId
                     )
             )
 
@@ -98,7 +97,7 @@ updateLogic ps msg model =
                             { configuration = model.configuration
                             , jwt = main.jwt
                             }
-                            main.recipeId
+                            main.parentId
                             elementId
                     )
             )
@@ -166,7 +165,7 @@ updateLogic ps msg model =
                         main
                             |> LensUtil.updateById (choice |> ps.idOfChoice)
                                 ChoiceGroup.lenses.main.choices
-                                (Editing.toUpdate (flip ps.toCreation main.recipeId))
+                                (Editing.toUpdate (flip ps.toCreation main.parentId))
                     )
             , Cmd.none
             )
@@ -197,7 +196,7 @@ updateLogic ps msg model =
                                     { configuration = model.configuration
                                     , jwt = main.jwt
                                     }
-                                    main.recipeId
+                                    main.parentId
                                 )
                     )
                 |> Maybe.withDefault Cmd.none
@@ -333,8 +332,8 @@ updateLogic ps msg model =
 mapElementStateById :
     elementId
     -> (Editing element update -> Editing element update)
-    -> ChoiceGroup.Model elementId element update choiceId choice creation
-    -> ChoiceGroup.Model elementId element update choiceId choice creation
+    -> ChoiceGroup.Model parentId elementId element update choiceId choice creation
+    -> ChoiceGroup.Model parentId elementId element update choiceId choice creation
 mapElementStateById elementId =
     (ChoiceGroup.lenses.main.elements
         |> LensUtil.updateById elementId
