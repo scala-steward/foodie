@@ -9,8 +9,8 @@ import Html.Events exposing (onClick, onInput)
 import Maybe.Extra
 import Pages.Ingredients.Complex.Page as Page
 import Pages.Ingredients.ComplexIngredientClientInput as ComplexIngredientClientInput
-import Pages.Ingredients.FoodGroup as FoodGroup
-import Pages.Ingredients.FoodGroupView as FoodGroupView
+import Pages.Util.Choice.ChoiceGroup as ChoiceGroup
+import Pages.Util.Choice.ChoiceGroupView as ChoiceGroupView
 import Pages.Util.DictListUtil as DictListUtil
 import Pages.Util.NavigationUtil as NavigationUtil
 import Pages.Util.Style as Style
@@ -23,7 +23,7 @@ import Util.SearchUtil as SearchUtil
 
 viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
-    FoodGroupView.viewMain
+    ChoiceGroupView.viewMain
         { nameOfFood = .name
         , foodIdOfIngredient = .complexFoodId
         , idOfIngredient = .complexFoodId
@@ -45,10 +45,10 @@ viewMain configuration main =
             \complexIngredient ->
                 let
                     editMsg =
-                        FoodGroup.EnterEdit complexIngredient.complexFoodId |> onClick
+                        ChoiceGroup.EnterEdit complexIngredient.complexFoodId |> onClick
                 in
                 [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
-                , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (FoodGroup.RequestDelete complexIngredient.complexFoodId) ] [ text "Delete" ] ]
+                , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (ChoiceGroup.RequestDelete complexIngredient.complexFoodId) ] [ text "Delete" ] ]
                 , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration complexIngredient.complexFoodId ]
                 ]
         , isValidInput = .factor >> ValidatedInput.isValid
@@ -73,7 +73,7 @@ viewMain configuration main =
                                         ComplexIngredientClientInput.lenses.factor
                                     ).set
                                     complexIngredientUpdateClientInput
-                                    >> FoodGroup.Edit
+                                    >> ChoiceGroup.Edit
                                 )
                             , Style.classes.numberLabel
                             ]
@@ -101,7 +101,7 @@ viewFoods configuration main =
             else
                 ( "", "" )
     in
-    FoodGroupView.viewFoods
+    ChoiceGroupView.viewFoods
         { matchesSearchText = \string -> .name >> SearchUtil.search string
         , sortBy = .name
         , foodHeaderColumns =
@@ -122,13 +122,13 @@ viewFoods configuration main =
                                     ComplexIngredientClientInput.lenses.factor
                                 ).set
                                 creation
-                                >> FoodGroup.UpdateCreation
+                                >> ChoiceGroup.UpdateCreation
                             )
                         , Style.classes.numberLabel
                         ]
                         []
                     ]
-                , td [ Style.classes.editable, Style.classes.numberLabel, onClick <| FoodGroup.SelectFood <| complexFood ]
+                , td [ Style.classes.editable, Style.classes.numberLabel, onClick <| ChoiceGroup.SelectFood <| complexFood ]
                     [ label [] [ text <| amountInfoOf <| complexFood ] ]
                 ]
         , ingredientCreationControls =
@@ -141,7 +141,7 @@ viewFoods configuration main =
                     [ button
                         ([ MaybeUtil.defined <| Style.classes.button.confirm
                          , MaybeUtil.defined <| disabled <| not <| validInput
-                         , MaybeUtil.optional validInput <| onClick <| FoodGroup.Create <| food.recipeId
+                         , MaybeUtil.optional validInput <| onClick <| ChoiceGroup.Create <| food.recipeId
                          ]
                             |> Maybe.Extra.values
                         )
@@ -149,7 +149,7 @@ viewFoods configuration main =
                         ]
                     ]
                 , td [ Style.classes.controls ]
-                    [ button [ Style.classes.button.cancel, onClick <| FoodGroup.DeselectFood <| food.recipeId ]
+                    [ button [ Style.classes.button.cancel, onClick <| ChoiceGroup.DeselectFood <| food.recipeId ]
                         [ text "Cancel" ]
                     ]
                 ]
@@ -173,7 +173,7 @@ viewFoods configuration main =
                             ( "Added", [ Style.classes.button.edit, disabled True ] )
 
                         else
-                            ( "Select", [ Style.classes.button.confirm, onClick <| FoodGroup.SelectFood <| complexFood ] )
+                            ( "Select", [ Style.classes.button.confirm, onClick <| ChoiceGroup.SelectFood <| complexFood ] )
                 in
                 [ td [ Style.classes.controls ] [ button selectStyles [ text <| selectName ] ]
                 , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration complexFood.recipeId ]

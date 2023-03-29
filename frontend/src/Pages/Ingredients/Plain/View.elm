@@ -17,11 +17,12 @@ import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
 import Pages.Ingredients.AmountUnitClientInput as AmountUnitClientInput
-import Pages.Ingredients.FoodGroup as FoodGroup exposing (IngredientState)
-import Pages.Ingredients.FoodGroupView as FoodGroupView
+import Pages.Util.Choice.ChoiceGroup as ChoiceGroup exposing (IngredientState)
+import Pages.Util.Choice.ChoiceGroup
 import Pages.Ingredients.IngredientCreationClientInput as IngredientCreationClientInput
 import Pages.Ingredients.IngredientUpdateClientInput as IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
 import Pages.Ingredients.Plain.Page as Page
+import Pages.Util.Choice.ChoiceGroupView as ChoiceGroupView
 import Pages.Util.DictListUtil as DictListUtil
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Links as Links
@@ -48,7 +49,7 @@ viewMain main =
                         }
                     )
     in
-    FoodGroupView.viewMain
+    ChoiceGroupView.viewMain
         { nameOfFood = .name
         , foodIdOfIngredient = .foodId
         , idOfIngredient = .id
@@ -77,8 +78,8 @@ viewMain main =
                 ]
         , controls =
             \ingredient ->
-                [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, FoodGroup.EnterEdit ingredient.id |> onClick ] [ text "Edit" ] ]
-                , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (FoodGroup.RequestDelete ingredient.id) ] [ text "Delete" ] ]
+                [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, ChoiceGroup.EnterEdit ingredient.id |> onClick ] [ text "Edit" ] ]
+                , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (ChoiceGroup.RequestDelete ingredient.id) ] [ text "Delete" ] ]
                 ]
         , isValidInput = .amountUnit >> .factor >> ValidatedInput.isValid
         , edit =
@@ -108,7 +109,7 @@ viewMain main =
                                         )
                                     ).set
                                     ingredientUpdateClientInput
-                                    >> FoodGroup.Edit
+                                    >> ChoiceGroup.Edit
                                 )
                             , Style.classes.numberLabel
                             ]
@@ -125,7 +126,7 @@ viewMain main =
                                 onChangeDropdown
                                     { amountUnitLens = IngredientUpdateClientInput.lenses.amountUnit
                                     , measureIdOf = .amountUnit >> .measureId
-                                    , mkMsg = FoodGroup.Edit
+                                    , mkMsg = ChoiceGroup.Edit
                                     , input = ingredientUpdateClientInput
                                     }
                             }
@@ -151,7 +152,7 @@ viewFoods configuration main =
             else
                 ( "", "" )
     in
-    FoodGroupView.viewFoods
+    ChoiceGroupView.viewFoods
         { matchesSearchText = \string -> .name >> SearchUtil.search string
         , sortBy = .name
         , foodHeaderColumns =
@@ -165,10 +166,10 @@ viewFoods configuration main =
             \food creation ->
                 let
                     addMsg =
-                        FoodGroup.Create food.id
+                        ChoiceGroup.Create food.id
 
                     cancelMsg =
-                        FoodGroup.DeselectFood food.id
+                        ChoiceGroup.DeselectFood food.id
 
                     validInput =
                         creation.amountUnit.factor |> ValidatedInput.isValid
@@ -185,7 +186,7 @@ viewFoods configuration main =
                                         )
                                     ).set
                                     creation
-                                    >> FoodGroup.UpdateCreation
+                                    >> ChoiceGroup.UpdateCreation
                          , MaybeUtil.defined <| Style.classes.numberLabel
                          , MaybeUtil.defined <| HtmlUtil.onEscape cancelMsg
                          , MaybeUtil.optional validInput <| onEnter addMsg
@@ -205,7 +206,7 @@ viewFoods configuration main =
                             onChangeDropdown
                                 { amountUnitLens = IngredientCreationClientInput.amountUnit
                                 , measureIdOf = .amountUnit >> .measureId
-                                , mkMsg = FoodGroup.UpdateCreation
+                                , mkMsg = ChoiceGroup.UpdateCreation
                                 , input = creation
                                 }
                         }
@@ -219,10 +220,10 @@ viewFoods configuration main =
             \food creation ->
                 let
                     addMsg =
-                        FoodGroup.Create food.id
+                        ChoiceGroup.Create food.id
 
                     cancelMsg =
-                        FoodGroup.DeselectFood food.id
+                        ChoiceGroup.DeselectFood food.id
 
                     validInput =
                         creation.amountUnit.factor |> ValidatedInput.isValid
@@ -259,7 +260,7 @@ viewFoods configuration main =
                 ]
         , viewFoodLineControls =
             \food ->
-                [ td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick <| FoodGroup.SelectFood <| food ] [ text "Select" ] ]
+                [ td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick <| ChoiceGroup.SelectFood <| food ] [ text "Select" ] ]
                 , td [ Style.classes.controls ]
                     [ Links.linkButton
                         { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsFoodSelect.address <| food.id

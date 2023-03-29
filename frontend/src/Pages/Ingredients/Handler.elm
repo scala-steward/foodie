@@ -8,13 +8,13 @@ import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
 import Monocle.Optional
 import Pages.Ingredients.Complex.Handler
-import Pages.Ingredients.FoodGroup as FoodGroup
 import Pages.Ingredients.Page as Page
-import Pages.Ingredients.Pagination as Pagination exposing (Pagination)
 import Pages.Ingredients.Plain.Handler
 import Pages.Ingredients.Plain.Requests
 import Pages.Ingredients.Recipe.Handler
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.Choice.ChoiceGroup as ChoiceGroup
+import Pages.Util.Choice.Pagination as Pagination exposing (Pagination)
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.View.Tristate as Tristate
 import Pages.View.TristateUtil as TristateUtil
@@ -100,7 +100,7 @@ updateFoods model =
             (\foods ->
                 ( model
                     |> Tristate.mapInitial
-                        ((Page.lenses.initial.ingredientsGroup |> Compose.lensWithLens FoodGroup.lenses.initial.foods).set
+                        ((Page.lenses.initial.ingredientsGroup |> Compose.lensWithLens ChoiceGroup.lenses.initial.foods).set
                             (foods |> Just |> Maybe.Extra.filter (List.isEmpty >> not) |> Maybe.map (DictList.fromListWithKey .id))
                         )
                     |> Tristate.fromInitToMain Page.initialToMain
@@ -129,7 +129,7 @@ changeFoodsMode model foodsMode =
 
 setSearchString :
     { searchStringLens : Lens Page.Main String
-    , foodGroupLens : Lens Page.Main (FoodGroup.Main ingredientId ingredient update foodId food creation)
+    , foodGroupLens : Lens Page.Main (ChoiceGroup.Main ingredientId ingredient update foodId food creation)
     }
     -> Page.Model
     -> String
@@ -142,7 +142,7 @@ setSearchString lenses model string =
                     lenses.searchStringLens
                 , paginationSettingsLens =
                     lenses.foodGroupLens
-                        |> Compose.lensWithLens FoodGroup.lenses.main.pagination
+                        |> Compose.lensWithLens ChoiceGroup.lenses.main.pagination
                         |> Compose.lensWithLens Pagination.lenses.ingredients
                 }
                 string

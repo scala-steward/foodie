@@ -1,4 +1,4 @@
-module Pages.Ingredients.Pagination exposing (..)
+module Pages.Util.Choice.Pagination exposing (..)
 
 import Monocle.Lens exposing (Lens)
 import Pages.Util.PaginationSettings as PaginationSettings exposing (PaginationSettings)

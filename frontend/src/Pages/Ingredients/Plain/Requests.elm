@@ -7,9 +7,9 @@ import Api.Types.IngredientCreation exposing (IngredientCreation, encoderIngredi
 import Api.Types.IngredientUpdate exposing (IngredientUpdate, encoderIngredientUpdate)
 import Http
 import Json.Decode as Decode
-import Pages.Ingredients.FoodGroup as FoodGroup
 import Pages.Ingredients.Plain.Page as Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.Choice.ChoiceGroup as ChoiceGroup
 import Pages.Util.Requests
 import Util.HttpUtil as HttpUtil exposing (Error)
 
@@ -20,13 +20,13 @@ fetchIngredients flags recipeId =
         flags
         (Addresses.Backend.recipes.ingredients.allOf recipeId)
         { body = Http.emptyBody
-        , expect = HttpUtil.expectJson FoodGroup.GotFetchResponse (Decode.list decoderIngredient)
+        , expect = HttpUtil.expectJson ChoiceGroup.GotFetchResponse (Decode.list decoderIngredient)
         }
 
 
 fetchFoods : AuthorizedAccess -> Cmd Page.LogicMsg
 fetchFoods =
-    Pages.Util.Requests.fetchFoodsWith FoodGroup.GotFetchFoodsResponse
+    Pages.Util.Requests.fetchFoodsWith ChoiceGroup.GotFetchFoodsResponse
 
 
 createIngredient :
@@ -38,7 +38,7 @@ createIngredient authorizedAccess ingredientCreation =
         authorizedAccess
         Addresses.Backend.recipes.ingredients.create
         { body = encoderIngredientCreation ingredientCreation |> Http.jsonBody
-        , expect = HttpUtil.expectJson FoodGroup.GotCreateResponse decoderIngredient
+        , expect = HttpUtil.expectJson ChoiceGroup.GotCreateResponse decoderIngredient
         }
 
 
@@ -48,7 +48,7 @@ saveIngredient flags ingredientUpdate =
         flags
         Addresses.Backend.recipes.ingredients.update
         { body = encoderIngredientUpdate ingredientUpdate |> Http.jsonBody
-        , expect = HttpUtil.expectJson FoodGroup.GotSaveEditResponse decoderIngredient
+        , expect = HttpUtil.expectJson ChoiceGroup.GotSaveEditResponse decoderIngredient
         }
 
 
@@ -58,5 +58,5 @@ deleteIngredient flags ingredientId =
         flags
         (Addresses.Backend.recipes.ingredients.delete ingredientId)
         { body = Http.emptyBody
-        , expect = HttpUtil.expectWhatever (FoodGroup.GotDeleteResponse ingredientId)
+        , expect = HttpUtil.expectWhatever (ChoiceGroup.GotDeleteResponse ingredientId)
         }

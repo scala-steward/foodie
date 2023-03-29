@@ -1,8 +1,8 @@
-module Pages.Ingredients.FoodGroup exposing (..)
+module Pages.Util.Choice.ChoiceGroup exposing (..)
 
 import Api.Auxiliary exposing (JWT, RecipeId)
 import Monocle.Lens exposing (Lens)
-import Pages.Ingredients.Pagination as Pagination exposing (Pagination)
+import Pages.Util.Choice.Pagination as Pagination exposing (Pagination)
 import Pages.View.Tristate as Tristate
 import Util.DictList as DictList exposing (DictList)
 import Util.Editing as Editing exposing (Editing)

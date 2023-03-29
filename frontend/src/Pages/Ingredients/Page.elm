@@ -8,12 +8,12 @@ import Api.Types.Ingredient exposing (Ingredient)
 import Monocle.Lens exposing (Lens)
 import Pages.Ingredients.Complex.Page
 import Pages.Ingredients.ComplexIngredientClientInput exposing (ComplexIngredientClientInput)
-import Pages.Ingredients.FoodGroup as FoodGroup
 import Pages.Ingredients.IngredientCreationClientInput exposing (IngredientCreationClientInput)
 import Pages.Ingredients.IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
 import Pages.Ingredients.Plain.Page
 import Pages.Ingredients.Recipe.Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.Choice.ChoiceGroup as ChoiceGroup
 import Pages.View.Tristate as Tristate exposing (Status(..))
 import Pages.View.TristateUtil as TristateUtil
 import Util.DictList exposing (DictList)
@@ -38,8 +38,8 @@ type alias Main =
 type alias Initial =
     { jwt : JWT
     , recipe : Pages.Ingredients.Recipe.Page.Initial
-    , ingredientsGroup : FoodGroup.Initial IngredientId Ingredient IngredientUpdateClientInput FoodId Food
-    , complexIngredientsGroup : FoodGroup.Initial ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood
+    , ingredientsGroup : ChoiceGroup.Initial IngredientId Ingredient IngredientUpdateClientInput FoodId Food
+    , complexIngredientsGroup : ChoiceGroup.Initial ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood
     }
 
 
@@ -71,8 +71,8 @@ initial : AuthorizedAccess -> RecipeId -> Model
 initial authorizedAccess recipeId =
     { jwt = authorizedAccess.jwt
     , recipe = Pages.Ingredients.Recipe.Page.initialWith authorizedAccess.jwt
-    , ingredientsGroup = FoodGroup.initialWith authorizedAccess.jwt recipeId
-    , complexIngredientsGroup = FoodGroup.initialWith authorizedAccess.jwt recipeId
+    , ingredientsGroup = ChoiceGroup.initialWith authorizedAccess.jwt recipeId
+    , complexIngredientsGroup = ChoiceGroup.initialWith authorizedAccess.jwt recipeId
     }
         |> Tristate.createInitial authorizedAccess.configuration
 
@@ -84,11 +84,11 @@ initialToMain i =
         |> Maybe.andThen
             (\recipe ->
                 i.ingredientsGroup
-                    |> FoodGroup.initialToMain
+                    |> ChoiceGroup.initialToMain
                     |> Maybe.andThen
                         (\ingredientsGroup ->
                             i.complexIngredientsGroup
-                                |> FoodGroup.initialToMain
+                                |> ChoiceGroup.initialToMain
                                 |> Maybe.map
                                     (\complexIngredientsGroup ->
                                         { jwt = i.jwt
@@ -105,11 +105,11 @@ initialToMain i =
 
 
 type alias PlainIngredientState =
-    FoodGroup.IngredientState Ingredient IngredientUpdateClientInput
+    ChoiceGroup.IngredientState Ingredient IngredientUpdateClientInput
 
 
 type alias ComplexIngredientState =
-    FoodGroup.IngredientState ComplexIngredient ComplexIngredientClientInput
+    ChoiceGroup.IngredientState ComplexIngredient ComplexIngredientClientInput
 
 
 type alias FoodMap =
@@ -135,8 +135,8 @@ type FoodsMode
 
 lenses :
     { initial :
-        { ingredientsGroup : Lens Initial (FoodGroup.Initial IngredientId Ingredient IngredientUpdateClientInput FoodId Food)
-        , complexIngredientsGroup : Lens Initial (FoodGroup.Initial ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood)
+        { ingredientsGroup : Lens Initial (ChoiceGroup.Initial IngredientId Ingredient IngredientUpdateClientInput FoodId Food)
+        , complexIngredientsGroup : Lens Initial (ChoiceGroup.Initial ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood)
         , recipe : Lens Initial Pages.Ingredients.Recipe.Page.Initial
         }
     , main :
