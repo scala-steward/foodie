@@ -27,6 +27,11 @@ viewMain configuration main =
         { nameOfChoice = .name
         , choiceIdOfElement = .complexFoodId
         , idOfElement = .complexFoodId
+        , elementHeaderColumns =
+            [ th [] [ label [] [ text "Name" ] ]
+            , th [ Style.classes.numberLabel ] [ label [] [ text "Factor" ] ]
+            , th [ Style.classes.numberLabel ] [ label [] [ text "Amount" ] ]
+            ]
         , info =
             \complexIngredient ->
                 let

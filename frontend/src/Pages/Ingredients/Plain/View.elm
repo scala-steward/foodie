@@ -52,6 +52,11 @@ viewMain main =
         { nameOfChoice = .name
         , choiceIdOfElement = .foodId
         , idOfElement = .id
+        , elementHeaderColumns =
+            [ th [] [ label [] [ text "Name" ] ]
+            , th [ Style.classes.numberLabel ] [ label [] [ text "Amount" ] ]
+            , th [ Style.classes.numberLabel ] [ label [] [ text "Unit" ] ]
+            ]
         , info =
             \ingredient ->
                 let

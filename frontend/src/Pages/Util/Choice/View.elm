@@ -24,6 +24,7 @@ viewMain :
     { nameOfChoice : choice -> String
     , choiceIdOfElement : element -> choiceId
     , idOfElement : element -> elementId
+    , elementHeaderColumns : List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
     , info : element -> List (Column (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
     , controls : element -> List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
     , isValidInput : update -> Bool
@@ -89,11 +90,9 @@ viewMain ps main =
         , table [ Style.classes.elementsWithControlsTable, Style.classes.elementEditTable ]
             [ thead []
                 [ tr [ Style.classes.tableHeader ]
-                    [ th [] [ label [] [ text "Name" ] ]
-                    , th [ Style.classes.numberLabel ] [ label [] [ text "Amount" ] ]
-                    , th [ Style.classes.numberLabel ] [ label [] [ text "Unit" ] ]
-                    , th [ Style.classes.toggle ] []
-                    ]
+                    (ps.elementHeaderColumns
+                        ++ [ th [ Style.classes.toggle ] [] ]
+                    )
                 ]
             , tbody []
                 (paginatedElements
