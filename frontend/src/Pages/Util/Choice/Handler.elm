@@ -4,7 +4,7 @@ import Basics.Extra exposing (flip)
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Pages.Util.Choice.Page as ChoiceGroup
+import Pages.Util.Choice.Page
 import Pages.Util.Choice.Pagination as Pagination
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.View.Tristate as Tristate
@@ -22,14 +22,14 @@ updateLogic :
     , choiceIdOfCreation : creation -> choiceId
     , toUpdate : element -> update
     , toCreation : choice -> parentId -> creation
-    , createElement : AuthorizedAccess -> parentId -> creation -> Cmd (ChoiceGroup.LogicMsg elementId element update choiceId choice creation)
-    , saveElement : AuthorizedAccess -> parentId -> update -> Cmd (ChoiceGroup.LogicMsg elementId element update choiceId choice creation)
-    , deleteElement : AuthorizedAccess -> parentId -> elementId -> Cmd (ChoiceGroup.LogicMsg elementId element update choiceId choice creation)
-    , storeChoices : List choice -> Cmd (ChoiceGroup.LogicMsg elementId element update choiceId choice creation)
+    , createElement : AuthorizedAccess -> parentId -> creation -> Cmd (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
+    , saveElement : AuthorizedAccess -> parentId -> update -> Cmd (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
+    , deleteElement : AuthorizedAccess -> parentId -> elementId -> Cmd (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
+    , storeChoices : List choice -> Cmd (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
     }
-    -> ChoiceGroup.LogicMsg elementId element update choiceId choice creation
-    -> ChoiceGroup.Model parentId elementId element update choiceId choice creation
-    -> ( ChoiceGroup.Model parentId elementId element update choiceId choice creation, Cmd (ChoiceGroup.LogicMsg elementId element update choiceId choice creation) )
+    -> Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation
+    -> Pages.Util.Choice.Page.Model parentId elementId element update choiceId choice creation
+    -> ( Pages.Util.Choice.Page.Model parentId elementId element update choiceId choice creation, Cmd (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation) )
 updateLogic ps msg model =
     let
         edit update =
@@ -114,7 +114,7 @@ updateLogic ps msg model =
                     (model
                         |> Tristate.mapMain
                             (LensUtil.deleteAtId elementId
-                                ChoiceGroup.lenses.main.elements
+                                Pages.Util.Choice.Page.lenses.main.elements
                             )
                         |> always
                     )
@@ -127,7 +127,7 @@ updateLogic ps msg model =
                     (\elements ->
                         model
                             |> Tristate.mapInitial
-                                (ChoiceGroup.lenses.initial.elements.set
+                                (Pages.Util.Choice.Page.lenses.initial.elements.set
                                     (elements
                                         |> DictList.fromListWithKey ps.idOfElement
                                         |> Just
@@ -143,7 +143,7 @@ updateLogic ps msg model =
                     (\choices ->
                         ( model
                             |> Tristate.mapInitial
-                                (ChoiceGroup.lenses.initial.choices.set
+                                (Pages.Util.Choice.Page.lenses.initial.choices.set
                                     (choices |> DictList.fromListWithKey ps.idOfChoice |> Just)
                                 )
                         , choices
@@ -153,7 +153,7 @@ updateLogic ps msg model =
 
         toggleChoiceControls choiceId =
             ( model
-                |> Tristate.mapMain (LensUtil.updateById choiceId ChoiceGroup.lenses.main.choices Editing.toggleControls)
+                |> Tristate.mapMain (LensUtil.updateById choiceId Pages.Util.Choice.Page.lenses.main.choices Editing.toggleControls)
             , Cmd.none
             )
 
@@ -163,7 +163,7 @@ updateLogic ps msg model =
                     (\main ->
                         main
                             |> LensUtil.updateById (choice |> ps.idOfChoice)
-                                ChoiceGroup.lenses.main.choices
+                                Pages.Util.Choice.Page.lenses.main.choices
                                 (Editing.toUpdate (flip ps.toCreation main.parentId))
                     )
             , Cmd.none
@@ -173,7 +173,7 @@ updateLogic ps msg model =
             ( model
                 |> Tristate.mapMain
                     (LensUtil.updateById choiceId
-                        ChoiceGroup.lenses.main.choices
+                        Pages.Util.Choice.Page.lenses.main.choices
                         Editing.toView
                     )
             , Cmd.none
@@ -186,7 +186,7 @@ updateLogic ps msg model =
                 |> Maybe.andThen
                     (\main ->
                         main
-                            |> (ChoiceGroup.lenses.main.choices
+                            |> (Pages.Util.Choice.Page.lenses.main.choices
                                     |> Compose.lensWithOptional (LensUtil.dictByKey choiceId)
                                     |> Compose.optionalWithOptional Editing.lenses.update
                                ).getOption
@@ -208,10 +208,10 @@ updateLogic ps msg model =
                         model
                             |> Tristate.mapMain
                                 (LensUtil.insertAtId (element |> ps.idOfElement)
-                                    ChoiceGroup.lenses.main.elements
+                                    Pages.Util.Choice.Page.lenses.main.elements
                                     (element |> Editing.asView)
                                     >> LensUtil.updateById (element |> ps.choiceIdOfElement)
-                                        ChoiceGroup.lenses.main.choices
+                                        Pages.Util.Choice.Page.lenses.main.choices
                                         Editing.toView
                                 )
                     )
@@ -222,7 +222,7 @@ updateLogic ps msg model =
             ( model
                 |> Tristate.mapMain
                     (LensUtil.updateById (elementCreationClientInput |> ps.choiceIdOfCreation)
-                        ChoiceGroup.lenses.main.choices
+                        Pages.Util.Choice.Page.lenses.main.choices
                         (Editing.lenses.update.set elementCreationClientInput)
                     )
             , Cmd.none
@@ -230,7 +230,7 @@ updateLogic ps msg model =
 
         setPagination pagination =
             ( model
-                |> Tristate.mapMain (ChoiceGroup.lenses.main.pagination.set pagination)
+                |> Tristate.mapMain (Pages.Util.Choice.Page.lenses.main.pagination.set pagination)
             , Cmd.none
             )
 
@@ -239,9 +239,9 @@ updateLogic ps msg model =
                 |> Tristate.mapMain
                     (PaginationSettings.setSearchStringAndReset
                         { searchStringLens =
-                            ChoiceGroup.lenses.main.elementsSearchString
+                            Pages.Util.Choice.Page.lenses.main.elementsSearchString
                         , paginationSettingsLens =
-                            ChoiceGroup.lenses.main.pagination |> Compose.lensWithLens Pagination.lenses.elements
+                            Pages.Util.Choice.Page.lenses.main.pagination |> Compose.lensWithLens Pagination.lenses.elements
                         }
                         string
                     )
@@ -253,9 +253,9 @@ updateLogic ps msg model =
                 |> Tristate.mapMain
                     (PaginationSettings.setSearchStringAndReset
                         { searchStringLens =
-                            ChoiceGroup.lenses.main.choicesSearchString
+                            Pages.Util.Choice.Page.lenses.main.choicesSearchString
                         , paginationSettingsLens =
-                            ChoiceGroup.lenses.main.pagination
+                            Pages.Util.Choice.Page.lenses.main.pagination
                                 |> Compose.lensWithLens Pagination.lenses.choices
                         }
                         string
@@ -264,77 +264,77 @@ updateLogic ps msg model =
             )
     in
     case msg of
-        ChoiceGroup.Edit update ->
+        Pages.Util.Choice.Page.Edit update ->
             edit update
 
-        ChoiceGroup.SaveEdit update ->
+        Pages.Util.Choice.Page.SaveEdit update ->
             saveEdit update
 
-        ChoiceGroup.GotSaveEditResponse result ->
+        Pages.Util.Choice.Page.GotSaveEditResponse result ->
             gotSaveEditResponse result
 
-        ChoiceGroup.ToggleControls elementId ->
+        Pages.Util.Choice.Page.ToggleControls elementId ->
             toggleControls elementId
 
-        ChoiceGroup.EnterEdit elementId ->
+        Pages.Util.Choice.Page.EnterEdit elementId ->
             enterEdit elementId
 
-        ChoiceGroup.ExitEdit elementId ->
+        Pages.Util.Choice.Page.ExitEdit elementId ->
             exitEdit elementId
 
-        ChoiceGroup.RequestDelete elementId ->
+        Pages.Util.Choice.Page.RequestDelete elementId ->
             requestDelete elementId
 
-        ChoiceGroup.ConfirmDelete elementId ->
+        Pages.Util.Choice.Page.ConfirmDelete elementId ->
             confirmDelete elementId
 
-        ChoiceGroup.CancelDelete elementId ->
+        Pages.Util.Choice.Page.CancelDelete elementId ->
             cancelDelete elementId
 
-        ChoiceGroup.GotDeleteResponse elementId result ->
+        Pages.Util.Choice.Page.GotDeleteResponse elementId result ->
             gotDeleteResponse elementId result
 
-        ChoiceGroup.GotFetchElementsResponse result ->
+        Pages.Util.Choice.Page.GotFetchElementsResponse result ->
             gotFetchElementsResponse result
 
-        ChoiceGroup.GotFetchChoicesResponse result ->
+        Pages.Util.Choice.Page.GotFetchChoicesResponse result ->
             gotFetchChoicesResponse result
 
-        ChoiceGroup.ToggleChoiceControls choiceId ->
+        Pages.Util.Choice.Page.ToggleChoiceControls choiceId ->
             toggleChoiceControls choiceId
 
-        ChoiceGroup.SelectChoice choice ->
+        Pages.Util.Choice.Page.SelectChoice choice ->
             selectChoice choice
 
-        ChoiceGroup.DeselectChoice choiceId ->
+        Pages.Util.Choice.Page.DeselectChoice choiceId ->
             deselectChoice choiceId
 
-        ChoiceGroup.Create choiceId ->
+        Pages.Util.Choice.Page.Create choiceId ->
             create choiceId
 
-        ChoiceGroup.GotCreateResponse result ->
+        Pages.Util.Choice.Page.GotCreateResponse result ->
             gotCreateResponse result
 
-        ChoiceGroup.UpdateCreation creation ->
+        Pages.Util.Choice.Page.UpdateCreation creation ->
             updateCreation creation
 
-        ChoiceGroup.SetPagination pagination ->
+        Pages.Util.Choice.Page.SetPagination pagination ->
             setPagination pagination
 
-        ChoiceGroup.SetElementsSearchString string ->
+        Pages.Util.Choice.Page.SetElementsSearchString string ->
             setElementsSearchString string
 
-        ChoiceGroup.SetChoicesSearchString string ->
+        Pages.Util.Choice.Page.SetChoicesSearchString string ->
             setChoicesSearchString string
 
 
 mapElementStateById :
     elementId
     -> (Editing element update -> Editing element update)
-    -> ChoiceGroup.Model parentId elementId element update choiceId choice creation
-    -> ChoiceGroup.Model parentId elementId element update choiceId choice creation
+    -> Pages.Util.Choice.Page.Model parentId elementId element update choiceId choice creation
+    -> Pages.Util.Choice.Page.Model parentId elementId element update choiceId choice creation
 mapElementStateById elementId =
-    (ChoiceGroup.lenses.main.elements
+    (Pages.Util.Choice.Page.lenses.main.elements
         |> LensUtil.updateById elementId
     )
         >> Tristate.mapMain

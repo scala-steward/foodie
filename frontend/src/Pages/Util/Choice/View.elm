@@ -7,7 +7,7 @@ import Html.Events exposing (onClick)
 import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
 import Monocle.Compose as Compose
-import Pages.Util.Choice.Page as ChoiceGroup
+import Pages.Util.Choice.Page
 import Pages.Util.Choice.Pagination as Pagination exposing (Pagination)
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.PaginationSettings as PaginationSettings
@@ -24,14 +24,14 @@ viewMain :
     { nameOfChoice : choice -> String
     , choiceIdOfElement : element -> choiceId
     , idOfElement : element -> elementId
-    , info : element -> List (Column (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
-    , controls : element -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    , info : element -> List (Column (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
+    , controls : element -> List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
     , isValidInput : update -> Bool
-    , edit : element -> update -> List (Column (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    , edit : element -> update -> List (Column (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
     , fitControlsToColumns : Int
     }
-    -> ChoiceGroup.Main parentId elementId element update choiceId choice creation
-    -> Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation)
+    -> Pages.Util.Choice.Page.Main parentId elementId element update choiceId choice creation
+    -> Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
 viewMain ps main =
     let
         viewElementState =
@@ -76,14 +76,14 @@ viewMain ps main =
                     )
                 |> ViewUtil.paginate
                     { pagination =
-                        ChoiceGroup.lenses.main.pagination
+                        Pages.Util.Choice.Page.lenses.main.pagination
                             |> Compose.lensWithLens Pagination.lenses.elements
                     }
                     main
     in
     div [ Style.classes.choices ]
         [ HtmlUtil.searchAreaWith
-            { msg = ChoiceGroup.SetElementsSearchString
+            { msg = Pages.Util.Choice.Page.SetElementsSearchString
             , searchString = main.elementsSearchString
             }
         , table [ Style.classes.elementsWithControlsTable, Style.classes.elementEditTable ]
@@ -105,11 +105,11 @@ viewMain ps main =
             [ ViewUtil.pagerButtons
                 { msg =
                     PaginationSettings.updateCurrentPage
-                        { pagination = ChoiceGroup.lenses.main.pagination
+                        { pagination = Pages.Util.Choice.Page.lenses.main.pagination
                         , items = Pagination.lenses.elements
                         }
                         main
-                        >> ChoiceGroup.SetPagination
+                        >> Pages.Util.Choice.Page.SetPagination
                 , elements = paginatedElements
                 }
             ]
@@ -119,16 +119,16 @@ viewMain ps main =
 viewChoices :
     { matchesSearchText : String -> choice -> Bool
     , sortBy : choice -> comparable
-    , choiceHeaderColumns : List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    , choiceHeaderColumns : List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
     , idOfChoice : choice -> choiceId
     , nameOfChoice : choice -> String
-    , elementCreationLine : choice -> creation -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
-    , elementCreationControls : choice -> creation -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
-    , viewChoiceLine : choice -> List (Column (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
-    , viewChoiceLineControls : choice -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    , elementCreationLine : choice -> creation -> List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
+    , elementCreationControls : choice -> creation -> List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
+    , viewChoiceLine : choice -> List (Column (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
+    , viewChoiceLineControls : choice -> List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
     }
-    -> ChoiceGroup.Main parentId elementId element update choiceId choice creation
-    -> Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation)
+    -> Pages.Util.Choice.Page.Main parentId elementId element update choiceId choice creation
+    -> Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
 viewChoices ps main =
     let
         paginatedChoices =
@@ -139,7 +139,7 @@ viewChoices ps main =
                 |> List.sortBy (.original >> ps.sortBy)
                 |> ViewUtil.paginate
                     { pagination =
-                        ChoiceGroup.lenses.main.pagination
+                        Pages.Util.Choice.Page.lenses.main.pagination
                             |> Compose.lensWithLens Pagination.lenses.choices
                     }
                     main
@@ -147,7 +147,7 @@ viewChoices ps main =
     div [ Style.classes.addView ]
         [ div [ Style.classes.addElement ]
             [ HtmlUtil.searchAreaWith
-                { msg = ChoiceGroup.SetChoicesSearchString
+                { msg = Pages.Util.Choice.Page.SetChoicesSearchString
                 , searchString = main.choicesSearchString
                 }
             , table [ Style.classes.elementsWithControlsTable ]
@@ -185,11 +185,11 @@ viewChoices ps main =
                 [ ViewUtil.pagerButtons
                     { msg =
                         PaginationSettings.updateCurrentPage
-                            { pagination = ChoiceGroup.lenses.main.pagination
+                            { pagination = Pages.Util.Choice.Page.lenses.main.pagination
                             , items = Pagination.lenses.choices
                             }
                             main
-                            >> ChoiceGroup.SetPagination
+                            >> Pages.Util.Choice.Page.SetPagination
                     , elements = paginatedChoices
                     }
                 ]
@@ -199,12 +199,12 @@ viewChoices ps main =
 
 viewElementLine :
     { idOfElement : element -> elementId
-    , info : element -> List (Column (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
-    , controls : element -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    , info : element -> List (Column (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
+    , controls : element -> List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
     }
     -> element
     -> Bool
-    -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    -> List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
 viewElementLine ps element showControls =
     elementLineWith
         { idOfElement = ps.idOfElement
@@ -217,10 +217,10 @@ viewElementLine ps element showControls =
 
 deleteElementLine :
     { idOfElement : element -> elementId
-    , info : element -> List (Column (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    , info : element -> List (Column (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
     }
     -> element
-    -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    -> List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
 deleteElementLine ps =
     elementLineWith
         { idOfElement = ps.idOfElement
@@ -231,8 +231,8 @@ deleteElementLine ps =
                     elementId =
                         element |> ps.idOfElement
                 in
-                [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick <| ChoiceGroup.ConfirmDelete <| elementId ] [ text "Delete?" ] ]
-                , td [ Style.classes.controls ] [ button [ Style.classes.button.confirm, onClick <| ChoiceGroup.CancelDelete <| elementId ] [ text "Cancel" ] ]
+                [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick <| Pages.Util.Choice.Page.ConfirmDelete <| elementId ] [ text "Delete?" ] ]
+                , td [ Style.classes.controls ] [ button [ Style.classes.button.confirm, onClick <| Pages.Util.Choice.Page.CancelDelete <| elementId ] [ text "Cancel" ] ]
                 ]
         , showControls = True
         }
@@ -251,16 +251,16 @@ withExtraAttributes extra column =
 
 elementLineWith :
     { idOfElement : element -> elementId
-    , info : element -> List (Column (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
-    , controls : element -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    , info : element -> List (Column (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
+    , controls : element -> List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
     , showControls : Bool
     }
     -> element
-    -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    -> List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
 elementLineWith ps element =
     let
         toggleCommand =
-            ChoiceGroup.ToggleControls <| ps.idOfElement <| element
+            Pages.Util.Choice.Page.ToggleControls <| ps.idOfElement <| element
 
         infoColumns =
             ps.info element
@@ -291,22 +291,22 @@ elementLineWith ps element =
 editElementLine :
     { idOfElement : element -> elementId
     , isValidInput : update -> Bool
-    , edit : element -> update -> List (Column (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    , edit : element -> update -> List (Column (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
     , fitControlsToColumns : Int
     }
     -> element
     -> update
-    -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    -> List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
 editElementLine ps element elementUpdateClientInput =
     let
         saveMsg =
-            ChoiceGroup.SaveEdit elementUpdateClientInput
+            Pages.Util.Choice.Page.SaveEdit elementUpdateClientInput
 
         elementId =
             element |> ps.idOfElement
 
         cancelMsg =
-            ChoiceGroup.ExitEdit <| elementId
+            Pages.Util.Choice.Page.ExitEdit <| elementId
 
         validInput =
             elementUpdateClientInput |> ps.isValidInput
@@ -321,7 +321,7 @@ editElementLine ps element elementUpdateClientInput =
                             ]
                         )
                  )
-                    ++ [ HtmlUtil.toggleControlsCell <| ChoiceGroup.ToggleControls <| elementId ]
+                    ++ [ HtmlUtil.toggleControlsCell <| Pages.Util.Choice.Page.ToggleControls <| elementId ]
                 )
 
         controlsRow =
@@ -354,16 +354,16 @@ editElementLine ps element elementUpdateClientInput =
 viewChoiceLine :
     { nameOfChoice : choice -> String
     , idOfChoice : choice -> choiceId
-    , choiceOnView : choice -> List (Column (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
-    , choiceControls : choice -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    , choiceOnView : choice -> List (Column (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
+    , choiceControls : choice -> List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
     }
     -> choice
     -> Bool
-    -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    -> List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
 viewChoiceLine ps choice showControls =
     let
         toggleCommand =
-            ChoiceGroup.ToggleChoiceControls <| ps.idOfChoice <| choice
+            Pages.Util.Choice.Page.ToggleChoiceControls <| ps.idOfChoice <| choice
 
         columns =
             ps.choiceOnView choice |> List.map (withExtraAttributes [ onClick toggleCommand ])
@@ -392,19 +392,19 @@ viewChoiceLine ps choice showControls =
 editElementCreation :
     { idOfChoice : choice -> choiceId
     , nameOfChoice : choice -> String
-    , elementCreationLine : choice -> creation -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
-    , elementCreationControls : choice -> creation -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    , elementCreationLine : choice -> creation -> List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
+    , elementCreationControls : choice -> creation -> List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
     }
     -> choice
     -> creation
-    -> List (Html (ChoiceGroup.LogicMsg elementId element update choiceId choice creation))
+    -> List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
 editElementCreation ps choice creation =
     let
         choiceId =
             choice |> ps.idOfChoice
 
         toggleMsg =
-            ChoiceGroup.ToggleChoiceControls <| choiceId
+            Pages.Util.Choice.Page.ToggleChoiceControls <| choiceId
 
         creationRow =
             tr []

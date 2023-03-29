@@ -5,7 +5,7 @@ import Api.Types.Food exposing (Food)
 import Api.Types.Ingredient exposing (Ingredient)
 import Pages.Ingredients.IngredientCreationClientInput exposing (IngredientCreationClientInput)
 import Pages.Ingredients.IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
-import Pages.Util.Choice.Page as ChoiceGroup
+import Pages.Util.Choice.Page
 import Pages.View.Tristate as Tristate
 
 
@@ -14,12 +14,12 @@ type alias Model =
 
 
 type alias Initial =
-    ChoiceGroup.Initial RecipeId IngredientId Ingredient FoodId Food
+    Pages.Util.Choice.Page.Initial RecipeId IngredientId Ingredient FoodId Food
 
 
 type alias Main =
-    ChoiceGroup.Main RecipeId IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput
+    Pages.Util.Choice.Page.Main RecipeId IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput
 
 
 type alias LogicMsg =
-    ChoiceGroup.LogicMsg IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput
+    Pages.Util.Choice.Page.LogicMsg IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput

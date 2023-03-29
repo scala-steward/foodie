@@ -13,7 +13,7 @@ import Pages.Ingredients.Plain.Handler
 import Pages.Ingredients.Plain.Requests
 import Pages.Ingredients.Recipe.Handler
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Pages.Util.Choice.Page as ChoiceGroup
+import Pages.Util.Choice.Page
 import Pages.View.Tristate as Tristate
 import Pages.View.TristateUtil as TristateUtil
 import Result.Extra
@@ -98,7 +98,7 @@ updateFoods model =
             (\foods ->
                 ( model
                     |> Tristate.mapInitial
-                        ((Page.lenses.initial.ingredientsGroup |> Compose.lensWithLens ChoiceGroup.lenses.initial.choices).set
+                        ((Page.lenses.initial.ingredientsGroup |> Compose.lensWithLens Pages.Util.Choice.Page.lenses.initial.choices).set
                             (foods |> Just |> Maybe.Extra.filter (List.isEmpty >> not) |> Maybe.map (DictList.fromListWithKey .id))
                         )
                     |> Tristate.fromInitToMain Page.initialToMain

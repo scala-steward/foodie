@@ -10,7 +10,7 @@ import Pages.Ingredients.IngredientUpdateClientInput as IngredientUpdateClientIn
 import Pages.Ingredients.Plain.Page as Page
 import Pages.Ingredients.Plain.Requests as Requests
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Pages.Util.Choice.Handler as ChoiceGroupHandler
+import Pages.Util.Choice.Handler
 import Ports exposing (doFetchFoods, storeFoods)
 
 
@@ -24,7 +24,7 @@ initialFetch authorizedAccess recipeId =
 
 updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 updateLogic =
-    ChoiceGroupHandler.updateLogic
+    Pages.Util.Choice.Handler.updateLogic
         { idOfElement = .id
         , idOfUpdate = .ingredientId
         , idOfChoice = .id

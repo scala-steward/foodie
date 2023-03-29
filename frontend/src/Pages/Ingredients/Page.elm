@@ -13,7 +13,7 @@ import Pages.Ingredients.IngredientUpdateClientInput exposing (IngredientUpdateC
 import Pages.Ingredients.Plain.Page
 import Pages.Ingredients.Recipe.Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Pages.Util.Choice.Page as ChoiceGroup
+import Pages.Util.Choice.Page
 import Pages.View.Tristate as Tristate exposing (Status(..))
 import Pages.View.TristateUtil as TristateUtil
 import Util.DictList exposing (DictList)
@@ -38,8 +38,8 @@ type alias Main =
 type alias Initial =
     { jwt : JWT
     , recipe : Pages.Ingredients.Recipe.Page.Initial
-    , ingredientsGroup : ChoiceGroup.Initial RecipeId IngredientId Ingredient FoodId Food
-    , complexIngredientsGroup : ChoiceGroup.Initial RecipeId ComplexIngredientId ComplexIngredient ComplexFoodId ComplexFood
+    , ingredientsGroup : Pages.Util.Choice.Page.Initial RecipeId IngredientId Ingredient FoodId Food
+    , complexIngredientsGroup : Pages.Util.Choice.Page.Initial RecipeId ComplexIngredientId ComplexIngredient ComplexFoodId ComplexFood
     }
 
 
@@ -71,8 +71,8 @@ initial : AuthorizedAccess -> RecipeId -> Model
 initial authorizedAccess recipeId =
     { jwt = authorizedAccess.jwt
     , recipe = Pages.Ingredients.Recipe.Page.initialWith authorizedAccess.jwt
-    , ingredientsGroup = ChoiceGroup.initialWith authorizedAccess.jwt recipeId
-    , complexIngredientsGroup = ChoiceGroup.initialWith authorizedAccess.jwt recipeId
+    , ingredientsGroup = Pages.Util.Choice.Page.initialWith authorizedAccess.jwt recipeId
+    , complexIngredientsGroup = Pages.Util.Choice.Page.initialWith authorizedAccess.jwt recipeId
     }
         |> Tristate.createInitial authorizedAccess.configuration
 
@@ -84,11 +84,11 @@ initialToMain i =
         |> Maybe.andThen
             (\recipe ->
                 i.ingredientsGroup
-                    |> ChoiceGroup.initialToMain
+                    |> Pages.Util.Choice.Page.initialToMain
                     |> Maybe.andThen
                         (\ingredientsGroup ->
                             i.complexIngredientsGroup
-                                |> ChoiceGroup.initialToMain
+                                |> Pages.Util.Choice.Page.initialToMain
                                 |> Maybe.map
                                     (\complexIngredientsGroup ->
                                         { jwt = i.jwt
@@ -135,8 +135,8 @@ type FoodsMode
 
 lenses :
     { initial :
-        { ingredientsGroup : Lens Initial (ChoiceGroup.Initial RecipeId IngredientId Ingredient FoodId Food)
-        , complexIngredientsGroup : Lens Initial (ChoiceGroup.Initial RecipeId ComplexIngredientId ComplexIngredient ComplexFoodId ComplexFood)
+        { ingredientsGroup : Lens Initial (Pages.Util.Choice.Page.Initial RecipeId IngredientId Ingredient FoodId Food)
+        , complexIngredientsGroup : Lens Initial (Pages.Util.Choice.Page.Initial RecipeId ComplexIngredientId ComplexIngredient ComplexFoodId ComplexFood)
         , recipe : Lens Initial Pages.Ingredients.Recipe.Page.Initial
         }
     , main :

@@ -5,7 +5,7 @@ import Pages.Ingredients.Complex.Page as Page
 import Pages.Ingredients.Complex.Requests as Requests
 import Pages.Ingredients.ComplexIngredientClientInput as ComplexIngredientClientInput
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Pages.Util.Choice.Handler as ChoiceGroupHandler
+import Pages.Util.Choice.Handler
 
 
 initialFetch : AuthorizedAccess -> RecipeId -> Cmd Page.LogicMsg
@@ -18,7 +18,7 @@ initialFetch authorizedAccess recipeId =
 
 updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 updateLogic =
-    ChoiceGroupHandler.updateLogic
+    Pages.Util.Choice.Handler.updateLogic
         { idOfElement = .complexFoodId
         , idOfUpdate = .complexFoodId
         , idOfChoice = .recipeId

@@ -6,7 +6,7 @@ import Api.Types.ComplexIngredient exposing (ComplexIngredient, decoderComplexIn
 import Http
 import Json.Decode as Decode
 import Pages.Ingredients.Complex.Page as Page
-import Pages.Util.Choice.Page as ChoiceGroup
+import Pages.Util.Choice.Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.Requests
 import Util.HttpUtil as HttpUtil exposing (Error)
@@ -18,13 +18,13 @@ fetchComplexIngredients flags recipeId =
         flags
         (Addresses.Backend.recipes.complexIngredients.allOf recipeId)
         { body = Http.emptyBody
-        , expect = HttpUtil.expectJson ChoiceGroup.GotFetchElementsResponse (Decode.list decoderComplexIngredient)
+        , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotFetchElementsResponse (Decode.list decoderComplexIngredient)
         }
 
 
 fetchComplexFoods : AuthorizedAccess -> Cmd Page.LogicMsg
 fetchComplexFoods =
-    Pages.Util.Requests.fetchComplexFoodsWith ChoiceGroup.GotFetchChoicesResponse
+    Pages.Util.Requests.fetchComplexFoodsWith Pages.Util.Choice.Page.GotFetchChoicesResponse
 
 
 createComplexIngredient :
@@ -37,7 +37,7 @@ createComplexIngredient authorizedAccess recipeId complexIngredient =
         authorizedAccess
         (Addresses.Backend.recipes.complexIngredients.create recipeId)
         { body = encoderComplexIngredient complexIngredient |> Http.jsonBody
-        , expect = HttpUtil.expectJson ChoiceGroup.GotCreateResponse decoderComplexIngredient
+        , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotCreateResponse decoderComplexIngredient
         }
 
 
@@ -47,7 +47,7 @@ saveComplexIngredient flags recipeId complexIngredient =
         flags
         (Addresses.Backend.recipes.complexIngredients.update recipeId)
         { body = encoderComplexIngredient complexIngredient |> Http.jsonBody
-        , expect = HttpUtil.expectJson ChoiceGroup.GotSaveEditResponse decoderComplexIngredient
+        , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotSaveEditResponse decoderComplexIngredient
         }
 
 
@@ -57,5 +57,5 @@ deleteComplexIngredient flags recipeId complexIngredientId =
         flags
         (Addresses.Backend.recipes.complexIngredients.delete recipeId complexIngredientId)
         { body = Http.emptyBody
-        , expect = HttpUtil.expectWhatever (ChoiceGroup.GotDeleteResponse complexIngredientId)
+        , expect = HttpUtil.expectWhatever (Pages.Util.Choice.Page.GotDeleteResponse complexIngredientId)
         }
