@@ -361,6 +361,7 @@ viewFoodLine ps food =
                 Just ingredientToAdd ->
                     ps.elementsIfSelected food.original ingredientToAdd
     in
+    --todo: Move controls into separate row
     tr [ Style.classes.editing ]
         (td [ Style.classes.editable ] [ label [] [ text <| ps.nameOfFood <| food.original ] ]
             :: process

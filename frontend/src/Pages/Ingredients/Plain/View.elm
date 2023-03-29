@@ -164,10 +164,10 @@ viewFoods configuration main =
             \food creation ->
                 let
                     addMsg =
-                        FoodGroup.Create food.original.id
+                        FoodGroup.Create food.id
 
                     cancelMsg =
-                        FoodGroup.DeselectFood food.original.id
+                        FoodGroup.DeselectFood food.id
 
                     validInput =
                         creation.amountUnit.factor |> ValidatedInput.isValid
@@ -206,7 +206,7 @@ viewFoods configuration main =
                     [ dropdown
                         { items =
                             --todo: Check duplication with unitDropdown
-                            food.original.measures
+                            food.measures
                                 |> List.map (\m -> { value = String.fromInt m.id, text = m.name, enabled = True })
                         , emptyItem = Nothing
                         , onChange =
@@ -236,16 +236,12 @@ viewFoods configuration main =
                 ]
         , elementsIfNotSelected =
             \food ->
-                let
-                    selectMsg =
-                        FoodGroup.SelectFood food.original
-                in
                 [ td [ Style.classes.editable, Style.classes.numberCell ] []
                 , td [ Style.classes.editable, Style.classes.numberCell ] []
-                , td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick selectMsg ] [ text "Select" ] ]
+                , td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick <| FoodGroup.SelectFood <| food ] [ text "Select" ] ]
                 , td [ Style.classes.controls ]
                     [ Links.linkButton
-                        { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsFoodSelect.address <| food.original.id
+                        { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsFoodSelect.address <| food.id
                         , attributes = [ Style.classes.button.nutrients ]
                         , children = [ text "Nutrients" ]
                         }

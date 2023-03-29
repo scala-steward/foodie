@@ -8,12 +8,13 @@ import Api.Types.IngredientUpdate exposing (IngredientUpdate, encoderIngredientU
 import Http
 import Json.Decode as Decode
 import Pages.Ingredients.FoodGroup as FoodGroup
-import Pages.Ingredients.Page as Page
+import Pages.Ingredients.Plain.Page as Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.Requests
 import Util.HttpUtil as HttpUtil exposing (Error)
 
-fetchIngredients : AuthorizedAccess -> RecipeId -> Cmd Page.IngredientsGroupMsg
+
+fetchIngredients : AuthorizedAccess -> RecipeId -> Cmd Page.LogicMsg
 fetchIngredients flags recipeId =
     HttpUtil.runPatternWithJwt
         flags
@@ -22,14 +23,16 @@ fetchIngredients flags recipeId =
         , expect = HttpUtil.expectJson FoodGroup.GotFetchResponse (Decode.list decoderIngredient)
         }
 
-fetchFoods : AuthorizedAccess -> Cmd Page.IngredientsGroupMsg
+
+fetchFoods : AuthorizedAccess -> Cmd Page.LogicMsg
 fetchFoods =
     Pages.Util.Requests.fetchFoodsWith FoodGroup.GotFetchFoodsResponse
+
 
 createIngredient :
     AuthorizedAccess
     -> IngredientCreation
-    -> Cmd Page.IngredientsGroupMsg
+    -> Cmd Page.LogicMsg
 createIngredient authorizedAccess ingredientCreation =
     HttpUtil.runPatternWithJwt
         authorizedAccess
@@ -38,7 +41,8 @@ createIngredient authorizedAccess ingredientCreation =
         , expect = HttpUtil.expectJson FoodGroup.GotCreateResponse decoderIngredient
         }
 
-saveIngredient : AuthorizedAccess -> IngredientUpdate -> Cmd Page.IngredientsGroupMsg
+
+saveIngredient : AuthorizedAccess -> IngredientUpdate -> Cmd Page.LogicMsg
 saveIngredient flags ingredientUpdate =
     HttpUtil.runPatternWithJwt
         flags
@@ -47,7 +51,8 @@ saveIngredient flags ingredientUpdate =
         , expect = HttpUtil.expectJson FoodGroup.GotSaveEditResponse decoderIngredient
         }
 
-deleteIngredient : AuthorizedAccess -> IngredientId -> Cmd Page.IngredientsGroupMsg
+
+deleteIngredient : AuthorizedAccess -> IngredientId -> Cmd Page.LogicMsg
 deleteIngredient flags ingredientId =
     HttpUtil.runPatternWithJwt
         flags
