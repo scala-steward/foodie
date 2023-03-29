@@ -13,7 +13,7 @@ import Util.Editing as Editing
 updateLogic :
     { toUpdate : parent -> update
     , idOf : parent -> parentId
-    , save : AuthorizedAccess -> update -> Cmd (Page.LogicMsg parent update)
+    , save : AuthorizedAccess -> update -> Maybe (Cmd (Page.LogicMsg parent update))
     , delete : AuthorizedAccess -> parentId -> Cmd (Page.LogicMsg parent update)
     , navigateAfterDeletionAddress : () -> List String
     }
@@ -58,7 +58,7 @@ updateLogic ps msg model =
                         main
                             |> Page.lenses.main.parent.get
                             |> Editing.extractUpdate
-                            |> Maybe.map
+                            |> Maybe.andThen
                                 (ps.save
                                     { configuration = model.configuration
                                     , jwt = main.jwt
