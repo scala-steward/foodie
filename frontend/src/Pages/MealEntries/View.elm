@@ -35,6 +35,6 @@ viewMain configuration main =
                 ]
             , div [ Style.classes.elements ] [ label [] [ text "Dishes" ] ]
             , Pages.MealEntries.Entries.View.viewMain configuration main.entries |> Html.map Page.EntriesMsg
-            , div [ Style.classes.elements ] [ label [] [ text "Complex ingredients" ] ]
+            , div [ Style.classes.elements ] [ label [] [ text "Recipes" ] ]
             , Pages.MealEntries.Entries.View.viewRecipes configuration main.entries |> Html.map Page.EntriesMsg
             ]
