@@ -11,14 +11,14 @@ import Pages.Ingredients.Plain.Page as Page
 import Pages.Ingredients.Plain.Requests as Requests
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.Choice.Handler
-import Ports exposing (doFetchFoods, storeFoods)
+import Ports
 
 
 initialFetch : AuthorizedAccess -> RecipeId -> Cmd Page.LogicMsg
 initialFetch authorizedAccess recipeId =
     Cmd.batch
         [ Requests.fetchIngredients authorizedAccess recipeId
-        , doFetchFoods ()
+        , Ports.doFetchFoods ()
         ]
 
 
@@ -38,5 +38,5 @@ updateLogic =
         , storeChoices =
             Encode.list encoderFood
                 >> Encode.encode 0
-                >> storeFoods
+                >> Ports.storeFoods
         }
