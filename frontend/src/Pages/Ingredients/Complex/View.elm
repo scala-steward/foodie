@@ -6,12 +6,14 @@ import Configuration exposing (Configuration)
 import Html exposing (Html, button, input, label, td, text, th)
 import Html.Attributes exposing (disabled, value)
 import Html.Events exposing (onClick, onInput)
+import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
 import Pages.Ingredients.Complex.Page as Page
 import Pages.Ingredients.ComplexIngredientClientInput as ComplexIngredientClientInput
 import Pages.Util.Choice.Page
 import Pages.Util.Choice.View
 import Pages.Util.DictListUtil as DictListUtil
+import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.NavigationUtil as NavigationUtil
 import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput
@@ -120,22 +122,33 @@ viewFoods configuration main =
                 let
                     validInput =
                         creation.factor |> ValidatedInput.isValid
+
+                    addMsg =
+                        Pages.Util.Choice.Page.Create complexFood.recipeId
+
+                    cancelMsg =
+                        Pages.Util.Choice.Page.DeselectChoice complexFood.recipeId
                 in
                 { display =
                     [ { attributes = [ Style.classes.numberCell ]
                       , children =
                             [ input
-                                [ value creation.factor.text
-                                , onInput
-                                    (flip
-                                        (ValidatedInput.lift
-                                            ComplexIngredientClientInput.lenses.factor
-                                        ).set
-                                        creation
-                                        >> Pages.Util.Choice.Page.UpdateCreation
-                                    )
-                                , Style.classes.numberLabel
-                                ]
+                                ([ MaybeUtil.defined <| value creation.factor.text
+                                 , MaybeUtil.defined <|
+                                    onInput
+                                        (flip
+                                            (ValidatedInput.lift
+                                                ComplexIngredientClientInput.lenses.factor
+                                            ).set
+                                            creation
+                                            >> Pages.Util.Choice.Page.UpdateCreation
+                                        )
+                                 , MaybeUtil.defined <| Style.classes.numberLabel
+                                 , MaybeUtil.defined <| HtmlUtil.onEscape <| cancelMsg
+                                 , MaybeUtil.optional validInput <| onEnter <| addMsg
+                                 ]
+                                    |> Maybe.Extra.values
+                                )
                                 []
                             ]
                       }
@@ -148,7 +161,7 @@ viewFoods configuration main =
                         [ button
                             ([ MaybeUtil.defined <| Style.classes.button.confirm
                              , MaybeUtil.defined <| disabled <| not <| validInput
-                             , MaybeUtil.optional validInput <| onClick <| Pages.Util.Choice.Page.Create <| complexFood.recipeId
+                             , MaybeUtil.optional validInput <| onClick <| addMsg
                              ]
                                 |> Maybe.Extra.values
                             )
@@ -156,7 +169,7 @@ viewFoods configuration main =
                             ]
                         ]
                     , td [ Style.classes.controls ]
-                        [ button [ Style.classes.button.cancel, onClick <| Pages.Util.Choice.Page.DeselectChoice <| complexFood.recipeId ]
+                        [ button [ Style.classes.button.cancel, onClick <| cancelMsg ]
                             [ text "Cancel" ]
                         ]
                     ]
