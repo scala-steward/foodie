@@ -82,8 +82,9 @@ viewMain main =
                 ]
         , controls =
             \ingredient ->
-                [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, Pages.Util.Choice.Page.EnterEdit ingredient.id |> onClick ] [ text "Edit" ] ]
-                , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Pages.Util.Choice.Page.RequestDelete ingredient.id) ] [ text "Delete" ] ]
+                -- todo: Add nutrients button
+                [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick <| Pages.Util.Choice.Page.EnterEdit <| ingredient.id ] [ text "Edit" ] ]
+                , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick <| Pages.Util.Choice.Page.RequestDelete <| ingredient.id ] [ text "Delete" ] ]
                 ]
         , isValidInput = .amountUnit >> .factor >> ValidatedInput.isValid
         , edit =
@@ -141,7 +142,6 @@ viewMain main =
                         ]
                   }
                 ]
-        , fitControlsToColumns = 3
         }
         main
 
@@ -175,63 +175,6 @@ viewFoods configuration main =
                     cancelMsg =
                         Pages.Util.Choice.Page.DeselectChoice food.id
 
-                    validInput =
-                        creation.amountUnit.factor |> ValidatedInput.isValid
-                in
-                [ td [ Style.classes.numberCell ]
-                    [ input
-                        ([ MaybeUtil.defined <| value creation.amountUnit.factor.text
-                         , MaybeUtil.defined <|
-                            onInput <|
-                                flip
-                                    (ValidatedInput.lift
-                                        (IngredientCreationClientInput.amountUnit
-                                            |> Compose.lensWithLens AmountUnitClientInput.lenses.factor
-                                        )
-                                    ).set
-                                    creation
-                                    >> Pages.Util.Choice.Page.UpdateCreation
-                         , MaybeUtil.defined <| Style.classes.numberLabel
-                         , MaybeUtil.defined <| HtmlUtil.onEscape cancelMsg
-                         , MaybeUtil.optional validInput <| onEnter addMsg
-                         ]
-                            |> Maybe.Extra.values
-                        )
-                        []
-                    ]
-                , td [ Style.classes.numberCell ]
-                    [ dropdown
-                        { items =
-                            --todo: Check duplication with unitDropdown
-                            food.measures
-                                |> List.map (\m -> { value = String.fromInt m.id, text = m.name, enabled = True })
-                        , emptyItem = Nothing
-                        , onChange =
-                            onChangeDropdown
-                                { amountUnitLens = IngredientCreationClientInput.amountUnit
-                                , measureIdOf = .amountUnit >> .measureId
-                                , mkMsg = Pages.Util.Choice.Page.UpdateCreation
-                                , input = creation
-                                }
-                        }
-                        [ Style.classes.numberLabel
-                        , HtmlUtil.onEscape cancelMsg
-                        ]
-                        (creation.amountUnit.measureId |> String.fromInt |> Just)
-                    ]
-                ]
-        , elementCreationControls =
-            \food creation ->
-                let
-                    addMsg =
-                        Pages.Util.Choice.Page.Create food.id
-
-                    cancelMsg =
-                        Pages.Util.Choice.Page.DeselectChoice food.id
-
-                    validInput =
-                        creation.amountUnit.factor |> ValidatedInput.isValid
-
                     ( confirmName, confirmStyle ) =
                         if DictListUtil.existsValue (\ingredient -> ingredient.original.foodId == creation.foodId) main.elements then
                             ( "Add again", Style.classes.button.edit )
@@ -240,39 +183,92 @@ viewFoods configuration main =
                             ( "Add"
                             , Style.classes.button.confirm
                             )
+
+                    validInput =
+                        creation.amountUnit.factor |> ValidatedInput.isValid
                 in
-                [ td [ Style.classes.controls ]
-                    [ button
-                        [ confirmStyle
-                        , disabled <| not <| validInput
-                        , onClick addMsg
-                        ]
-                        [ text confirmName
-                        ]
+                { display =
+                    [ { attributes = [ Style.classes.numberCell ]
+                      , children =
+                            [ input
+                                ([ MaybeUtil.defined <| value creation.amountUnit.factor.text
+                                 , MaybeUtil.defined <|
+                                    onInput <|
+                                        flip
+                                            (ValidatedInput.lift
+                                                (IngredientCreationClientInput.amountUnit
+                                                    |> Compose.lensWithLens AmountUnitClientInput.lenses.factor
+                                                )
+                                            ).set
+                                            creation
+                                            >> Pages.Util.Choice.Page.UpdateCreation
+                                 , MaybeUtil.defined <| Style.classes.numberLabel
+                                 , MaybeUtil.defined <| HtmlUtil.onEscape cancelMsg
+                                 , MaybeUtil.optional validInput <| onEnter addMsg
+                                 ]
+                                    |> Maybe.Extra.values
+                                )
+                                []
+                            ]
+                      }
+                    , { attributes = [ Style.classes.numberCell ]
+                      , children =
+                            [ dropdown
+                                { items =
+                                    --todo: Check duplication with unitDropdown
+                                    food.measures
+                                        |> List.map (\m -> { value = String.fromInt m.id, text = m.name, enabled = True })
+                                , emptyItem = Nothing
+                                , onChange =
+                                    onChangeDropdown
+                                        { amountUnitLens = IngredientCreationClientInput.amountUnit
+                                        , measureIdOf = .amountUnit >> .measureId
+                                        , mkMsg = Pages.Util.Choice.Page.UpdateCreation
+                                        , input = creation
+                                        }
+                                }
+                                [ Style.classes.numberLabel
+                                , HtmlUtil.onEscape cancelMsg
+                                ]
+                                (creation.amountUnit.measureId |> String.fromInt |> Just)
+                            ]
+                      }
                     ]
-                , td [ Style.classes.controls ]
-                    [ button [ Style.classes.button.cancel, onClick cancelMsg ] [ text "Cancel" ] ]
-                ]
+                , controls =
+                    [ td [ Style.classes.controls ]
+                        [ button
+                            [ confirmStyle
+                            , disabled <| not <| validInput
+                            , onClick <| addMsg
+                            ]
+                            [ text confirmName
+                            ]
+                        ]
+                    , td [ Style.classes.controls ]
+                        [ button [ Style.classes.button.cancel, onClick <| cancelMsg ] [ text "Cancel" ] ]
+                    ]
+                }
         , viewChoiceLine =
-            \_ ->
-                [ { attributes = [ Style.classes.editable, Style.classes.numberCell ]
-                  , children = []
-                  }
-                , { attributes = [ Style.classes.editable, Style.classes.numberCell ]
-                  , children = []
-                  }
-                ]
-        , viewChoiceLineControls =
             \food ->
-                [ td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick <| Pages.Util.Choice.Page.SelectChoice <| food ] [ text "Select" ] ]
-                , td [ Style.classes.controls ]
-                    [ Links.linkButton
-                        { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsFoodSelect.address <| food.id
-                        , attributes = [ Style.classes.button.nutrients ]
-                        , children = [ text "Nutrients" ]
-                        }
+                { display =
+                    [ { attributes = [ Style.classes.editable, Style.classes.numberCell ]
+                      , children = []
+                      }
+                    , { attributes = [ Style.classes.editable, Style.classes.numberCell ]
+                      , children = []
+                      }
                     ]
-                ]
+                , controls =
+                    [ td [ Style.classes.controls ] [ button [ Style.classes.button.select, onClick <| Pages.Util.Choice.Page.SelectChoice <| food ] [ text "Select" ] ]
+                    , td [ Style.classes.controls ]
+                        [ Links.linkButton
+                            { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsFoodSelect.address <| food.id
+                            , attributes = [ Style.classes.button.nutrients ]
+                            , children = [ text "Nutrients" ]
+                            }
+                        ]
+                    ]
+                }
         }
         main
 

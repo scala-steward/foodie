@@ -91,7 +91,6 @@ viewMain configuration main =
                         ]
                   }
                 ]
-        , fitControlsToColumns = 3
         }
         main
 
@@ -118,56 +117,51 @@ viewFoods configuration main =
         , nameOfChoice = .name
         , elementCreationLine =
             \complexFood creation ->
-                [ td [ Style.classes.numberCell ]
-                    [ input
-                        [ value creation.factor.text
-                        , onInput
-                            (flip
-                                (ValidatedInput.lift
-                                    ComplexIngredientClientInput.lenses.factor
-                                ).set
-                                creation
-                                >> Pages.Util.Choice.Page.UpdateCreation
-                            )
-                        , Style.classes.numberLabel
-                        ]
-                        []
-                    ]
-                , td [ Style.classes.editable, Style.classes.numberLabel, onClick <| Pages.Util.Choice.Page.SelectChoice <| complexFood ]
-                    [ label [] [ text <| amountInfoOf <| complexFood ] ]
-                ]
-        , elementCreationControls =
-            \food creation ->
                 let
                     validInput =
                         creation.factor |> ValidatedInput.isValid
                 in
-                [ td [ Style.classes.controls ]
-                    [ button
-                        ([ MaybeUtil.defined <| Style.classes.button.confirm
-                         , MaybeUtil.defined <| disabled <| not <| validInput
-                         , MaybeUtil.optional validInput <| onClick <| Pages.Util.Choice.Page.Create <| food.recipeId
-                         ]
-                            |> Maybe.Extra.values
-                        )
-                        [ text "Add"
+                { display =
+                    [ { attributes = [ Style.classes.numberCell ]
+                      , children =
+                            [ input
+                                [ value creation.factor.text
+                                , onInput
+                                    (flip
+                                        (ValidatedInput.lift
+                                            ComplexIngredientClientInput.lenses.factor
+                                        ).set
+                                        creation
+                                        >> Pages.Util.Choice.Page.UpdateCreation
+                                    )
+                                , Style.classes.numberLabel
+                                ]
+                                []
+                            ]
+                      }
+                    , { attributes = [ Style.classes.editable, Style.classes.numberLabel, onClick <| Pages.Util.Choice.Page.SelectChoice <| complexFood ]
+                      , children = [ label [] [ text <| amountInfoOf <| complexFood ] ]
+                      }
+                    ]
+                , controls =
+                    [ td [ Style.classes.controls ]
+                        [ button
+                            ([ MaybeUtil.defined <| Style.classes.button.confirm
+                             , MaybeUtil.defined <| disabled <| not <| validInput
+                             , MaybeUtil.optional validInput <| onClick <| Pages.Util.Choice.Page.Create <| complexFood.recipeId
+                             ]
+                                |> Maybe.Extra.values
+                            )
+                            [ text "Add"
+                            ]
+                        ]
+                    , td [ Style.classes.controls ]
+                        [ button [ Style.classes.button.cancel, onClick <| Pages.Util.Choice.Page.DeselectChoice <| complexFood.recipeId ]
+                            [ text "Cancel" ]
                         ]
                     ]
-                , td [ Style.classes.controls ]
-                    [ button [ Style.classes.button.cancel, onClick <| Pages.Util.Choice.Page.DeselectChoice <| food.recipeId ]
-                        [ text "Cancel" ]
-                    ]
-                ]
+                }
         , viewChoiceLine =
-            \_ ->
-                [ { attributes = [ Style.classes.editable, Style.classes.numberCell ]
-                  , children = []
-                  }
-                , { attributes = [ Style.classes.editable, Style.classes.numberCell ]
-                  , children = []
-                  }
-                ]
-        , viewChoiceLineControls =
             \complexFood ->
                 let
                     exists =
@@ -180,10 +174,20 @@ viewFoods configuration main =
                         else
                             ( "Select", [ Style.classes.button.confirm, onClick <| Pages.Util.Choice.Page.SelectChoice <| complexFood ] )
                 in
-                [ td [ Style.classes.controls ] [ button selectStyles [ text <| selectName ] ]
-                , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration complexFood.recipeId ]
-                , td [ Style.classes.controls ] [ NavigationUtil.recipeNutrientsLinkButton configuration complexFood.recipeId ]
-                ]
+                { display =
+                    [ { attributes = [ Style.classes.editable, Style.classes.numberCell ]
+                      , children = []
+                      }
+                    , { attributes = [ Style.classes.editable, Style.classes.numberCell ]
+                      , children = []
+                      }
+                    ]
+                , controls =
+                    [ td [ Style.classes.controls ] [ button selectStyles [ text <| selectName ] ]
+                    , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration complexFood.recipeId ]
+                    , td [ Style.classes.controls ] [ NavigationUtil.recipeNutrientsLinkButton configuration complexFood.recipeId ]
+                    ]
+                }
         }
         main
 
