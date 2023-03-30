@@ -1,7 +1,6 @@
 module Pages.MealEntries.Requests exposing
     ( addMealEntry
     , deleteMealEntry
-    , fetchMeal
     , fetchMealEntries
     , fetchRecipes
     , saveMealEntry
@@ -18,11 +17,6 @@ import Pages.MealEntries.Page as Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.Requests
 import Util.HttpUtil as HttpUtil
-
-
-fetchMeal : Page.Flags -> Cmd Page.LogicMsg
-fetchMeal =
-    Pages.Util.Requests.fetchMealWith Page.GotFetchMealResponse
 
 
 fetchMealEntries : AuthorizedAccess -> MealId -> Cmd Page.LogicMsg

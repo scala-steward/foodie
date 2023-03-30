@@ -1,6 +1,5 @@
 module Pages.MealEntries.View exposing (view)
 
-import Addresses.Frontend
 import Api.Auxiliary exposing (RecipeId)
 import Api.Types.MealEntry exposing (MealEntry)
 import Api.Types.Recipe exposing (Recipe)
@@ -13,15 +12,13 @@ import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
 import Monocle.Compose as Compose
+import Pages.MealEntries.Meal.View
 import Pages.MealEntries.MealEntryCreationClientInput as MealEntryCreationClientInput exposing (MealEntryCreationClientInput)
 import Pages.MealEntries.MealEntryUpdateClientInput as MealEntryUpdateClientInput exposing (MealEntryUpdateClientInput)
 import Pages.MealEntries.Page as Page exposing (RecipeMap)
 import Pages.MealEntries.Pagination as Pagination
-import Pages.Meals.MealUpdateClientInput as MealUpdateClientInput
-import Pages.Meals.View
 import Pages.Util.DictListUtil as DictUtil
 import Pages.Util.HtmlUtil as HtmlUtil
-import Pages.Util.Links as Links
 import Pages.Util.NavigationUtil as NavigationUtil
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.Style as Style
@@ -92,78 +89,16 @@ viewMain configuration main =
 
                 else
                     ""
-
-            viewMeal =
-                Editing.unpack
-                    { onView =
-                        \meal showControls ->
-                            Pages.Meals.View.mealLineWith
-                                { controls =
-                                    [ td [ Style.classes.controls ]
-                                        [ button [ Style.classes.button.edit, Page.EnterEditMeal |> onClick ] [ text "Edit" ] ]
-                                    , td [ Style.classes.controls ]
-                                        [ button
-                                            [ Style.classes.button.delete, Page.RequestDeleteMeal |> onClick ]
-                                            [ text "Delete" ]
-                                        ]
-                                    , td [ Style.classes.controls ]
-                                        [ Links.linkButton
-                                            { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsMealSelect.address <| main.meal.original.id
-                                            , attributes = [ Style.classes.button.nutrients ]
-                                            , children = [ text "Nutrients" ]
-                                            }
-                                        ]
-                                    ]
-                                , toggleCommand = Page.ToggleMealControls
-                                , showControls = showControls
-                                }
-                                meal
-                    , onUpdate =
-                        Pages.Meals.View.editMealLineWith
-                            { saveMsg = Page.SaveMealEdit
-                            , dateLens = MealUpdateClientInput.lenses.date
-                            , setDate = True
-                            , nameLens = MealUpdateClientInput.lenses.name
-                            , updateMsg = Page.UpdateMeal
-                            , confirmName = "Save"
-                            , cancelMsg = Page.ExitEditMeal
-                            , cancelName = "Cancel"
-                            , rowStyles = []
-                            , toggleCommand = Just Page.ToggleMealControls
-                            }
-                            |> always
-                    , onDelete =
-                        Pages.Meals.View.mealLineWith
-                            { controls =
-                                [ td [ Style.classes.controls ]
-                                    [ button [ Style.classes.button.delete, onClick <| Page.ConfirmDeleteMeal ] [ text "Delete?" ] ]
-                                , td [ Style.classes.controls ]
-                                    [ button
-                                        [ Style.classes.button.confirm, onClick <| Page.CancelDeleteMeal ]
-                                        [ text "Cancel" ]
-                                    ]
-                                ]
-                            , toggleCommand = Page.ToggleMealControls
-                            , showControls = True
-                            }
-                    }
-                    main.meal
         in
         div [ Style.ids.mealEntryEditor ]
             [ div []
-                [ table [ Style.classes.elementsWithControlsTable ]
-                    (Pages.Meals.View.tableHeader
-                        ++ [ tbody [] viewMeal
-                           ]
-                    )
-                ]
+                [ Pages.MealEntries.Meal.View.viewMain configuration main.meal |> Html.map Page.MealMsg ]
             , div [ Style.classes.elements ] [ label [] [ text "Dishes" ] ]
             , div [ Style.classes.choices ]
                 [ HtmlUtil.searchAreaWith
                     { msg = Page.SetEntriesSearchString
                     , searchString = main.entriesSearchString
                     }
-
                 , table [ Style.classes.elementsWithControlsTable, Style.classes.mealEntryEditTable ]
                     [ colgroup []
                         [ col [] []
@@ -206,7 +141,6 @@ viewMain configuration main =
                         { msg = Page.SetRecipesSearchString
                         , searchString = main.recipesSearchString
                         }
-
                     , table [ Style.classes.elementsWithControlsTable ]
                         [ colgroup []
                             [ col [] []

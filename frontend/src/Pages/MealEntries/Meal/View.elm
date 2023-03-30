@@ -14,7 +14,7 @@ import Pages.Util.Style as Style
 
 
 viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
-viewMain configuration =
+viewMain configuration main =
     Pages.Util.Parent.View.viewMain
         { tableHeader = Pages.Meals.View.tableHeader
         , onView =
@@ -30,7 +30,7 @@ viewMain configuration =
                             ]
                         , td [ Style.classes.controls ]
                             [ Links.linkButton
-                                { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsMealSelect.address <| main.meal.original.id
+                                { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsMealSelect.address <| main.parent.original.id
                                 , attributes = [ Style.classes.button.nutrients ]
                                 , children = [ text "Nutrients" ]
                                 }
@@ -69,3 +69,4 @@ viewMain configuration =
                 , showControls = True
                 }
         }
+        main

@@ -5,12 +5,15 @@ import Api.Types.Meal exposing (Meal)
 import Api.Types.MealEntry exposing (MealEntry)
 import Api.Types.Recipe exposing (Recipe)
 import Monocle.Lens exposing (Lens)
+import Pages.MealEntries.Meal.Page
 import Pages.MealEntries.MealEntryCreationClientInput exposing (MealEntryCreationClientInput)
 import Pages.MealEntries.MealEntryUpdateClientInput exposing (MealEntryUpdateClientInput)
 import Pages.MealEntries.Pagination as Pagination exposing (Pagination)
 import Pages.Meals.MealUpdateClientInput exposing (MealUpdateClientInput)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.Parent.Page
 import Pages.View.Tristate as Tristate
+import Pages.View.TristateUtil as TristateUtil
 import Util.DictList as DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
@@ -22,7 +25,7 @@ type alias Model =
 
 type alias Main =
     { jwt : JWT
-    , meal : Editing Meal MealUpdateClientInput
+    , meal : Pages.Util.Parent.Page.Main Meal MealUpdateClientInput
     , mealEntries : MealEntryStateMap
     , recipes : RecipeMap
     , recipesSearchString : String
@@ -34,16 +37,24 @@ type alias Main =
 
 type alias Initial =
     { jwt : JWT
-    , meal : Maybe (Editing Meal MealUpdateClientInput)
+    , meal : Pages.Util.Parent.Page.Initial Meal
     , mealEntries : Maybe MealEntryStateMap
     , recipes : Maybe RecipeMap
     }
 
 
+mealSubModel : Model -> Pages.MealEntries.Meal.Page.Model
+mealSubModel =
+    TristateUtil.subModelWith
+        { initialLens = lenses.initial.meal
+        , mainLens = lenses.main.meal
+        }
+
+
 initial : AuthorizedAccess -> Model
 initial authorizedAccess =
     { jwt = authorizedAccess.jwt
-    , meal = Nothing
+    , meal = Pages.Util.Parent.Page.initialWith authorizedAccess.jwt
     , mealEntries = Nothing
     , recipes = Nothing
     }
@@ -52,21 +63,25 @@ initial authorizedAccess =
 
 initialToMain : Initial -> Maybe Main
 initialToMain i =
-    Maybe.map3
-        (\meal mealEntries recipes ->
-            { jwt = i.jwt
-            , meal = meal
-            , mealEntries = mealEntries
-            , recipes = recipes
-            , recipesSearchString = ""
-            , entriesSearchString = ""
-            , mealEntriesToAdd = DictList.empty
-            , pagination = Pagination.initial
-            }
-        )
-        i.meal
-        i.mealEntries
-        i.recipes
+    i.meal
+        |> Pages.Util.Parent.Page.initialToMain
+        |> Maybe.andThen
+            (\meal ->
+                Maybe.map2
+                    (\mealEntries recipes ->
+                        { jwt = i.jwt
+                        , meal = meal
+                        , mealEntries = mealEntries
+                        , recipes = recipes
+                        , recipesSearchString = ""
+                        , entriesSearchString = ""
+                        , mealEntriesToAdd = DictList.empty
+                        , pagination = Pagination.initial
+                        }
+                    )
+                    i.mealEntries
+                    i.recipes
+            )
 
 
 type alias MealEntryState =
@@ -93,12 +108,12 @@ type alias Flags =
 
 lenses :
     { initial :
-        { meal : Lens Initial (Maybe (Editing Meal MealUpdateClientInput))
+        { meal : Lens Initial (Pages.Util.Parent.Page.Initial Meal)
         , mealEntries : Lens Initial (Maybe MealEntryStateMap)
         , recipes : Lens Initial (Maybe RecipeMap)
         }
     , main :
-        { meal : Lens Main (Editing Meal MealUpdateClientInput)
+        { meal : Lens Main (Pages.Util.Parent.Page.Main Meal MealUpdateClientInput)
         , mealEntries : Lens Main MealEntryStateMap
         , mealEntriesToAdd : Lens Main AddMealEntriesMap
         , recipes : Lens Main RecipeMap
@@ -141,7 +156,6 @@ type LogicMsg
     | GotDeleteMealEntryResponse MealEntryId (Result Error ())
     | GotFetchMealEntriesResponse (Result Error (List MealEntry))
     | GotFetchRecipesResponse (Result Error (List Recipe))
-    | GotFetchMealResponse (Result Error Meal)
     | SelectRecipe RecipeId
     | DeselectRecipe RecipeId
     | AddRecipe RecipeId
@@ -150,13 +164,4 @@ type LogicMsg
     | SetRecipesSearchString String
     | SetEntriesSearchString String
     | SetPagination Pagination
-    | ToggleMealControls
-    | UpdateMeal MealUpdateClientInput
-    | SaveMealEdit
-    | GotSaveMealResponse (Result Error Meal)
-    | EnterEditMeal
-    | ExitEditMeal
-    | RequestDeleteMeal
-    | ConfirmDeleteMeal
-    | CancelDeleteMeal
-    | GotDeleteMealResponse (Result Error ())
+    | MealMsg Pages.MealEntries.Meal.Page.LogicMsg
