@@ -30,8 +30,6 @@ type alias Main =
     , ingredientsGroup : Pages.Ingredients.Plain.Page.Main
     , complexIngredientsGroup : Pages.Ingredients.Complex.Page.Main
     , foodsMode : FoodsMode
-    , ingredientsSearchString : String
-    , complexIngredientsSearchString : String
     }
 
 
@@ -96,8 +94,6 @@ initialToMain i =
                                         , ingredientsGroup = ingredientsGroup
                                         , complexIngredientsGroup = complexIngredientsGroup
                                         , foodsMode = Plain
-                                        , ingredientsSearchString = ""
-                                        , complexIngredientsSearchString = ""
                                         }
                                     )
                         )
@@ -144,8 +140,6 @@ lenses :
         , complexIngredientsGroup : Lens Main Pages.Ingredients.Complex.Page.Main
         , recipe : Lens Main Pages.Ingredients.Recipe.Page.Main
         , foodsMode : Lens Main FoodsMode
-        , ingredientsSearchString : Lens Main String
-        , complexIngredientsSearchString : Lens Main String
         }
     }
 lenses =
@@ -159,8 +153,6 @@ lenses =
         , complexIngredientsGroup = Lens .complexIngredientsGroup (\b a -> { a | complexIngredientsGroup = b })
         , recipe = Lens .recipe (\b a -> { a | recipe = b })
         , foodsMode = Lens .foodsMode (\b a -> { a | foodsMode = b })
-        , ingredientsSearchString = Lens .ingredientsSearchString (\b a -> { a | ingredientsSearchString = b })
-        , complexIngredientsSearchString = Lens .complexIngredientsSearchString (\b a -> { a | complexIngredientsSearchString = b })
         }
     }
 
