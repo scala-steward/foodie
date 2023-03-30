@@ -3,17 +3,17 @@ module Pages.ReferenceEntries.Page exposing (..)
 import Api.Auxiliary exposing (JWT, NutrientCode, ReferenceMapId)
 import Api.Types.Nutrient exposing (Nutrient)
 import Api.Types.ReferenceEntry exposing (ReferenceEntry)
-import Api.Types.ReferenceMap exposing (ReferenceMap)
 import Monocle.Lens exposing (Lens)
-import Pages.ReferenceEntries.Pagination as Pagination exposing (Pagination)
+import Pages.ReferenceEntries.Entries.Page
+import Pages.ReferenceEntries.Map.Page
 import Pages.ReferenceEntries.ReferenceEntryCreationClientInput exposing (ReferenceEntryCreationClientInput)
 import Pages.ReferenceEntries.ReferenceEntryUpdateClientInput exposing (ReferenceEntryUpdateClientInput)
-import Pages.ReferenceMaps.ReferenceMapUpdateClientInput exposing (ReferenceMapUpdateClientInput)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.Choice.Page
+import Pages.Util.Parent.Page
 import Pages.View.Tristate as Tristate
-import Util.DictList as DictList exposing (DictList)
+import Util.DictList exposing (DictList)
 import Util.Editing exposing (Editing)
-import Util.HttpUtil exposing (Error)
 
 
 type alias Model =
@@ -22,51 +22,43 @@ type alias Model =
 
 type alias Main =
     { jwt : JWT
-    , referenceMap : Editing ReferenceMap ReferenceMapUpdateClientInput
-    , referenceEntries : ReferenceEntryStateMap
-    , nutrients : NutrientMap
-    , nutrientsSearchString : String
-    , referenceEntriesSearchString : String
-    , referenceEntriesToAdd : AddNutrientMap
-    , pagination : Pagination
+    , map : Pages.ReferenceEntries.Map.Page.Main
+    , entries : Pages.ReferenceEntries.Entries.Page.Main
     }
 
 
 type alias Initial =
     { jwt : JWT
-    , nutrients : Maybe NutrientMap
-    , referenceMap : Maybe (Editing ReferenceMap ReferenceMapUpdateClientInput)
-    , referenceEntries : Maybe ReferenceEntryStateMap
+    , map : Pages.ReferenceEntries.Map.Page.Initial
+    , entries : Pages.ReferenceEntries.Entries.Page.Initial
     }
 
 
-initial : AuthorizedAccess -> Model
-initial authorizedAccess =
+initial : AuthorizedAccess -> ReferenceMapId -> Model
+initial authorizedAccess referenceMapId =
     { jwt = authorizedAccess.jwt
-    , nutrients = Nothing
-    , referenceMap = Nothing
-    , referenceEntries = Nothing
+    , map = Pages.Util.Parent.Page.initialWith authorizedAccess.jwt
+    , entries = Pages.Util.Choice.Page.initialWith authorizedAccess.jwt referenceMapId
     }
         |> Tristate.createInitial authorizedAccess.configuration
 
 
 initialToMain : Initial -> Maybe Main
 initialToMain i =
-    Maybe.map3
-        (\nutrients referenceMap referenceEntries ->
-            { jwt = i.jwt
-            , referenceMap = referenceMap
-            , referenceEntries = referenceEntries
-            , nutrients = nutrients
-            , nutrientsSearchString = ""
-            , referenceEntriesSearchString = ""
-            , referenceEntriesToAdd = DictList.empty
-            , pagination = Pagination.initial
-            }
-        )
-        i.nutrients
-        i.referenceMap
-        i.referenceEntries
+    i.entries
+        |> Pages.Util.Choice.Page.initialToMain
+        |> Maybe.andThen
+            (\entries ->
+                i.map
+                    |> Pages.Util.Parent.Page.initialToMain
+                    |> Maybe.map
+                        (\map ->
+                            { jwt = i.jwt
+                            , map = map
+                            , entries = entries
+                            }
+                        )
+            )
 
 
 type alias ReferenceEntryState =
@@ -93,34 +85,22 @@ type alias Flags =
 
 lenses :
     { initial :
-        { referenceMap : Lens Initial (Maybe (Editing ReferenceMap ReferenceMapUpdateClientInput))
-        , referenceEntries : Lens Initial (Maybe ReferenceEntryStateMap)
-        , nutrients : Lens Initial (Maybe NutrientMap)
+        { map : Lens Initial Pages.ReferenceEntries.Map.Page.Initial
+        , entries : Lens Initial Pages.ReferenceEntries.Entries.Page.Initial
         }
     , main :
-        { referenceMap : Lens Main (Editing ReferenceMap ReferenceMapUpdateClientInput)
-        , referenceEntries : Lens Main ReferenceEntryStateMap
-        , referenceEntriesToAdd : Lens Main AddNutrientMap
-        , nutrients : Lens Main NutrientMap
-        , nutrientsSearchString : Lens Main String
-        , referenceEntriesSearchString : Lens Main String
-        , pagination : Lens Main Pagination
+        { map : Lens Main Pages.ReferenceEntries.Map.Page.Main
+        , entries : Lens Main Pages.ReferenceEntries.Entries.Page.Main
         }
     }
 lenses =
     { initial =
-        { referenceMap = Lens .referenceMap (\b a -> { a | referenceMap = b })
-        , referenceEntries = Lens .referenceEntries (\b a -> { a | referenceEntries = b })
-        , nutrients = Lens .nutrients (\b a -> { a | nutrients = b })
+        { map = Lens .map (\b a -> { a | map = b })
+        , entries = Lens .entries (\b a -> { a | entries = b })
         }
     , main =
-        { referenceMap = Lens .referenceMap (\b a -> { a | referenceMap = b })
-        , referenceEntries = Lens .referenceEntries (\b a -> { a | referenceEntries = b })
-        , referenceEntriesToAdd = Lens .referenceEntriesToAdd (\b a -> { a | referenceEntriesToAdd = b })
-        , nutrients = Lens .nutrients (\b a -> { a | nutrients = b })
-        , nutrientsSearchString = Lens .nutrientsSearchString (\b a -> { a | nutrientsSearchString = b })
-        , referenceEntriesSearchString = Lens .referenceEntriesSearchString (\b a -> { a | referenceEntriesSearchString = b })
-        , pagination = Lens .pagination (\b a -> { a | pagination = b })
+        { map = Lens .map (\b a -> { a | map = b })
+        , entries = Lens .entries (\b a -> { a | entries = b })
         }
     }
 
@@ -130,34 +110,6 @@ type alias Msg =
 
 
 type LogicMsg
-    = UpdateReferenceEntry ReferenceEntryUpdateClientInput
-    | SaveReferenceEntryEdit ReferenceEntryUpdateClientInput
-    | GotSaveReferenceEntryResponse (Result Error ReferenceEntry)
-    | EnterEditReferenceEntry NutrientCode
-    | ExitEditReferenceEntryAt NutrientCode
-    | RequestDeleteReferenceEntry NutrientCode
-    | ConfirmDeleteReferenceEntry NutrientCode
-    | CancelDeleteReferenceEntry NutrientCode
-    | GotDeleteReferenceEntryResponse NutrientCode (Result Error ())
-    | GotFetchReferenceEntriesResponse (Result Error (List ReferenceEntry))
-    | GotFetchReferenceMapResponse (Result Error ReferenceMap)
-    | GotFetchNutrientsResponse (Result Error (List Nutrient))
-    | SelectNutrient NutrientCode
-    | DeselectNutrient NutrientCode
-    | AddNutrient NutrientCode
-    | GotAddReferenceEntryResponse (Result Error ReferenceEntry)
-    | UpdateAddNutrient ReferenceEntryCreationClientInput
+    = MapMsg Pages.ReferenceEntries.Map.Page.LogicMsg
+    | EntriesMsg Pages.ReferenceEntries.Entries.Page.LogicMsg
     | UpdateNutrients String
-    | SetNutrientsSearchString String
-    | SetReferenceEntriesSearchString String
-    | SetPagination Pagination
-    | ToggleReferenceMapControls
-    | UpdateReferenceMap ReferenceMapUpdateClientInput
-    | SaveReferenceMapEdit
-    | GotSaveReferenceMapResponse (Result Error ReferenceMap)
-    | EnterEditReferenceMap
-    | ExitEditReferenceMap
-    | RequestDeleteReferenceMap
-    | ConfirmDeleteReferenceMap
-    | CancelDeleteReferenceMap
-    | GotDeleteReferenceMapResponse (Result Error ())

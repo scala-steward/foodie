@@ -1,8 +1,8 @@
 module Pages.ReferenceEntries.ReferenceEntryUpdateClientInput exposing (..)
 
 import Api.Auxiliary exposing (NutrientCode, RecipeId, ReferenceMapId)
+import Api.Types.ReferenceEntry exposing (ReferenceEntry)
 import Api.Types.ReferenceEntryUpdate exposing (ReferenceEntryUpdate)
-import Api.Types.ReferenceNutrient exposing (ReferenceNutrient)
 import Monocle.Lens exposing (Lens)
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
 
@@ -19,13 +19,13 @@ lenses =
     }
 
 
-from : ReferenceNutrient -> ReferenceEntryUpdateClientInput
-from referenceNutrient =
-    { nutrientCode = referenceNutrient.nutrientCode
+from : ReferenceEntry -> ReferenceEntryUpdateClientInput
+from referenceEntry =
+    { nutrientCode = referenceEntry.nutrientCode
     , amount =
         ValidatedInput.positive
-            |> ValidatedInput.lenses.value.set referenceNutrient.amount
-            |> ValidatedInput.lenses.text.set (referenceNutrient.amount |> String.fromFloat)
+            |> ValidatedInput.lenses.value.set referenceEntry.amount
+            |> ValidatedInput.lenses.text.set (referenceEntry.amount |> String.fromFloat)
     }
 
 

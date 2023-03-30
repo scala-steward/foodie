@@ -133,8 +133,8 @@ viewRecipes configuration main =
                                                     creation
                                                     >> Pages.Util.Choice.Page.UpdateCreation
                                          , MaybeUtil.defined <| Style.classes.numberLabel
-                                         , MaybeUtil.defined <| HtmlUtil.onEscape <| addMsg
-                                         , MaybeUtil.optional validInput <| onEnter <| cancelMsg
+                                         , MaybeUtil.defined <| HtmlUtil.onEscape <| cancelMsg
+                                         , MaybeUtil.optional validInput <| onEnter <| addMsg
                                          ]
                                             |> Maybe.Extra.values
                                         )
