@@ -1,4 +1,4 @@
-module Pages.Util.Choice.View exposing (..)
+module Pages.Util.Choice.View exposing (Column, viewChoices, viewMain)
 
 import Basics.Extra exposing (flip)
 import Html exposing (Attribute, Html, button, div, label, table, tbody, td, text, th, thead, tr)
@@ -18,6 +18,10 @@ import Util.DictList as DictList exposing (DictList)
 import Util.Editing as Editing exposing (Editing)
 import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
+
+
+
+-- todo: This should be called "viewElements"
 
 
 viewMain :
@@ -316,10 +320,11 @@ editElementLine ps element elementUpdateClientInput =
         cells =
             (ps.edit element elementUpdateClientInput
                 |> List.map
-                    (withExtraAttributes
-                        [ onEnter saveMsg
-                        , HtmlUtil.onEscape cancelMsg
-                        ]
+                    ([ MaybeUtil.optional validInput <| onEnter saveMsg
+                     , MaybeUtil.defined <| HtmlUtil.onEscape cancelMsg
+                     ]
+                        |> Maybe.Extra.values
+                        |> withExtraAttributes
                     )
             )
                 ++ [ HtmlUtil.toggleControlsCell <| Pages.Util.Choice.Page.ToggleControls <| elementId ]

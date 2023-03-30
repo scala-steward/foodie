@@ -25,6 +25,7 @@ default recipeId =
     }
 
 
+-- todo: Use this function
 withSuggestion : Recipe -> ComplexFoodClientInput
 withSuggestion recipe =
     let

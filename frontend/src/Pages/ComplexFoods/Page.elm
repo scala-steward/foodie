@@ -3,60 +3,35 @@ module Pages.ComplexFoods.Page exposing (..)
 import Api.Auxiliary exposing (ComplexFoodId, JWT, RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.Recipe exposing (Recipe)
-import Monocle.Lens exposing (Lens)
 import Pages.ComplexFoods.ComplexFoodClientInput exposing (ComplexFoodClientInput)
-import Pages.ComplexFoods.Pagination as Pagination exposing (Pagination)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.Choice.Page
 import Pages.View.Tristate as Tristate
 import Util.DictList exposing (DictList)
 import Util.Editing exposing (Editing)
-import Util.HttpUtil exposing (Error)
 
 
 type alias Model =
     Tristate.Model Main Initial
 
 
-type alias Main =
-    { jwt : JWT
-    , recipes : RecipeStateMap
-    , complexFoods : ComplexFoodStateMap
-    , recipesSearchString : String
-    , complexFoodsSearchString : String
-    , pagination : Pagination
-    }
-
-
 type alias Initial =
-    { recipes : Maybe RecipeStateMap
-    , complexFoods : Maybe ComplexFoodStateMap
-    , jwt : JWT
-    }
+    Pages.Util.Choice.Page.Initial () ComplexFoodId ComplexFood RecipeId Recipe
+
+
+type alias Main =
+    Pages.Util.Choice.Page.Main () ComplexFoodId ComplexFood ComplexFoodClientInput RecipeId Recipe ComplexFoodClientInput
 
 
 initial : AuthorizedAccess -> Model
 initial authorizedAccess =
-    { recipes = Nothing
-    , complexFoods = Nothing
-    , jwt = authorizedAccess.jwt
-    }
+    Pages.Util.Choice.Page.initialWith authorizedAccess.jwt ()
         |> Tristate.createInitial authorizedAccess.configuration
 
 
 initialToMain : Initial -> Maybe Main
-initialToMain i =
-    Maybe.map2
-        (\recipes complexFoods ->
-            { jwt = i.jwt
-            , recipes = recipes
-            , complexFoods = complexFoods
-            , recipesSearchString = ""
-            , complexFoodsSearchString = ""
-            , pagination = Pagination.initial
-            }
-        )
-        i.recipes
-        i.complexFoods
+initialToMain =
+    Pages.Util.Choice.Page.initialToMain
 
 
 type alias ComplexFoodState =
@@ -79,34 +54,6 @@ type alias RecipeStateMap =
     DictList RecipeId RecipeState
 
 
-lenses :
-    { initial :
-        { recipes : Lens Initial (Maybe RecipeStateMap)
-        , complexFoods : Lens Initial (Maybe ComplexFoodStateMap)
-        }
-    , main :
-        { recipes : Lens Main RecipeStateMap
-        , complexFoods : Lens Main ComplexFoodStateMap
-        , recipesSearchString : Lens Main String
-        , complexFoodsSearchString : Lens Main String
-        , pagination : Lens Main Pagination
-        }
-    }
-lenses =
-    { initial =
-        { recipes = Lens .recipes (\b a -> { a | recipes = b })
-        , complexFoods = Lens .complexFoods (\b a -> { a | complexFoods = b })
-        }
-    , main =
-        { recipes = Lens .recipes (\b a -> { a | recipes = b })
-        , complexFoods = Lens .complexFoods (\b a -> { a | complexFoods = b })
-        , recipesSearchString = Lens .recipesSearchString (\b a -> { a | recipesSearchString = b })
-        , complexFoodsSearchString = Lens .complexFoodsSearchString (\b a -> { a | complexFoodsSearchString = b })
-        , pagination = Lens .pagination (\b a -> { a | pagination = b })
-        }
-    }
-
-
 type alias Flags =
     { authorizedAccess : AuthorizedAccess
     }
@@ -116,25 +63,5 @@ type alias Msg =
     Tristate.Msg LogicMsg
 
 
-type LogicMsg
-    = UpdateComplexFoodCreation ComplexFoodClientInput
-    | CreateComplexFood RecipeId
-    | GotCreateComplexFoodResponse (Result Error ComplexFood)
-    | ToggleComplexFoodControls ComplexFoodId
-    | UpdateComplexFood ComplexFoodClientInput
-    | SaveComplexFoodEdit ComplexFoodClientInput
-    | GotSaveComplexFoodResponse (Result Error ComplexFood)
-    | EnterEditComplexFood ComplexFoodId
-    | ExitEditComplexFood ComplexFoodId
-    | RequestDeleteComplexFood ComplexFoodId
-    | ConfirmDeleteComplexFood ComplexFoodId
-    | CancelDeleteComplexFood ComplexFoodId
-    | GotDeleteComplexFoodResponse ComplexFoodId (Result Error ())
-    | GotFetchRecipesResponse (Result Error (List Recipe))
-    | GotFetchComplexFoodsResponse (Result Error (List ComplexFood))
-    | ToggleRecipeControls RecipeId
-    | SelectRecipe RecipeId
-    | DeselectRecipe RecipeId
-    | SetRecipesSearchString String
-    | SetComplexFoodsSearchString String
-    | SetPagination Pagination
+type alias LogicMsg =
+    Pages.Util.Choice.Page.LogicMsg ComplexFoodId ComplexFood ComplexFoodClientInput RecipeId Recipe ComplexFoodClientInput
