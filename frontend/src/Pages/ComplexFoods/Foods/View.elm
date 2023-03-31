@@ -219,7 +219,15 @@ viewRecipes configuration main =
                         else
                             ( "Select", [ Style.classes.button.select, onClick <| Pages.Util.Choice.Page.SelectChoice <| recipe ] )
                 in
-                { display = displayRecipe recipe
+                { display =
+                    displayRecipe recipe
+                        ++ [ { attributes = []
+                             , children = []
+                             }
+                           , { attributes = []
+                             , children = []
+                             }
+                           ]
                 , controls =
                     [ td [ Style.classes.controls ] [ button buttonAttributes [ text <| buttonText ] ]
                     , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration recipe.id ]
@@ -233,9 +241,6 @@ viewRecipes configuration main =
 displayRecipe : Recipe -> List (Pages.Util.Choice.View.Column msg)
 displayRecipe recipe =
     [ { attributes = [ Style.classes.editable ]
-      , children = [ label [] [ text recipe.name ] ]
-      }
-    , { attributes = [ Style.classes.editable ]
       , children = [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
       }
     , { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
