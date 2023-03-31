@@ -11,6 +11,7 @@ import Maybe.Extra
 import Monocle.Lens exposing (Lens)
 import Pages.ComplexFoods.ComplexFoodClientInput as ComplexFoodClientInput exposing (ComplexFoodClientInput)
 import Pages.ComplexFoods.Foods.Page as Page
+import Pages.Recipes.View
 import Pages.Util.Choice.Page
 import Pages.Util.Choice.View
 import Pages.Util.DictListUtil as DictListUtil
@@ -129,7 +130,6 @@ viewRecipes configuration main =
             , th [ Style.classes.numberLabel ] [ label [] [ text amountMillilitres ] ]
             ]
         , idOfChoice = .id
-        , nameOfChoice = .name
         , elementCreationLine =
             \recipe complexFoodClientInput ->
                 let
@@ -190,7 +190,7 @@ viewRecipes configuration main =
                           }
                         ]
                 in
-                { display = displayRecipe recipe ++ inputCells
+                { display = Pages.Recipes.View.recipeInfoColumns recipe ++ inputCells
                 , controls =
                     [ td [ Style.classes.controls ]
                         [ button
@@ -221,7 +221,7 @@ viewRecipes configuration main =
                             ( "Select", [ Style.classes.button.select, onClick <| Pages.Util.Choice.Page.SelectChoice <| recipe ] )
                 in
                 { display =
-                    displayRecipe recipe
+                    Pages.Recipes.View.recipeInfoColumns recipe
                         ++ [ { attributes = []
                              , children = []
                              }
@@ -237,17 +237,3 @@ viewRecipes configuration main =
                 }
         }
         main
-
-
-displayRecipe : Recipe -> List (HtmlUtil.Column msg)
-displayRecipe recipe =
-    [ { attributes = [ Style.classes.editable ]
-      , children = [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
-      }
-    , { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
-      , children = [ label [] [ text <| String.fromFloat <| recipe.numberOfServings ] ]
-      }
-    , { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
-      , children = [ label [] [ text <| Maybe.withDefault "" <| recipe.servingSize ] ]
-      }
-    ]

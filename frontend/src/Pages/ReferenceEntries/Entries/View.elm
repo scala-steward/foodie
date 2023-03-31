@@ -116,7 +116,6 @@ viewNutrients main =
             , th [ Style.classes.numberLabel ] [ label [] [ text unit ] ]
             ]
         , idOfChoice = .code
-        , nameOfChoice = .name
         , elementCreationLine =
             \nutrient creation ->
                 let
@@ -130,7 +129,10 @@ viewNutrients main =
                         Pages.Util.Choice.Page.DeselectChoice nutrient.code
                 in
                 { display =
-                    [ { attributes = [ Style.classes.numberCell ]
+                    [ { attributes = [ Style.classes.editable ]
+                      , children = [ label [] [ text <| .name <| nutrient ] ]
+                      }
+                    , { attributes = [ Style.classes.numberCell ]
                       , children =
                             [ input
                                 ([ MaybeUtil.defined <| value creation.amount.text

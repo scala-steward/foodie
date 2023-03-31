@@ -12,6 +12,7 @@ import Maybe.Extra
 import Pages.MealEntries.Entries.Page as Page
 import Pages.MealEntries.MealEntryCreationClientInput as MealEntryCreationClientInput exposing (MealEntryCreationClientInput)
 import Pages.MealEntries.MealEntryUpdateClientInput as MealEntryUpdateClientInput
+import Pages.Recipes.View
 import Pages.Util.Choice.Page
 import Pages.Util.Choice.View
 import Pages.Util.DictListUtil as DictListUtil
@@ -40,7 +41,7 @@ viewMealEntries configuration main =
         , info =
             \mealEntry ->
                 { display =
-                    recipeInfoFromMap { withName = True } main.choices mealEntry.recipeId
+                    recipeInfoFromMap main.choices mealEntry.recipeId
                         ++ [ { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
                              , children = [ label [] [ text <| String.fromFloat <| mealEntry.numberOfServings ] ]
                              }
@@ -54,7 +55,7 @@ viewMealEntries configuration main =
         , isValidInput = .numberOfServings >> ValidatedInput.isValid
         , edit =
             \mealEntry mealEntryUpdateClientInput ->
-                recipeInfoFromMap { withName = True } main.choices mealEntry.recipeId
+                recipeInfoFromMap main.choices mealEntry.recipeId
                     ++ [ { attributes = [ Style.classes.numberCell ]
                          , children =
                             [ input
@@ -98,7 +99,6 @@ viewRecipes configuration main =
             , th [ Style.classes.numberLabel ] [ label [] [ text numberOfServings ] ]
             ]
         , idOfChoice = .id
-        , nameOfChoice = .name
         , elementCreationLine =
             \recipe creation ->
                 let
@@ -119,7 +119,7 @@ viewRecipes configuration main =
                             ( "Add", Style.classes.button.confirm )
                 in
                 { display =
-                    recipeInfo { withName = False } (Just recipe)
+                    Pages.Recipes.View.recipeInfoColumns recipe
                         ++ [ { attributes = [ Style.classes.numberCell ]
                              , children =
                                 [ td []
@@ -165,7 +165,7 @@ viewRecipes configuration main =
                         Pages.Util.Choice.Page.SelectChoice <| recipe
                 in
                 { display =
-                    recipeInfo { withName = False } (Just recipe)
+                    Pages.Recipes.View.recipeInfoColumns recipe
                         ++ [ { attributes = [ Style.classes.editable, Style.classes.numberCell ]
                              , children = []
                              }
@@ -178,32 +178,8 @@ viewRecipes configuration main =
         }
         main
 
-
-recipeInfo : { withName : Bool } -> Maybe Recipe -> List (HtmlUtil.Column Page.LogicMsg)
-recipeInfo ps recipe =
-    let
-        nameColumn =
-            { attributes = [ Style.classes.editable ]
-            , children = [ label [] [ text <| Maybe.Extra.unwrap "" .name <| recipe ] ]
-            }
-    in
-    (if ps.withName then
-        [ nameColumn ]
-
-     else
-        []
-    )
-        ++ [ { attributes = [ Style.classes.editable ]
-             , children = [ label [] [ text <| Maybe.withDefault "" <| Maybe.andThen .description <| recipe ] ]
-             }
-           , { attributes = [ Style.classes.editable, Style.classes.numberLabel, Style.classes.numberCell ]
-             , children = [ label [] [ text <| Maybe.withDefault "" <| Maybe.andThen .servingSize <| recipe ] ]
-             }
-           ]
-
-
-recipeInfoFromMap : { withName : Bool } -> DictList RecipeId (Editing Recipe MealEntryCreationClientInput) -> RecipeId -> List (HtmlUtil.Column Page.LogicMsg)
-recipeInfoFromMap ps recipes recipeId =
+-- Todo: The function is oddly specific, and the implementation with the fixed amount of columns is awkward.
+recipeInfoFromMap : DictList RecipeId (Editing Recipe MealEntryCreationClientInput) -> RecipeId -> List (HtmlUtil.Column Page.LogicMsg)
+recipeInfoFromMap recipes recipeId =
     DictList.get recipeId recipes
-        |> Maybe.map .original
-        |> recipeInfo ps
+        |> Maybe.Extra.unwrap (List.repeat 4 { attributes = [ Style.classes.editable ], children = [] }) (.original >> Pages.Recipes.View.recipeInfoColumns)

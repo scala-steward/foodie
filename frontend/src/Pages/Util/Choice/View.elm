@@ -111,15 +111,11 @@ viewElements ps main =
         ]
 
 
-
-
-
 viewChoices :
     { matchesSearchText : String -> choice -> Bool
     , sortBy : choice -> comparable
     , choiceHeaderColumns : List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
     , idOfChoice : choice -> choiceId
-    , nameOfChoice : choice -> String
     , elementCreationLine : choice -> creation -> HtmlUtil.RowWithControls (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
     , viewChoiceLine : choice -> HtmlUtil.RowWithControls (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
     }
@@ -160,14 +156,12 @@ viewChoices ps main =
                             (Editing.unpack
                                 { onView =
                                     viewChoiceLine
-                                        { nameOfChoice = ps.nameOfChoice
-                                        , idOfChoice = ps.idOfChoice
+                                        { idOfChoice = ps.idOfChoice
                                         , choiceOnView = ps.viewChoiceLine
                                         }
                                 , onUpdate =
                                     editElementCreation
                                         { idOfChoice = ps.idOfChoice
-                                        , nameOfChoice = ps.nameOfChoice
                                         , elementCreationLine = ps.elementCreationLine
                                         }
                                 , onDelete = always []
@@ -230,13 +224,6 @@ deleteElementLine ps =
                 }
         , showControls = True
         }
-
-
-
-
-
-
--- todo: Consider adding the name automatically, as in the other view function
 
 
 elementLineWith :
@@ -350,8 +337,7 @@ editElementLine ps element elementUpdateClientInput =
 
 
 viewChoiceLine :
-    { nameOfChoice : choice -> String
-    , idOfChoice : choice -> choiceId
+    { idOfChoice : choice -> choiceId
     , choiceOnView : choice -> HtmlUtil.RowWithControls (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
     }
     -> choice
@@ -370,14 +356,11 @@ viewChoiceLine ps choice showControls =
 
         infoRow =
             tr [ Style.classes.editing ]
-                (td [ Style.classes.editable, onClick toggleCommand ] [ label [] [ text <| ps.nameOfChoice <| choice ] ]
-                    :: (columns ++ [ HtmlUtil.toggleControlsCell toggleCommand ])
-                )
+                (columns ++ [ HtmlUtil.toggleControlsCell toggleCommand ])
 
-        -- Extra column because the name is fixed
         controlsRow =
             tr []
-                [ td [ colspan <| (+) 1 <| List.length <| columns ] [ table [ Style.classes.elementsWithControlsTable ] [ tr [] rowWithControls.controls ] ]
+                [ td [ colspan <| List.length <| columns ] [ table [ Style.classes.elementsWithControlsTable ] [ tr [] rowWithControls.controls ] ]
                 ]
     in
     infoRow
@@ -391,7 +374,6 @@ viewChoiceLine ps choice showControls =
 
 editElementCreation :
     { idOfChoice : choice -> choiceId
-    , nameOfChoice : choice -> String
     , elementCreationLine : choice -> creation -> HtmlUtil.RowWithControls (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
     }
     -> choice
@@ -410,8 +392,7 @@ editElementCreation ps choice creation =
 
         creationRow =
             tr []
-                (td [ Style.classes.editable ] [ label [] [ text <| ps.nameOfChoice <| choice ] ]
-                    :: (rowWithControls.display |> List.map (HtmlUtil.withExtraAttributes []))
+                ((rowWithControls.display |> List.map (HtmlUtil.withExtraAttributes []))
                     ++ [ HtmlUtil.toggleControlsCell <| toggleMsg ]
                 )
 

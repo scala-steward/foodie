@@ -1,4 +1,4 @@
-module Pages.Ingredients.Complex.View exposing (viewFoods, viewComplexIngredients)
+module Pages.Ingredients.Complex.View exposing (viewComplexIngredients, viewFoods)
 
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Basics.Extra exposing (flip)
@@ -117,7 +117,6 @@ viewFoods configuration main =
             , th [ Style.classes.numberLabel ] [ label [] [ text amount ] ]
             ]
         , idOfChoice = .recipeId
-        , nameOfChoice = .name
         , elementCreationLine =
             \complexFood creation ->
                 let
@@ -131,7 +130,10 @@ viewFoods configuration main =
                         Pages.Util.Choice.Page.DeselectChoice complexFood.recipeId
                 in
                 { display =
-                    [ { attributes = [ Style.classes.numberCell ]
+                    [ { attributes = [ Style.classes.editable ]
+                      , children = [ label [] [ text <| .name <| complexFood ] ]
+                      }
+                    , { attributes = [ Style.classes.numberCell ]
                       , children =
                             [ input
                                 ([ MaybeUtil.defined <| value creation.factor.text

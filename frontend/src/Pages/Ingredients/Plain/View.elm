@@ -174,7 +174,6 @@ viewFoods configuration main =
             , th [ Style.classes.numberLabel ] [ label [] [ text unit ] ]
             ]
         , idOfChoice = .id
-        , nameOfChoice = .name
         , elementCreationLine =
             \food creation ->
                 let
@@ -197,7 +196,10 @@ viewFoods configuration main =
                         creation.amountUnit.factor |> ValidatedInput.isValid
                 in
                 { display =
-                    [ { attributes = [ Style.classes.numberCell ]
+                    [ { attributes = [ Style.classes.editable ]
+                      , children = [ label [] [ text <| .name <| food ] ]
+                      }
+                    , { attributes = [ Style.classes.numberCell ]
                       , children =
                             [ input
                                 ([ MaybeUtil.defined <| value creation.amountUnit.factor.text
