@@ -6,8 +6,8 @@ import Api.Types.SimpleDate exposing (SimpleDate)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
 import Either exposing (Either(..))
-import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (colspan, disabled, scope, type_, value)
+import Html exposing (Attribute, Html, button, div, input, label, table, tbody, td, text, th, thead, tr)
+import Html.Attributes exposing (colspan, disabled, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
@@ -117,17 +117,11 @@ viewMain configuration main =
 
 tableHeader : List (Html msg)
 tableHeader =
-    [ colgroup []
-        [ col [] []
-        , col [] []
-        , col [] []
-        , col [] []
-        ]
-    , thead []
+    [ thead []
         [ tr [ Style.classes.tableHeader, Style.classes.mealEditTable ]
-            [ th [ scope "col" ] [ label [] [ text "Date" ] ]
-            , th [ scope "col" ] [ label [] [ text "Time" ] ]
-            , th [ scope "col" ] [ label [] [ text "Name" ] ]
+            [ th [] [ label [] [ text "Date" ] ]
+            , th [] [ label [] [ text "Time" ] ]
+            , th [] [ label [] [ text "Name" ] ]
             , th [ Style.classes.toggle ] []
             ]
         ]
