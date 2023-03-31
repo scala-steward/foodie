@@ -37,7 +37,7 @@ viewMain configuration main =
                     |> Html.map Page.RecipeMsg
                 ]
             , div [ Style.classes.elements ] [ label [] [ text "Ingredients" ] ]
-            , Pages.Ingredients.Plain.View.viewIngredients main.ingredientsGroup |> Html.map Page.IngredientMsg
+            , Pages.Ingredients.Plain.View.viewIngredients configuration main.ingredientsGroup |> Html.map Page.IngredientMsg
             , div [ Style.classes.elements ] [ label [] [ text "Complex ingredients" ] ]
             , Pages.Ingredients.Complex.View.viewMain configuration main.complexIngredientsGroup |> Html.map Page.ComplexIngredientMsg
             , div []

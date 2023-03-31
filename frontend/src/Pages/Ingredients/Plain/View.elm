@@ -33,8 +33,8 @@ import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
 
-viewIngredients : Page.Main -> Html Page.LogicMsg
-viewIngredients main =
+viewIngredients : Configuration -> Page.Main -> Html Page.LogicMsg
+viewIngredients configuration main =
     let
         unitDropdown foodId =
             main.choices
@@ -62,6 +62,20 @@ viewIngredients main =
                 let
                     food =
                         DictList.get ingredient.foodId main.choices |> Maybe.map .original
+
+                    nutrientsButton =
+                        food
+                            |> Maybe.Extra.unwrap []
+                                (\f ->
+                                    [ td [ Style.classes.controls ]
+                                        [ Links.linkButton
+                                            { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsFoodSelect.address <| f.id
+                                            , attributes = [ Style.classes.button.nutrients ]
+                                            , children = [ text "Nutrients" ]
+                                            }
+                                        ]
+                                    ]
+                                )
                 in
                 { display =
                     [ { attributes = [ Style.classes.editable ]
@@ -82,10 +96,10 @@ viewIngredients main =
                       }
                     ]
                 , controls =
-                    -- todo: Add nutrients button
                     [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick <| Pages.Util.Choice.Page.EnterEdit <| ingredient.id ] [ text "Edit" ] ]
                     , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick <| Pages.Util.Choice.Page.RequestDelete <| ingredient.id ] [ text "Delete" ] ]
                     ]
+                        ++ nutrientsButton
                 }
         , isValidInput = .amountUnit >> .factor >> ValidatedInput.isValid
         , edit =
