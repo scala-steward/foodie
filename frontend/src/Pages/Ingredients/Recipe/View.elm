@@ -36,7 +36,6 @@ viewMain configuration main =
                                         }
                                     ]
                                 ]
-                            , extraCells = []
                             , toggleCommand = Page.ToggleControls
                             , showControls = showControls
                             }
@@ -68,7 +67,6 @@ viewMain configuration main =
                                 ]
                             ]
                         , toggleCommand = Page.ToggleControls
-                        , extraCells = []
                         , showControls = True
                         }
                 }

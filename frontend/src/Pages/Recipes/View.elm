@@ -4,8 +4,7 @@ import Addresses.Frontend
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
-import Either exposing (Either(..))
-import Html exposing (Attribute, Html, button, div, input, label, table, td, text, th, tr)
+import Html exposing (Attribute, Html, button, input, label, table, td, text, th, tr)
 import Html.Attributes exposing (colspan, disabled, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
@@ -47,9 +46,14 @@ viewMain =
         , viewLine = viewRecipeLine
         , updateLine = \_ -> updateRecipeLine
         , deleteLine = deleteRecipeLine
-        , create = createRecipe
+        , create =
+            { ifCreating = createRecipeLine
+            , default = RecipeCreationClientInput.default
+            , label = "New recipe"
+            }
         , styling = Style.ids.addRecipeView
         }
+
 
 tableHeader : Html msg
 tableHeader =
@@ -61,24 +65,6 @@ tableHeader =
             , th [ Style.classes.numberLabel ] [ label [] [ text "Serving size" ] ]
             ]
         }
-
-
-createRecipe : Maybe RecipeCreationClientInput -> Either (List (Html Page.LogicMsg)) (List (Html Page.LogicMsg))
-createRecipe maybeCreation =
-    case maybeCreation of
-        Nothing ->
-            [ div [ Style.ids.add ]
-                [ button
-                    [ Style.classes.button.add
-                    , onClick <| Pages.Util.ParentEditor.Page.UpdateCreation <| Just <| RecipeCreationClientInput.default
-                    ]
-                    [ text "New recipe" ]
-                ]
-            ]
-                |> Left
-
-        Just creation ->
-            createRecipeLine creation |> Right
 
 
 viewRecipeLine : Configuration -> Recipe -> Bool -> List (Html Page.LogicMsg)
@@ -107,7 +93,6 @@ viewRecipeLine configuration recipe showControls =
                     }
                 ]
             ]
-        , extraCells = []
         , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls recipe.id
         , showControls = showControls
         }
@@ -119,14 +104,13 @@ deleteRecipeLine recipe =
     recipeLineWith
         { controls =
             [ td [ Style.classes.controls ]
-                [ button [ Style.classes.button.delete, onClick (Pages.Util.ParentEditor.Page.ConfirmDelete recipe.id) ] [ text "Delete?" ] ]
+                [ button [ Style.classes.button.delete, onClick <| Pages.Util.ParentEditor.Page.ConfirmDelete <| recipe.id ] [ text "Delete?" ] ]
             , td [ Style.classes.controls ]
                 [ button
-                    [ Style.classes.button.confirm, onClick (Pages.Util.ParentEditor.Page.CancelDelete recipe.id) ]
+                    [ Style.classes.button.confirm, onClick <| Pages.Util.ParentEditor.Page.CancelDelete <| recipe.id ]
                     [ text "Cancel" ]
                 ]
             ]
-        , extraCells = []
         , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls recipe.id
         , showControls = True
         }
@@ -135,7 +119,6 @@ deleteRecipeLine recipe =
 
 recipeInfoLineWith :
     { toggleCommand : msg
-    , extraCells : List (Html msg)
     }
     -> Recipe
     -> Html msg
@@ -154,7 +137,6 @@ recipeInfoLineWith ps recipe =
          , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick)
             [ label [] [ text <| Maybe.withDefault "" <| recipe.servingSize ] ]
          ]
-            ++ ps.extraCells
             ++ [ HtmlUtil.toggleControlsCell ps.toggleCommand
                ]
         )
@@ -162,7 +144,6 @@ recipeInfoLineWith ps recipe =
 
 recipeLineWith :
     { controls : List (Html msg)
-    , extraCells : List (Html msg)
     , toggleCommand : msg
     , showControls : Bool
     }
@@ -171,12 +152,11 @@ recipeLineWith :
 recipeLineWith ps recipe =
     recipeInfoLineWith
         { toggleCommand = ps.toggleCommand
-        , extraCells = ps.extraCells
         }
         recipe
         :: (if ps.showControls then
                 [ tr []
-                    [ td [ colspan (4 + (ps.extraCells |> List.length)) ] [ table [ Style.classes.elementsWithControlsTable ] [ tr [] ps.controls ] ]
+                    [ td [ colspan 4 ] [ table [ Style.classes.elementsWithControlsTable ] [ tr [] ps.controls ] ]
                     ]
                 ]
 

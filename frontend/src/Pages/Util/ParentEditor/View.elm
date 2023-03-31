@@ -2,9 +2,10 @@ module Pages.Util.ParentEditor.View exposing (..)
 
 import Configuration exposing (Configuration)
 import Either exposing (Either)
-import Html exposing (Attribute, Html, div, table, tbody, td, th, thead, tr)
+import Html exposing (Attribute, Html, button, div, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan)
 import Html.Events exposing (onClick)
+import Maybe.Extra
 import Monocle.Compose as Compose
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.PaginationSettings as PaginationSettings
@@ -25,7 +26,11 @@ viewParentsWith :
     , viewLine : Configuration -> parent -> Bool -> List (Html (Page.LogicMsg parentId parent creation update))
     , updateLine : parent -> update -> List (Html (Page.LogicMsg parentId parent creation update))
     , deleteLine : parent -> List (Html (Page.LogicMsg parentId parent creation update))
-    , create : Maybe creation -> Either (List (Html (Page.LogicMsg parentId parent creation update))) (List (Html (Page.LogicMsg parentId parent creation update)))
+    , create :
+        { ifCreating : creation -> List (Html (Page.LogicMsg parentId parent creation update))
+        , default : creation
+        , label : String
+        }
     , styling : Attribute (Page.LogicMsg parentId parent creation update)
     }
     -> Configuration
@@ -62,8 +67,15 @@ viewParentsWith ps configuration main =
                         main
 
             ( button, creationLine ) =
-                ps.create main.parentCreation
-                    |> Either.unpack (\l -> ( l, [] )) (\r -> ( [], r ))
+                main.parentCreation
+                    |> Maybe.Extra.unwrap
+                        ( [ div [ Style.ids.add ]
+                                [ creationButton { defaultCreation = ps.create.default, label = ps.create.label }
+                                ]
+                          ]
+                        , []
+                        )
+                        (ps.create.ifCreating >> Tuple.pair [])
         in
         div [ ps.styling ]
             (button
@@ -144,3 +156,16 @@ lineWith ps parent =
             else
                 []
            )
+
+
+creationButton :
+    { defaultCreation : creation
+    , label : String
+    }
+    -> Html (Page.LogicMsg parentId parent creation update)
+creationButton ps =
+    button
+        [ Style.classes.button.add
+        , onClick <| Page.UpdateCreation <| Just <| ps.defaultCreation
+        ]
+        [ text <| ps.label ]
