@@ -26,8 +26,6 @@ classes :
         }
     , choices : Attribute msg
     , choiceTable : Attribute msg
-    , complexFoodCreateTable : Attribute msg
-    , complexFoodEditTable : Attribute msg
     , confirm : Attribute msg
     , controlsGroup : Attribute msg
     , controls : Attribute msg
@@ -43,10 +41,8 @@ classes :
     , ellipsis : Attribute msg
     , incomplete : Attribute msg
     , info : Attribute msg
-    , ingredientEditTable : Attribute msg
     , intervalSelection : Attribute msg
     , mealEditTable : Attribute msg
-    , mealEntryEditTable : Attribute msg
     , meals : Attribute msg
     , numberCell : Attribute msg
     , numberLabel : Attribute msg
@@ -60,7 +56,6 @@ classes :
         }
     , request : Attribute msg
     , recipeEditTable : Attribute msg
-    , referenceEntryEditTable : Attribute msg
     , referenceMapEditTable : Attribute msg
     , search :
         { area : Attribute msg
@@ -92,8 +87,6 @@ classes =
         }
     , choices = class "choices"
     , choiceTable = class "choiceTable"
-    , complexFoodCreateTable = class "complexFoodCreateTable"
-    , complexFoodEditTable = class "complexFoodEditTable"
     , confirm = class "confirm"
     , controlsGroup = class "controlsGroup"
     , controls = class "controls"
@@ -109,10 +102,8 @@ classes =
     , ellipsis = class "ellipsis"
     , incomplete = class "incomplete"
     , info = class "info"
-    , ingredientEditTable = class "ingredientEditTable"
     , intervalSelection = class "intervalSection"
     , mealEditTable = class "mealEditTable"
-    , mealEntryEditTable = class "mealEntryEditTable"
     , meals = class "meals"
     , numberCell = class "numberCell"
     , numberLabel = class "numberLabel"
@@ -126,7 +117,6 @@ classes =
         }
     , request = class "request"
     , recipeEditTable = class "recipeEditTable"
-    , referenceEntryEditTable = class "referenceEntryEditTable"
     , referenceMapEditTable = class "referenceMapEditTable"
     , search =
         { area = class "searchArea"
