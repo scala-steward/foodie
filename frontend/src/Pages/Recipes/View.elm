@@ -1,11 +1,11 @@
-module Pages.Recipes.View exposing (editRecipeLineWith, recipeInfoLineWith, recipeLineWith, tableHeader, view)
+module Pages.Recipes.View exposing (editRecipeLineWith, recipeInfoColumns, recipeLineWith, tableHeader, view)
 
 import Addresses.Frontend
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
-import Html exposing (Attribute, Html, button, input, label, table, td, text, th, tr)
-import Html.Attributes exposing (colspan, disabled, value)
+import Html exposing (Attribute, Html, button, input, label, td, text, th, tr)
+import Html.Attributes exposing (value)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
@@ -93,7 +93,7 @@ viewRecipeLine configuration recipe showControls =
                     }
                 ]
             ]
-        , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls recipe.id
+        , toggleMsg = Pages.Util.ParentEditor.Page.ToggleControls recipe.id
         , showControls = showControls
         }
         recipe
@@ -111,58 +111,46 @@ deleteRecipeLine recipe =
                     [ text "Cancel" ]
                 ]
             ]
-        , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls recipe.id
+        , toggleMsg = Pages.Util.ParentEditor.Page.ToggleControls recipe.id
         , showControls = True
         }
         recipe
 
 
-recipeInfoLineWith :
-    { toggleCommand : msg
-    }
-    -> Recipe
-    -> Html msg
-recipeInfoLineWith ps recipe =
-    let
-        withOnClick =
-            (::) (ps.toggleCommand |> onClick)
-    in
-    tr [ Style.classes.editing ]
-        ([ td ([ Style.classes.editable ] |> withOnClick)
-            [ label [] [ text recipe.name ] ]
-         , td ([ Style.classes.editable ] |> withOnClick)
-            [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
-         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick)
-            [ label [] [ text <| String.fromFloat <| recipe.numberOfServings ] ]
-         , td ([ Style.classes.editable, Style.classes.numberLabel ] |> withOnClick)
-            [ label [] [ text <| Maybe.withDefault "" <| recipe.servingSize ] ]
-         ]
-            ++ [ HtmlUtil.toggleControlsCell ps.toggleCommand
-               ]
-        )
+recipeInfoColumns : Recipe -> List (HtmlUtil.Column msg)
+recipeInfoColumns recipe =
+    [ { attributes = [ Style.classes.editable ]
+      , children = [ label [] [ text recipe.name ] ]
+      }
+    , { attributes = [ Style.classes.editable ]
+      , children = [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
+      }
+    , { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
+      , children = [ label [] [ text <| String.fromFloat <| recipe.numberOfServings ] ]
+      }
+    , { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
+      , children = [ label [] [ text <| Maybe.withDefault "" <| recipe.servingSize ] ]
+      }
+    ]
 
 
 recipeLineWith :
     { controls : List (Html msg)
-    , toggleCommand : msg
+    , toggleMsg : msg
     , showControls : Bool
     }
     -> Recipe
     -> List (Html msg)
-recipeLineWith ps recipe =
-    recipeInfoLineWith
-        { toggleCommand = ps.toggleCommand
+recipeLineWith ps =
+    Pages.Util.ParentEditor.View.lineWith
+        { rowWithControls =
+            \recipe ->
+                { display = recipeInfoColumns recipe
+                , controls = ps.controls
+                }
+        , toggleMsg = ps.toggleMsg
+        , showControls = ps.showControls
         }
-        recipe
-        :: (if ps.showControls then
-                [ tr []
-                    [ td [ colspan 4 ] [ table [ Style.classes.elementsWithControlsTable ] [ tr [] ps.controls ] ]
-                    ]
-                ]
-
-            else
-                []
-           )
 
 
 updateRecipeLine : RecipeUpdateClientInput -> List (Html Page.LogicMsg)
@@ -226,110 +214,100 @@ editRecipeLineWith handling editedValue =
         validatedSaveAction =
             MaybeUtil.optional validInput <| onEnter handling.saveMsg
 
-        controlsRow =
-            tr []
-                [ td [ colspan 4 ]
-                    [ table [ Style.classes.elementsWithControlsTable ]
-                        [ tr []
-                            [ td [ Style.classes.controls ]
-                                [ button
-                                    ([ MaybeUtil.defined <| Style.classes.button.confirm
-                                     , MaybeUtil.defined <| disabled <| not <| validInput
-                                     , MaybeUtil.optional validInput <| onClick handling.saveMsg
-                                     ]
-                                        |> Maybe.Extra.values
-                                    )
-                                    [ text handling.confirmName ]
-                                ]
-                            , td [ Style.classes.controls ]
-                                [ button [ Style.classes.button.cancel, onClick handling.cancelMsg ]
-                                    [ text handling.cancelName ]
-                                ]
-                            ]
-                        ]
-                    ]
+        infoColumns =
+            [ td [ Style.classes.editable ]
+                [ input
+                    ([ MaybeUtil.defined <| value <| .text <| handling.nameLens.get <| editedValue
+                     , MaybeUtil.defined <|
+                        onInput <|
+                            flip (ValidatedInput.lift handling.nameLens).set editedValue
+                                >> handling.updateMsg
+                     , MaybeUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
+                     , validatedSaveAction
+                     ]
+                        |> Maybe.Extra.values
+                    )
+                    []
                 ]
+            , td [ Style.classes.editable ]
+                [ input
+                    ([ MaybeUtil.defined <| value <| Maybe.withDefault "" <| handling.descriptionLens.get <| editedValue
+                     , MaybeUtil.defined <|
+                        onInput <|
+                            flip
+                                (Just
+                                    >> Maybe.Extra.filter (String.isEmpty >> not)
+                                    >> handling.descriptionLens.set
+                                )
+                                editedValue
+                                >> handling.updateMsg
+                     , MaybeUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
+                     , validatedSaveAction
+                     ]
+                        |> Maybe.Extra.values
+                    )
+                    []
+                ]
+            , td [ Style.classes.numberCell ]
+                [ input
+                    ([ MaybeUtil.defined <| value <| .text <| handling.numberOfServingsLens.get <| editedValue
+                     , MaybeUtil.defined <|
+                        onInput <|
+                            flip
+                                (ValidatedInput.lift
+                                    handling.numberOfServingsLens
+                                ).set
+                                editedValue
+                                >> handling.updateMsg
+                     , MaybeUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
+                     , MaybeUtil.defined <| Style.classes.numberLabel
+                     , validatedSaveAction
+                     ]
+                        |> Maybe.Extra.values
+                    )
+                    []
+                ]
+            , td [ Style.classes.numberCell ]
+                [ input
+                    ([ MaybeUtil.defined <| value <| Maybe.withDefault "" <| handling.servingSizeLens.get <| editedValue
+                     , MaybeUtil.defined <|
+                        onInput <|
+                            flip
+                                (Just
+                                    >> Maybe.Extra.filter (String.isEmpty >> not)
+                                    >> handling.servingSizeLens.set
+                                )
+                                editedValue
+                                >> handling.updateMsg
+                     , MaybeUtil.defined <| Style.classes.numberLabel
+                     , MaybeUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
+                     , validatedSaveAction
+                     ]
+                        |> Maybe.Extra.values
+                    )
+                    []
+                ]
+            ]
+
+        controlsRow =
+            Pages.Util.ParentEditor.View.controlsRowWith
+                { colspan = infoColumns |> List.length
+                , validInput = validInput
+                , confirm =
+                    { msg = handling.saveMsg
+                    , name = handling.confirmName
+                    }
+                , cancel =
+                    { msg = handling.cancelMsg
+                    , name = handling.cancelName
+                    }
+                }
 
         commandToggle =
             handling.toggleCommand
-                |> Maybe.Extra.unwrap []
-                    (HtmlUtil.toggleControlsCell >> List.singleton)
+                |> Maybe.Extra.toList
+                |> List.map HtmlUtil.toggleControlsCell
     in
-    [ tr handling.rowStyles
-        ([ td [ Style.classes.editable ]
-            [ input
-                ([ MaybeUtil.defined <| value <| .text <| handling.nameLens.get <| editedValue
-                 , MaybeUtil.defined <|
-                    onInput <|
-                        flip (ValidatedInput.lift handling.nameLens).set editedValue
-                            >> handling.updateMsg
-                 , MaybeUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
-                 , validatedSaveAction
-                 ]
-                    |> Maybe.Extra.values
-                )
-                []
-            ]
-         , td [ Style.classes.editable ]
-            [ input
-                ([ MaybeUtil.defined <| value <| Maybe.withDefault "" <| handling.descriptionLens.get <| editedValue
-                 , MaybeUtil.defined <|
-                    onInput <|
-                        flip
-                            (Just
-                                >> Maybe.Extra.filter (String.isEmpty >> not)
-                                >> handling.descriptionLens.set
-                            )
-                            editedValue
-                            >> handling.updateMsg
-                 , MaybeUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
-                 , validatedSaveAction
-                 ]
-                    |> Maybe.Extra.values
-                )
-                []
-            ]
-         , td [ Style.classes.numberCell ]
-            [ input
-                ([ MaybeUtil.defined <| value <| .text <| handling.numberOfServingsLens.get <| editedValue
-                 , MaybeUtil.defined <|
-                    onInput <|
-                        flip
-                            (ValidatedInput.lift
-                                handling.numberOfServingsLens
-                            ).set
-                            editedValue
-                            >> handling.updateMsg
-                 , MaybeUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
-                 , MaybeUtil.defined <| Style.classes.numberLabel
-                 , validatedSaveAction
-                 ]
-                    |> Maybe.Extra.values
-                )
-                []
-            ]
-         , td [ Style.classes.numberCell ]
-            [ input
-                ([ MaybeUtil.defined <| value <| Maybe.withDefault "" <| handling.servingSizeLens.get <| editedValue
-                 , MaybeUtil.defined <|
-                    onInput <|
-                        flip
-                            (Just
-                                >> Maybe.Extra.filter (String.isEmpty >> not)
-                                >> handling.servingSizeLens.set
-                            )
-                            editedValue
-                            >> handling.updateMsg
-                 , MaybeUtil.defined <| Style.classes.numberLabel
-                 , MaybeUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
-                 , validatedSaveAction
-                 ]
-                    |> Maybe.Extra.values
-                )
-                []
-            ]
-         ]
-            ++ commandToggle
-        )
+    [ tr handling.rowStyles (infoColumns ++ commandToggle)
     , controlsRow
     ]
