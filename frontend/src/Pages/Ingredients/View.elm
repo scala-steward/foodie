@@ -39,7 +39,7 @@ viewMain configuration main =
             , div [ Style.classes.elements ] [ label [] [ text "Ingredients" ] ]
             , Pages.Ingredients.Plain.View.viewIngredients configuration main.ingredientsGroup |> Html.map Page.IngredientMsg
             , div [ Style.classes.elements ] [ label [] [ text "Complex ingredients" ] ]
-            , Pages.Ingredients.Complex.View.viewMain configuration main.complexIngredientsGroup |> Html.map Page.ComplexIngredientMsg
+            , Pages.Ingredients.Complex.View.viewComplexIngredients configuration main.complexIngredientsGroup |> Html.map Page.ComplexIngredientMsg
             , div []
                 [ button
                     [ disabled <| main.foodsMode == Page.Plain

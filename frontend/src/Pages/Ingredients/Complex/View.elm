@@ -1,4 +1,4 @@
-module Pages.Ingredients.Complex.View exposing (viewFoods, viewMain)
+module Pages.Ingredients.Complex.View exposing (viewFoods, viewComplexIngredients)
 
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Basics.Extra exposing (flip)
@@ -23,8 +23,8 @@ import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
 
-viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
-viewMain configuration main =
+viewComplexIngredients : Configuration -> Page.Main -> Html Page.LogicMsg
+viewComplexIngredients configuration main =
     Pages.Util.Choice.View.viewElements
         { nameOfChoice = .name
         , choiceIdOfElement = .complexFoodId
@@ -55,6 +55,7 @@ viewMain configuration main =
                 , controls =
                     [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
                     , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Pages.Util.Choice.Page.RequestDelete complexIngredient.complexFoodId) ] [ text "Delete" ] ]
+                    , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration complexIngredient.complexFoodId ]
                     , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration complexIngredient.complexFoodId ]
                     ]
                 }
