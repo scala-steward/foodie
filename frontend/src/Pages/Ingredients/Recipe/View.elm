@@ -36,7 +36,7 @@ viewMain configuration main =
                                         }
                                     ]
                                 ]
-                            , toggleCommand = Page.ToggleControls
+                            , toggleMsg = Page.ToggleControls
                             , showControls = showControls
                             }
                             recipe
@@ -66,7 +66,7 @@ viewMain configuration main =
                                     [ text "Cancel" ]
                                 ]
                             ]
-                        , toggleCommand = Page.ToggleControls
+                        , toggleMsg = Page.ToggleControls
                         , showControls = True
                         }
                 }
