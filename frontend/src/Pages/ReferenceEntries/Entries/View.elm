@@ -98,9 +98,9 @@ viewMain main =
 viewNutrients : Page.Main -> Html Page.LogicMsg
 viewNutrients main =
     let
-        ( factor, amount ) =
+        ( referenceValue, unit ) =
             if DictListUtil.existsValue Editing.isUpdate main.choices then
-                ( "Factor", "Amount" )
+                ( "Reference value", "Unit" )
 
             else
                 ( "", "" )
@@ -110,8 +110,8 @@ viewNutrients main =
         , sortBy = .name
         , choiceHeaderColumns =
             [ th [] [ label [] [ text "Name" ] ]
-            , th [ Style.classes.numberLabel ] [ label [] [ text factor ] ]
-            , th [ Style.classes.numberLabel ] [ label [] [ text amount ] ]
+            , th [ Style.classes.numberLabel ] [ label [] [ text referenceValue ] ]
+            , th [ Style.classes.numberLabel ] [ label [] [ text unit ] ]
             ]
         , idOfChoice = .code
         , nameOfChoice = .name
