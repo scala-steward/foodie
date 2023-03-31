@@ -4,7 +4,6 @@ import Configuration exposing (Configuration)
 import Either exposing (Either)
 import Html exposing (Attribute, Html, div, table, tbody)
 import Monocle.Compose as Compose
-import Monocle.Lens exposing (Lens)
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.ParentEditor.Page as Page
@@ -19,7 +18,6 @@ import Util.Editing as Editing
 viewParentsWith :
     { currentPage : ViewUtil.Page
     , matchesSearchText : String -> parent -> Bool
-    , nameLens : Lens parent String
     , sortBy : parent -> comparable
     , tableHeader : List (Html (Page.LogicMsg parentId parent creation update))
     , viewLine : Configuration -> parent -> Bool -> List (Html (Page.LogicMsg parentId parent creation update))
