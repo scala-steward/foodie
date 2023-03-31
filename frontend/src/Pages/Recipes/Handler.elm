@@ -1,8 +1,7 @@
 module Pages.Recipes.Handler exposing (init, update)
 
 import Addresses.Frontend
-import Api.Types.Recipe exposing (Recipe)
-import Pages.Recipes.Page as Page exposing (RecipeState)
+import Pages.Recipes.Page as Page
 import Pages.Recipes.RecipeCreationClientInput as RecipeCreationClientInput exposing (RecipeCreationClientInput)
 import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
 import Pages.Recipes.Requests as Requests
