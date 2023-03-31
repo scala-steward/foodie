@@ -17,15 +17,6 @@ type alias ComplexFoodClientInput =
     }
 
 
-default : RecipeId -> ComplexFoodClientInput
-default recipeId =
-    { recipeId = recipeId
-    , amountGrams = ValidatedInput.positive
-    , amountMilliLitres = ValidatedInput.maybePositive
-    }
-
-
--- todo: Use this function
 withSuggestion : Recipe -> ComplexFoodClientInput
 withSuggestion recipe =
     let
