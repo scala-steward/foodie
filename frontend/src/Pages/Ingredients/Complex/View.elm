@@ -56,7 +56,7 @@ viewComplexIngredients configuration main =
                     [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
                     , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Pages.Util.Choice.Page.RequestDelete complexIngredient.complexFoodId) ] [ text "Delete" ] ]
                     , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration complexIngredient.complexFoodId ]
-                    , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration complexIngredient.complexFoodId ]
+                    , td [ Style.classes.controls ] [ NavigationUtil.complexFoodNutrientLinkButton configuration complexIngredient.complexFoodId ]
                     ]
                 }
         , isValidInput = .factor >> ValidatedInput.isValid
