@@ -178,7 +178,11 @@ viewRecipes configuration main =
         }
         main
 
+
+
 -- Todo: The function is oddly specific, and the implementation with the fixed amount of columns is awkward.
+
+
 recipeInfoFromMap : DictList RecipeId (Editing Recipe MealEntryCreationClientInput) -> RecipeId -> List (HtmlUtil.Column Page.LogicMsg)
 recipeInfoFromMap recipes recipeId =
     DictList.get recipeId recipes
