@@ -3,10 +3,13 @@ module Pages.ComplexFoods.Page exposing (..)
 import Api.Auxiliary exposing (ComplexFoodId, JWT, RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.Recipe exposing (Recipe)
+import Monocle.Lens exposing (Lens)
 import Pages.ComplexFoods.ComplexFoodClientInput exposing (ComplexFoodClientInput)
+import Pages.ComplexFoods.Foods.Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.Choice.Page
 import Pages.View.Tristate as Tristate
+import Pages.View.TristateUtil as TristateUtil
 import Util.DictList exposing (DictList)
 import Util.Editing exposing (Editing)
 
@@ -15,23 +18,44 @@ type alias Model =
     Tristate.Model Main Initial
 
 
-type alias Initial =
-    Pages.Util.Choice.Page.Initial () ComplexFoodId ComplexFood RecipeId Recipe
-
-
 type alias Main =
-    Pages.Util.Choice.Page.Main () ComplexFoodId ComplexFood ComplexFoodClientInput RecipeId Recipe ComplexFoodClientInput
+    { jwt : JWT
+    , foods : Pages.ComplexFoods.Foods.Page.Main
+    }
+
+
+type alias Initial =
+    { jwt : JWT
+    , foods : Pages.ComplexFoods.Foods.Page.Initial
+    }
+
+
+foodsSubModel : Model -> Pages.ComplexFoods.Foods.Page.Model
+foodsSubModel =
+    TristateUtil.subModelWith
+        { initialLens = lenses.initial.foods
+        , mainLens = lenses.main.foods
+        }
 
 
 initial : AuthorizedAccess -> Model
 initial authorizedAccess =
-    Pages.Util.Choice.Page.initialWith authorizedAccess.jwt ()
+    { jwt = authorizedAccess.jwt
+    , foods = Pages.Util.Choice.Page.initialWith authorizedAccess.jwt ()
+    }
         |> Tristate.createInitial authorizedAccess.configuration
 
 
 initialToMain : Initial -> Maybe Main
-initialToMain =
-    Pages.Util.Choice.Page.initialToMain
+initialToMain i =
+    i.foods
+        |> Pages.Util.Choice.Page.initialToMain
+        |> Maybe.map
+            (\foods ->
+                { jwt = i.jwt
+                , foods = foods
+                }
+            )
 
 
 type alias ComplexFoodState =
@@ -54,6 +78,24 @@ type alias RecipeStateMap =
     DictList RecipeId RecipeState
 
 
+lenses :
+    { initial :
+        { foods : Lens Initial Pages.ComplexFoods.Foods.Page.Initial
+        }
+    , main :
+        { foods : Lens Main Pages.ComplexFoods.Foods.Page.Main
+        }
+    }
+lenses =
+    { initial =
+        { foods = Lens .foods (\b a -> { a | foods = b })
+        }
+    , main =
+        { foods = Lens .foods (\b a -> { a | foods = b })
+        }
+    }
+
+
 type alias Flags =
     { authorizedAccess : AuthorizedAccess
     }
@@ -63,5 +105,5 @@ type alias Msg =
     Tristate.Msg LogicMsg
 
 
-type alias LogicMsg =
-    Pages.Util.Choice.Page.LogicMsg ComplexFoodId ComplexFood ComplexFoodClientInput RecipeId Recipe ComplexFoodClientInput
+type LogicMsg
+    = FoodsMsg Pages.ComplexFoods.Foods.Page.LogicMsg

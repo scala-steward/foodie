@@ -1,4 +1,4 @@
-module Pages.ComplexFoods.Requests exposing (..)
+module Pages.ComplexFoods.Foods.Requests exposing (..)
 
 import Addresses.Backend
 import Api.Auxiliary exposing (ComplexFoodId)
@@ -6,7 +6,7 @@ import Api.Types.ComplexFood exposing (ComplexFood, decoderComplexFood)
 import Api.Types.ComplexFoodIncoming exposing (ComplexFoodIncoming, encoderComplexFoodIncoming)
 import Http
 import Json.Decode as Decode
-import Pages.ComplexFoods.Page as Page
+import Pages.ComplexFoods.Foods.Page as Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.Choice.Page
 import Pages.Util.Requests
