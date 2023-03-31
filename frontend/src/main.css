@@ -193,39 +193,38 @@ th {
     width: 15%;
 }
 
-#mealEntryEditor .mealEntryEditTable th:first-child {
+#mealEntryEditor .addView .addElement th:first-child,
+#mealEntryEditor .elementEditTable th:first-child {
     width: 25%
 }
 
-#mealEntryEditor .mealEntryEditTable th:nth-child(2) {
+#mealEntryEditor .addView .addElement th:nth-child(2),
+#mealEntryEditor .elementEditTable th:nth-child(2) {
     width: 25%
 }
 
-#mealEntryEditor .mealEntryEditTable th:nth-child(3) {
+#mealEntryEditor .addView .addElement th:nth-child(3),
+#mealEntryEditor .elementEditTable th:nth-child(3) {
     width: 15%
 }
 
-#mealEntryEditor .mealEntryEditTable th:nth-child(4) {
-    width: 10%
+#referenceEntryEditor .elementEditTable th:first-child,
+#referenceEntryEditor .addView .addElement th:first-child {
+    width: 60%;
 }
 
-#referenceEntryEditor .referenceEntryEditTable th:first-child {
-    width: 50%;
-}
-
-#referenceEntryEditor .referenceEntryEditTable th:nth-child(2) {
+#referenceEntryEditor .elementEditTable th:nth-child(2),
+#referenceEntryEditor .addView .addElement th:nth-child(2) {
     width: 20%
 }
 
-#referenceEntryEditor .referenceEntryEditTable th:nth-child(3) {
-    width: 5%
-}
-
-#ingredientEditor .ingredientEditTable th:first-child {
+#ingredientEditor .elementEditTable th:first-child,
+#ingredientEditor .addView .addElement th:first-child {
     width: 60%
 }
 
-#ingredientEditor .ingredientEditTable th:nth-child(2) {
+#ingredientEditor .elementEditTable th:nth-child(2),
+#ingredientEditor .addView .addElement th:first-child th:nth-child(2) {
     width: 15%;
 }
 
@@ -296,28 +295,32 @@ th {
     width: 35%;
 }
 
-#complexFoodEditor .complexFoodEditTable th:first-child {
-    width: 50%
+#complexFoodEditor .elementEditTable th:first-child {
+    width: 60%
 }
 
-#complexFoodEditor .complexFoodCreateTable th:first-child {
-    width: 25%
+#complexFoodEditor .elementEditTable th:nth-child(2) {
+    width: 15%
 }
 
-#complexFoodEditor .complexFoodCreateTable th:nth-child(2) {
-    width: 25%
+#complexFoodEditor .addView .addElement th:first-child {
+    width: 22%
 }
 
-#complexFoodEditor .complexFoodCreateTable th:nth-child(3) {
-    width: 10%
+#complexFoodEditor .addView .addElement th:nth-child(2) {
+    width: 22%
 }
 
-#complexFoodEditor .complexFoodCreateTable th:nth-child(4) {
-    width: 10%
+#complexFoodEditor .addView .addElement th:nth-child(3) {
+    width: 12%
 }
 
-#complexFoodEditor .complexFoodCreateTable th:nth-child(5) {
-    width: 10%
+#complexFoodEditor .addView .addElement th:nth-child(4) {
+    width: 12%
+}
+
+#complexFoodEditor .addView .addElement th:nth-child(5) {
+    width: 12%
 }
 
 #statisticsRecipeOccurrence th:first-child {

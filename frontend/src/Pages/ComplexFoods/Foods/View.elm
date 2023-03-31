@@ -122,7 +122,7 @@ viewRecipes configuration main =
         , choiceHeaderColumns =
             [ th [] [ label [] [ text "Name" ] ]
             , th [] [ label [] [ text "Description" ] ]
-            , th [ Style.classes.numberLabel ] [ label [] [ text "Number of servings" ] ]
+            , th [ Style.classes.numberLabel ] [ label [] [ text "Servings" ] ]
             , th [ Style.classes.numberLabel ] [ label [] [ text "Serving size" ] ]
             , th [ Style.classes.numberLabel ] [ label [] [ text amountGrams ] ]
             , th [ Style.classes.numberLabel ] [ label [] [ text amountMillilitres ] ]
