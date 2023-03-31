@@ -36,23 +36,24 @@ viewComplexFoods configuration main =
             ]
         , info =
             \complexFood ->
-                [ { attributes = [ Style.classes.editable ]
-                  , children = [ label [] [ text <| .name <| complexFood ] ]
-                  }
-                , { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
-                  , children = [ label [] [ text <| String.fromFloat <| complexFood.amountGrams ] ]
-                  }
-                , { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
-                  , children = [ label [] [ text <| Maybe.Extra.unwrap "" String.fromFloat <| complexFood.amountMilliLitres ] ]
-                  }
-                ]
-        , controls =
-            \complexFood ->
-                [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick <| Pages.Util.Choice.Page.EnterEdit <| complexFood.recipeId ] [ text "Edit" ] ]
-                , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick <| Pages.Util.Choice.Page.RequestDelete <| complexFood.recipeId ] [ text "Delete" ] ]
-                , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration complexFood.recipeId ]
-                , td [ Style.classes.controls ] [ NavigationUtil.recipeNutrientsLinkButton configuration complexFood.recipeId ]
-                ]
+                { display =
+                    [ { attributes = [ Style.classes.editable ]
+                      , children = [ label [] [ text <| .name <| complexFood ] ]
+                      }
+                    , { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
+                      , children = [ label [] [ text <| String.fromFloat <| complexFood.amountGrams ] ]
+                      }
+                    , { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
+                      , children = [ label [] [ text <| Maybe.Extra.unwrap "" String.fromFloat <| complexFood.amountMilliLitres ] ]
+                      }
+                    ]
+                , controls =
+                    [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick <| Pages.Util.Choice.Page.EnterEdit <| complexFood.recipeId ] [ text "Edit" ] ]
+                    , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick <| Pages.Util.Choice.Page.RequestDelete <| complexFood.recipeId ] [ text "Delete" ] ]
+                    , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration complexFood.recipeId ]
+                    , td [ Style.classes.controls ] [ NavigationUtil.recipeNutrientsLinkButton configuration complexFood.recipeId ]
+                    ]
+                }
         , isValidInput =
             \complexFoodClientInput ->
                 List.all identity

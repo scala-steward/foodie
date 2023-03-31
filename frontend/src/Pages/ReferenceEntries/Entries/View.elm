@@ -40,22 +40,23 @@ viewReferenceEntries main =
                     nutrient =
                         DictList.get referenceEntry.nutrientCode main.choices |> Maybe.map .original
                 in
-                [ { attributes = [ Style.classes.editable ]
-                  , children = [ label [] [ text <| Maybe.Extra.unwrap "" .name <| nutrient ] ]
-                  }
-                , { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
-                  , children = [ label [] [ text <| String.fromFloat <| referenceEntry.amount ] ]
-                  }
-                , { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
-                  , children =
-                        [ label [ Style.classes.numberLabel ] [ text <| Maybe.Extra.unwrap "" (.unit >> NutrientUnit.toString) <| nutrient ] ]
-                  }
-                ]
-        , controls =
-            \referenceEntry ->
-                [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick <| Pages.Util.Choice.Page.EnterEdit <| referenceEntry.nutrientCode ] [ text "Edit" ] ]
-                , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick <| Pages.Util.Choice.Page.RequestDelete <| referenceEntry.nutrientCode ] [ text "Delete" ] ]
-                ]
+                { display =
+                    [ { attributes = [ Style.classes.editable ]
+                      , children = [ label [] [ text <| Maybe.Extra.unwrap "" .name <| nutrient ] ]
+                      }
+                    , { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
+                      , children = [ label [] [ text <| String.fromFloat <| referenceEntry.amount ] ]
+                      }
+                    , { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
+                      , children =
+                            [ label [ Style.classes.numberLabel ] [ text <| Maybe.Extra.unwrap "" (.unit >> NutrientUnit.toString) <| nutrient ] ]
+                      }
+                    ]
+                , controls =
+                    [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick <| Pages.Util.Choice.Page.EnterEdit <| referenceEntry.nutrientCode ] [ text "Edit" ] ]
+                    , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick <| Pages.Util.Choice.Page.RequestDelete <| referenceEntry.nutrientCode ] [ text "Delete" ] ]
+                    ]
+                }
         , isValidInput = .amount >> ValidatedInput.isValid
         , edit =
             \referenceEntry referenceEntryUpdateClientInput ->

@@ -63,29 +63,30 @@ viewIngredients main =
                     food =
                         DictList.get ingredient.foodId main.choices |> Maybe.map .original
                 in
-                [ { attributes = [ Style.classes.editable ]
-                  , children = [ label [] [ text <| Maybe.Extra.unwrap "" .name <| food ] ]
-                  }
-                , { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
-                  , children = [ label [] [ text <| String.fromFloat <| ingredient.amountUnit.factor ] ]
-                  }
-                , { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
-                  , children =
-                        [ label []
-                            [ text <|
-                                Maybe.Extra.unwrap "" .name <|
-                                    Maybe.andThen (measureOfFood ingredient.amountUnit.measureId) <|
-                                        food
+                { display =
+                    [ { attributes = [ Style.classes.editable ]
+                      , children = [ label [] [ text <| Maybe.Extra.unwrap "" .name <| food ] ]
+                      }
+                    , { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
+                      , children = [ label [] [ text <| String.fromFloat <| ingredient.amountUnit.factor ] ]
+                      }
+                    , { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
+                      , children =
+                            [ label []
+                                [ text <|
+                                    Maybe.Extra.unwrap "" .name <|
+                                        Maybe.andThen (measureOfFood ingredient.amountUnit.measureId) <|
+                                            food
+                                ]
                             ]
-                        ]
-                  }
-                ]
-        , controls =
-            \ingredient ->
-                -- todo: Add nutrients button
-                [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick <| Pages.Util.Choice.Page.EnterEdit <| ingredient.id ] [ text "Edit" ] ]
-                , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick <| Pages.Util.Choice.Page.RequestDelete <| ingredient.id ] [ text "Delete" ] ]
-                ]
+                      }
+                    ]
+                , controls =
+                    -- todo: Add nutrients button
+                    [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick <| Pages.Util.Choice.Page.EnterEdit <| ingredient.id ] [ text "Edit" ] ]
+                    , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick <| Pages.Util.Choice.Page.RequestDelete <| ingredient.id ] [ text "Delete" ] ]
+                    ]
+                }
         , isValidInput = .amountUnit >> .factor >> ValidatedInput.isValid
         , edit =
             \ingredient ingredientUpdateClientInput ->

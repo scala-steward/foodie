@@ -43,21 +43,21 @@ viewMain configuration main =
                     amountInfo =
                         complexFood
                             |> Maybe.Extra.unwrap "" amountInfoOf
-                in
-                [ { attributes = [ Style.classes.editable ], children = [ label [] [ text <| Maybe.Extra.unwrap "" .name <| complexFood ] ] }
-                , { attributes = [ Style.classes.editable, Style.classes.numberLabel ], children = [ label [] [ text <| String.fromFloat <| complexIngredient.factor ] ] }
-                , { attributes = [ Style.classes.editable, Style.classes.numberLabel ], children = [ label [] [ text <| amountInfo ] ] }
-                ]
-        , controls =
-            \complexIngredient ->
-                let
+
                     editMsg =
                         Pages.Util.Choice.Page.EnterEdit complexIngredient.complexFoodId |> onClick
                 in
-                [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
-                , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Pages.Util.Choice.Page.RequestDelete complexIngredient.complexFoodId) ] [ text "Delete" ] ]
-                , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration complexIngredient.complexFoodId ]
-                ]
+                { display =
+                    [ { attributes = [ Style.classes.editable ], children = [ label [] [ text <| Maybe.Extra.unwrap "" .name <| complexFood ] ] }
+                    , { attributes = [ Style.classes.editable, Style.classes.numberLabel ], children = [ label [] [ text <| String.fromFloat <| complexIngredient.factor ] ] }
+                    , { attributes = [ Style.classes.editable, Style.classes.numberLabel ], children = [ label [] [ text <| amountInfo ] ] }
+                    ]
+                , controls =
+                    [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
+                    , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick (Pages.Util.Choice.Page.RequestDelete complexIngredient.complexFoodId) ] [ text "Delete" ] ]
+                    , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration complexIngredient.complexFoodId ]
+                    ]
+                }
         , isValidInput = .factor >> ValidatedInput.isValid
         , edit =
             \complexIngredient complexIngredientUpdateClientInput ->

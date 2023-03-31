@@ -25,8 +25,7 @@ viewElements :
     , choiceIdOfElement : element -> choiceId
     , idOfElement : element -> elementId
     , elementHeaderColumns : List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
-    , info : element -> List (Column (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
-    , controls : element -> List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
+    , info : element -> RowWithControls (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
     , isValidInput : update -> Bool
     , edit : element -> update -> List (Column (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
     }
@@ -39,7 +38,6 @@ viewElements ps main =
                 { onView =
                     viewElementLine
                         { idOfElement = ps.idOfElement
-                        , controls = ps.controls
                         , info = ps.info
                         }
                 , onUpdate =
@@ -51,7 +49,7 @@ viewElements ps main =
                 , onDelete =
                     deleteElementLine
                         { idOfElement = ps.idOfElement
-                        , info = ps.info
+                        , info = ps.info >> .display
                         }
                 }
 
@@ -198,8 +196,7 @@ viewChoices ps main =
 
 viewElementLine :
     { idOfElement : element -> elementId
-    , info : element -> List (Column (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
-    , controls : element -> List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
+    , info : element -> RowWithControls (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
     }
     -> element
     -> Bool
@@ -208,7 +205,6 @@ viewElementLine ps element showControls =
     elementLineWith
         { idOfElement = ps.idOfElement
         , info = ps.info
-        , controls = ps.controls
         , showControls = showControls
         }
         element
@@ -223,16 +219,18 @@ deleteElementLine :
 deleteElementLine ps =
     elementLineWith
         { idOfElement = ps.idOfElement
-        , info = ps.info
-        , controls =
+        , info =
             \element ->
-                let
-                    elementId =
-                        element |> ps.idOfElement
-                in
-                [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick <| Pages.Util.Choice.Page.ConfirmDelete <| elementId ] [ text "Delete?" ] ]
-                , td [ Style.classes.controls ] [ button [ Style.classes.button.confirm, onClick <| Pages.Util.Choice.Page.CancelDelete <| elementId ] [ text "Cancel" ] ]
-                ]
+                { display = ps.info element
+                , controls =
+                    let
+                        elementId =
+                            element |> ps.idOfElement
+                    in
+                    [ td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick <| Pages.Util.Choice.Page.ConfirmDelete <| elementId ] [ text "Delete?" ] ]
+                    , td [ Style.classes.controls ] [ button [ Style.classes.button.confirm, onClick <| Pages.Util.Choice.Page.CancelDelete <| elementId ] [ text "Cancel" ] ]
+                    ]
+                }
         , showControls = True
         }
 
@@ -254,8 +252,7 @@ withExtraAttributes extra column =
 
 elementLineWith :
     { idOfElement : element -> elementId
-    , info : element -> List (Column (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
-    , controls : element -> List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
+    , info : element -> RowWithControls (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
     , showControls : Bool
     }
     -> element
@@ -265,11 +262,14 @@ elementLineWith ps element =
         toggleCommand =
             Pages.Util.Choice.Page.ToggleControls <| ps.idOfElement <| element
 
-        infoColumns =
+        info =
             ps.info element
 
+        displayColumns =
+            info |> .display
+
         infoCells =
-            infoColumns |> List.map (withExtraAttributes [ toggleCommand |> onClick ])
+            displayColumns |> List.map (withExtraAttributes [ toggleCommand |> onClick ])
 
         infoRow =
             tr [ Style.classes.editing ]
@@ -279,7 +279,7 @@ elementLineWith ps element =
 
         controlsRow =
             tr []
-                [ td [ colspan <| List.length <| infoColumns ] [ table [ Style.classes.elementsWithControlsTable ] [ tr [] (ps.controls <| element) ] ]
+                [ td [ colspan <| List.length <| displayColumns ] [ table [ Style.classes.elementsWithControlsTable ] [ tr [] (.controls <| info) ] ]
                 ]
     in
     infoRow

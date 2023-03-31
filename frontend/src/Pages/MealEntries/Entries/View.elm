@@ -39,17 +39,18 @@ viewMealEntries configuration main =
             ]
         , info =
             \mealEntry ->
-                recipeInfoFromMap { withName = True } main.choices mealEntry.recipeId
-                    ++ [ { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
-                         , children = [ label [] [ text <| String.fromFloat <| mealEntry.numberOfServings ] ]
-                         }
-                       ]
-        , controls =
-            \mealEntry ->
-                [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick <| Pages.Util.Choice.Page.EnterEdit <| mealEntry.id ] [ text "Edit" ] ]
-                , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick <| Pages.Util.Choice.Page.RequestDelete <| mealEntry.id ] [ text "Delete" ] ]
-                , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration mealEntry.recipeId ]
-                ]
+                { display =
+                    recipeInfoFromMap { withName = True } main.choices mealEntry.recipeId
+                        ++ [ { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
+                             , children = [ label [] [ text <| String.fromFloat <| mealEntry.numberOfServings ] ]
+                             }
+                           ]
+                , controls =
+                    [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick <| Pages.Util.Choice.Page.EnterEdit <| mealEntry.id ] [ text "Edit" ] ]
+                    , td [ Style.classes.controls ] [ button [ Style.classes.button.delete, onClick <| Pages.Util.Choice.Page.RequestDelete <| mealEntry.id ] [ text "Delete" ] ]
+                    , td [ Style.classes.controls ] [ NavigationUtil.recipeEditorLinkButton configuration mealEntry.recipeId ]
+                    ]
+                }
         , isValidInput = .numberOfServings >> ValidatedInput.isValid
         , edit =
             \mealEntry mealEntryUpdateClientInput ->
