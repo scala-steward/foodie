@@ -47,7 +47,8 @@ viewMain main =
                   , children = [ label [] [ text <| String.fromFloat <| referenceEntry.amount ] ]
                   }
                 , { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
-                  , children = [ label [] [ text <| Maybe.Extra.unwrap "" (.unit >> NutrientUnit.toString) <| nutrient ] ]
+                  , children =
+                        [ label [ Style.classes.numberLabel ] [ text <| Maybe.Extra.unwrap "" (.unit >> NutrientUnit.toString) <| nutrient ] ]
                   }
                 ]
         , controls =

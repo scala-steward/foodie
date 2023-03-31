@@ -87,9 +87,9 @@ viewMain configuration main =
                             []
                         ]
                   }
-                , { attributes = [ Style.classes.numberCell ]
+                , { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
                   , children =
-                        [ label [ Style.classes.editable, Style.classes.numberLabel ] [ text <| Maybe.Extra.unwrap "" amountInfoOf <| complexFood ]
+                        [ label [] [ text <| Maybe.Extra.unwrap "" amountInfoOf <| complexFood ]
                         ]
                   }
                 ]
