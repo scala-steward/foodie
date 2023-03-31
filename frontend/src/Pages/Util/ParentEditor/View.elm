@@ -2,7 +2,9 @@ module Pages.Util.ParentEditor.View exposing (..)
 
 import Configuration exposing (Configuration)
 import Either exposing (Either)
-import Html exposing (Attribute, Html, div, table, tbody)
+import Html exposing (Attribute, Html, div, table, tbody, td, th, thead, tr)
+import Html.Attributes exposing (colspan)
+import Html.Events exposing (onClick)
 import Monocle.Compose as Compose
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.PaginationSettings as PaginationSettings
@@ -19,11 +21,12 @@ viewParentsWith :
     { currentPage : ViewUtil.Page
     , matchesSearchText : String -> parent -> Bool
     , sortBy : parent -> comparable
-    , tableHeader : List (Html (Page.LogicMsg parentId parent creation update))
+    , tableHeader : Html (Page.LogicMsg parentId parent creation update)
     , viewLine : Configuration -> parent -> Bool -> List (Html (Page.LogicMsg parentId parent creation update))
     , updateLine : parent -> update -> List (Html (Page.LogicMsg parentId parent creation update))
     , deleteLine : parent -> List (Html (Page.LogicMsg parentId parent creation update))
     , create : Maybe creation -> Either (List (Html (Page.LogicMsg parentId parent creation update))) (List (Html (Page.LogicMsg parentId parent creation update)))
+    , styling : Attribute (Page.LogicMsg parentId parent creation update)
     }
     -> Configuration
     -> Page.Main parentId parent creation update
@@ -62,7 +65,7 @@ viewParentsWith ps configuration main =
                 ps.create main.parentCreation
                     |> Either.unpack (\l -> ( l, [] )) (\r -> ( [], r ))
         in
-        div [ Style.classes.addView ]
+        div [ ps.styling ]
             (button
                 ++ [ HtmlUtil.searchAreaWith
                         { msg = Page.SetSearchString
@@ -70,7 +73,7 @@ viewParentsWith ps configuration main =
                         }
                    , table [ Style.classes.elementsWithControlsTable ]
                         (ps.tableHeader
-                            ++ [ tbody []
+                            :: [ tbody []
                                     (creationLine
                                         ++ (viewParents |> Paginate.page |> List.concatMap viewParent)
                                     )
@@ -90,3 +93,54 @@ viewParentsWith ps configuration main =
                         ]
                    ]
             )
+
+
+tableHeaderWith : { columns : List (Html msg) } -> Html msg
+tableHeaderWith ps =
+    thead []
+        [ tr [ Style.classes.tableHeader, Style.classes.mealEditTable ]
+            (ps.columns
+                ++ [ th [ Style.classes.toggle ] []
+                   ]
+            )
+        ]
+
+
+lineWith :
+    { rowWithControls : parent -> HtmlUtil.RowWithControls msg
+    , toggleMsg : msg
+    , showControls : Bool
+    }
+    -> parent
+    -> List (Html msg)
+lineWith ps parent =
+    let
+        row =
+            parent |> ps.rowWithControls
+
+        displayColumns =
+            row
+                |> .display
+                |> List.map (HtmlUtil.withExtraAttributes [ ps.toggleMsg |> onClick ])
+
+        infoRow =
+            tr [ Style.classes.editing ]
+                (displayColumns
+                    ++ [ HtmlUtil.toggleControlsCell ps.toggleMsg ]
+                )
+
+        controlsRow =
+            tr []
+                [ td [ colspan <| List.length <| displayColumns ]
+                    [ table [ Style.classes.elementsWithControlsTable ]
+                        [ tr [] row.controls ]
+                    ]
+                ]
+    in
+    infoRow
+        :: (if ps.showControls then
+                [ controlsRow ]
+
+            else
+                []
+           )
