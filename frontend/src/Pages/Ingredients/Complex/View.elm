@@ -191,7 +191,10 @@ viewFoods configuration main =
                             ( "Select", [ Style.classes.button.confirm, onClick <| Pages.Util.Choice.Page.SelectChoice <| complexFood ] )
                 in
                 { display =
-                    [ { attributes = [ Style.classes.editable, Style.classes.numberCell ]
+                    [ { attributes = [ Style.classes.editable ]
+                      , children = [ label [] [ text <| .name <| complexFood ] ]
+                      }
+                    , { attributes = [ Style.classes.editable, Style.classes.numberCell ]
                       , children = []
                       }
                     , { attributes = [ Style.classes.editable, Style.classes.numberCell ]

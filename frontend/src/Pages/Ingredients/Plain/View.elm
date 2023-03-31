@@ -262,7 +262,10 @@ viewFoods configuration main =
         , viewChoiceLine =
             \food ->
                 { display =
-                    [ { attributes = [ Style.classes.editable, Style.classes.numberCell ]
+                    [ { attributes = [ Style.classes.editable ]
+                      , children = [ label [] [ text <| .name <| food ] ]
+                      }
+                    , { attributes = [ Style.classes.editable, Style.classes.numberCell ]
                       , children = []
                       }
                     , { attributes = [ Style.classes.editable, Style.classes.numberCell ]

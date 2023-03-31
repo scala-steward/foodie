@@ -190,7 +190,10 @@ viewNutrients main =
                             ( "Select", [ Style.classes.button.confirm, onClick <| Pages.Util.Choice.Page.SelectChoice <| nutrient ] )
                 in
                 { display =
-                    [ { attributes = [ Style.classes.editable, Style.classes.numberCell ]
+                    [ { attributes = [ Style.classes.editable ]
+                      , children = [ label [] [ text <| .name <| nutrient ] ]
+                      }
+                    , { attributes = [ Style.classes.editable, Style.classes.numberCell ]
                       , children = []
                       }
                     , { attributes = [ Style.classes.editable, Style.classes.numberCell ]
