@@ -8,6 +8,7 @@ import Html exposing (Html, button, input, label, td, text, th)
 import Html.Attributes exposing (disabled, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
+import List.Extra
 import Maybe.Extra
 import Pages.MealEntries.Entries.Page as Page
 import Pages.MealEntries.MealEntryCreationClientInput as MealEntryCreationClientInput exposing (MealEntryCreationClientInput)
@@ -119,7 +120,7 @@ viewRecipes configuration main =
                             ( "Add", Style.classes.button.confirm )
                 in
                 { display =
-                    Pages.Recipes.View.recipeInfoColumns recipe
+                    recipeInfo recipe
                         ++ [ { attributes = [ Style.classes.numberCell ]
                              , children =
                                 [ td []
@@ -165,7 +166,7 @@ viewRecipes configuration main =
                         Pages.Util.Choice.Page.SelectChoice <| recipe
                 in
                 { display =
-                    Pages.Recipes.View.recipeInfoColumns recipe
+                    recipeInfo recipe
                         ++ [ { attributes = [ Style.classes.editable, Style.classes.numberCell ]
                              , children = []
                              }
@@ -180,10 +181,22 @@ viewRecipes configuration main =
 
 
 
--- Todo: The function is oddly specific, and the implementation with the fixed amount of columns is awkward.
+-- todo: Simplified assumption that the last column should be removed.
+
+
+recipeInfo : Recipe -> List (HtmlUtil.Column msg)
+recipeInfo =
+    Pages.Recipes.View.recipeInfoColumns
+        >> List.Extra.init
+        >> Maybe.withDefault []
+
+
+
+-- Todo: The function is oddly specific, and the implementation with the fixed amount of columns is awkward,
+-- especially because the non-matching case should never occur.
 
 
 recipeInfoFromMap : DictList RecipeId (Editing Recipe MealEntryCreationClientInput) -> RecipeId -> List (HtmlUtil.Column Page.LogicMsg)
 recipeInfoFromMap recipes recipeId =
     DictList.get recipeId recipes
-        |> Maybe.Extra.unwrap (List.repeat 4 { attributes = [ Style.classes.editable ], children = [] }) (.original >> Pages.Recipes.View.recipeInfoColumns)
+        |> Maybe.Extra.unwrap (List.repeat 4 { attributes = [ Style.classes.editable ], children = [] }) (.original >> recipeInfo)
