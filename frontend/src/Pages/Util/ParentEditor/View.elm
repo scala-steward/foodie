@@ -1,9 +1,8 @@
 module Pages.Util.ParentEditor.View exposing (..)
 
 import Configuration exposing (Configuration)
-import Either exposing (Either)
 import Html exposing (Attribute, Html, button, div, table, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (colspan)
+import Html.Attributes exposing (colspan, disabled)
 import Html.Events exposing (onClick)
 import Maybe.Extra
 import Monocle.Compose as Compose
@@ -16,6 +15,7 @@ import Pages.Util.ViewUtil as ViewUtil
 import Paginate
 import Util.DictList as DictList
 import Util.Editing as Editing
+import Util.MaybeUtil as MaybeUtil
 
 
 viewParentsWith :
@@ -169,3 +169,41 @@ creationButton ps =
         , onClick <| Page.UpdateCreation <| Just <| ps.defaultCreation
         ]
         [ text <| ps.label ]
+
+
+type alias LabelledButton msg =
+    { msg : msg
+    , name : String
+    }
+
+
+controlsRowWith :
+    { colspan : Int
+    , validInput : Bool
+    , confirm : LabelledButton msg
+    , cancel : LabelledButton msg
+    }
+    -> Html msg
+controlsRowWith ps =
+    tr []
+        [ td [ colspan <| ps.colspan ]
+            [ table [ Style.classes.elementsWithControlsTable ]
+                [ tr []
+                    [ td [ Style.classes.controls ]
+                        [ button
+                            ([ MaybeUtil.defined <| Style.classes.button.confirm
+                             , MaybeUtil.defined <| disabled <| not <| ps.validInput
+                             , MaybeUtil.optional ps.validInput <| onClick ps.confirm.msg
+                             ]
+                                |> Maybe.Extra.values
+                            )
+                            [ text <| ps.confirm.name ]
+                        ]
+                    , td [ Style.classes.controls ]
+                        [ button [ Style.classes.button.cancel, onClick <| ps.cancel.msg ]
+                            [ text <| ps.cancel.name ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
