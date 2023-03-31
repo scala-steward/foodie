@@ -179,7 +179,7 @@ viewRecipes configuration main =
         main
 
 
-recipeInfo : { withName : Bool } -> Maybe Recipe -> List (Pages.Util.Choice.View.Column Page.LogicMsg)
+recipeInfo : { withName : Bool } -> Maybe Recipe -> List (HtmlUtil.Column Page.LogicMsg)
 recipeInfo ps recipe =
     let
         nameColumn =
@@ -202,7 +202,7 @@ recipeInfo ps recipe =
            ]
 
 
-recipeInfoFromMap : { withName : Bool } -> DictList RecipeId (Editing Recipe MealEntryCreationClientInput) -> RecipeId -> List (Pages.Util.Choice.View.Column Page.LogicMsg)
+recipeInfoFromMap : { withName : Bool } -> DictList RecipeId (Editing Recipe MealEntryCreationClientInput) -> RecipeId -> List (HtmlUtil.Column Page.LogicMsg)
 recipeInfoFromMap ps recipes recipeId =
     DictList.get recipeId recipes
         |> Maybe.map .original

@@ -1,4 +1,4 @@
-module Pages.Util.HtmlUtil exposing (menuIcon, onEscape, searchAreaWith, toggleControlsCell)
+module Pages.Util.HtmlUtil exposing (Column, RowWithControls, menuIcon, onEscape, searchAreaWith, toggleControlsCell, withExtraAttributes)
 
 import Html exposing (Attribute, Html, button, div, input, label, td, text)
 import Html.Attributes exposing (disabled, value)
@@ -62,3 +62,20 @@ toggleControlsCell : msg -> Html msg
 toggleControlsCell msg =
     td [ Style.classes.toggle, msg |> onClick ]
         [ button [ Style.classes.button.menu ] [ menuIcon ] ]
+
+
+type alias Column msg =
+    { attributes : List (Attribute msg)
+    , children : List (Html msg)
+    }
+
+
+withExtraAttributes : List (Attribute msg) -> Column msg -> Html msg
+withExtraAttributes extra column =
+    td (column.attributes ++ extra) column.children
+
+
+type alias RowWithControls msg =
+    { display : List (Column msg)
+    , controls : List (Html msg)
+    }

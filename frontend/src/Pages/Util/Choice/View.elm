@@ -1,4 +1,4 @@
-module Pages.Util.Choice.View exposing (Column, viewChoices, viewElements)
+module Pages.Util.Choice.View exposing (viewChoices, viewElements)
 
 import Basics.Extra exposing (flip)
 import Html exposing (Attribute, Html, button, div, label, table, tbody, td, text, th, thead, tr)
@@ -25,9 +25,9 @@ viewElements :
     , choiceIdOfElement : element -> choiceId
     , idOfElement : element -> elementId
     , elementHeaderColumns : List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
-    , info : element -> RowWithControls (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
+    , info : element -> HtmlUtil.RowWithControls (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
     , isValidInput : update -> Bool
-    , edit : element -> update -> List (Column (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
+    , edit : element -> update -> List (HtmlUtil.Column (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
     }
     -> Pages.Util.Choice.Page.Main parentId elementId element update choiceId choice creation
     -> Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
@@ -111,10 +111,7 @@ viewElements ps main =
         ]
 
 
-type alias RowWithControls msg =
-    { display : List (Column msg)
-    , controls : List (Html msg)
-    }
+
 
 
 viewChoices :
@@ -123,8 +120,8 @@ viewChoices :
     , choiceHeaderColumns : List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
     , idOfChoice : choice -> choiceId
     , nameOfChoice : choice -> String
-    , elementCreationLine : choice -> creation -> RowWithControls (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
-    , viewChoiceLine : choice -> RowWithControls (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
+    , elementCreationLine : choice -> creation -> HtmlUtil.RowWithControls (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
+    , viewChoiceLine : choice -> HtmlUtil.RowWithControls (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
     }
     -> Pages.Util.Choice.Page.Main parentId elementId element update choiceId choice creation
     -> Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
@@ -196,7 +193,7 @@ viewChoices ps main =
 
 viewElementLine :
     { idOfElement : element -> elementId
-    , info : element -> RowWithControls (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
+    , info : element -> HtmlUtil.RowWithControls (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
     }
     -> element
     -> Bool
@@ -212,7 +209,7 @@ viewElementLine ps element showControls =
 
 deleteElementLine :
     { idOfElement : element -> elementId
-    , info : element -> List (Column (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
+    , info : element -> List (HtmlUtil.Column (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
     }
     -> element
     -> List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
@@ -235,15 +232,7 @@ deleteElementLine ps =
         }
 
 
-type alias Column msg =
-    { attributes : List (Attribute msg)
-    , children : List (Html msg)
-    }
 
-
-withExtraAttributes : List (Attribute msg) -> Column msg -> Html msg
-withExtraAttributes extra column =
-    td (column.attributes ++ extra) column.children
 
 
 
@@ -252,7 +241,7 @@ withExtraAttributes extra column =
 
 elementLineWith :
     { idOfElement : element -> elementId
-    , info : element -> RowWithControls (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
+    , info : element -> HtmlUtil.RowWithControls (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
     , showControls : Bool
     }
     -> element
@@ -269,7 +258,7 @@ elementLineWith ps element =
             info |> .display
 
         infoCells =
-            displayColumns |> List.map (withExtraAttributes [ toggleCommand |> onClick ])
+            displayColumns |> List.map (HtmlUtil.withExtraAttributes [ toggleCommand |> onClick ])
 
         infoRow =
             tr [ Style.classes.editing ]
@@ -294,7 +283,7 @@ elementLineWith ps element =
 editElementLine :
     { idOfElement : element -> elementId
     , isValidInput : update -> Bool
-    , edit : element -> update -> List (Column (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
+    , edit : element -> update -> List (HtmlUtil.Column (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
     }
     -> element
     -> update
@@ -323,7 +312,7 @@ editElementLine ps element elementUpdateClientInput =
                      , MaybeUtil.defined <| HtmlUtil.onEscape cancelMsg
                      ]
                         |> Maybe.Extra.values
-                        |> withExtraAttributes
+                        |> HtmlUtil.withExtraAttributes
                     )
             )
                 ++ [ HtmlUtil.toggleControlsCell <| Pages.Util.Choice.Page.ToggleControls <| elementId ]
@@ -363,7 +352,7 @@ editElementLine ps element elementUpdateClientInput =
 viewChoiceLine :
     { nameOfChoice : choice -> String
     , idOfChoice : choice -> choiceId
-    , choiceOnView : choice -> RowWithControls (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
+    , choiceOnView : choice -> HtmlUtil.RowWithControls (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
     }
     -> choice
     -> Bool
@@ -377,7 +366,7 @@ viewChoiceLine ps choice showControls =
             ps.choiceOnView choice
 
         columns =
-            rowWithControls.display |> List.map (withExtraAttributes [ onClick toggleCommand ])
+            rowWithControls.display |> List.map (HtmlUtil.withExtraAttributes [ onClick toggleCommand ])
 
         infoRow =
             tr [ Style.classes.editing ]
@@ -403,7 +392,7 @@ viewChoiceLine ps choice showControls =
 editElementCreation :
     { idOfChoice : choice -> choiceId
     , nameOfChoice : choice -> String
-    , elementCreationLine : choice -> creation -> RowWithControls (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
+    , elementCreationLine : choice -> creation -> HtmlUtil.RowWithControls (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
     }
     -> choice
     -> creation
@@ -422,7 +411,7 @@ editElementCreation ps choice creation =
         creationRow =
             tr []
                 (td [ Style.classes.editable ] [ label [] [ text <| ps.nameOfChoice <| choice ] ]
-                    :: (rowWithControls.display |> List.map (withExtraAttributes []))
+                    :: (rowWithControls.display |> List.map (HtmlUtil.withExtraAttributes []))
                     ++ [ HtmlUtil.toggleControlsCell <| toggleMsg ]
                 )
 

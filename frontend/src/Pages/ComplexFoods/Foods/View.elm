@@ -239,7 +239,7 @@ viewRecipes configuration main =
         main
 
 
-displayRecipe : Recipe -> List (Pages.Util.Choice.View.Column msg)
+displayRecipe : Recipe -> List (HtmlUtil.Column msg)
 displayRecipe recipe =
     [ { attributes = [ Style.classes.editable ]
       , children = [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
