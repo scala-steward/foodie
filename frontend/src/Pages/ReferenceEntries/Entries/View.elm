@@ -23,9 +23,9 @@ import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
 
-viewMain : Page.Main -> Html Page.LogicMsg
-viewMain main =
-    Pages.Util.Choice.View.viewMain
+viewReferenceEntries : Page.Main -> Html Page.LogicMsg
+viewReferenceEntries main =
+    Pages.Util.Choice.View.viewElements
         { nameOfChoice = .name
         , choiceIdOfElement = .nutrientCode
         , idOfElement = .nutrientCode

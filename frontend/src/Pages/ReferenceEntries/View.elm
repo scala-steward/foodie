@@ -34,7 +34,7 @@ viewMain configuration main =
                     |> Html.map Page.MapMsg
                 ]
             , div [ Style.classes.elements ] [ label [] [ text "Reference values" ] ]
-            , Pages.ReferenceEntries.Entries.View.viewMain main.entries |> Html.map Page.EntriesMsg
+            , Pages.ReferenceEntries.Entries.View.viewReferenceEntries main.entries |> Html.map Page.EntriesMsg
             , div [ Style.classes.elements ] [ label [] [ text "Nutrients" ] ]
             , Pages.ReferenceEntries.Entries.View.viewNutrients main.entries |> Html.map Page.EntriesMsg
             ]

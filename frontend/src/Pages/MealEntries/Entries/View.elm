@@ -25,9 +25,9 @@ import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
 
-viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
-viewMain configuration main =
-    Pages.Util.Choice.View.viewMain
+viewMealEntries : Configuration -> Page.Main -> Html Page.LogicMsg
+viewMealEntries configuration main =
+    Pages.Util.Choice.View.viewElements
         { nameOfChoice = .name
         , choiceIdOfElement = .recipeId
         , idOfElement = .id

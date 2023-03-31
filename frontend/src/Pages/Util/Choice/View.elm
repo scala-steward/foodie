@@ -1,4 +1,4 @@
-module Pages.Util.Choice.View exposing (Column, viewChoices, viewMain)
+module Pages.Util.Choice.View exposing (Column, viewChoices, viewElements)
 
 import Basics.Extra exposing (flip)
 import Html exposing (Attribute, Html, button, div, label, table, tbody, td, text, th, thead, tr)
@@ -20,11 +20,7 @@ import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
 
-
--- todo: This should be called "viewElements"
-
-
-viewMain :
+viewElements :
     { nameOfChoice : choice -> String
     , choiceIdOfElement : element -> choiceId
     , idOfElement : element -> elementId
@@ -36,7 +32,7 @@ viewMain :
     }
     -> Pages.Util.Choice.Page.Main parentId elementId element update choiceId choice creation
     -> Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
-viewMain ps main =
+viewElements ps main =
     let
         viewElementState =
             Editing.unpack

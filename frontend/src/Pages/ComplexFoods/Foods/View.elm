@@ -25,7 +25,7 @@ import Util.SearchUtil as SearchUtil
 
 viewComplexFoods : Configuration -> Page.Main -> Html Page.LogicMsg
 viewComplexFoods configuration main =
-    Pages.Util.Choice.View.viewMain
+    Pages.Util.Choice.View.viewElements
         { nameOfChoice = .name
         , choiceIdOfElement = .recipeId
         , idOfElement = .recipeId

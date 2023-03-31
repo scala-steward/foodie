@@ -1,4 +1,4 @@
-module Pages.Ingredients.Plain.View exposing (viewFoods, viewMain)
+module Pages.Ingredients.Plain.View exposing (viewFoods, viewIngredients)
 
 import Addresses.Frontend
 import Api.Auxiliary exposing (ComplexFoodId, FoodId, IngredientId, JWT, MeasureId, RecipeId)
@@ -33,8 +33,8 @@ import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
 
-viewMain : Page.Main -> Html Page.LogicMsg
-viewMain main =
+viewIngredients : Page.Main -> Html Page.LogicMsg
+viewIngredients main =
     let
         unitDropdown foodId =
             main.choices
@@ -48,7 +48,7 @@ viewMain main =
                         }
                     )
     in
-    Pages.Util.Choice.View.viewMain
+    Pages.Util.Choice.View.viewElements
         { nameOfChoice = .name
         , choiceIdOfElement = .foodId
         , idOfElement = .id
