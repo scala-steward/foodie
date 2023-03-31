@@ -109,10 +109,9 @@ updateLogic ps msg model =
                     )
             )
 
-        {- Todo: Check back, whether showControls is really fixed. -}
         cancelDelete =
             ( model
-                |> Tristate.mapMain (Lens.modify Page.lenses.main.parent (Editing.toViewWith { showControls = True }))
+                |> Tristate.mapMain (Lens.modify Page.lenses.main.parent Editing.toView)
             , Cmd.none
             )
 

@@ -177,12 +177,14 @@ gotSaveMealResponse model dataOrError =
     , Cmd.none
     )
 
+
 toggleControls : Page.Model -> MealId -> ( Page.Model, Cmd Page.LogicMsg )
 toggleControls model mealId =
     ( model
         |> mapMealStateById mealId Editing.toggleControls
     , Cmd.none
     )
+
 
 enterEditMeal : Page.Model -> MealId -> ( Page.Model, Cmd Page.LogicMsg )
 enterEditMeal model mealId =
@@ -195,7 +197,7 @@ enterEditMeal model mealId =
 
 exitEditMealAt : Page.Model -> MealId -> ( Page.Model, Cmd Page.LogicMsg )
 exitEditMealAt model mealId =
-    ( model |> mapMealStateById mealId (Editing.toViewWith { showControls = True })
+    ( model |> mapMealStateById mealId Editing.toView
     , Cmd.none
     )
 
@@ -226,7 +228,7 @@ confirmDeleteMeal model mealId =
 
 cancelDeleteMeal : Page.Model -> MealId -> ( Page.Model, Cmd Page.LogicMsg )
 cancelDeleteMeal model mealId =
-    ( model |> mapMealStateById mealId (Editing.toViewWith { showControls = True })
+    ( model |> mapMealStateById mealId Editing.toView
     , Cmd.none
     )
 

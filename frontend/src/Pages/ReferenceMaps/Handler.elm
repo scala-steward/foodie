@@ -201,7 +201,7 @@ enterEditReferenceMap model referenceMapId =
 
 exitEditReferenceMapAt : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.LogicMsg )
 exitEditReferenceMapAt model referenceMapId =
-    ( model |> mapReferenceMapStateById referenceMapId (Editing.toViewWith { showControls = True })
+    ( model |> mapReferenceMapStateById referenceMapId Editing.toView
     , Cmd.none
     )
 
@@ -232,7 +232,7 @@ confirmDeleteReferenceMap model referenceMapId =
 
 cancelDeleteReferenceMap : Page.Model -> ReferenceMapId -> ( Page.Model, Cmd Page.LogicMsg )
 cancelDeleteReferenceMap model referenceMapId =
-    ( model |> mapReferenceMapStateById referenceMapId (Editing.toViewWith { showControls = True })
+    ( model |> mapReferenceMapStateById referenceMapId Editing.toView
     , Cmd.none
     )
 

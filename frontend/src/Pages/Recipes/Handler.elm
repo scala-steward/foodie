@@ -219,13 +219,9 @@ enterEditRecipe model recipeId =
     )
 
 
-
--- todo: Consider whether 'showControls' is possibly False.
-
-
 exitEditRecipeAt : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.LogicMsg )
 exitEditRecipeAt model recipeId =
-    ( model |> mapRecipeStateById recipeId (Editing.toViewWith { showControls = True })
+    ( model |> mapRecipeStateById recipeId Editing.toView
     , Cmd.none
     )
 
@@ -254,13 +250,9 @@ confirmDeleteRecipe model recipeId =
     )
 
 
-
--- todo: Consider whether 'showControls' is possibly False.
-
-
 cancelDeleteRecipe : Page.Model -> RecipeId -> ( Page.Model, Cmd Page.LogicMsg )
 cancelDeleteRecipe model recipeId =
-    ( model |> mapRecipeStateById recipeId (Editing.toViewWith { showControls = True })
+    ( model |> mapRecipeStateById recipeId Editing.toView
     , Cmd.none
     )
 
