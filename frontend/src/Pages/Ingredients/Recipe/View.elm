@@ -76,6 +76,6 @@ viewMain configuration main =
     in
     table [ Style.classes.elementsWithControlsTable ]
         (Pages.Recipes.View.tableHeader
-            ++ [ tbody [] viewRecipe
+            :: [ tbody [] viewRecipe
                ]
         )
