@@ -8,13 +8,14 @@ import Api.Types.RecipeUpdate exposing (RecipeUpdate)
 import Http
 import Pages.Recipes.Page as Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.ParentEditor.Page
 import Pages.Util.Requests
 import Util.HttpUtil as HttpUtil
 
 
 fetchRecipes : AuthorizedAccess -> Cmd Page.LogicMsg
 fetchRecipes =
-    Pages.Util.Requests.fetchRecipesWith Page.GotFetchRecipesResponse
+    Pages.Util.Requests.fetchRecipesWith Pages.Util.ParentEditor.Page.GotFetchResponse
 
 
 createRecipe : AuthorizedAccess -> RecipeCreation -> Cmd Page.LogicMsg
@@ -23,7 +24,7 @@ createRecipe authorizedAccess recipeCreation =
         authorizedAccess
         Addresses.Backend.recipes.create
         { body = encoderRecipeCreation recipeCreation |> Http.jsonBody
-        , expect = HttpUtil.expectJson Page.GotCreateRecipeResponse decoderRecipe
+        , expect = HttpUtil.expectJson Pages.Util.ParentEditor.Page.GotCreateResponse decoderRecipe
         }
 
 
@@ -32,19 +33,23 @@ createRecipe authorizedAccess recipeCreation =
 
 
 saveRecipe :
-    { authorizedAccess : AuthorizedAccess
-    , recipeUpdate : RecipeUpdate
-    }
+    AuthorizedAccess
+    -> RecipeUpdate
     -> Cmd Page.LogicMsg
-saveRecipe =
+saveRecipe authorizedAccess recipeUpdate =
     Pages.Util.Requests.saveRecipeWith
-        Page.GotSaveRecipeResponse
+        Pages.Util.ParentEditor.Page.GotSaveEditResponse
+        { authorizedAccess = authorizedAccess
+        , recipeUpdate = recipeUpdate
+        }
 
 
 deleteRecipe :
-    { authorizedAccess : AuthorizedAccess
-    , recipeId : RecipeId
-    }
+    AuthorizedAccess
+    -> RecipeId
     -> Cmd Page.LogicMsg
-deleteRecipe ps =
-    Pages.Util.Requests.deleteRecipeWith (Page.GotDeleteRecipeResponse ps.recipeId) ps
+deleteRecipe authorizedAccess recipeId =
+    Pages.Util.Requests.deleteRecipeWith (Pages.Util.ParentEditor.Page.GotDeleteResponse recipeId)
+        { authorizedAccess = authorizedAccess
+        , recipeId = recipeId
+        }

@@ -5,27 +5,23 @@ import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
 import Either exposing (Either(..))
-import Html exposing (Attribute, Html, button, div, input, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Attribute, Html, button, div, input, label, table, td, text, th, tr)
 import Html.Attributes exposing (colspan, disabled, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
-import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
 import Pages.Recipes.Page as Page
-import Pages.Recipes.Pagination as Pagination
 import Pages.Recipes.RecipeCreationClientInput as RecipeCreationClientInput exposing (RecipeCreationClientInput)
 import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Links as Links
-import Pages.Util.PaginationSettings as PaginationSettings
+import Pages.Util.ParentEditor.Page
+import Pages.Util.ParentEditor.View
 import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
 import Pages.Util.ViewUtil as ViewUtil
 import Pages.View.Tristate as Tristate
-import Paginate
-import Util.DictList as DictList
-import Util.Editing as Editing
 import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
@@ -39,87 +35,32 @@ view =
 
 
 viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
-viewMain configuration main =
-    ViewUtil.viewMainWith
-        { configuration = configuration
-        , jwt = .jwt >> Just
-        , currentPage = Just ViewUtil.Recipes
-        , showNavigation = True
+viewMain =
+    Pages.Util.ParentEditor.View.viewParentsWith
+        { currentPage = ViewUtil.Recipes
+        , matchesSearchText =
+            \string recipe ->
+                SearchUtil.search string recipe.name
+                    || SearchUtil.search string (recipe.description |> Maybe.withDefault "")
+        , sortBy = .name
+        , tableHeader = tableHeader
+        , viewLine = viewRecipeLine
+        , updateLine = \_ -> updateRecipeLine
+        , deleteLine = deleteRecipeLine
+        , create = createRecipe
+        , styling = Style.ids.addRecipeView
         }
-        main
-    <|
-        let
-            viewRecipeState =
-                Editing.unpack
-                    { onView = viewRecipeLine configuration
-                    , onUpdate = always updateRecipeLine
-                    , onDelete = deleteRecipeLine
-                    }
 
-            filterOn =
-                SearchUtil.search main.searchString
-
-            viewEditRecipes =
-                main.recipes
-                    |> DictList.filter
-                        (\_ v ->
-                            filterOn v.original.name
-                                || filterOn (v.original.description |> Maybe.withDefault "")
-                        )
-                    |> DictList.values
-                    |> List.sortBy (.original >> .name >> String.toLower)
-                    |> ViewUtil.paginate
-                        { pagination = Page.lenses.main.pagination |> Compose.lensWithLens Pagination.lenses.recipes
-                        }
-                        main
-
-            ( button, creationLine ) =
-                createRecipe main.recipeToAdd
-                    |> Either.unpack (\l -> ( [ l ], [] )) (\r -> ( [], [ r ] ))
-                    |> Tuple.mapBoth List.concat List.concat
-        in
-        div [ Style.ids.addRecipeView ]
-            (button
-                ++ [ HtmlUtil.searchAreaWith
-                        { msg = Page.SetSearchString
-                        , searchString = main.searchString
-                        }
-                   , table [ Style.classes.elementsWithControlsTable ]
-                        (tableHeader
-                            ++ [ tbody []
-                                    (creationLine
-                                        ++ (viewEditRecipes |> Paginate.page |> List.concatMap viewRecipeState)
-                                    )
-                               ]
-                        )
-                   , div [ Style.classes.pagination ]
-                        [ ViewUtil.pagerButtons
-                            { msg =
-                                PaginationSettings.updateCurrentPage
-                                    { pagination = Page.lenses.main.pagination
-                                    , items = Pagination.lenses.recipes
-                                    }
-                                    main
-                                    >> Page.SetPagination
-                            , elements = viewEditRecipes
-                            }
-                        ]
-                   ]
-            )
-
-
-tableHeader : List (Html msg)
+tableHeader : Html msg
 tableHeader =
-    [ thead []
-        [ tr [ Style.classes.tableHeader, Style.classes.recipeEditTable ]
+    Pages.Util.ParentEditor.View.tableHeaderWith
+        { columns =
             [ th [] [ label [] [ text "Name" ] ]
             , th [] [ label [] [ text "Description" ] ]
             , th [ Style.classes.numberLabel ] [ label [] [ text "Servings" ] ]
             , th [ Style.classes.numberLabel ] [ label [] [ text "Serving size" ] ]
-            , th [ Style.classes.toggle ] []
             ]
-        ]
-    ]
+        }
 
 
 createRecipe : Maybe RecipeCreationClientInput -> Either (List (Html Page.LogicMsg)) (List (Html Page.LogicMsg))
@@ -129,7 +70,7 @@ createRecipe maybeCreation =
             [ div [ Style.ids.add ]
                 [ button
                     [ Style.classes.button.add
-                    , onClick <| Page.UpdateRecipeCreation <| Just <| RecipeCreationClientInput.default
+                    , onClick <| Pages.Util.ParentEditor.Page.UpdateCreation <| Just <| RecipeCreationClientInput.default
                     ]
                     [ text "New recipe" ]
                 ]
@@ -145,7 +86,7 @@ viewRecipeLine configuration recipe showControls =
     recipeLineWith
         { controls =
             [ td [ Style.classes.controls ]
-                [ button [ Style.classes.button.edit, Page.EnterEditRecipe recipe.id |> onClick ] [ text "Edit" ] ]
+                [ button [ Style.classes.button.edit, Pages.Util.ParentEditor.Page.EnterEdit recipe.id |> onClick ] [ text "Edit" ] ]
             , td [ Style.classes.controls ]
                 [ Links.linkButton
                     { url = Links.frontendPage configuration <| Addresses.Frontend.ingredientEditor.address <| recipe.id
@@ -155,7 +96,7 @@ viewRecipeLine configuration recipe showControls =
                 ]
             , td [ Style.classes.controls ]
                 [ button
-                    [ Style.classes.button.delete, onClick (Page.RequestDeleteRecipe recipe.id) ]
+                    [ Style.classes.button.delete, onClick (Pages.Util.ParentEditor.Page.RequestDelete recipe.id) ]
                     [ text "Delete" ]
                 ]
             , td [ Style.classes.controls ]
@@ -167,7 +108,7 @@ viewRecipeLine configuration recipe showControls =
                 ]
             ]
         , extraCells = []
-        , toggleCommand = Page.ToggleControls recipe.id
+        , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls recipe.id
         , showControls = showControls
         }
         recipe
@@ -178,15 +119,15 @@ deleteRecipeLine recipe =
     recipeLineWith
         { controls =
             [ td [ Style.classes.controls ]
-                [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteRecipe recipe.id) ] [ text "Delete?" ] ]
+                [ button [ Style.classes.button.delete, onClick (Pages.Util.ParentEditor.Page.ConfirmDelete recipe.id) ] [ text "Delete?" ] ]
             , td [ Style.classes.controls ]
                 [ button
-                    [ Style.classes.button.confirm, onClick (Page.CancelDeleteRecipe recipe.id) ]
+                    [ Style.classes.button.confirm, onClick (Pages.Util.ParentEditor.Page.CancelDelete recipe.id) ]
                     [ text "Cancel" ]
                 ]
             ]
         , extraCells = []
-        , toggleCommand = Page.ToggleControls recipe.id
+        , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls recipe.id
         , showControls = True
         }
         recipe
@@ -247,17 +188,17 @@ recipeLineWith ps recipe =
 updateRecipeLine : RecipeUpdateClientInput -> List (Html Page.LogicMsg)
 updateRecipeLine recipeUpdateClientInput =
     editRecipeLineWith
-        { saveMsg = Page.SaveRecipeEdit recipeUpdateClientInput.id
+        { saveMsg = Pages.Util.ParentEditor.Page.SaveEdit recipeUpdateClientInput.id
         , nameLens = RecipeUpdateClientInput.lenses.name
         , descriptionLens = RecipeUpdateClientInput.lenses.description
         , numberOfServingsLens = RecipeUpdateClientInput.lenses.numberOfServings
         , servingSizeLens = RecipeUpdateClientInput.lenses.servingSize
-        , updateMsg = Page.UpdateRecipe
+        , updateMsg = Pages.Util.ParentEditor.Page.Edit
         , confirmName = "Save"
-        , cancelMsg = Page.ExitEditRecipeAt recipeUpdateClientInput.id
+        , cancelMsg = Pages.Util.ParentEditor.Page.ExitEdit recipeUpdateClientInput.id
         , cancelName = "Cancel"
         , rowStyles = [ Style.classes.editLine ]
-        , toggleCommand = Page.ToggleControls recipeUpdateClientInput.id |> Just
+        , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls recipeUpdateClientInput.id |> Just
         }
         recipeUpdateClientInput
 
@@ -265,14 +206,14 @@ updateRecipeLine recipeUpdateClientInput =
 createRecipeLine : RecipeCreationClientInput -> List (Html Page.LogicMsg)
 createRecipeLine =
     editRecipeLineWith
-        { saveMsg = Page.CreateRecipe
+        { saveMsg = Pages.Util.ParentEditor.Page.Create
         , nameLens = RecipeCreationClientInput.lenses.name
         , descriptionLens = RecipeCreationClientInput.lenses.description
         , numberOfServingsLens = RecipeCreationClientInput.lenses.numberOfServings
         , servingSizeLens = RecipeCreationClientInput.lenses.servingSize
-        , updateMsg = Just >> Page.UpdateRecipeCreation
+        , updateMsg = Just >> Pages.Util.ParentEditor.Page.UpdateCreation
         , confirmName = "Add"
-        , cancelMsg = Page.UpdateRecipeCreation Nothing
+        , cancelMsg = Pages.Util.ParentEditor.Page.UpdateCreation Nothing
         , cancelName = "Cancel"
         , rowStyles = [ Style.classes.editLine ]
         , toggleCommand = Nothing
