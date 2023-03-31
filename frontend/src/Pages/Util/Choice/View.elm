@@ -313,8 +313,11 @@ editElementLine ps element elementUpdateClientInput =
         validInput =
             elementUpdateClientInput |> ps.isValidInput
 
+        editCells =
+            ps.edit element elementUpdateClientInput
+
         cells =
-            (ps.edit element elementUpdateClientInput
+            (editCells
                 |> List.map
                     ([ MaybeUtil.optional validInput <| onEnter saveMsg
                      , MaybeUtil.defined <| HtmlUtil.onEscape cancelMsg
@@ -329,9 +332,10 @@ editElementLine ps element elementUpdateClientInput =
             tr [ Style.classes.editLine ]
                 cells
 
+        -- Only the edit info cells are used for the spanning, because we add an additional column
         controlsRow =
             tr []
-                [ td [ colspan <| List.length <| cells ]
+                [ td [ colspan <| List.length <| editCells ]
                     [ table [ Style.classes.elementsWithControlsTable ]
                         [ tr []
                             [ td [ Style.classes.controls ]
