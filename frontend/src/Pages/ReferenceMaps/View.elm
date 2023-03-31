@@ -5,9 +5,8 @@ import Api.Types.ReferenceMap exposing (ReferenceMap)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
 import Either exposing (Either(..))
-import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (colspan, disabled, scope, value)
-import Html.Attributes.Extra exposing (stringProperty)
+import Html exposing (Attribute, Html, button, div, input, label, table, tbody, td, text, th, thead, tr)
+import Html.Attributes exposing (colspan, disabled, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
@@ -104,11 +103,7 @@ viewMain configuration main =
 
 tableHeader : List (Html msg)
 tableHeader =
-    [ colgroup []
-        [ col [] []
-        , col [] []
-        ]
-    , thead []
+    [ thead []
         [ tr [ Style.classes.tableHeader, Style.classes.referenceMapEditTable ]
             [ th [] [ label [] [ text "Name" ] ]
             , th [ Style.classes.toggle ] []
