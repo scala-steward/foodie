@@ -64,6 +64,7 @@ tableHeader =
             , th [ Style.classes.numberLabel ] [ label [] [ text "Servings" ] ]
             , th [ Style.classes.numberLabel ] [ label [] [ text "Serving size" ] ]
             ]
+        , style = Style.classes.recipeEditTable
         }
 
 

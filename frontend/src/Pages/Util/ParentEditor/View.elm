@@ -107,10 +107,14 @@ viewParentsWith ps configuration main =
             )
 
 
-tableHeaderWith : { columns : List (Html msg) } -> Html msg
+tableHeaderWith :
+    { columns : List (Html msg)
+    , style : Attribute msg
+    }
+    -> Html msg
 tableHeaderWith ps =
     thead []
-        [ tr [ Style.classes.tableHeader, Style.classes.mealEditTable ]
+        [ tr [ Style.classes.tableHeader, ps.style ]
             (ps.columns
                 ++ [ th [ Style.classes.toggle ] []
                    ]
