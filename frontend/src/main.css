@@ -195,17 +195,17 @@ th {
 
 #mealEntryEditor .addView .addElement th:first-child,
 #mealEntryEditor .elementEditTable th:first-child {
-    width: 25%
+    width: 40%
 }
 
 #mealEntryEditor .addView .addElement th:nth-child(2),
 #mealEntryEditor .elementEditTable th:nth-child(2) {
-    width: 25%
+    width: 30%
 }
 
 #mealEntryEditor .addView .addElement th:nth-child(3),
 #mealEntryEditor .elementEditTable th:nth-child(3) {
-    width: 15%
+    width: 12%
 }
 
 #referenceEntryEditor .elementEditTable th:first-child,
