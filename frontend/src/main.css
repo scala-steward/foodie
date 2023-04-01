@@ -173,21 +173,24 @@ th {
 
 #addRecipeView th:first-child,
 #ingredientEditor .recipeEditTable th:first-child {
-    width: 40%;
+    width: 20%;
 }
 
 #addRecipeView th:nth-child(2),
 #ingredientEditor .recipeEditTable th:nth-child(2) {
-    width: 30%;
+    width: 27%;
 }
 
 #addRecipeView th:nth-child(3),
 #ingredientEditor .recipeEditTable th:nth-child(3) {
-    width: 12%;
+    width: 23%;
 }
 
 #addMealView th:first-child,
-#mealEntryEditor .mealEditTable th:first-child,
+#mealEntryEditor .mealEditTable th:first-child {
+    width: 25%;
+}
+
 #addMealView th:nth-child(2):not(input),
 #mealEntryEditor .mealEditTable th:nth-child(2):not(input) {
     width: 15%;
@@ -195,37 +198,37 @@ th {
 
 #mealEntryEditor .addView .addElement th:first-child,
 #mealEntryEditor .elementEditTable th:first-child {
-    width: 40%
+    width: 20%
 }
 
 #mealEntryEditor .addView .addElement th:nth-child(2),
 #mealEntryEditor .elementEditTable th:nth-child(2) {
-    width: 30%
+    width: 27%
 }
 
 #mealEntryEditor .addView .addElement th:nth-child(3),
 #mealEntryEditor .elementEditTable th:nth-child(3) {
-    width: 12%
+    width: 20%
 }
 
 #referenceEntryEditor .elementEditTable th:first-child,
 #referenceEntryEditor .addView .addElement th:first-child {
-    width: 60%;
+    width: 40%;
 }
 
 #referenceEntryEditor .elementEditTable th:nth-child(2),
 #referenceEntryEditor .addView .addElement th:nth-child(2) {
-    width: 20%
+    width: 25%
 }
 
 #ingredientEditor .elementEditTable th:first-child,
 #ingredientEditor .addView .addElement th:first-child {
-    width: 60%
+    width: 50%
 }
 
 #ingredientEditor .elementEditTable th:nth-child(2),
 #ingredientEditor .addView .addElement th:first-child th:nth-child(2) {
-    width: 15%;
+    width: 20%;
 }
 
 #statistics .intervalSelection th:first-child,
