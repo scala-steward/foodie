@@ -41,7 +41,7 @@ viewMain configuration main =
                     [ table [ Style.classes.info ]
                         [ tr []
                             [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Date" ] ]
-                            , td [] [ label [] [ text <| (DateUtil.dateToString << .date << .date) <| main.meal ] ]
+                            , td [] [ label [] [ text <| (DateUtil.dateToPrettyString << .date << .date) <| main.meal ] ]
                             ]
                         , tr []
                             [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Time" ] ]

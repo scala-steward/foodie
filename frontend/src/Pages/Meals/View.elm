@@ -207,7 +207,7 @@ mealLineWith ps meal =
 
         infoRow =
             tr [ Style.classes.editing ]
-                [ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| DateUtil.dateToString <| meal.date.date ] ]
+                [ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| DateUtil.dateToPrettyString <| meal.date.date ] ]
                 , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.Extra.unwrap "" DateUtil.timeToString <| meal.date.time ] ]
                 , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.withDefault "" <| meal.name ] ]
                 , HtmlUtil.toggleControlsCell ps.toggleCommand
@@ -292,7 +292,7 @@ editMealLineWith handling editedValue =
             date
                 |> .date
                 |> Maybe.Extra.filter (\_ -> handling.setDate)
-                |> Maybe.map (DateUtil.dateToString >> value)
+                |> Maybe.map (DateUtil.dateToPrettyString >> value)
                 |> Maybe.Extra.toList
 
         dateParsedInteraction =

@@ -168,7 +168,7 @@ viewMain configuration main =
 mealLine : Configuration -> Meal -> Html Page.LogicMsg
 mealLine configuration meal =
     tr [ Style.classes.editLine ]
-        [ td [ Style.classes.editable, Style.classes.date ] [ label [] [ text <| DateUtil.dateToString <| meal.date.date ] ]
+        [ td [ Style.classes.editable, Style.classes.date ] [ label [] [ text <| DateUtil.dateToPrettyString <| meal.date.date ] ]
         , td [ Style.classes.editable, Style.classes.time ] [ label [] [ text <| Maybe.Extra.unwrap "" DateUtil.timeToString <| meal.date.time ] ]
         , td [ Style.classes.editable ] [ label [] [ text <| Maybe.withDefault "" <| meal.name ] ]
         , td [ Style.classes.controls ]
