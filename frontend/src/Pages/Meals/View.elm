@@ -5,8 +5,8 @@ import Api.Types.Meal exposing (Meal)
 import Api.Types.SimpleDate exposing (SimpleDate)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
-import Html exposing (Attribute, Html, button, input, label, table, td, text, th, tr)
-import Html.Attributes exposing (colspan, disabled, type_, value)
+import Html exposing (Attribute, Html, button, input, label, td, text, th, tr)
+import Html.Attributes exposing (type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
@@ -248,75 +248,64 @@ editMealLineWith handling editedValue =
         validInput =
             Maybe.Extra.isJust <| date.date
 
-        -- todo: Check back, whether it is sensible to extract this block (cf. same block for recipes).
-        controlsRow =
-            tr []
-                [ td [ colspan 3 ]
-                    [ table [ Style.classes.elementsWithControlsTable ]
-                        [ tr []
-                            [ td [ Style.classes.controls ]
-                                [ button
-                                    ([ MaybeUtil.defined <| Style.classes.button.confirm
-                                     , MaybeUtil.defined <| disabled <| not <| validInput
-                                     , MaybeUtil.optional validInput <| onClick handling.saveMsg
-                                     ]
-                                        |> Maybe.Extra.values
-                                    )
-                                    [ text handling.confirmName ]
-                                ]
-                            , td [ Style.classes.controls ]
-                                [ button [ Style.classes.button.cancel, onClick handling.cancelMsg ]
-                                    [ text handling.cancelName ]
-                                ]
-                            ]
-                        ]
-                    ]
+        infoColumns =
+            [ td [ Style.classes.editable, Style.classes.date ]
+                [ input
+                    ([ type_ "date"
+                     , Style.classes.date
+                     , onInput dateParsedInteraction
+                     , HtmlUtil.onEscape handling.cancelMsg
+                     ]
+                        ++ dateValue
+                    )
+                    []
                 ]
+            , td [ Style.classes.editable, Style.classes.time ]
+                [ input
+                    ([ type_ "time"
+                     , Style.classes.time
+                     , onInput timeInteraction
+                     , HtmlUtil.onEscape handling.cancelMsg
+                     ]
+                        ++ timeValue
+                    )
+                    []
+                ]
+            , td [ Style.classes.editable ]
+                [ input
+                    ([ MaybeUtil.defined <| value <| name
+                     , MaybeUtil.defined <|
+                        onInput <|
+                            flip handling.nameLens.set editedValue
+                                >> handling.updateMsg
+                     , MaybeUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
+                     , validatedSaveAction
+                     ]
+                        |> Maybe.Extra.values
+                    )
+                    []
+                ]
+            ]
+
+        controlsRow =
+            Pages.Util.ParentEditor.View.controlsRowWith
+                { colspan = infoColumns |> List.length
+                , validInput = validInput
+                , confirm =
+                    { msg = handling.saveMsg
+                    , name = handling.confirmName
+                    }
+                , cancel =
+                    { msg = handling.cancelMsg
+                    , name = handling.cancelName
+                    }
+                }
 
         commandToggle =
             handling.toggleCommand
                 |> Maybe.Extra.unwrap []
                     (HtmlUtil.toggleControlsCell >> List.singleton)
     in
-    [ tr handling.rowStyles
-        ([ td [ Style.classes.editable, Style.classes.date ]
-            [ input
-                ([ type_ "date"
-                 , Style.classes.date
-                 , onInput dateParsedInteraction
-                 , HtmlUtil.onEscape handling.cancelMsg
-                 ]
-                    ++ dateValue
-                )
-                []
-            ]
-         , td [ Style.classes.editable, Style.classes.time ]
-            [ input
-                ([ type_ "time"
-                 , Style.classes.time
-                 , onInput timeInteraction
-                 , HtmlUtil.onEscape handling.cancelMsg
-                 ]
-                    ++ timeValue
-                )
-                []
-            ]
-         , td [ Style.classes.editable ]
-            [ input
-                ([ MaybeUtil.defined <| value <| name
-                 , MaybeUtil.defined <|
-                    onInput <|
-                        flip handling.nameLens.set editedValue
-                            >> handling.updateMsg
-                 , MaybeUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
-                 , validatedSaveAction
-                 ]
-                    |> Maybe.Extra.values
-                )
-                []
-            ]
-         ]
-            ++ commandToggle
-        )
+    [ tr handling.rowStyles (infoColumns ++ commandToggle)
     , controlsRow
     ]
