@@ -213,7 +213,7 @@ editMealLineWith handling editedValue =
             date
                 |> .date
                 |> Maybe.Extra.filter (\_ -> handling.setDate)
-                |> Maybe.map (DateUtil.dateToPrettyString >> value)
+                |> Maybe.map (DateUtil.dateToString >> value)
                 |> Maybe.Extra.toList
 
         dateParsedInteraction =
