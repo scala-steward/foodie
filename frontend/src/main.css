@@ -160,7 +160,8 @@ select {
 #referenceEntryEditor .editable,
 #statistics .editable:not(.date),
 #complexFoodEditor .editable,
-.partialStatistics .editable {
+.partialStatistics .editable,
+#statisticsRecipeOccurrence .editable {
     white-space: break-spaces;
     word-wrap: break-word;
 }
@@ -318,19 +319,19 @@ th {
 }
 
 #statisticsRecipeOccurrence th:first-child {
-    width: 20%;
+    width: 12.5%;
 }
 
 #statisticsRecipeOccurrence th:nth-child(2) {
-    width: 20%;
+    width: 12.5%;
 }
 
 #statisticsRecipeOccurrence th:nth-child(3) {
-    width: 10%;
+    width: 25%;
 }
 
 #statisticsRecipeOccurrence th:nth-child(4) {
-    width: 15%;
+    width: 10%;
 }
 
 .low {
