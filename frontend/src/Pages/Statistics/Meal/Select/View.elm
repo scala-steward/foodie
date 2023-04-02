@@ -45,7 +45,7 @@ viewMain configuration main =
                             ]
                         , tr []
                             [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Time" ] ]
-                            , td [] [ label [] [ text <|  (Maybe.Extra.unwrap "" DateUtil.timeToString << .time << .date) <| main.meal ] ]
+                            , td [] [ label [] [ text <| (Maybe.Extra.unwrap "" DateUtil.timeToString << .time << .date) <| main.meal ] ]
                             ]
                         , tr []
                             [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Name" ] ]

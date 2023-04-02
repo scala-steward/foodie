@@ -6,8 +6,8 @@ import Api.Types.ComplexIngredient exposing (ComplexIngredient, decoderComplexIn
 import Http
 import Json.Decode as Decode
 import Pages.Ingredients.Complex.Page as Page
-import Pages.Util.Choice.Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.Choice.Page
 import Pages.Util.Requests
 import Util.HttpUtil as HttpUtil exposing (Error)
 

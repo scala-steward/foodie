@@ -21,10 +21,6 @@ import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Util.HttpUtil as HttpUtil
 
 
-
-
-
-
 fetchReferenceMap : AuthorizedAccess -> ReferenceMapId -> Cmd Page.LogicMsg
 fetchReferenceMap authorizedAccess referenceMapId =
     HttpUtil.runPatternWithJwt
@@ -33,7 +29,3 @@ fetchReferenceMap authorizedAccess referenceMapId =
         { body = Http.emptyBody
         , expect = HttpUtil.expectJson GotFetchReferenceMapResponse decoderReferenceMap
         }
-
-
-
-
