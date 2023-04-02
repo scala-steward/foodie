@@ -552,6 +552,12 @@ th {
     text-decoration: underline dashed rgb(218, 112, 214);
 }
 
+
+#statisticsRecipeOccurrence .sortControls button {
+    margin-left: 5px;
+    margin-bottom: 5px;
+}
+
 @media only screen and (orientation: portrait) {
     .elementsWithControlsTable thead th {
         font-size: small;

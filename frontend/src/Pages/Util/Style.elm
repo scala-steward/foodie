@@ -61,6 +61,7 @@ classes :
         { area : Attribute msg
         , field : Attribute msg
         }
+    , sortControls : Attribute msg
     , tableHeader : Attribute msg
     , time : Attribute msg
     , toggle : Attribute msg
@@ -122,6 +123,7 @@ classes =
         { area = class "searchArea"
         , field = class "searchField"
         }
+    , sortControls = class "sortControls"
     , tableHeader = class "tableHeader"
     , time = class "time"
     , toggle = class "toggle"

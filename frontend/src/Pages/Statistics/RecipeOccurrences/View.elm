@@ -3,7 +3,7 @@ module Pages.Statistics.RecipeOccurrences.View exposing (view)
 import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.RecipeOccurrence exposing (RecipeOccurrence)
 import Configuration exposing (Configuration)
-import Html exposing (Html, button, col, colgroup, div, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Html, button, div, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (disabled)
 import Html.Events exposing (onClick)
 import Maybe.Extra
@@ -72,33 +72,30 @@ viewMain configuration main =
                         { msg = Page.SetSearchString
                         , searchString = main.recipesSearchString
                         }
-                    , table [ Style.classes.elementsWithControlsTable ]
-                        [ colgroup []
-                            [ col [] []
-                            , col [] []
-                            , col [] []
+                    , div [ Style.classes.sortControls ]
+                        [ label [] [ text "Sort by" ]
+                        , button
+                            [ disabled <| main.sortType == Page.RecipeName
+                            , onClick (Page.SortBy Page.RecipeName)
+                            , Style.classes.button.alternative
                             ]
-                        , thead []
+                            [ label [] [ text "Recipe name" ] ]
+                        , button
+                            [ disabled <| main.sortType == Page.MealDate
+                            , onClick (Page.SortBy Page.MealDate)
+                            , Style.classes.button.alternative
+                            ]
+                            [ label [] [ text "Meal date" ] ]
+                        ]
+                    , table [ Style.classes.elementsWithControlsTable ]
+                        [ thead []
                             [ tr [ Style.classes.tableHeader ]
-                                [ th []
-                                    [ button
-                                        [ disabled <| main.sortType == Page.RecipeName
-                                        , onClick (Page.SortBy Page.RecipeName)
-                                        , Style.classes.button.alternative
-                                        ]
-                                        [ label [] [ text "Recipe name" ] ]
-                                    ]
+                                [ th [] [ label [] [ text "Recipe name" ] ]
                                 , th [] [ label [] [ text "Description" ] ]
-                                , th []
-                                    [ button
-                                        [ disabled <| main.sortType == Page.MealDate
-                                        , onClick (Page.SortBy Page.MealDate)
-                                        , Style.classes.button.alternative
-                                        ]
-                                        [ label [] [ text "Meal date" ] ]
-                                    ]
+                                , th [] [ label [] [ text "Meal date" ] ]
                                 , th [] [ label [] [ text "Name of meal" ] ]
-                                , th [ Style.classes.controlsGroup ] []
+                                , th [] []
+                                , th [] []
                                 ]
                             ]
                         , tbody []
