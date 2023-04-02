@@ -159,7 +159,8 @@ select {
 #mealEntryEditor .editable:not(.date, .time),
 #referenceEntryEditor .editable,
 #statistics .editable:not(.date),
-#complexFoodEditor .editable {
+#complexFoodEditor .editable,
+.partialStatistics .editable {
     white-space: break-spaces;
     word-wrap: break-word;
 }
@@ -188,12 +189,16 @@ th {
 }
 
 #addMealView th:first-child,
-#mealEntryEditor .mealEditTable th:first-child {
+#mealEntryEditor .mealEditTable th:first-child,
+#statistics .meals th:first-child,
+#statisticsMeal th:first-child {
     width: 25%;
 }
 
 #addMealView th:nth-child(2):not(input),
-#mealEntryEditor .mealEditTable th:nth-child(2):not(input) {
+#mealEntryEditor .mealEditTable th:nth-child(2):not(input),
+#statistics .meals th:nth-child(2),
+#statisticsMeal th:nth-child(2) {
     width: 15%;
 }
 
@@ -243,35 +248,29 @@ th {
 
 #statistics .nutrients th:first-child,
 .partialStatistics .nutrients th:first-child {
-    width: 30%
+    width: 20%;
 }
 
-#statistics .nutrients th:nth-child(2),
-#statistics .nutrients th:nth-child(3),
-#statistics .nutrients th:nth-child(4) {
+#statistics .nutrients th:nth-child(2) {
     width: 15%;
+}
+
+#statistics .nutrients th:nth-child(3) {
+    width: 17%;
+}
+
+#statistics .nutrients th:nth-child(4) {
+    width: 17%;
 }
 
 #statistics .nutrients th:nth-child(5),
 .partialStatistics .nutrients th:nth-child(4) {
-    width: 5%;
+    width: 10%;
 }
 
 .partialStatistics .nutrients th:nth-child(2),
 .partialStatistics .nutrients th:nth-child(3) {
     width: 25%;
-}
-
-#statistics .meals th:first-child {
-    width: 12%;
-}
-
-#statistics .meals th:nth-child(2) {
-    width: 8%;
-}
-
-#statistics .meals th:nth-child(3) {
-    width: 35%;
 }
 
 #statisticsFood th:first-child {
@@ -280,18 +279,6 @@ th {
 
 #statisticsComplexFood th:first-child {
     width: 60%;
-}
-
-#statisticsMeal th:first-child {
-    width: 25%;
-}
-
-#statisticsMeal th:nth-child(2) {
-    width: 15%;
-}
-
-#statisticsMeal th:nth-child(3) {
-    width: 20%;
 }
 
 #statisticsRecipe th:first-child {

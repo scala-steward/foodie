@@ -103,7 +103,7 @@ viewMain configuration main =
 
 viewMealLine : Configuration -> Meal -> Html Page.LogicMsg
 viewMealLine configuration meal =
-    tr [ Style.classes.editing ]
+    tr [ Style.classes.editLine ]
         [ td [ Style.classes.editable ]
             [ label [] [ text <| DateUtil.dateToString <| meal.date.date ] ]
         , td [ Style.classes.editable ]
