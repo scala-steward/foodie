@@ -3,6 +3,7 @@ module Pages.Statistics.Meal.Select.View exposing (view)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
 import Html exposing (Html, div, label, table, td, text, tr)
+import Maybe.Extra
 import Pages.Statistics.Meal.Select.Page as Page
 import Pages.Statistics.StatisticsView as StatisticsView
 import Pages.Util.DateUtil as DateUtil
@@ -40,7 +41,11 @@ viewMain configuration main =
                     [ table [ Style.classes.info ]
                         [ tr []
                             [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Date" ] ]
-                            , td [] [ label [] [ text <| (DateUtil.toString << .date) <| main.meal ] ]
+                            , td [] [ label [] [ text <| (DateUtil.dateToString << .date << .date) <| main.meal ] ]
+                            ]
+                        , tr []
+                            [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Time" ] ]
+                            , td [] [ label [] [ text <|  (Maybe.Extra.unwrap "" DateUtil.timeToString << .time << .date) <| main.meal ] ]
                             ]
                         , tr []
                             [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Name" ] ]
