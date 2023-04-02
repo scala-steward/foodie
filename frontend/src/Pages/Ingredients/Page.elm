@@ -14,6 +14,7 @@ import Pages.Ingredients.Plain.Page
 import Pages.Ingredients.Recipe.Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.Choice.Page
+import Pages.Util.Parent.Page
 import Pages.View.Tristate as Tristate exposing (Status(..))
 import Pages.View.TristateUtil as TristateUtil
 import Util.DictList exposing (DictList)
@@ -68,7 +69,7 @@ complexIngredientsGroupSubModel =
 initial : AuthorizedAccess -> RecipeId -> Model
 initial authorizedAccess recipeId =
     { jwt = authorizedAccess.jwt
-    , recipe = Pages.Ingredients.Recipe.Page.initialWith authorizedAccess.jwt
+    , recipe = Pages.Util.Parent.Page.initialWith authorizedAccess.jwt
     , ingredientsGroup = Pages.Util.Choice.Page.initialWith authorizedAccess.jwt recipeId
     , complexIngredientsGroup = Pages.Util.Choice.Page.initialWith authorizedAccess.jwt recipeId
     }
@@ -78,7 +79,7 @@ initial authorizedAccess recipeId =
 initialToMain : Initial -> Maybe Main
 initialToMain i =
     i.recipe
-        |> Pages.Ingredients.Recipe.Page.initialToMain
+        |> Pages.Util.Parent.Page.initialToMain
         |> Maybe.andThen
             (\recipe ->
                 i.ingredientsGroup
