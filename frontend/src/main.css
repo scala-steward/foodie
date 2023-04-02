@@ -137,6 +137,7 @@ table .toggle {
 select {
     white-space: nowrap;
     overflow: hidden;
+    font-size: larger;
 }
 
 .editButton:disabled,
@@ -586,6 +587,10 @@ th {
     .confirm label,
     .confirm button,
     .confirm a {
+        font-size: medium;
+    }
+
+    select {
         font-size: medium;
     }
 

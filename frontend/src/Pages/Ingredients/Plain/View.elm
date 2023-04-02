@@ -40,13 +40,7 @@ viewIngredients configuration main =
             main.choices
                 |> DictList.get foodId
                 |> Maybe.Extra.unwrap [] (.original >> .measures)
-                |> List.map
-                    (\m ->
-                        { value = String.fromInt m.id
-                        , text = m.name
-                        , enabled = True
-                        }
-                    )
+                |> List.map startingDropdownUnit
     in
     Pages.Util.Choice.View.viewElements
         { nameOfChoice = .name
@@ -113,10 +107,10 @@ viewIngredients configuration main =
                 , { attributes = [ Style.classes.numberCell ]
                   , children =
                         [ input
-                            [ value
+                            [ value <|
                                 ingredientUpdateClientInput.amountUnit.factor.text
-                            , onInput
-                                (flip
+                            , onInput <|
+                                flip
                                     (ValidatedInput.lift
                                         (IngredientUpdateClientInput.lenses.amountUnit
                                             |> Compose.lensWithLens AmountUnitClientInput.lenses.factor
@@ -124,7 +118,6 @@ viewIngredients configuration main =
                                     ).set
                                     ingredientUpdateClientInput
                                     >> Pages.Util.Choice.Page.Edit
-                                )
                             , Style.classes.numberLabel
                             ]
                             []
@@ -134,8 +127,7 @@ viewIngredients configuration main =
                   , children =
                         [ dropdown
                             { items = unitDropdown ingredient.foodId
-                            , emptyItem =
-                                Maybe.map startingDropdownUnit <| maybeMeasure
+                            , emptyItem = Maybe.map startingDropdownUnit <| maybeMeasure
                             , onChange =
                                 onChangeDropdown
                                     { amountUnitLens = IngredientUpdateClientInput.lenses.amountUnit
@@ -226,9 +218,8 @@ viewFoods configuration main =
                       , children =
                             [ dropdown
                                 { items =
-                                    --todo: Check duplication with unitDropdown
                                     food.measures
-                                        |> List.map (\m -> { value = String.fromInt m.id, text = m.name, enabled = True })
+                                        |> List.map startingDropdownUnit
                                 , emptyItem = Nothing
                                 , onChange =
                                     onChangeDropdown
