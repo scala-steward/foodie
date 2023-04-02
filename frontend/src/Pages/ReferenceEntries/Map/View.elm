@@ -26,7 +26,7 @@ viewMain main =
                                 [ text "Delete" ]
                             ]
                         ]
-                    , toggleCommand = Pages.Util.Parent.Page.ToggleControls
+                    , toggleMsg = Pages.Util.Parent.Page.ToggleControls
                     , showControls = showControls
                     }
                     referenceMap
@@ -53,7 +53,7 @@ viewMain main =
                             [ text "Cancel" ]
                         ]
                     ]
-                , toggleCommand = Pages.Util.Parent.Page.ToggleControls
+                , toggleMsg = Pages.Util.Parent.Page.ToggleControls
                 , showControls = True
                 }
         }
