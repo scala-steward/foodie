@@ -463,7 +463,7 @@ th {
 .confirm label,
 .confirm button,
 .confirm a {
-    font-size: xx-large;
+    font-size: larger;
 }
 
 #login input,
@@ -485,15 +485,14 @@ th {
 .confirm button,
 .confirm a {
     margin-top: 5px;
-    width: 30%;
+    width: 50%;
     margin-bottom: 0;
 }
 
 .request .info,
 .confirm .info {
-    font-size: xx-large;
-    font-weight: bold;
-    font-style: italic;
+    font-size: larger;
+    text-transform: uppercase;
     margin-bottom: 10px;
 }
 
@@ -583,16 +582,26 @@ th {
     .nutrientsButton,
     .menuButton,
     .errorButton,
-    .addButton {
+    .addButton,
+    #login input,
+    #login label,
+    #login button,
+    .request input,
+    .request label,
+    .request button,
+    .confirm input,
+    .confirm label,
+    .confirm button,
+    .confirm a {
         font-size: medium;
     }
 
 }
 
-@media screen and (min-width: 1200px)  {
-  body {
-      width: 60%;
-      margin-left: auto;
-      margin-right: auto;
-  }
+@media screen and (min-width: 1200px) {
+    body {
+        width: 60%;
+        margin-left: auto;
+        margin-right: auto;
+    }
 }
