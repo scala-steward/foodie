@@ -275,28 +275,31 @@ th {
 }
 
 #statisticsFood th:first-child {
-    width: 75%;
+    width: 80%;
 }
 
 #statisticsComplexFood th:first-child {
-    width: 75%;
+    width: 60%;
 }
 
-#statisticsMeal th:first-child,
+#statisticsMeal th:first-child {
+    width: 25%;
+}
+
 #statisticsMeal th:nth-child(2) {
     width: 15%;
 }
 
 #statisticsMeal th:nth-child(3) {
-    width: 45%;
+    width: 20%;
 }
 
 #statisticsRecipe th:first-child {
-    width: 40%;
+    width: 30%;
 }
 
 #statisticsRecipe th:nth-child(2) {
-    width: 35%;
+    width: 30%;
 }
 
 #complexFoodEditor .elementEditTable th:first-child {
