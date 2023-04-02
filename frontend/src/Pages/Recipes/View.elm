@@ -41,7 +41,7 @@ viewMain =
             \string recipe ->
                 SearchUtil.search string recipe.name
                     || SearchUtil.search string (recipe.description |> Maybe.withDefault "")
-        , sortBy = .name
+        , sort = List.sortBy (.original >> .name)
         , tableHeader = tableHeader
         , viewLine = viewRecipeLine
         , updateLine = \_ -> updateRecipeLine

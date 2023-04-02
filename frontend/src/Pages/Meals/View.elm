@@ -46,7 +46,7 @@ viewMain =
             \string meal ->
                 SearchUtil.search string (meal.name |> Maybe.withDefault "")
                     || SearchUtil.search string (meal.date |> DateUtil.toString)
-        , sortBy = .date >> DateUtil.toString
+        , sort = List.sortBy (.original >> .date >> DateUtil.toString) >> List.reverse
         , tableHeader = tableHeader
         , viewLine = viewMealLine
         , updateLine = \_ -> updateMealLine

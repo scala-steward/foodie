@@ -19,6 +19,7 @@ import Pages.ReferenceMaps.ReferenceMapUpdateClientInput as ReferenceMapUpdateCl
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
+import Pages.Util.ParentEditor.View
 import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
 import Pages.Util.ViewUtil as ViewUtil
@@ -79,7 +80,7 @@ viewMain configuration main =
                         }
                    , table [ Style.classes.elementsWithControlsTable ]
                         (tableHeader
-                            ++ [ tbody []
+                            :: [ tbody []
                                     (creationLine
                                         ++ (viewReferenceMaps |> Paginate.page |> List.concatMap viewReferenceMapState)
                                     )
@@ -101,15 +102,12 @@ viewMain configuration main =
             )
 
 
-tableHeader : List (Html msg)
+tableHeader : Html msg
 tableHeader =
-    [ thead []
-        [ tr [ Style.classes.tableHeader, Style.classes.referenceMapEditTable ]
-            [ th [] [ label [] [ text "Name" ] ]
-            , th [ Style.classes.toggle ] []
-            ]
-        ]
-    ]
+    Pages.Util.ParentEditor.View.tableHeaderWith
+        { columns = [ th [] [ label [] [ text "Name" ] ] ]
+        , style = Style.classes.referenceMapEditTable
+        }
 
 
 createReferenceMap : Maybe ReferenceMapCreationClientInput -> Either (List (Html Page.LogicMsg)) (List (Html Page.LogicMsg))

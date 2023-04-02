@@ -14,14 +14,14 @@ import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
 import Paginate
 import Util.DictList as DictList
-import Util.Editing as Editing
+import Util.Editing as Editing exposing (Editing)
 import Util.MaybeUtil as MaybeUtil
 
 
 viewParentsWith :
     { currentPage : ViewUtil.Page
     , matchesSearchText : String -> parent -> Bool
-    , sortBy : parent -> comparable
+    , sort : List (Editing parent update) -> List (Editing parent update)
     , tableHeader : Html (Page.LogicMsg parentId parent creation update)
     , viewLine : Configuration -> parent -> Bool -> List (Html (Page.LogicMsg parentId parent creation update))
     , updateLine : parent -> update -> List (Html (Page.LogicMsg parentId parent creation update))
@@ -60,7 +60,7 @@ viewParentsWith ps configuration main =
                             ps.matchesSearchText main.searchString v.original
                         )
                     |> DictList.values
-                    |> List.sortBy (.original >> ps.sortBy)
+                    |> ps.sort
                     |> ViewUtil.paginate
                         { pagination = Page.lenses.main.pagination |> Compose.lensWithLens Pagination.lenses.parents
                         }
