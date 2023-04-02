@@ -7,7 +7,7 @@ import Util.Editing as Editing
 
 
 viewMain :
-    { tableHeader : List (Html (Page.LogicMsg parent update))
+    { tableHeader : Html (Page.LogicMsg parent update)
     , onView : parent -> Bool -> List (Html (Page.LogicMsg parent update))
     , onUpdate : parent -> update -> List (Html (Page.LogicMsg parent update))
     , onDelete : parent -> List (Html (Page.LogicMsg parent update))
@@ -17,12 +17,11 @@ viewMain :
 viewMain ps main =
     table [ Style.classes.elementsWithControlsTable ]
         (ps.tableHeader
-            ++ [ tbody []
+            :: [ tbody []
                     (Editing.unpack
                         { onView = ps.onView
                         , onUpdate = ps.onUpdate
-                        , onDelete =
-                            ps.onDelete
+                        , onDelete = ps.onDelete
                         }
                         main.parent
                     )
