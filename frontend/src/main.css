@@ -65,9 +65,10 @@ body, button, input {
 }
 
 .elementsWithControlsTable thead th {
-    font-size: larger;
     font-weight: lighter;
-    font-style: italic;
+    color: rgb(250, 250, 250);;
+    background-color: gray;
+    text-transform: uppercase;
 }
 
 .elementsWithControlsTable thead th:not(.numberLabel) {
@@ -218,7 +219,7 @@ th {
 
 #referenceEntryEditor .elementEditTable th:nth-child(2),
 #referenceEntryEditor .addView .addElement th:nth-child(2) {
-    width: 25%
+    width: 35%
 }
 
 #ingredientEditor .elementEditTable th:first-child,
@@ -299,31 +300,31 @@ th {
 }
 
 #complexFoodEditor .elementEditTable th:first-child {
-    width: 60%
+    width: 40%
 }
 
 #complexFoodEditor .elementEditTable th:nth-child(2) {
-    width: 15%
+    width: 22%
 }
 
 #complexFoodEditor .addView .addElement th:first-child {
-    width: 22%
+    width: 10%
 }
 
 #complexFoodEditor .addView .addElement th:nth-child(2) {
-    width: 22%
+    width: 23%
 }
 
 #complexFoodEditor .addView .addElement th:nth-child(3) {
-    width: 12%
+    width: 10%
 }
 
 #complexFoodEditor .addView .addElement th:nth-child(4) {
-    width: 12%
+    width: 15%
 }
 
 #complexFoodEditor .addView .addElement th:nth-child(5) {
-    width: 12%
+    width: 15%
 }
 
 #statisticsRecipeOccurrence th:first-child {
@@ -564,4 +565,34 @@ th {
 
 .incomplete {
     text-decoration: underline dashed rgb(218, 112, 214);
+}
+
+@media only screen and (orientation: portrait) {
+    .elementsWithControlsTable thead th {
+        font-size: small;
+    }
+
+    .editButton,
+    .editorButton,
+    .deleteButton,
+    .confirmButton,
+    .cancelButton,
+    .selectButton,
+    .logoutButton,
+    .alternativeButton,
+    .nutrientsButton,
+    .menuButton,
+    .errorButton,
+    .addButton {
+        font-size: medium;
+    }
+
+}
+
+@media screen and (min-width: 1200px)  {
+  body {
+      width: 60%;
+      margin-left: auto;
+      margin-right: auto;
+  }
 }
