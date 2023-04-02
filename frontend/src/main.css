@@ -422,12 +422,8 @@ th {
     background-color: rgb(220, 220, 220);
 }
 
-.descriptionColumn, select {
-    font-size: larger;
-}
-
 .elements {
-    font-size: x-large;
+    font-size: larger;
     padding-top: 10px;
     padding-bottom: 10px;
 }
