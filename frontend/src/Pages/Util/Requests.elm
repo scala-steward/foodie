@@ -48,15 +48,13 @@ fetchRecipesWith mkMsg authorizedAccess =
 
 fetchRecipeWith :
     (Result Error Recipe -> msg)
-    ->
-        { authorizedAccess : AuthorizedAccess
-        , recipeId : RecipeId
-        }
+    -> AuthorizedAccess
+    -> RecipeId
     -> Cmd msg
-fetchRecipeWith mkMsg flags =
+fetchRecipeWith mkMsg authorizedAccess recipeId =
     HttpUtil.runPatternWithJwt
-        flags.authorizedAccess
-        (Addresses.Backend.recipes.single flags.recipeId)
+        authorizedAccess
+        (Addresses.Backend.recipes.single recipeId)
         { body = Http.emptyBody
         , expect = HttpUtil.expectJson mkMsg decoderRecipe
         }
@@ -77,15 +75,13 @@ fetchMealsWith mkMsg authorizedAccess =
 
 fetchMealWith :
     (Result Error Meal -> msg)
-    ->
-        { authorizedAccess : AuthorizedAccess
-        , mealId : MealId
-        }
+    -> AuthorizedAccess
+    -> MealId
     -> Cmd msg
-fetchMealWith mkMsg ps =
+fetchMealWith mkMsg authorizedAccess mealId =
     HttpUtil.runPatternWithJwt
-        ps.authorizedAccess
-        (Addresses.Backend.meals.single ps.mealId)
+        authorizedAccess
+        (Addresses.Backend.meals.single mealId)
         { body = Http.emptyBody
         , expect = HttpUtil.expectJson mkMsg decoderMeal
         }
@@ -93,31 +89,27 @@ fetchMealWith mkMsg ps =
 
 saveMealWith :
     (Result Error Meal -> msg)
-    ->
-        { authorizedAccess : AuthorizedAccess
-        , mealUpdate : MealUpdate
-        }
+    -> AuthorizedAccess
+    -> MealUpdate
     -> Cmd msg
-saveMealWith mkMsg ps =
+saveMealWith mkMsg authorizedAccess mealUpdate =
     HttpUtil.runPatternWithJwt
-        ps.authorizedAccess
+        authorizedAccess
         Addresses.Backend.meals.update
-        { body = encoderMealUpdate ps.mealUpdate |> Http.jsonBody
+        { body = encoderMealUpdate mealUpdate |> Http.jsonBody
         , expect = HttpUtil.expectJson mkMsg decoderMeal
         }
 
 
 deleteMealWith :
     (Result Error () -> msg)
-    ->
-        { authorizedAccess : AuthorizedAccess
-        , mealId : MealId
-        }
+    -> AuthorizedAccess
+    -> MealId
     -> Cmd msg
-deleteMealWith mkMsg ps =
+deleteMealWith mkMsg authorizedAccess mealId =
     HttpUtil.runPatternWithJwt
-        ps.authorizedAccess
-        (Addresses.Backend.meals.delete ps.mealId)
+        authorizedAccess
+        (Addresses.Backend.meals.delete mealId)
         { body = Http.emptyBody
         , expect = HttpUtil.expectWhatever mkMsg
         }
@@ -125,31 +117,27 @@ deleteMealWith mkMsg ps =
 
 saveRecipeWith :
     (Result Error Recipe -> msg)
-    ->
-        { authorizedAccess : AuthorizedAccess
-        , recipeUpdate : RecipeUpdate
-        }
+    -> AuthorizedAccess
+    -> RecipeUpdate
     -> Cmd msg
-saveRecipeWith mkMsg ps =
+saveRecipeWith mkMsg authorizedAccess recipeUpdate =
     HttpUtil.runPatternWithJwt
-        ps.authorizedAccess
+        authorizedAccess
         Addresses.Backend.recipes.update
-        { body = encoderRecipeUpdate ps.recipeUpdate |> Http.jsonBody
+        { body = encoderRecipeUpdate recipeUpdate |> Http.jsonBody
         , expect = HttpUtil.expectJson mkMsg decoderRecipe
         }
 
 
 deleteRecipeWith :
     (Result Error () -> msg)
-    ->
-        { authorizedAccess : AuthorizedAccess
-        , recipeId : RecipeId
-        }
+    -> AuthorizedAccess
+    -> RecipeId
     -> Cmd msg
-deleteRecipeWith mkMsg ps =
+deleteRecipeWith mkMsg authorizedAccess recipeId =
     HttpUtil.runPatternWithJwt
-        ps.authorizedAccess
-        (Addresses.Backend.recipes.delete ps.recipeId)
+        authorizedAccess
+        (Addresses.Backend.recipes.delete recipeId)
         { body = Http.emptyBody
         , expect = HttpUtil.expectWhatever mkMsg
         }
@@ -157,31 +145,27 @@ deleteRecipeWith mkMsg ps =
 
 saveReferenceMapWith :
     (Result Error ReferenceMap -> msg)
-    ->
-        { authorizedAccess : AuthorizedAccess
-        , referenceMapUpdate : ReferenceMapUpdate
-        }
+    -> AuthorizedAccess
+    -> ReferenceMapUpdate
     -> Cmd msg
-saveReferenceMapWith mkMsg ps =
+saveReferenceMapWith mkMsg authorizedAccess referenceMapUpdate =
     HttpUtil.runPatternWithJwt
-        ps.authorizedAccess
+        authorizedAccess
         Addresses.Backend.references.update
-        { body = encoderReferenceMapUpdate ps.referenceMapUpdate |> Http.jsonBody
+        { body = encoderReferenceMapUpdate referenceMapUpdate |> Http.jsonBody
         , expect = HttpUtil.expectJson mkMsg decoderReferenceMap
         }
 
 
 deleteReferenceMapWith :
     (Result Error () -> msg)
-    ->
-        { authorizedAccess : AuthorizedAccess
-        , referenceMapId : ReferenceMapId
-        }
+    -> AuthorizedAccess
+    -> ReferenceMapId
     -> Cmd msg
-deleteReferenceMapWith mkMsg ps =
+deleteReferenceMapWith mkMsg authorizedAccess referenceMapId =
     HttpUtil.runPatternWithJwt
-        ps.authorizedAccess
-        (Addresses.Backend.references.delete ps.referenceMapId)
+        authorizedAccess
+        (Addresses.Backend.references.delete referenceMapId)
         { body = Http.emptyBody
         , expect = HttpUtil.expectWhatever mkMsg
         }

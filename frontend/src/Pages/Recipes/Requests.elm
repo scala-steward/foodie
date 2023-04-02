@@ -36,12 +36,9 @@ saveRecipe :
     AuthorizedAccess
     -> RecipeUpdate
     -> Cmd Page.LogicMsg
-saveRecipe authorizedAccess recipeUpdate =
+saveRecipe =
     Pages.Util.Requests.saveRecipeWith
         Pages.Util.ParentEditor.Page.GotSaveEditResponse
-        { authorizedAccess = authorizedAccess
-        , recipeUpdate = recipeUpdate
-        }
 
 
 deleteRecipe :
@@ -50,6 +47,5 @@ deleteRecipe :
     -> Cmd Page.LogicMsg
 deleteRecipe authorizedAccess recipeId =
     Pages.Util.Requests.deleteRecipeWith (Pages.Util.ParentEditor.Page.GotDeleteResponse recipeId)
-        { authorizedAccess = authorizedAccess
-        , recipeId = recipeId
-        }
+        authorizedAccess
+        recipeId

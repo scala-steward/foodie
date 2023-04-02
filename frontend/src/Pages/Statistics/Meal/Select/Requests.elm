@@ -1,6 +1,7 @@
 module Pages.Statistics.Meal.Select.Requests exposing (fetchMeal, fetchReferenceTrees, fetchStats)
 
 import Addresses.Backend
+import Api.Auxiliary exposing (MealId)
 import Api.Types.TotalOnlyStats exposing (decoderTotalOnlyStats)
 import Http
 import Pages.Statistics.Meal.Select.Page as Page
@@ -15,16 +16,16 @@ fetchReferenceTrees =
     StatisticsRequests.fetchReferenceTreesWith Page.GotFetchReferenceTreesResponse
 
 
-fetchMeal : Page.Flags -> Cmd Page.LogicMsg
+fetchMeal : AuthorizedAccess -> MealId -> Cmd Page.LogicMsg
 fetchMeal =
     Pages.Util.Requests.fetchMealWith Page.GotFetchMealResponse
 
 
-fetchStats : Page.Flags -> Cmd Page.LogicMsg
-fetchStats flags =
+fetchStats : AuthorizedAccess -> MealId -> Cmd Page.LogicMsg
+fetchStats authorizedAccess mealId =
     HttpUtil.runPatternWithJwt
-        flags.authorizedAccess
-        (Addresses.Backend.stats.meal flags.mealId)
+        authorizedAccess
+        (Addresses.Backend.stats.meal mealId)
         { body = Http.emptyBody
         , expect = HttpUtil.expectJson Page.GotFetchStatsResponse decoderTotalOnlyStats
         }

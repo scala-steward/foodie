@@ -38,11 +38,8 @@ saveReferenceMap :
     AuthorizedAccess
     -> ReferenceMapUpdate
     -> Cmd Page.LogicMsg
-saveReferenceMap authorizedAccess referenceMapUpdate =
+saveReferenceMap =
     Pages.Util.Requests.saveReferenceMapWith Pages.Util.ParentEditor.Page.GotSaveEditResponse
-        { authorizedAccess = authorizedAccess
-        , referenceMapUpdate = referenceMapUpdate
-        }
 
 
 deleteReferenceMap :
@@ -51,6 +48,5 @@ deleteReferenceMap :
     -> Cmd Page.LogicMsg
 deleteReferenceMap authorizedAccess referenceMapId =
     Pages.Util.Requests.deleteReferenceMapWith (Pages.Util.ParentEditor.Page.GotDeleteResponse referenceMapId)
-        { authorizedAccess = authorizedAccess
-        , referenceMapId = referenceMapId
-        }
+        authorizedAccess
+        referenceMapId

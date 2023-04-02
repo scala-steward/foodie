@@ -12,11 +12,8 @@ import Pages.Util.Requests
 
 
 initialFetch : AuthorizedAccess -> RecipeId -> Cmd Page.LogicMsg
-initialFetch authorizedAccess recipeId =
+initialFetch =
     Pages.Util.Requests.fetchRecipeWith Pages.Util.Parent.Page.GotFetchResponse
-        { authorizedAccess = authorizedAccess
-        , recipeId = recipeId
-        }
 
 
 updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
@@ -25,22 +22,12 @@ updateLogic =
         { toUpdate = RecipeUpdateClientInput.from
         , idOf = .id
         , save =
-            \authorizedAccess update ->
-                update
-                    |> RecipeUpdateClientInput.to
-                    |> (\recipeUpdate ->
-                            Pages.Util.Requests.saveRecipeWith
-                                Pages.Util.Parent.Page.GotSaveEditResponse
-                                { authorizedAccess = authorizedAccess
-                                , recipeUpdate = recipeUpdate
-                                }
-                       )
-                    |> Just
-        , delete =
-            \authorizedAccess recipeId ->
-                Pages.Util.Requests.deleteRecipeWith Pages.Util.Parent.Page.GotDeleteResponse
-                    { authorizedAccess = authorizedAccess
-                    , recipeId = recipeId
-                    }
+            \authorizedAccess ->
+                RecipeUpdateClientInput.to
+                    >> Pages.Util.Requests.saveRecipeWith
+                        Pages.Util.Parent.Page.GotSaveEditResponse
+                        authorizedAccess
+                    >> Just
+        , delete = Pages.Util.Requests.deleteRecipeWith Pages.Util.Parent.Page.GotDeleteResponse
         , navigateAfterDeletionAddress = Addresses.Frontend.recipes.address
         }

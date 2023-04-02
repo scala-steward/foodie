@@ -32,11 +32,8 @@ saveMeal :
     AuthorizedAccess
     -> MealUpdate
     -> Cmd Page.LogicMsg
-saveMeal authorizedAccess mealUpdate =
+saveMeal =
     Pages.Util.Requests.saveMealWith Pages.Util.ParentEditor.Page.GotSaveEditResponse
-        { authorizedAccess = authorizedAccess
-        , mealUpdate = mealUpdate
-        }
 
 
 deleteMeal :
@@ -45,6 +42,5 @@ deleteMeal :
     -> Cmd Page.LogicMsg
 deleteMeal authorizedAccess mealId =
     Pages.Util.Requests.deleteMealWith (Pages.Util.ParentEditor.Page.GotDeleteResponse mealId)
-        { authorizedAccess = authorizedAccess
-        , mealId = mealId
-        }
+        authorizedAccess
+        mealId

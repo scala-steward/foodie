@@ -22,22 +22,12 @@ updateLogic =
         { toUpdate = ReferenceMapUpdateClientInput.from
         , idOf = .id
         , save =
-            \authorizedAccess update ->
-                update
-                    |> ReferenceMapUpdateClientInput.to
-                    |> (\referenceMapUpdate ->
-                            Pages.Util.Requests.saveReferenceMapWith
-                                Pages.Util.Parent.Page.GotSaveEditResponse
-                                { authorizedAccess = authorizedAccess
-                                , referenceMapUpdate = referenceMapUpdate
-                                }
-                       )
-                    |> Just
-        , delete =
-            \authorizedAccess referenceMapId ->
-                Pages.Util.Requests.deleteReferenceMapWith Pages.Util.Parent.Page.GotDeleteResponse
-                    { authorizedAccess = authorizedAccess
-                    , referenceMapId = referenceMapId
-                    }
+            \authorizedAccess ->
+                ReferenceMapUpdateClientInput.to
+                    >> Pages.Util.Requests.saveReferenceMapWith
+                        Pages.Util.Parent.Page.GotSaveEditResponse
+                        authorizedAccess
+                    >> Just
+        , delete = Pages.Util.Requests.deleteReferenceMapWith Pages.Util.Parent.Page.GotDeleteResponse
         , navigateAfterDeletionAddress = Addresses.Frontend.referenceMaps.address
         }
