@@ -5,8 +5,7 @@ import Api.Types.Meal exposing (Meal)
 import Api.Types.SimpleDate exposing (SimpleDate)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
-import Either exposing (Either(..))
-import Html exposing (Attribute, Html, button, div, input, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Attribute, Html, button, input, label, table, td, text, th, tr)
 import Html.Attributes exposing (colspan, disabled, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
@@ -17,19 +16,16 @@ import Monocle.Optional exposing (Optional)
 import Pages.Meals.MealCreationClientInput as MealCreationClientInput exposing (MealCreationClientInput)
 import Pages.Meals.MealUpdateClientInput as MealUpdateClientInput exposing (MealUpdateClientInput)
 import Pages.Meals.Page as Page
-import Pages.Meals.Pagination as Pagination
 import Pages.Util.DateUtil as DateUtil
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Links as Links
-import Pages.Util.PaginationSettings as PaginationSettings
+import Pages.Util.ParentEditor.Page
+import Pages.Util.ParentEditor.View
 import Pages.Util.SimpleDateInput as SimpleDateInput exposing (SimpleDateInput)
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
 import Pages.View.Tristate as Tristate
-import Paginate
 import Parser
-import Util.DictList as DictList
-import Util.Editing as Editing
 import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
@@ -43,114 +39,44 @@ view =
 
 
 viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
-viewMain configuration main =
-    ViewUtil.viewMainWith
-        { configuration = configuration
-        , jwt = .jwt >> Just
-        , currentPage = Just ViewUtil.Meals
-        , showNavigation = True
+viewMain =
+    Pages.Util.ParentEditor.View.viewParentsWith
+        { currentPage = ViewUtil.Meals
+        , matchesSearchText =
+            \string meal ->
+                SearchUtil.search string (meal.name |> Maybe.withDefault "")
+                    || SearchUtil.search string (meal.date |> DateUtil.toString)
+        , sortBy = .date >> DateUtil.toString
+        , tableHeader = tableHeader
+        , viewLine = viewMealLine
+        , updateLine = \_ -> updateMealLine
+        , deleteLine = deleteMealLine
+        , create =
+            { ifCreating = createMealLine
+            , default = MealCreationClientInput.default
+            , label = "New meal"
+            }
+        , styling = Style.ids.addMealView
         }
-        main
-    <|
-        let
-            viewMealState =
-                Editing.unpack
-                    { onView = viewMealLine configuration
-                    , onUpdate = updateMealLine |> always
-                    , onDelete = deleteMealLine
-                    }
-
-            filterOn =
-                SearchUtil.search main.searchString
-
-            viewMeals =
-                main.meals
-                    |> DictList.filter
-                        (\_ v ->
-                            filterOn (v.original.name |> Maybe.withDefault "")
-                                || filterOn (v.original.date |> DateUtil.toString)
-                        )
-                    |> DictList.values
-                    |> List.sortBy (.original >> .date >> DateUtil.toString)
-                    |> List.reverse
-                    |> ViewUtil.paginate
-                        { pagination = Page.lenses.main.pagination |> Compose.lensWithLens Pagination.lenses.meals }
-                        main
-
-            ( button, creationLine ) =
-                createMeal main.mealToAdd
-                    |> Either.unpack (\l -> ( [ l ], [] )) (\r -> ( [], [ r ] ))
-                    |> Tuple.mapBoth List.concat List.concat
-        in
-        div [ Style.ids.addMealView ]
-            (button
-                ++ [ HtmlUtil.searchAreaWith
-                        { msg = Page.SetSearchString
-                        , searchString = main.searchString
-                        }
-                   , table [ Style.classes.elementsWithControlsTable ]
-                        (tableHeader
-                            ++ [ tbody []
-                                    (creationLine
-                                        ++ (viewMeals
-                                                |> Paginate.page
-                                                |> List.concatMap viewMealState
-                                           )
-                                    )
-                               ]
-                        )
-                   , div [ Style.classes.pagination ]
-                        [ ViewUtil.pagerButtons
-                            { msg =
-                                PaginationSettings.updateCurrentPage
-                                    { pagination = Page.lenses.main.pagination
-                                    , items = Pagination.lenses.meals
-                                    }
-                                    main
-                                    >> Page.SetPagination
-                            , elements = viewMeals
-                            }
-                        ]
-                   ]
-            )
 
 
-tableHeader : List (Html msg)
+tableHeader : Html msg
 tableHeader =
-    [ thead []
-        [ tr [ Style.classes.tableHeader, Style.classes.mealEditTable ]
+    Pages.Util.ParentEditor.View.tableHeaderWith
+        { columns =
             [ th [] [ label [] [ text "Date" ] ]
             , th [] [ label [] [ text "Time" ] ]
             , th [] [ label [] [ text "Name" ] ]
-            , th [ Style.classes.toggle ] []
             ]
-        ]
-    ]
-
-
-createMeal : Maybe MealCreationClientInput -> Either (List (Html Page.LogicMsg)) (List (Html Page.LogicMsg))
-createMeal maybeCreation =
-    case maybeCreation of
-        Nothing ->
-            [ div [ Style.ids.add ]
-                [ button
-                    [ Style.classes.button.add
-                    , onClick (MealCreationClientInput.default |> Just |> Page.UpdateMealCreation)
-                    ]
-                    [ text "New meal" ]
-                ]
-            ]
-                |> Left
-
-        Just creation ->
-            createMealLine creation |> Right
+        , style = Style.classes.mealEditTable
+        }
 
 
 viewMealLine : Configuration -> Meal -> Bool -> List (Html Page.LogicMsg)
 viewMealLine configuration meal showControls =
     mealLineWith
         { controls =
-            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, Page.EnterEditMeal meal.id |> onClick ] [ text "Edit" ] ]
+            [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick <| Pages.Util.ParentEditor.Page.EnterEdit <| meal.id ] [ text "Edit" ] ]
             , td [ Style.classes.controls ]
                 [ Links.linkButton
                     { url = Links.frontendPage configuration <| Addresses.Frontend.mealEntryEditor.address <| meal.id
@@ -159,7 +85,7 @@ viewMealLine configuration meal showControls =
                     }
                 ]
             , td [ Style.classes.controls ]
-                [ button [ Style.classes.button.delete, onClick (Page.RequestDeleteMeal meal.id) ] [ text "Delete" ] ]
+                [ button [ Style.classes.button.delete, onClick <| Pages.Util.ParentEditor.Page.RequestDelete <| meal.id ] [ text "Delete" ] ]
             , td [ Style.classes.controls ]
                 [ Links.linkButton
                     { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsMealSelect.address <| meal.id
@@ -168,7 +94,7 @@ viewMealLine configuration meal showControls =
                     }
                 ]
             ]
-        , toggleCommand = Page.ToggleControls meal.id
+        , toggleMsg = Pages.Util.ParentEditor.Page.ToggleControls meal.id
         , showControls = showControls
         }
         meal
@@ -179,67 +105,62 @@ deleteMealLine meal =
     mealLineWith
         { controls =
             [ td [ Style.classes.controls ]
-                [ button [ Style.classes.button.delete, onClick (Page.ConfirmDeleteMeal meal.id) ] [ text "Delete?" ] ]
+                [ button [ Style.classes.button.delete, onClick <| Pages.Util.ParentEditor.Page.ConfirmDelete meal.id ] [ text "Delete?" ] ]
             , td [ Style.classes.controls ]
-                [ button [ Style.classes.button.confirm, onClick (Page.CancelDeleteMeal meal.id) ] [ text "Cancel" ] ]
+                [ button [ Style.classes.button.confirm, onClick <| Pages.Util.ParentEditor.Page.CancelDelete meal.id ] [ text "Cancel" ] ]
             ]
-        , toggleCommand = Page.ToggleControls meal.id
+        , toggleMsg = Pages.Util.ParentEditor.Page.ToggleControls meal.id
         , showControls = True
         }
         meal
 
 
-
--- todo: Check back for duplication (cf. recipeLineWith).
+mealInfoColumns : Meal -> List (HtmlUtil.Column msg)
+mealInfoColumns meal =
+    [ { attributes = [ Style.classes.editable ]
+      , children = [ label [] [ text <| DateUtil.dateToPrettyString <| meal.date.date ] ]
+      }
+    , { attributes = [ Style.classes.editable ]
+      , children = [ label [] [ text <| Maybe.Extra.unwrap "" DateUtil.timeToString <| meal.date.time ] ]
+      }
+    , { attributes = [ Style.classes.editable ]
+      , children = [ label [] [ text <| Maybe.withDefault "" <| meal.name ] ]
+      }
+    ]
 
 
 mealLineWith :
     { controls : List (Html msg)
-    , toggleCommand : msg
+    , toggleMsg : msg
     , showControls : Bool
     }
     -> Meal
     -> List (Html msg)
-mealLineWith ps meal =
-    let
-        withOnClick =
-            (::) (ps.toggleCommand |> onClick)
-
-        infoRow =
-            tr [ Style.classes.editing ]
-                [ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| DateUtil.dateToPrettyString <| meal.date.date ] ]
-                , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.Extra.unwrap "" DateUtil.timeToString <| meal.date.time ] ]
-                , td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text <| Maybe.withDefault "" <| meal.name ] ]
-                , HtmlUtil.toggleControlsCell ps.toggleCommand
-                ]
-
-        controlsRow =
-            tr []
-                [ td [ colspan 3 ] [ table [ Style.classes.elementsWithControlsTable ] [ tr [] ps.controls ] ]
-                ]
-    in
-    infoRow
-        :: (if ps.showControls then
-                [ controlsRow ]
-
-            else
-                []
-           )
+mealLineWith ps =
+    Pages.Util.ParentEditor.View.lineWith
+        { rowWithControls =
+            \meal ->
+                { display = mealInfoColumns meal
+                , controls = ps.controls
+                }
+        , toggleMsg = ps.toggleMsg
+        , showControls = ps.showControls
+        }
 
 
 updateMealLine : MealUpdateClientInput -> List (Html Page.LogicMsg)
 updateMealLine mealUpdateClientInput =
     editMealLineWith
-        { saveMsg = Page.SaveMealEdit mealUpdateClientInput.id
+        { saveMsg = Pages.Util.ParentEditor.Page.SaveEdit mealUpdateClientInput.id
         , dateLens = MealUpdateClientInput.lenses.date
         , setDate = True
         , nameLens = MealUpdateClientInput.lenses.name
-        , updateMsg = Page.UpdateMeal
+        , updateMsg = Pages.Util.ParentEditor.Page.Edit
         , confirmName = "Save"
-        , cancelMsg = Page.ExitEditMealAt mealUpdateClientInput.id
+        , cancelMsg = Pages.Util.ParentEditor.Page.ExitEdit mealUpdateClientInput.id
         , cancelName = "Cancel"
         , rowStyles = [ Style.classes.editLine ]
-        , toggleCommand = Page.ToggleControls mealUpdateClientInput.id |> Just
+        , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls mealUpdateClientInput.id |> Just
         }
         mealUpdateClientInput
 
@@ -247,13 +168,13 @@ updateMealLine mealUpdateClientInput =
 createMealLine : MealCreationClientInput -> List (Html Page.LogicMsg)
 createMealLine mealCreation =
     editMealLineWith
-        { saveMsg = Page.CreateMeal
+        { saveMsg = Pages.Util.ParentEditor.Page.Create
         , dateLens = MealCreationClientInput.lenses.date
         , setDate = False
         , nameLens = MealCreationClientInput.lenses.name
-        , updateMsg = Just >> Page.UpdateMealCreation
+        , updateMsg = Just >> Pages.Util.ParentEditor.Page.UpdateCreation
         , confirmName = "Add"
-        , cancelMsg = Page.UpdateMealCreation Nothing
+        , cancelMsg = Pages.Util.ParentEditor.Page.UpdateCreation Nothing
         , cancelName = "Cancel"
         , rowStyles = [ Style.classes.editLine ]
         , toggleCommand = Nothing

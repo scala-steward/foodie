@@ -36,7 +36,7 @@ viewMain configuration main =
                                 }
                             ]
                         ]
-                    , toggleCommand = Pages.Util.Parent.Page.ToggleControls
+                    , toggleMsg = Pages.Util.Parent.Page.ToggleControls
                     , showControls = showControls
                     }
                     meal
@@ -65,7 +65,7 @@ viewMain configuration main =
                             [ text "Cancel" ]
                         ]
                     ]
-                , toggleCommand = Pages.Util.Parent.Page.ToggleControls
+                , toggleMsg = Pages.Util.Parent.Page.ToggleControls
                 , showControls = True
                 }
         }
