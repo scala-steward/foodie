@@ -9,6 +9,7 @@ import Http
 import Json.Decode as Decode
 import Pages.ReferenceMaps.Page as Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.ParentEditor.Page
 import Pages.Util.Requests
 import Util.HttpUtil as HttpUtil
 
@@ -19,7 +20,7 @@ fetchReferenceMaps authorizedAccess =
         authorizedAccess
         Addresses.Backend.references.all
         { body = Http.emptyBody
-        , expect = HttpUtil.expectJson Page.GotFetchReferenceMapsResponse (Decode.list decoderReferenceMap)
+        , expect = HttpUtil.expectJson Pages.Util.ParentEditor.Page.GotFetchResponse (Decode.list decoderReferenceMap)
         }
 
 
@@ -29,23 +30,27 @@ createReferenceMap authorizedAccess referenceMapCreation =
         authorizedAccess
         Addresses.Backend.references.create
         { body = encoderReferenceMapCreation referenceMapCreation |> Http.jsonBody
-        , expect = HttpUtil.expectJson Page.GotCreateReferenceMapResponse decoderReferenceMap
+        , expect = HttpUtil.expectJson Pages.Util.ParentEditor.Page.GotCreateResponse decoderReferenceMap
         }
 
 
 saveReferenceMap :
-    { authorizedAccess : AuthorizedAccess
-    , referenceMapUpdate : ReferenceMapUpdate
-    }
+    AuthorizedAccess
+    -> ReferenceMapUpdate
     -> Cmd Page.LogicMsg
-saveReferenceMap =
-    Pages.Util.Requests.saveReferenceMapWith Page.GotSaveReferenceMapResponse
+saveReferenceMap authorizedAccess referenceMapUpdate =
+    Pages.Util.Requests.saveReferenceMapWith Pages.Util.ParentEditor.Page.GotSaveEditResponse
+        { authorizedAccess = authorizedAccess
+        , referenceMapUpdate = referenceMapUpdate
+        }
 
 
 deleteReferenceMap :
-    { authorizedAccess : AuthorizedAccess
-    , referenceMapId : ReferenceMapId
-    }
+    AuthorizedAccess
+    -> ReferenceMapId
     -> Cmd Page.LogicMsg
-deleteReferenceMap ps =
-    Pages.Util.Requests.deleteReferenceMapWith (Page.GotDeleteReferenceMapResponse ps.referenceMapId) ps
+deleteReferenceMap authorizedAccess referenceMapId =
+    Pages.Util.Requests.deleteReferenceMapWith (Pages.Util.ParentEditor.Page.GotDeleteResponse referenceMapId)
+        { authorizedAccess = authorizedAccess
+        , referenceMapId = referenceMapId
+        }
