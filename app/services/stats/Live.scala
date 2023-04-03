@@ -7,15 +7,15 @@ import cats.syntax.traverse._
 import db._
 import db.generated.Tables
 import io.scalaland.chimney.dsl.TransformerOps
-import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
+import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.common.RequestInterval
 import services.common.Transactionally.syntax._
 import services.complex.food.ComplexFoodService
 import services.complex.ingredient.ComplexIngredientService
-import services.meal.{MealEntry, MealService}
+import services.meal.{ MealEntry, MealService }
 import services.nutrient.NutrientService.ConversionFactorKey
-import services.nutrient.{AmountEvaluation, Nutrient, NutrientMap, NutrientService}
-import services.recipe.{Recipe, RecipeService}
+import services.nutrient.{ AmountEvaluation, Nutrient, NutrientMap, NutrientService }
+import services.recipe.{ Recipe, RecipeService }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
@@ -27,7 +27,7 @@ import utils.TransformerUtils.Implicits._
 import utils.collection.MapUtil
 
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 import scala.util.chaining._
 
 class Live @Inject() (

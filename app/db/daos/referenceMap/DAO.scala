@@ -1,7 +1,7 @@
 package db.daos.referenceMap
 
 import db.generated.Tables
-import db.{DAOActions, ReferenceMapId, UserId}
+import db.{ DAOActions, ReferenceMapId, UserId }
 import io.scalaland.chimney.dsl._
 import slick.jdbc.PostgresProfile.api._
 import utils.TransformerUtils.Implicits._
