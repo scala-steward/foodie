@@ -4,29 +4,24 @@ import Addresses.Frontend
 import Api.Types.ReferenceMap exposing (ReferenceMap)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
-import Either exposing (Either(..))
-import Html exposing (Attribute, Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (colspan, disabled, scope, value)
-import Html.Attributes.Extra exposing (stringProperty)
+import Html exposing (Attribute, Html, button, input, label, td, text, th, tr)
+import Html.Attributes exposing (value)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
-import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
 import Pages.ReferenceMaps.Page as Page
-import Pages.ReferenceMaps.Pagination as Pagination
 import Pages.ReferenceMaps.ReferenceMapCreationClientInput as ReferenceMapCreationClientInput exposing (ReferenceMapCreationClientInput)
 import Pages.ReferenceMaps.ReferenceMapUpdateClientInput as ReferenceMapUpdateClientInput exposing (ReferenceMapUpdateClientInput)
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Links as Links
-import Pages.Util.PaginationSettings as PaginationSettings
+import Pages.Util.ParentEditor.Page
+import Pages.Util.ParentEditor.View
 import Pages.Util.Style as Style
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
 import Pages.Util.ViewUtil as ViewUtil
 import Pages.View.Tristate as Tristate
-import Paginate
-import Util.DictList as DictList
-import Util.Editing as Editing
+import Util.Editing
 import Util.MaybeUtil as MaybeUtil
 import Util.SearchUtil as SearchUtil
 
@@ -40,108 +35,38 @@ view =
 
 
 viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
-viewMain configuration main =
-    ViewUtil.viewMainWith
-        { configuration = configuration
-        , jwt = .jwt >> Just
-        , currentPage = Just ViewUtil.ReferenceMaps
-        , showNavigation = True
+viewMain =
+    Pages.Util.ParentEditor.View.viewParentsWith
+        { currentPage = ViewUtil.ReferenceMaps
+        , matchesSearchText = \string referenceMap -> SearchUtil.search string referenceMap.name
+        , sort = List.sortBy (.original >> .name)
+        , tableHeader = tableHeader
+        , viewLine = viewReferenceMapLine
+        , updateLine = \_ -> updateReferenceMapLine
+        , deleteLine = deleteReferenceMapLine
+        , create =
+            { ifCreating = createReferenceMapLine
+            , default = ReferenceMapCreationClientInput.default
+            , label = "New reference map"
+            }
+        , styling = Style.ids.addReferenceMapView
         }
-        main
-    <|
-        let
-            viewReferenceMapState =
-                Editing.unpack
-                    { onView = viewReferenceMapLine configuration
-                    , onUpdate = editReferenceMapLine |> always
-                    , onDelete = deleteReferenceMapLine
-                    }
-
-            viewReferenceMaps =
-                main.referenceMaps
-                    |> DictList.filter (\_ v -> SearchUtil.search main.searchString v.original.name)
-                    |> DictList.values
-                    |> List.sortBy (.original >> .name >> String.toLower)
-                    |> ViewUtil.paginate
-                        { pagination = Page.lenses.main.pagination |> Compose.lensWithLens Pagination.lenses.referenceMaps
-                        }
-                        main
-
-            ( button, creationLine ) =
-                createReferenceMap main.referenceMapToAdd |> Either.unpack (\l -> ( [ l ], [] )) (\r -> ( [], [ r ] ))
-        in
-        div [ Style.ids.addReferenceMapView ]
-            (button
-                ++ [ HtmlUtil.searchAreaWith
-                        { msg = Page.SetSearchString
-                        , searchString = main.searchString
-                        }
-                   , table [ Style.classes.elementsWithControlsTable ]
-                        (tableHeader { controlButtons = 3 }
-                            ++ [ tbody []
-                                    (creationLine
-                                        ++ (viewReferenceMaps |> Paginate.page |> List.map viewReferenceMapState)
-                                    )
-                               ]
-                        )
-                   , div [ Style.classes.pagination ]
-                        [ ViewUtil.pagerButtons
-                            { msg =
-                                PaginationSettings.updateCurrentPage
-                                    { pagination = Page.lenses.main.pagination
-                                    , items = Pagination.lenses.referenceMaps
-                                    }
-                                    main
-                                    >> Page.SetPagination
-                            , elements = viewReferenceMaps
-                            }
-                        ]
-                   ]
-            )
 
 
-tableHeader : { controlButtons : Int } -> List (Html msg)
-tableHeader ps =
-    [ colgroup []
-        [ col [] []
-        , col [ stringProperty "span" <| String.fromInt <| ps.controlButtons ] []
-        ]
-    , thead []
-        [ tr [ Style.classes.tableHeader ]
-            [ th [ scope "col" ] [ label [] [ text "Name" ] ]
-            , th [ colspan <| ps.controlButtons, scope "colgroup", Style.classes.controlsGroup ] []
-            ]
-        ]
-    ]
+tableHeader : Html msg
+tableHeader =
+    Pages.Util.ParentEditor.View.tableHeaderWith
+        { columns = [ th [] [ label [] [ text "Name" ] ] ]
+        , style = Style.classes.referenceMapEditTable
+        }
 
 
-createReferenceMap : Maybe ReferenceMapCreationClientInput -> Either (Html Page.LogicMsg) (Html Page.LogicMsg)
-createReferenceMap maybeCreation =
-    case maybeCreation of
-        Nothing ->
-            div [ Style.ids.add ]
-                [ button
-                    [ Style.classes.button.add
-                    , onClick <| Page.UpdateReferenceMapCreation <| Just <| ReferenceMapCreationClientInput.default
-                    ]
-                    [ text "New reference map" ]
-                ]
-                |> Left
-
-        Just creation ->
-            createReferenceMapLine creation |> Right
-
-
-viewReferenceMapLine : Configuration -> ReferenceMap -> Html Page.LogicMsg
-viewReferenceMapLine configuration referenceMap =
-    let
-        editMsg =
-            Page.EnterEditReferenceMap referenceMap.id |> onClick
-    in
+viewReferenceMapLine : Configuration -> ReferenceMap -> Bool -> List (Html Page.LogicMsg)
+viewReferenceMapLine configuration referenceMap showControls =
     referenceMapLineWith
         { controls =
             [ td [ Style.classes.controls ]
-                [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
+                [ button [ Style.classes.button.edit, Pages.Util.ParentEditor.Page.EnterEdit referenceMap.id |> onClick ] [ text "Edit" ] ]
             , td [ Style.classes.controls ]
                 [ Links.linkButton
                     { url = Links.frontendPage configuration <| Addresses.Frontend.referenceEntries.address <| referenceMap.id
@@ -151,80 +76,90 @@ viewReferenceMapLine configuration referenceMap =
                 ]
             , td [ Style.classes.controls ]
                 [ button
-                    [ Style.classes.button.delete, onClick (Page.RequestDeleteReferenceMap referenceMap.id) ]
+                    [ Style.classes.button.delete, onClick <| Pages.Util.ParentEditor.Page.RequestDelete <| referenceMap.id ]
                     [ text "Delete" ]
                 ]
             ]
-        , onClick = [ editMsg ]
-        , styles = [ Style.classes.editing ]
+        , toggleMsg = Pages.Util.ParentEditor.Page.ToggleControls referenceMap.id
+        , showControls = showControls
         }
         referenceMap
 
 
-deleteReferenceMapLine : ReferenceMap -> Html Page.LogicMsg
+deleteReferenceMapLine : ReferenceMap -> List (Html Page.LogicMsg)
 deleteReferenceMapLine referenceMap =
     referenceMapLineWith
         { controls =
             [ td [ Style.classes.controls ]
                 [ button
-                    [ Style.classes.button.delete, onClick (Page.ConfirmDeleteReferenceMap referenceMap.id) ]
+                    [ Style.classes.button.delete, onClick <| Pages.Util.ParentEditor.Page.ConfirmDelete <| referenceMap.id ]
                     [ text "Delete?" ]
                 ]
             , td [ Style.classes.controls ]
                 [ button
-                    [ Style.classes.button.confirm, onClick (Page.CancelDeleteReferenceMap referenceMap.id) ]
+                    [ Style.classes.button.confirm, onClick <| Pages.Util.ParentEditor.Page.CancelDelete <| referenceMap.id ]
                     [ text "Cancel" ]
                 ]
             ]
-        , onClick = []
-        , styles = [ Style.classes.editing ]
+        , toggleMsg = Pages.Util.ParentEditor.Page.ToggleControls referenceMap.id
+        , showControls = True
         }
         referenceMap
 
 
+referenceMapInfoColumns : ReferenceMap -> List (HtmlUtil.Column msg)
+referenceMapInfoColumns referenceMap =
+    [ { attributes = [ Style.classes.editable ]
+      , children = [ label [] [ text referenceMap.name ] ]
+      }
+    ]
+
+
 referenceMapLineWith :
     { controls : List (Html msg)
-    , onClick : List (Attribute msg)
-    , styles : List (Attribute msg)
+    , toggleMsg : msg
+    , showControls : Bool
     }
     -> ReferenceMap
-    -> Html msg
-referenceMapLineWith ps referenceMap =
-    let
-        withOnClick =
-            (++) ps.onClick
-    in
-    tr ps.styles
-        ([ td ([ Style.classes.editable ] |> withOnClick) [ label [] [ text referenceMap.name ] ]
-         ]
-            ++ ps.controls
-        )
+    -> List (Html msg)
+referenceMapLineWith ps =
+    Pages.Util.ParentEditor.View.lineWith
+        { rowWithControls =
+            \referenceMap ->
+                { display = referenceMapInfoColumns referenceMap
+                , controls = ps.controls
+                }
+        , toggleMsg = ps.toggleMsg
+        , showControls = ps.showControls
+        }
 
 
-editReferenceMapLine : ReferenceMapUpdateClientInput -> Html Page.LogicMsg
-editReferenceMapLine referenceMapUpdateClientInput =
+updateReferenceMapLine : ReferenceMapUpdateClientInput -> List (Html Page.LogicMsg)
+updateReferenceMapLine referenceMapUpdateClientInput =
     editReferenceMapLineWith
-        { saveMsg = Page.SaveReferenceMapEdit referenceMapUpdateClientInput.id
+        { saveMsg = Pages.Util.ParentEditor.Page.SaveEdit referenceMapUpdateClientInput.id
         , nameLens = ReferenceMapUpdateClientInput.lenses.name
-        , updateMsg = Page.UpdateReferenceMap
+        , updateMsg = Pages.Util.ParentEditor.Page.Edit
         , confirmName = "Save"
-        , cancelMsg = Page.ExitEditReferenceMapAt referenceMapUpdateClientInput.id
+        , cancelMsg = Pages.Util.ParentEditor.Page.ExitEdit referenceMapUpdateClientInput.id
         , cancelName = "Cancel"
         , rowStyles = [ Style.classes.editLine ]
+        , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls referenceMapUpdateClientInput.id |> Just
         }
         referenceMapUpdateClientInput
 
 
-createReferenceMapLine : ReferenceMapCreationClientInput -> Html Page.LogicMsg
+createReferenceMapLine : ReferenceMapCreationClientInput -> List (Html Page.LogicMsg)
 createReferenceMapLine referenceMapCreationClientInput =
     editReferenceMapLineWith
-        { saveMsg = Page.CreateReferenceMap
+        { saveMsg = Pages.Util.ParentEditor.Page.Create
         , nameLens = ReferenceMapCreationClientInput.lenses.name
-        , updateMsg = Just >> Page.UpdateReferenceMapCreation
+        , updateMsg = Just >> Pages.Util.ParentEditor.Page.UpdateCreation
         , confirmName = "Add"
-        , cancelMsg = Page.UpdateReferenceMapCreation Nothing
+        , cancelMsg = Pages.Util.ParentEditor.Page.UpdateCreation Nothing
         , cancelName = "Cancel"
         , rowStyles = [ Style.classes.editLine ]
+        , toggleCommand = Nothing
         }
         referenceMapCreationClientInput
 
@@ -237,9 +172,10 @@ editReferenceMapLineWith :
     , cancelMsg : msg
     , cancelName : String
     , rowStyles : List (Attribute msg)
+    , toggleCommand : Maybe msg
     }
     -> editedValue
-    -> Html msg
+    -> List (Html msg)
 editReferenceMapLineWith handling editedValue =
     let
         validInput =
@@ -248,34 +184,43 @@ editReferenceMapLineWith handling editedValue =
 
         validatedSaveAction =
             MaybeUtil.optional validInput <| onEnter handling.saveMsg
+
+        infoColumns =
+            [ td [ Style.classes.editable ]
+                [ input
+                    ([ MaybeUtil.defined <| value <| .text <| handling.nameLens.get <| editedValue
+                     , MaybeUtil.defined <|
+                        onInput <|
+                            flip (ValidatedInput.lift handling.nameLens).set editedValue
+                                >> handling.updateMsg
+                     , MaybeUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
+                     , validatedSaveAction
+                     ]
+                        |> Maybe.Extra.values
+                    )
+                    []
+                ]
+            ]
+
+        controlsRow =
+            Pages.Util.ParentEditor.View.controlsRowWith
+                { colspan = infoColumns |> List.length
+                , validInput = validInput
+                , confirm =
+                    { msg = handling.saveMsg
+                    , name = handling.confirmName
+                    }
+                , cancel =
+                    { msg = handling.cancelMsg
+                    , name = handling.cancelName
+                    }
+                }
+
+        commandToggle =
+            handling.toggleCommand
+                |> Maybe.Extra.unwrap []
+                    (HtmlUtil.toggleControlsCell >> List.singleton)
     in
-    tr handling.rowStyles
-        [ td [ Style.classes.editable ]
-            [ input
-                ([ MaybeUtil.defined <| value <| .text <| handling.nameLens.get <| editedValue
-                 , MaybeUtil.defined <|
-                    onInput <|
-                        flip (ValidatedInput.lift handling.nameLens).set editedValue
-                            >> handling.updateMsg
-                 , MaybeUtil.defined <| HtmlUtil.onEscape handling.cancelMsg
-                 , validatedSaveAction
-                 ]
-                    |> Maybe.Extra.values
-                )
-                []
-            ]
-        , td [ Style.classes.controls ]
-            [ button
-                ([ MaybeUtil.defined <| Style.classes.button.confirm
-                 , MaybeUtil.defined <| disabled <| not <| validInput
-                 , MaybeUtil.optional validInput <| onClick handling.saveMsg
-                 ]
-                    |> Maybe.Extra.values
-                )
-                [ text handling.confirmName ]
-            ]
-        , td [ Style.classes.controls ]
-            [ button [ Style.classes.button.cancel, onClick handling.cancelMsg ]
-                [ text handling.cancelName ]
-            ]
-        ]
+    [ tr handling.rowStyles (infoColumns ++ commandToggle)
+    , controlsRow
+    ]

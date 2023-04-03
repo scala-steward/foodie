@@ -5,12 +5,13 @@ import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.Recipe exposing (Recipe)
 import Monocle.Lens exposing (Lens)
 import Pages.ComplexFoods.ComplexFoodClientInput exposing (ComplexFoodClientInput)
-import Pages.ComplexFoods.Pagination as Pagination exposing (Pagination)
+import Pages.ComplexFoods.Foods.Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.Choice.Page
 import Pages.View.Tristate as Tristate
-import Util.DictList as DictList exposing (DictList)
+import Pages.View.TristateUtil as TristateUtil
+import Util.DictList exposing (DictList)
 import Util.Editing exposing (Editing)
-import Util.HttpUtil exposing (Error)
 
 
 type alias Model =
@@ -19,46 +20,42 @@ type alias Model =
 
 type alias Main =
     { jwt : JWT
-    , recipes : RecipeMap
-    , complexFoods : ComplexFoodStateMap
-    , complexFoodsToCreate : CreateComplexFoodsMap
-    , recipesSearchString : String
-    , complexFoodsSearchString : String
-    , pagination : Pagination
+    , foods : Pages.ComplexFoods.Foods.Page.Main
     }
 
 
 type alias Initial =
-    { recipes : Maybe RecipeMap
-    , complexFoods : Maybe ComplexFoodStateMap
-    , jwt : JWT
+    { jwt : JWT
+    , foods : Pages.ComplexFoods.Foods.Page.Initial
     }
+
+
+foodsSubModel : Model -> Pages.ComplexFoods.Foods.Page.Model
+foodsSubModel =
+    TristateUtil.subModelWith
+        { initialLens = lenses.initial.foods
+        , mainLens = lenses.main.foods
+        }
 
 
 initial : AuthorizedAccess -> Model
 initial authorizedAccess =
-    { recipes = Nothing
-    , complexFoods = Nothing
-    , jwt = authorizedAccess.jwt
+    { jwt = authorizedAccess.jwt
+    , foods = Pages.Util.Choice.Page.initialWith authorizedAccess.jwt ()
     }
         |> Tristate.createInitial authorizedAccess.configuration
 
 
 initialToMain : Initial -> Maybe Main
 initialToMain i =
-    Maybe.map2
-        (\recipes complexFoods ->
-            { jwt = i.jwt
-            , recipes = recipes
-            , complexFoods = complexFoods
-            , complexFoodsToCreate = DictList.empty
-            , recipesSearchString = ""
-            , complexFoodsSearchString = ""
-            , pagination = Pagination.initial
-            }
-        )
-        i.recipes
-        i.complexFoods
+    i.foods
+        |> Pages.Util.Choice.Page.initialToMain
+        |> Maybe.map
+            (\foods ->
+                { jwt = i.jwt
+                , foods = foods
+                }
+            )
 
 
 type alias ComplexFoodState =
@@ -73,36 +70,28 @@ type alias CreateComplexFoodsMap =
     DictList ComplexFoodId ComplexFoodClientInput
 
 
-type alias RecipeMap =
-    DictList RecipeId Recipe
+type alias RecipeState =
+    Editing Recipe ComplexFoodClientInput
+
+
+type alias RecipeStateMap =
+    DictList RecipeId RecipeState
 
 
 lenses :
     { initial :
-        { recipes : Lens Initial (Maybe RecipeMap)
-        , complexFoods : Lens Initial (Maybe ComplexFoodStateMap)
+        { foods : Lens Initial Pages.ComplexFoods.Foods.Page.Initial
         }
     , main :
-        { recipes : Lens Main RecipeMap
-        , complexFoods : Lens Main ComplexFoodStateMap
-        , complexFoodsToCreate : Lens Main CreateComplexFoodsMap
-        , recipesSearchString : Lens Main String
-        , complexFoodsSearchString : Lens Main String
-        , pagination : Lens Main Pagination
+        { foods : Lens Main Pages.ComplexFoods.Foods.Page.Main
         }
     }
 lenses =
     { initial =
-        { recipes = Lens .recipes (\b a -> { a | recipes = b })
-        , complexFoods = Lens .complexFoods (\b a -> { a | complexFoods = b })
+        { foods = Lens .foods (\b a -> { a | foods = b })
         }
     , main =
-        { recipes = Lens .recipes (\b a -> { a | recipes = b })
-        , complexFoods = Lens .complexFoods (\b a -> { a | complexFoods = b })
-        , complexFoodsToCreate = Lens .complexFoodsToCreate (\b a -> { a | complexFoodsToCreate = b })
-        , recipesSearchString = Lens .recipesSearchString (\b a -> { a | recipesSearchString = b })
-        , complexFoodsSearchString = Lens .complexFoodsSearchString (\b a -> { a | complexFoodsSearchString = b })
-        , pagination = Lens .pagination (\b a -> { a | pagination = b })
+        { foods = Lens .foods (\b a -> { a | foods = b })
         }
     }
 
@@ -117,22 +106,4 @@ type alias Msg =
 
 
 type LogicMsg
-    = UpdateComplexFoodCreation ComplexFoodClientInput
-    | CreateComplexFood RecipeId
-    | GotCreateComplexFoodResponse (Result Error ComplexFood)
-    | UpdateComplexFood ComplexFoodClientInput
-    | SaveComplexFoodEdit ComplexFoodClientInput
-    | GotSaveComplexFoodResponse (Result Error ComplexFood)
-    | EnterEditComplexFood ComplexFoodId
-    | ExitEditComplexFood ComplexFoodId
-    | RequestDeleteComplexFood ComplexFoodId
-    | ConfirmDeleteComplexFood ComplexFoodId
-    | CancelDeleteComplexFood ComplexFoodId
-    | GotDeleteComplexFoodResponse ComplexFoodId (Result Error ())
-    | GotFetchRecipesResponse (Result Error (List Recipe))
-    | GotFetchComplexFoodsResponse (Result Error (List ComplexFood))
-    | SelectRecipe Recipe
-    | DeselectRecipe RecipeId
-    | SetRecipesSearchString String
-    | SetComplexFoodsSearchString String
-    | SetPagination Pagination
+    = FoodsMsg Pages.ComplexFoods.Foods.Page.LogicMsg

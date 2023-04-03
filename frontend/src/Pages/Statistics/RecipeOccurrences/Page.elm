@@ -19,7 +19,7 @@ type alias Main =
     , recipeOccurrences : List RecipeOccurrence
     , recipesSearchString : String
     , pagination : Pagination
-    , sortType: SortType
+    , sortType : SortType
     , variant : Page
     }
 

@@ -1,4 +1,4 @@
-module Pages.ComplexFoods.Requests exposing (..)
+module Pages.ComplexFoods.Foods.Requests exposing (..)
 
 import Addresses.Backend
 import Api.Auxiliary exposing (ComplexFoodId)
@@ -6,15 +6,16 @@ import Api.Types.ComplexFood exposing (ComplexFood, decoderComplexFood)
 import Api.Types.ComplexFoodIncoming exposing (ComplexFoodIncoming, encoderComplexFoodIncoming)
 import Http
 import Json.Decode as Decode
-import Pages.ComplexFoods.Page as Page
+import Pages.ComplexFoods.Foods.Page as Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.Choice.Page
 import Pages.Util.Requests
 import Util.HttpUtil as HttpUtil
 
 
 fetchRecipes : AuthorizedAccess -> Cmd Page.LogicMsg
 fetchRecipes =
-    Pages.Util.Requests.fetchRecipesWith Page.GotFetchRecipesResponse
+    Pages.Util.Requests.fetchRecipesWith Pages.Util.Choice.Page.GotFetchChoicesResponse
 
 
 fetchComplexFoods : AuthorizedAccess -> Cmd Page.LogicMsg
@@ -23,7 +24,7 @@ fetchComplexFoods authorizedAccess =
         authorizedAccess
         Addresses.Backend.complexFoods.all
         { body = Http.emptyBody
-        , expect = HttpUtil.expectJson Page.GotFetchComplexFoodsResponse (Decode.list decoderComplexFood)
+        , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotFetchElementsResponse (Decode.list decoderComplexFood)
         }
 
 
@@ -33,7 +34,7 @@ createComplexFood authorizedAccess complexFood =
         authorizedAccess
         Addresses.Backend.complexFoods.create
         { body = encoderComplexFoodIncoming complexFood |> Http.jsonBody
-        , expect = HttpUtil.expectJson Page.GotCreateComplexFoodResponse decoderComplexFood
+        , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotCreateResponse decoderComplexFood
         }
 
 
@@ -43,7 +44,7 @@ updateComplexFood authorizedAccess complexFood =
         authorizedAccess
         Addresses.Backend.complexFoods.update
         { body = encoderComplexFoodIncoming complexFood |> Http.jsonBody
-        , expect = HttpUtil.expectJson Page.GotSaveComplexFoodResponse decoderComplexFood
+        , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotSaveEditResponse decoderComplexFood
         }
 
 
@@ -53,5 +54,5 @@ deleteComplexFood authorizedAccess complexFoodId =
         authorizedAccess
         (Addresses.Backend.complexFoods.delete complexFoodId)
         { body = Http.emptyBody
-        , expect = HttpUtil.expectWhatever (Page.GotDeleteComplexFoodResponse complexFoodId)
+        , expect = HttpUtil.expectWhatever (Pages.Util.Choice.Page.GotDeleteResponse complexFoodId)
         }

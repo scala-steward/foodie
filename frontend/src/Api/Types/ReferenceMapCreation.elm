@@ -5,12 +5,15 @@ import Json.Decode.Pipeline exposing (..)
 import Json.Encode as Encode
 
 
-type alias ReferenceMapCreation = { name: String }
+type alias ReferenceMapCreation =
+    { name : String }
 
 
 decoderReferenceMapCreation : Decode.Decoder ReferenceMapCreation
-decoderReferenceMapCreation = Decode.succeed ReferenceMapCreation |> required "name" Decode.string
+decoderReferenceMapCreation =
+    Decode.succeed ReferenceMapCreation |> required "name" Decode.string
 
 
 encoderReferenceMapCreation : ReferenceMapCreation -> Encode.Value
-encoderReferenceMapCreation obj = Encode.object [ ("name", Encode.string obj.name) ]
+encoderReferenceMapCreation obj =
+    Encode.object [ ( "name", Encode.string obj.name ) ]

@@ -17,6 +17,7 @@ classes :
         , editor : Attribute msg
         , error : Attribute msg
         , logout : Attribute msg
+        , menu : Attribute msg
         , navigation : Attribute msg
         , nutrients : Attribute msg
         , overview : Attribute msg
@@ -36,10 +37,12 @@ classes :
     , editLine : Attribute msg
     , elements : Attribute msg
     , elementsWithControlsTable : Attribute msg
+    , elementEditTable : Attribute msg
     , ellipsis : Attribute msg
     , incomplete : Attribute msg
     , info : Attribute msg
     , intervalSelection : Attribute msg
+    , mealEditTable : Attribute msg
     , meals : Attribute msg
     , numberCell : Attribute msg
     , numberLabel : Attribute msg
@@ -53,12 +56,15 @@ classes :
         }
     , request : Attribute msg
     , recipeEditTable : Attribute msg
+    , referenceMapEditTable : Attribute msg
     , search :
         { area : Attribute msg
         , field : Attribute msg
         }
+    , sortControls : Attribute msg
     , tableHeader : Attribute msg
     , time : Attribute msg
+    , toggle : Attribute msg
     }
 classes =
     { addElement = class "addElement"
@@ -73,6 +79,7 @@ classes =
         , editor = class "editorButton"
         , error = class "errorButton"
         , logout = class "logoutButton"
+        , menu = class "menuButton"
         , navigation = class "navigationButton"
         , nutrients = class "nutrientsButton"
         , overview = class "overviewButton"
@@ -91,11 +98,13 @@ classes =
     , editing = class "editing"
     , editLine = class "editLine"
     , elements = class "elements"
+    , elementEditTable = class "elementEditTable"
     , elementsWithControlsTable = class "elementsWithControlsTable"
     , ellipsis = class "ellipsis"
     , incomplete = class "incomplete"
     , info = class "info"
     , intervalSelection = class "intervalSection"
+    , mealEditTable = class "mealEditTable"
     , meals = class "meals"
     , numberCell = class "numberCell"
     , numberLabel = class "numberLabel"
@@ -109,12 +118,15 @@ classes =
         }
     , request = class "request"
     , recipeEditTable = class "recipeEditTable"
+    , referenceMapEditTable = class "referenceMapEditTable"
     , search =
         { area = class "searchArea"
         , field = class "searchField"
         }
+    , sortControls = class "sortControls"
     , tableHeader = class "tableHeader"
     , time = class "time"
+    , toggle = class "toggle"
     }
 
 

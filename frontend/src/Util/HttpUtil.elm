@@ -116,7 +116,7 @@ errorToExplanation error =
                 else
                     ""
             , redirectToLogin = code == 401
-            , suggestReload = False
+            , suggestReload = True
             }
 
         BadBody string ->

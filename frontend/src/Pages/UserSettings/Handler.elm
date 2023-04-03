@@ -29,6 +29,7 @@ init flags =
     , initialFetch flags.authorizedAccess |> Cmd.map Tristate.Logic
     )
 
+
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
 update =
     Tristate.updateWith updateLogic

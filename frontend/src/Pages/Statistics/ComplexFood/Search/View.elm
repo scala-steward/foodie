@@ -3,7 +3,7 @@ module Pages.Statistics.ComplexFood.Search.View exposing (view)
 import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Configuration exposing (Configuration)
-import Html exposing (Html, col, colgroup, div, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Html, div, label, table, tbody, td, text, th, thead, tr)
 import Monocle.Compose as Compose
 import Pages.Statistics.ComplexFood.Search.Page as Page
 import Pages.Statistics.ComplexFood.Search.Pagination as Pagination
@@ -67,14 +67,11 @@ viewMain configuration main =
                         , searchString = main.complexFoodsSearchString
                         }
                     , table [ Style.classes.elementsWithControlsTable ]
-                        [ colgroup []
-                            [ col [] []
-                            , col [] []
-                            ]
-                        , thead []
+                        [ thead []
                             [ tr [ Style.classes.tableHeader ]
                                 [ th [] [ label [] [ text "Name" ] ]
-                                , th [ Style.classes.controlsGroup ] []
+                                , th [] []
+                                , th [] []
                                 ]
                             ]
                         , tbody []
