@@ -21,26 +21,6 @@ import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Util.HttpUtil as HttpUtil
 
 
-fetchReferenceEntries : AuthorizedAccess -> ReferenceMapId -> Cmd Page.LogicMsg
-fetchReferenceEntries authorizedAccess referenceMapId =
-    HttpUtil.runPatternWithJwt
-        authorizedAccess
-        (Addresses.Backend.references.entries.allOf referenceMapId)
-        { body = Http.emptyBody
-        , expect = HttpUtil.expectJson GotFetchReferenceEntriesResponse (Decode.list decoderReferenceEntry)
-        }
-
-
-fetchNutrients : AuthorizedAccess -> Cmd Page.LogicMsg
-fetchNutrients authorizedAccess =
-    HttpUtil.runPatternWithJwt
-        authorizedAccess
-        Addresses.Backend.stats.nutrients
-        { body = Http.emptyBody
-        , expect = HttpUtil.expectJson GotFetchNutrientsResponse (Decode.list decoderNutrient)
-        }
-
-
 fetchReferenceMap : AuthorizedAccess -> ReferenceMapId -> Cmd Page.LogicMsg
 fetchReferenceMap authorizedAccess referenceMapId =
     HttpUtil.runPatternWithJwt
@@ -48,34 +28,4 @@ fetchReferenceMap authorizedAccess referenceMapId =
         (Addresses.Backend.references.single referenceMapId)
         { body = Http.emptyBody
         , expect = HttpUtil.expectJson GotFetchReferenceMapResponse decoderReferenceMap
-        }
-
-
-saveReferenceEntry : AuthorizedAccess -> ReferenceEntryUpdate -> Cmd Page.LogicMsg
-saveReferenceEntry authorizedAccess referenceEntryUpdate =
-    HttpUtil.runPatternWithJwt
-        authorizedAccess
-        Addresses.Backend.references.entries.update
-        { body = encoderReferenceEntryUpdate referenceEntryUpdate |> Http.jsonBody
-        , expect = HttpUtil.expectJson GotSaveReferenceEntryResponse decoderReferenceEntry
-        }
-
-
-deleteReferenceEntry : AuthorizedAccess -> ReferenceMapId -> NutrientCode -> Cmd Page.LogicMsg
-deleteReferenceEntry authorizedAccess referenceMapId nutrientCode =
-    HttpUtil.runPatternWithJwt
-        authorizedAccess
-        (Addresses.Backend.references.entries.delete referenceMapId nutrientCode)
-        { body = Http.emptyBody
-        , expect = HttpUtil.expectWhatever (GotDeleteReferenceEntryResponse nutrientCode)
-        }
-
-
-addReferenceEntry : AuthorizedAccess -> ReferenceEntryCreation -> Cmd Page.LogicMsg
-addReferenceEntry authorizedAccess referenceNutrientCreation =
-    HttpUtil.runPatternWithJwt
-        authorizedAccess
-        Addresses.Backend.references.entries.create
-        { body = encoderReferenceEntryCreation referenceNutrientCreation |> Http.jsonBody
-        , expect = HttpUtil.expectJson GotAddReferenceEntryResponse decoderReferenceEntry
         }

@@ -1,4 +1,4 @@
-module Util.DictList exposing (DictList, empty, any, filter, fromList, fromListWithKey, get, insert, isEmpty, remove, toList, values)
+module Util.DictList exposing (DictList, any, empty, filter, fromList, fromListWithKey, get, insert, isEmpty, map, remove, toList, values)
 
 import Basics.Extra
 import List.Extra
@@ -75,3 +75,10 @@ values : DictList k v -> List v
 values =
     toList
         >> List.map Tuple.second
+
+
+map : (v -> w) -> DictList k v -> DictList k w
+map f =
+    toList
+        >> List.map (Tuple.mapSecond f)
+        >> fromList

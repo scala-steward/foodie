@@ -179,14 +179,14 @@ nutrientInformationLineWith ps referenceValues information =
 
         dailyAverage =
             if ps.showDailyAmount then
-                [ td [ Style.classes.numberCell ] [ label completenessStyles [ text <| displayValue <| dailyValue ] ] ]
+                [ td [ Style.classes.numberCell ] [ label completenessStyles [ text <| Maybe.Extra.unwrap "" displayFloat <| dailyValue ] ] ]
 
             else
                 []
     in
     tr [ Style.classes.editLine ]
-        ([ td [] [ label [] [ text <| .name <| ps.nutrientBase <| information ] ]
-         , td [ Style.classes.numberCell ] [ label completenessStyles [ text <| displayValue <| ps.amountOf <| information ] ]
+        ([ td [ Style.classes.editable ] [ label [] [ text <| .name <| ps.nutrientBase <| information ] ]
+         , td [ Style.classes.editable, Style.classes.numberCell ] [ label completenessStyles [ text <| displayValue <| ps.amountOf <| information ] ]
          ]
             ++ dailyAverage
             ++ [ td [ Style.classes.numberCell ] [ label [] [ text <| Maybe.Extra.unwrap "" displayFloat <| referenceValue ] ]
@@ -207,7 +207,7 @@ nutrientTableHeader ps =
     let
         dailyAverageColumn =
             if ps.withDailyAverage then
-                [ th [ Style.classes.numberLabel ] [ label [] [ text "Daily average" ] ] ]
+                [ th [ Style.classes.numberLabel ] [ label [] [ text "Daily (avg.)" ] ] ]
 
             else
                 []
@@ -218,9 +218,9 @@ nutrientTableHeader ps =
              , th [ Style.classes.numberLabel ] [ label [] [ text "Total" ] ]
              ]
                 ++ dailyAverageColumn
-                ++ [ th [ Style.classes.numberLabel ] [ label [] [ text "Reference daily average" ] ]
+                ++ [ th [ Style.classes.numberLabel ] [ label [] [ text "Reference daily" ] ]
                    , th [ Style.classes.numberLabel ] [ label [] [ text "Unit" ] ]
-                   , th [ Style.classes.numberLabel ] [ label [] [ text "Percentage" ] ]
+                   , th [ Style.classes.numberLabel ] [ label [] [ text "%" ] ]
                    ]
             )
         ]

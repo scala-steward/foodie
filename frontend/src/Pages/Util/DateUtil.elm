@@ -1,4 +1,4 @@
-module Pages.Util.DateUtil exposing (dateParser, dateToString, timeParser, timeToString, toString)
+module Pages.Util.DateUtil exposing (dateParser, dateToPrettyString, dateToString, timeParser, timeToString, toPrettyString, toString)
 
 import Api.Types.Date exposing (Date)
 import Api.Types.SimpleDate exposing (SimpleDate)
@@ -16,6 +16,15 @@ toString simpleDate =
         |> String.trim
 
 
+toPrettyString : SimpleDate -> String
+toPrettyString simpleDate =
+    [ simpleDate.date |> dateToPrettyString
+    , simpleDate.time |> Maybe.Extra.unwrap "" timeToString
+    ]
+        |> String.join " "
+        |> String.trim
+
+
 dateToString : Date -> String
 dateToString date =
     [ date.year
@@ -24,6 +33,16 @@ dateToString date =
     ]
         |> List.map padToTwo
         |> String.join "-"
+
+
+dateToPrettyString : Date -> String
+dateToPrettyString date =
+    [ date.year
+    , date.month
+    , date.day
+    ]
+        |> List.map padToTwo
+        |> String.join "."
 
 
 padToTwo : Int -> String

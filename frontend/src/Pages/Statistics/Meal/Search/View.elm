@@ -3,7 +3,7 @@ module Pages.Statistics.Meal.Search.View exposing (view)
 import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.Meal exposing (Meal)
 import Configuration exposing (Configuration)
-import Html exposing (Html, col, colgroup, div, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Html, div, label, table, tbody, td, text, th, thead, tr)
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Pages.Statistics.Meal.Search.Page as Page
@@ -52,9 +52,9 @@ viewMain configuration main =
                         |> List.filter
                             (\v ->
                                 filterOn (v.name |> Maybe.withDefault "")
-                                    || filterOn (v.date |> DateUtil.toString)
+                                    || filterOn (v.date |> DateUtil.toPrettyString)
                             )
-                        |> List.sortBy (.date >> DateUtil.toString)
+                        |> List.sortBy (.date >> DateUtil.toPrettyString)
                         |> List.reverse
                         |> ViewUtil.paginate
                             { pagination =
@@ -70,17 +70,13 @@ viewMain configuration main =
                         , searchString = main.mealsSearchString
                         }
                     , table [ Style.classes.elementsWithControlsTable ]
-                        [ colgroup []
-                            [ col [] []
-                            , col [] []
-                            , col [] []
-                            ]
-                        , thead []
+                        [ thead []
                             [ tr [ Style.classes.tableHeader ]
                                 [ th [] [ label [] [ text "Date" ] ]
                                 , th [] [ label [] [ text "Time" ] ]
                                 , th [] [ label [] [ text "Name" ] ]
-                                , th [ Style.classes.controlsGroup ] []
+                                , th [] []
+                                , th [] []
                                 ]
                             ]
                         , tbody []
@@ -107,9 +103,9 @@ viewMain configuration main =
 
 viewMealLine : Configuration -> Meal -> Html Page.LogicMsg
 viewMealLine configuration meal =
-    tr [ Style.classes.editing ]
+    tr [ Style.classes.editLine ]
         [ td [ Style.classes.editable ]
-            [ label [] [ text <| DateUtil.dateToString <| meal.date.date ] ]
+            [ label [] [ text <| DateUtil.dateToPrettyString <| meal.date.date ] ]
         , td [ Style.classes.editable ]
             [ label [] [ text <| Maybe.Extra.unwrap "" DateUtil.timeToString <| meal.date.time ] ]
         , td [ Style.classes.editable ]

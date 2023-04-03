@@ -3,7 +3,7 @@ module Pages.Statistics.RecipeOccurrences.View exposing (view)
 import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.RecipeOccurrence exposing (RecipeOccurrence)
 import Configuration exposing (Configuration)
-import Html exposing (Html, button, col, colgroup, div, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Html, button, div, label, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (disabled)
 import Html.Events exposing (onClick)
 import Maybe.Extra
@@ -55,7 +55,7 @@ viewMain configuration main =
                             (\v ->
                                 filterOn v.recipe.name
                                     || filterOn (v.recipe.description |> Maybe.withDefault "")
-                                    || filterOn (v.lastUsedInMeal |> Maybe.Extra.unwrap "" (.date >> DateUtil.toString))
+                                    || filterOn (v.lastUsedInMeal |> Maybe.Extra.unwrap "" (.date >> DateUtil.toPrettyString))
                                     || filterOn (v.lastUsedInMeal |> Maybe.andThen .name |> Maybe.withDefault "")
                             )
                         |> sortBy main.sortType
@@ -72,33 +72,30 @@ viewMain configuration main =
                         { msg = Page.SetSearchString
                         , searchString = main.recipesSearchString
                         }
-                    , table [ Style.classes.elementsWithControlsTable ]
-                        [ colgroup []
-                            [ col [] []
-                            , col [] []
-                            , col [] []
+                    , div [ Style.classes.sortControls ]
+                        [ label [] [ text "Sort by" ]
+                        , button
+                            [ disabled <| main.sortType == Page.RecipeName
+                            , onClick (Page.SortBy Page.RecipeName)
+                            , Style.classes.button.alternative
                             ]
-                        , thead []
+                            [ label [] [ text "Recipe name" ] ]
+                        , button
+                            [ disabled <| main.sortType == Page.MealDate
+                            , onClick (Page.SortBy Page.MealDate)
+                            , Style.classes.button.alternative
+                            ]
+                            [ label [] [ text "Meal date" ] ]
+                        ]
+                    , table [ Style.classes.elementsWithControlsTable ]
+                        [ thead []
                             [ tr [ Style.classes.tableHeader ]
-                                [ th []
-                                    [ button
-                                        [ disabled <| main.sortType == Page.RecipeName
-                                        , onClick (Page.SortBy Page.RecipeName)
-                                        , Style.classes.button.alternative
-                                        ]
-                                        [ label [] [ text "Recipe name" ] ]
-                                    ]
+                                [ th [] [ label [] [ text "Recipe" ] ]
                                 , th [] [ label [] [ text "Description" ] ]
-                                , th []
-                                    [ button
-                                        [ disabled <| main.sortType == Page.MealDate
-                                        , onClick (Page.SortBy Page.MealDate)
-                                        , Style.classes.button.alternative
-                                        ]
-                                        [ label [] [ text "Meal date" ] ]
-                                    ]
-                                , th [] [ label [] [ text "Name of meal" ] ]
-                                , th [ Style.classes.controlsGroup ] []
+                                , th [] [ label [] [ text "Meal date" ] ]
+                                , th [] [ label [] [ text "Meal name" ] ]
+                                , th [] []
+                                , th [] []
                                 ]
                             ]
                         , tbody []
@@ -130,7 +127,7 @@ viewRecipeOccurrenceLine configuration recipeOccurrence =
             recipeOccurrence.lastUsedInMeal
                 |> Maybe.Extra.unwrap ( "", "", [] )
                     (\meal ->
-                        ( meal.date |> DateUtil.toString
+                        ( meal.date |> DateUtil.toPrettyString
                         , meal.name |> Maybe.withDefault ""
                         , [ td [ Style.classes.controls ]
                                 [ NavigationUtil.mealEditorLinkButton configuration meal.id ]
@@ -138,16 +135,16 @@ viewRecipeOccurrenceLine configuration recipeOccurrence =
                         )
                     )
     in
-    tr [ Style.classes.editing ]
+    tr [ Style.classes.editLine ]
         ([ td [ Style.classes.editable ]
             [ label [] [ text recipeOccurrence.recipe.name ] ]
          , td [ Style.classes.editable ]
             [ label [] [ text <| Maybe.withDefault "" <| recipeOccurrence.recipe.description ] ]
-         , td [ Style.classes.controls ]
+         , td [ Style.classes.editable ]
             [ label [] [ text mealDate ] ]
-         , td [ Style.classes.controls ]
+         , td [ Style.classes.editable ]
             [ label [] [ text mealName ] ]
-         , td [ Style.classes.controls ]
+         , td [ Style.classes.editable ]
             [ NavigationUtil.recipeEditorLinkButton configuration recipeOccurrence.recipe.id ]
          ]
             ++ mealButton
@@ -163,5 +160,5 @@ sortBy sortType recipeOccurrences =
 
         Page.MealDate ->
             recipeOccurrences
-                |> List.sortBy (.lastUsedInMeal >> Maybe.Extra.unwrap "" (.date >> DateUtil.toString))
+                |> List.sortBy (.lastUsedInMeal >> Maybe.Extra.unwrap "" (.date >> DateUtil.toPrettyString))
                 |> List.reverse

@@ -5,19 +5,20 @@ import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.ComplexIngredient exposing (ComplexIngredient)
 import Api.Types.Food exposing (Food)
 import Api.Types.Ingredient exposing (Ingredient)
-import Api.Types.Recipe exposing (Recipe)
 import Monocle.Lens exposing (Lens)
+import Pages.Ingredients.Complex.Page
 import Pages.Ingredients.ComplexIngredientClientInput exposing (ComplexIngredientClientInput)
-import Pages.Ingredients.FoodGroup as FoodGroup
 import Pages.Ingredients.IngredientCreationClientInput exposing (IngredientCreationClientInput)
 import Pages.Ingredients.IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
-import Pages.Ingredients.Pagination exposing (Pagination)
-import Pages.Recipes.RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
+import Pages.Ingredients.Plain.Page
+import Pages.Ingredients.Recipe.Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
-import Pages.View.Tristate as Tristate
+import Pages.Util.Choice.Page
+import Pages.Util.Parent.Page
+import Pages.View.Tristate as Tristate exposing (Status(..))
+import Pages.View.TristateUtil as TristateUtil
 import Util.DictList exposing (DictList)
 import Util.Editing exposing (Editing)
-import Util.HttpUtil exposing (Error)
 
 
 type alias Model =
@@ -26,29 +27,51 @@ type alias Model =
 
 type alias Main =
     { jwt : JWT
-    , recipe : Editing Recipe RecipeUpdateClientInput
-    , ingredientsGroup : IngredientsGroup
-    , complexIngredientsGroup : ComplexIngredientsGroup
+    , recipe : Pages.Ingredients.Recipe.Page.Main
+    , ingredientsGroup : Pages.Ingredients.Plain.Page.Main
+    , complexIngredientsGroup : Pages.Ingredients.Complex.Page.Main
     , foodsMode : FoodsMode
-    , ingredientsSearchString : String
-    , complexIngredientsSearchString : String
     }
 
 
 type alias Initial =
     { jwt : JWT
-    , recipe : Maybe (Editing Recipe RecipeUpdateClientInput)
-    , ingredientsGroup : FoodGroup.Initial IngredientId Ingredient IngredientUpdateClientInput FoodId Food
-    , complexIngredientsGroup : FoodGroup.Initial ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood
+    , recipe : Pages.Ingredients.Recipe.Page.Initial
+    , ingredientsGroup : Pages.Util.Choice.Page.Initial RecipeId IngredientId Ingredient FoodId Food
+    , complexIngredientsGroup : Pages.Util.Choice.Page.Initial RecipeId ComplexIngredientId ComplexIngredient ComplexFoodId ComplexFood
     }
 
 
-initial : AuthorizedAccess -> Model
-initial authorizedAccess =
+recipeSubModel : Model -> Pages.Ingredients.Recipe.Page.Model
+recipeSubModel =
+    TristateUtil.subModelWith
+        { initialLens = lenses.initial.recipe
+        , mainLens = lenses.main.recipe
+        }
+
+
+ingredientsGroupSubModel : Model -> Pages.Ingredients.Plain.Page.Model
+ingredientsGroupSubModel =
+    TristateUtil.subModelWith
+        { initialLens = lenses.initial.ingredientsGroup
+        , mainLens = lenses.main.ingredientsGroup
+        }
+
+
+complexIngredientsGroupSubModel : Model -> Pages.Ingredients.Complex.Page.Model
+complexIngredientsGroupSubModel =
+    TristateUtil.subModelWith
+        { initialLens = lenses.initial.complexIngredientsGroup
+        , mainLens = lenses.main.complexIngredientsGroup
+        }
+
+
+initial : AuthorizedAccess -> RecipeId -> Model
+initial authorizedAccess recipeId =
     { jwt = authorizedAccess.jwt
-    , recipe = Nothing
-    , ingredientsGroup = FoodGroup.initial
-    , complexIngredientsGroup = FoodGroup.initial
+    , recipe = Pages.Util.Parent.Page.initialWith authorizedAccess.jwt
+    , ingredientsGroup = Pages.Util.Choice.Page.initialWith authorizedAccess.jwt recipeId
+    , complexIngredientsGroup = Pages.Util.Choice.Page.initialWith authorizedAccess.jwt recipeId
     }
         |> Tristate.createInitial authorizedAccess.configuration
 
@@ -56,14 +79,15 @@ initial authorizedAccess =
 initialToMain : Initial -> Maybe Main
 initialToMain i =
     i.recipe
+        |> Pages.Util.Parent.Page.initialToMain
         |> Maybe.andThen
             (\recipe ->
                 i.ingredientsGroup
-                    |> FoodGroup.initialToMain
+                    |> Pages.Util.Choice.Page.initialToMain
                     |> Maybe.andThen
                         (\ingredientsGroup ->
                             i.complexIngredientsGroup
-                                |> FoodGroup.initialToMain
+                                |> Pages.Util.Choice.Page.initialToMain
                                 |> Maybe.map
                                     (\complexIngredientsGroup ->
                                         { jwt = i.jwt
@@ -71,48 +95,26 @@ initialToMain i =
                                         , ingredientsGroup = ingredientsGroup
                                         , complexIngredientsGroup = complexIngredientsGroup
                                         , foodsMode = Plain
-                                        , ingredientsSearchString = ""
-                                        , complexIngredientsSearchString = ""
                                         }
                                     )
                         )
             )
 
 
-type alias IngredientsGroup =
-    FoodGroup.Main IngredientId Ingredient IngredientUpdateClientInput FoodId Food IngredientCreationClientInput
-
-
-type alias ComplexIngredientsGroup =
-    FoodGroup.Main ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood ComplexIngredientClientInput
-
-
 type alias PlainIngredientState =
-    FoodGroup.IngredientState Ingredient IngredientUpdateClientInput
+    Editing Ingredient IngredientUpdateClientInput
 
 
 type alias ComplexIngredientState =
-    FoodGroup.IngredientState ComplexIngredient ComplexIngredientClientInput
+    Editing ComplexIngredient ComplexIngredientClientInput
 
 
 type alias FoodMap =
-    DictList FoodId Food
+    DictList FoodId (Editing Food IngredientCreationClientInput)
 
 
 type alias ComplexFoodMap =
-    DictList ComplexFoodId ComplexFood
-
-
-type alias RecipeMap =
-    DictList RecipeId Recipe
-
-
-type alias AddFoodsMap =
-    DictList FoodId IngredientCreationClientInput
-
-
-type alias AddComplexFoodsMap =
-    DictList ComplexFoodId ComplexIngredientClientInput
+    DictList ComplexFoodId (Editing ComplexFood ComplexIngredientClientInput)
 
 
 type alias PlainIngredientStateMap =
@@ -130,17 +132,15 @@ type FoodsMode
 
 lenses :
     { initial :
-        { ingredientsGroup : Lens Initial (FoodGroup.Initial IngredientId Ingredient IngredientUpdateClientInput FoodId Food)
-        , complexIngredientsGroup : Lens Initial (FoodGroup.Initial ComplexIngredientId ComplexIngredient ComplexIngredientClientInput ComplexFoodId ComplexFood)
-        , recipe : Lens Initial (Maybe (Editing Recipe RecipeUpdateClientInput))
+        { ingredientsGroup : Lens Initial (Pages.Util.Choice.Page.Initial RecipeId IngredientId Ingredient FoodId Food)
+        , complexIngredientsGroup : Lens Initial (Pages.Util.Choice.Page.Initial RecipeId ComplexIngredientId ComplexIngredient ComplexFoodId ComplexFood)
+        , recipe : Lens Initial Pages.Ingredients.Recipe.Page.Initial
         }
     , main :
-        { ingredientsGroup : Lens Main IngredientsGroup
-        , complexIngredientsGroup : Lens Main ComplexIngredientsGroup
-        , recipe : Lens Main (Editing Recipe RecipeUpdateClientInput)
+        { ingredientsGroup : Lens Main Pages.Ingredients.Plain.Page.Main
+        , complexIngredientsGroup : Lens Main Pages.Ingredients.Complex.Page.Main
+        , recipe : Lens Main Pages.Ingredients.Recipe.Page.Main
         , foodsMode : Lens Main FoodsMode
-        , ingredientsSearchString : Lens Main String
-        , complexIngredientsSearchString : Lens Main String
         }
     }
 lenses =
@@ -154,8 +154,6 @@ lenses =
         , complexIngredientsGroup = Lens .complexIngredientsGroup (\b a -> { a | complexIngredientsGroup = b })
         , recipe = Lens .recipe (\b a -> { a | recipe = b })
         , foodsMode = Lens .foodsMode (\b a -> { a | foodsMode = b })
-        , ingredientsSearchString = Lens .ingredientsSearchString (\b a -> { a | ingredientsSearchString = b })
-        , complexIngredientsSearchString = Lens .complexIngredientsSearchString (\b a -> { a | complexIngredientsSearchString = b })
         }
     }
 
@@ -165,56 +163,11 @@ type alias Msg =
 
 
 type LogicMsg
-    = UpdateIngredient IngredientUpdateClientInput
-    | UpdateComplexIngredient ComplexIngredientClientInput
-    | SaveIngredientEdit IngredientUpdateClientInput
-    | SaveComplexIngredientEdit ComplexIngredientClientInput
-    | GotSaveIngredientResponse (Result Error Ingredient)
-    | GotSaveComplexIngredientResponse (Result Error ComplexIngredient)
-    | EnterEditIngredient IngredientId
-    | EnterEditComplexIngredient ComplexIngredientId
-    | ExitEditIngredientAt IngredientId
-    | ExitEditComplexIngredientAt ComplexIngredientId
-    | RequestDeleteIngredient IngredientId
-    | ConfirmDeleteIngredient IngredientId
-    | CancelDeleteIngredient IngredientId
-    | RequestDeleteComplexIngredient ComplexIngredientId
-    | ConfirmDeleteComplexIngredient ComplexIngredientId
-    | CancelDeleteComplexIngredient ComplexIngredientId
-    | GotDeleteIngredientResponse IngredientId (Result Error ())
-    | GotDeleteComplexIngredientResponse ComplexIngredientId (Result Error ())
-    | GotFetchIngredientsResponse (Result Error (List Ingredient))
-    | GotFetchComplexIngredientsResponse (Result Error (List ComplexIngredient))
-    | GotFetchFoodsResponse (Result Error (List Food))
-    | GotFetchComplexFoodsResponse (Result Error (List ComplexFood))
-    | GotFetchRecipeResponse (Result Error Recipe)
-    | SelectFood Food
-    | SelectComplexFood ComplexFood
-    | DeselectFood FoodId
-    | DeselectComplexFood ComplexFoodId
-    | AddFood FoodId
-    | AddComplexFood ComplexFoodId
-    | GotAddFoodResponse (Result Error Ingredient)
-    | GotAddComplexFoodResponse (Result Error ComplexIngredient)
-    | UpdateAddFood IngredientCreationClientInput
-    | UpdateAddComplexFood ComplexIngredientClientInput
-    | UpdateFoods String
-    | SetFoodsSearchString String
-    | SetComplexFoodsSearchString String
-    | SetIngredientsPagination Pagination
-    | SetComplexIngredientsPagination Pagination
+    = UpdateFoods String
     | ChangeFoodsMode FoodsMode
-    | SetIngredientsSearchString String
-    | SetComplexIngredientsSearchString String
-    | UpdateRecipe RecipeUpdateClientInput
-    | SaveRecipeEdit
-    | GotSaveRecipeResponse (Result Error Recipe)
-    | EnterEditRecipe
-    | ExitEditRecipe
-    | RequestDeleteRecipe
-    | ConfirmDeleteRecipe
-    | CancelDeleteRecipe
-    | GotDeleteRecipeResponse (Result Error ())
+    | IngredientMsg Pages.Ingredients.Plain.Page.LogicMsg
+    | ComplexIngredientMsg Pages.Ingredients.Complex.Page.LogicMsg
+    | RecipeMsg Pages.Ingredients.Recipe.Page.LogicMsg
 
 
 type alias Flags =

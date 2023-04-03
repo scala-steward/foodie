@@ -3,6 +3,7 @@ module Pages.Statistics.ComplexFood.Select.View exposing (view)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
 import Html exposing (Html, div, label, table, td, text, tr)
+import Maybe.Extra
 import Pages.Statistics.ComplexFood.Select.Page as Page
 import Pages.Statistics.StatisticsView as StatisticsView
 import Pages.Util.Style as Style
@@ -46,8 +47,12 @@ viewMain configuration main =
                             , td [] [ label [] [ text <| Maybe.withDefault "" <| .description <| main.complexFood ] ]
                             ]
                         , tr []
-                            [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Set weight" ] ]
+                            [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Weight (set)" ] ]
                             , td [] [ label [] [ text <| flip (++) "g" <| StatisticsView.displayFloat <| .amountGrams <| main.complexFood ] ]
+                            ]
+                        , tr []
+                            [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Volume (set)" ] ]
+                            , td [] [ label [] [ text <| flip (++) "ml" <| Maybe.Extra.unwrap "" StatisticsView.displayFloat <| .amountMilliLitres <| main.complexFood ] ]
                             ]
                         ]
                     ]

@@ -25,6 +25,14 @@ body, button, input {
     background-color: rgb(100, 149, 237);
 }
 
+.menuButton {
+    background-color: rgb(23, 162, 184);
+}
+
+.menuButton:hover {
+    background-color: rgb(40, 180, 200);
+}
+
 .nutrientsButton:hover {
     background-color: rgb(170, 102, 204);
 }
@@ -57,9 +65,10 @@ body, button, input {
 }
 
 .elementsWithControlsTable thead th {
-    font-size: larger;
     font-weight: lighter;
-    font-style: italic;
+    color: rgb(250, 250, 250);;
+    background-color: gray;
+    text-transform: uppercase;
 }
 
 .elementsWithControlsTable thead th:not(.numberLabel) {
@@ -97,6 +106,7 @@ body, button, input {
 .logoutButton,
 .alternativeButton,
 .nutrientsButton,
+.menuButton,
 .errorButton {
     color: rgb(250, 250, 250);
     border: none;
@@ -120,9 +130,14 @@ body, button, input {
     width: auto;
 }
 
+table .toggle {
+    width: 35px;
+}
+
 select {
     white-space: nowrap;
     overflow: hidden;
+    font-size: larger;
 }
 
 .editButton:disabled,
@@ -145,7 +160,9 @@ select {
 #mealEntryEditor .editable:not(.date, .time),
 #referenceEntryEditor .editable,
 #statistics .editable:not(.date),
-#complexFoodEditor .editable {
+#complexFoodEditor .editable,
+.partialStatistics .editable,
+#statisticsRecipeOccurrence .editable {
     white-space: break-spaces;
     word-wrap: break-word;
 }
@@ -158,111 +175,68 @@ th {
     background: white;
 }
 
-#addRecipeView th:first-child {
+#addRecipeView th:first-child,
+#ingredientEditor .recipeEditTable th:first-child {
     width: 20%;
 }
 
-#addRecipeView th:nth-child(2) {
-    width: 15%;
+#addRecipeView th:nth-child(2),
+#ingredientEditor .recipeEditTable th:nth-child(2) {
+    width: 27%;
 }
 
-#addRecipeView th:nth-child(3) {
-    width: 10%;
-}
-
-#addRecipeView th:nth-child(4) {
-    width: 12%;
+#addRecipeView th:nth-child(3),
+#ingredientEditor .recipeEditTable th:nth-child(3) {
+    width: 23%;
 }
 
 #addMealView th:first-child,
-#addMealView th:nth-child(2):not(input) {
+#mealEntryEditor .mealEditTable th:first-child,
+#statistics .meals th:first-child,
+#statisticsMeal th:first-child {
+    width: 25%;
+}
+
+#addMealView th:nth-child(2):not(input),
+#mealEntryEditor .mealEditTable th:nth-child(2):not(input),
+#statistics .meals th:nth-child(2),
+#statisticsMeal th:nth-child(2) {
     width: 15%;
 }
 
-#addMealView th:nth-child(3) {
-    width: 30%;
-}
-
-#addReferenceMapView th:first-child {
-    width: 30%;
-}
-
-#addReferenceMapView th:nth-child(2) {
-    width: 10%;
-}
-
-#mealEntryEditor th:first-child:not(.recipeEditTable),
-#mealEntryEditor th:nth-child(2):not(.recipeEditTable) {
-    width: 30%;
-}
-
-#mealEntryEditor th:nth-child(3):not(.recipeEditTable) {
-    width: 10%;
-}
-
-#mealEntryEditor .recipeEditTable th:first-child {
-    width: 25%
-}
-
-#mealEntryEditor .recipeEditTable th:nth-child(2) {
-    width: 25%
-}
-
-#mealEntryEditor .recipeEditTable th:nth-child(3) {
-    width: 15%
-}
-
-#mealEntryEditor .recipeEditTable th:nth-child(4) {
-    width: 10%
-}
-
-
-#referenceEntryEditor th:first-child {
-    width: 50%;
-}
-
-#referenceEntryEditor th:nth-child(2) {
+#mealEntryEditor .addView .addElement th:first-child,
+#mealEntryEditor .elementEditTable th:first-child {
     width: 20%
 }
 
-#referenceEntryEditor th:nth-child(3) {
-    width: 5%
+#mealEntryEditor .addView .addElement th:nth-child(2),
+#mealEntryEditor .elementEditTable th:nth-child(2) {
+    width: 27%
 }
 
-#ingredientEditor th:first-child:not(.recipeEditTable) {
-    width: 30%
+#mealEntryEditor .addView .addElement th:nth-child(3),
+#mealEntryEditor .elementEditTable th:nth-child(3) {
+    width: 20%
 }
 
-#ingredientEditor th:nth-child(2):not(.recipeEditTable) {
-    width: 12%;
+#referenceEntryEditor .elementEditTable th:first-child,
+#referenceEntryEditor .addView .addElement th:first-child {
+    width: 40%;
 }
 
-#ingredientEditor th:nth-child(3):not(.recipeEditTable) {
-    width: 30%;
+#referenceEntryEditor .elementEditTable th:nth-child(2),
+#referenceEntryEditor .addView .addElement th:nth-child(2) {
+    width: 35%
 }
 
-#ingredientEditor th:nth-child(4):not(.recipeEditTable) {
-    width: 28%;
+#ingredientEditor .elementEditTable th:first-child,
+#ingredientEditor .addView .addElement th:first-child {
+    width: 50%
 }
 
-#ingredientEditor .recipeEditTable th:first-child {
-    width: 25%
-}
-
-#ingredientEditor .recipeEditTable th:nth-child(2) {
-    width: 21%;
-}
-
-#ingredientEditor .recipeEditTable th:nth-child(3) {
-    width: 12%;
-}
-
-#ingredientEditor .recipeEditTable th:nth-child(4) {
-    width: 14%;
-}
-
-#ingredientEditor .recipeEditTable th:nth-child(5) {
-    width: 28%;
+#ingredientEditor .elementEditTable th:nth-child(2),
+#ingredientEditor .addView .addElement th:first-child th:nth-child(2) {
+    width: 20%;
 }
 
 #statistics .intervalSelection th:first-child,
@@ -276,18 +250,24 @@ th {
 
 #statistics .nutrients th:first-child,
 .partialStatistics .nutrients th:first-child {
-    width: 30%
+    width: 20%;
 }
 
-#statistics .nutrients th:nth-child(2),
-#statistics .nutrients th:nth-child(3),
-#statistics .nutrients th:nth-child(4) {
+#statistics .nutrients th:nth-child(2) {
     width: 15%;
+}
+
+#statistics .nutrients th:nth-child(3) {
+    width: 17%;
+}
+
+#statistics .nutrients th:nth-child(4) {
+    width: 17%;
 }
 
 #statistics .nutrients th:nth-child(5),
 .partialStatistics .nutrients th:nth-child(4) {
-    width: 5%;
+    width: 10%;
 }
 
 .partialStatistics .nutrients th:nth-child(2),
@@ -295,73 +275,64 @@ th {
     width: 25%;
 }
 
-#statistics .meals th:first-child {
-    width: 12%;
-}
-
-#statistics .meals th:nth-child(2) {
-    width: 8%;
-}
-
-#statistics .meals th:nth-child(3) {
-    width: 35%;
-}
-
 #statisticsFood th:first-child {
-    width: 75%;
+    width: 80%;
 }
 
 #statisticsComplexFood th:first-child {
-    width: 75%;
-}
-
-#statisticsMeal th:first-child,
-#statisticsMeal th:nth-child(2) {
-    width: 15%;
-}
-
-#statisticsMeal th:nth-child(3) {
-    width: 45%;
+    width: 60%;
 }
 
 #statisticsRecipe th:first-child {
-    width: 40%;
+    width: 30%;
 }
 
 #statisticsRecipe th:nth-child(2) {
-    width: 35%;
+    width: 30%;
 }
 
-#complexFoodEditor th:first-child {
-    width: 30%
+#complexFoodEditor .elementEditTable th:first-child {
+    width: 40%
 }
 
-#complexFoodEditor th:nth-child(2) {
+#complexFoodEditor .elementEditTable th:nth-child(2) {
+    width: 22%
+}
+
+#complexFoodEditor .addView .addElement th:first-child {
+    width: 10%
+}
+
+#complexFoodEditor .addView .addElement th:nth-child(2) {
+    width: 23%
+}
+
+#complexFoodEditor .addView .addElement th:nth-child(3) {
+    width: 10%
+}
+
+#complexFoodEditor .addView .addElement th:nth-child(4) {
     width: 15%
 }
 
-#complexFoodEditor th:nth-child(3) {
+#complexFoodEditor .addView .addElement th:nth-child(5) {
     width: 15%
-}
-
-#complexFoodEditor th:nth-child(4) {
-    width: 30%
 }
 
 #statisticsRecipeOccurrence th:first-child {
-    width: 20%;
+    width: 12.5%;
 }
 
 #statisticsRecipeOccurrence th:nth-child(2) {
-    width: 20%;
+    width: 12.5%;
 }
 
 #statisticsRecipeOccurrence th:nth-child(3) {
-    width: 10%;
+    width: 25%;
 }
 
 #statisticsRecipeOccurrence th:nth-child(4) {
-    width: 15%;
+    width: 10%;
 }
 
 .low {
@@ -453,12 +424,8 @@ th {
     background-color: rgb(220, 220, 220);
 }
 
-.descriptionColumn, select {
-    font-size: larger;
-}
-
 .elements {
-    font-size: x-large;
+    font-size: larger;
     padding-top: 10px;
     padding-bottom: 10px;
 }
@@ -484,7 +451,7 @@ th {
 .confirm label,
 .confirm button,
 .confirm a {
-    font-size: xx-large;
+    font-size: larger;
 }
 
 #login input,
@@ -506,15 +473,14 @@ th {
 .confirm button,
 .confirm a {
     margin-top: 5px;
-    width: 30%;
+    width: 50%;
     margin-bottom: 0;
 }
 
 .request .info,
 .confirm .info {
-    font-size: xx-large;
-    font-weight: bold;
-    font-style: italic;
+    font-size: larger;
+    text-transform: uppercase;
     margin-bottom: 10px;
 }
 
@@ -586,4 +552,54 @@ th {
 
 .incomplete {
     text-decoration: underline dashed rgb(218, 112, 214);
+}
+
+
+#statisticsRecipeOccurrence .sortControls button {
+    margin-left: 5px;
+    margin-bottom: 5px;
+}
+
+@media only screen and (orientation: portrait) {
+    .elementsWithControlsTable thead th {
+        font-size: small;
+    }
+
+    .editButton,
+    .editorButton,
+    .deleteButton,
+    .confirmButton,
+    .cancelButton,
+    .selectButton,
+    .logoutButton,
+    .alternativeButton,
+    .nutrientsButton,
+    .menuButton,
+    .errorButton,
+    .addButton,
+    #login input,
+    #login label,
+    #login button,
+    .request input,
+    .request label,
+    .request button,
+    .confirm input,
+    .confirm label,
+    .confirm button,
+    .confirm a {
+        font-size: medium;
+    }
+
+    select {
+        font-size: medium;
+    }
+
+}
+
+@media screen and (min-width: 1200px) {
+    body {
+        width: 60%;
+        margin-left: auto;
+        margin-right: auto;
+    }
 }

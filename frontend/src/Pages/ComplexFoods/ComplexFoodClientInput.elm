@@ -3,9 +3,11 @@ module Pages.ComplexFoods.ComplexFoodClientInput exposing (..)
 import Api.Auxiliary exposing (RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.ComplexFoodIncoming exposing (ComplexFoodIncoming)
+import Api.Types.Recipe exposing (Recipe)
 import Maybe.Extra
 import Monocle.Lens exposing (Lens)
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
+import Parser exposing ((|.), (|=))
 
 
 type alias ComplexFoodClientInput =
@@ -15,10 +17,26 @@ type alias ComplexFoodClientInput =
     }
 
 
-default : RecipeId -> ComplexFoodClientInput
-default recipeId =
-    { recipeId = recipeId
-    , amountGrams = ValidatedInput.positive
+withSuggestion : Recipe -> ComplexFoodClientInput
+withSuggestion recipe =
+    let
+        gramsParser =
+            Parser.float
+                |. Parser.chompWhile ((==) ' ')
+                |. Parser.symbol "g"
+
+        modifier =
+            recipe.servingSize
+                |> Maybe.andThen (Parser.run gramsParser >> Result.toMaybe)
+                |> Maybe.map ((*) recipe.numberOfServings)
+                |> Maybe.Extra.unwrap identity
+                    (\value ->
+                        ValidatedInput.lenses.value.set value
+                            >> ValidatedInput.lenses.text.set (String.fromFloat value)
+                    )
+    in
+    { recipeId = recipe.id
+    , amountGrams = ValidatedInput.positive |> modifier
     , amountMilliLitres = ValidatedInput.maybePositive
     }
 

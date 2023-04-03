@@ -5,12 +5,15 @@ import Json.Decode.Pipeline exposing (..)
 import Json.Encode as Encode
 
 
-type alias FoodInfo = { id: Int, name: String }
+type alias FoodInfo =
+    { id : Int, name : String }
 
 
 decoderFoodInfo : Decode.Decoder FoodInfo
-decoderFoodInfo = Decode.succeed FoodInfo |> required "id" Decode.int |> required "name" Decode.string
+decoderFoodInfo =
+    Decode.succeed FoodInfo |> required "id" Decode.int |> required "name" Decode.string
 
 
 encoderFoodInfo : FoodInfo -> Encode.Value
-encoderFoodInfo obj = Encode.object [ ("id", Encode.int obj.id), ("name", Encode.string obj.name) ]
+encoderFoodInfo obj =
+    Encode.object [ ( "id", Encode.int obj.id ), ( "name", Encode.string obj.name ) ]
