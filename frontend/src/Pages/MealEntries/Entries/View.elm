@@ -181,14 +181,13 @@ viewRecipes configuration main =
 
 
 
--- todo: Simplified assumption that the last column should be removed.
+-- todo: Simplified assumption that the third column should be removed.
 
 
 recipeInfo : Recipe -> List (HtmlUtil.Column msg)
 recipeInfo =
     Pages.Recipes.View.recipeInfoColumns
-        >> List.Extra.init
-        >> Maybe.withDefault []
+        >> List.Extra.removeAt 2
 
 
 
