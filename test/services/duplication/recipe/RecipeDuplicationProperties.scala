@@ -150,4 +150,45 @@ object RecipeDuplicationProperties extends Properties("Recipe duplication") {
 
     DBTestUtil.awaitProp(transformer)
   }
+
+  property("Duplication adds value") = Prop.forAll(duplicationSetupGen :| "setup") { setup =>
+    val services = servicesWith(
+      userId = setup.userId,
+      complexFoods = setup.complexFoods,
+      recipe = setup.recipe,
+      ingredients = setup.ingredients,
+      complexIngredients = setup.complexIngredients
+    )
+    val transformer = for {
+      allRecipesBefore <- EitherT.liftF[Future, ServerError, Seq[Recipe]](
+        services.recipeService.allRecipes(setup.userId)
+      )
+      duplicated <- EitherT(services.duplication.duplicate(setup.userId, setup.recipe.id))
+      allRecipesAfter <- EitherT.liftF[Future, ServerError, Seq[Recipe]](
+        services.recipeService.allRecipes(setup.userId)
+      )
+    } yield {
+      allRecipesAfter.map(_.id).sorted ?= (allRecipesBefore :+ duplicated).map(_.id).sorted
+    }
+
+    DBTestUtil.awaitProp(transformer)
+  }
+
+  property("Duplication fails for wrong user id") = Prop.forAll(
+    duplicationSetupGen :| "setup",
+    GenUtils.taggedId[UserTag] :| "userId2"
+  ) { (setup, userId2) =>
+    val services = servicesWith(
+      userId = setup.userId,
+      complexFoods = setup.complexFoods,
+      recipe = setup.recipe,
+      ingredients = setup.ingredients,
+      complexIngredients = setup.complexIngredients
+    )
+    val propF = for {
+      result <- services.duplication.duplicate(userId2, setup.recipe.id)
+    } yield result.isLeft
+
+    DBTestUtil.await(propF)
+  }
 }
