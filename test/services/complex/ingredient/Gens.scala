@@ -6,7 +6,7 @@ import services.GenUtils
 
 object Gens {
 
-  def complexIngredientsGen(recipeId: RecipeId, complexFoodIds: Seq[ComplexFoodId]): Gen[Seq[ComplexIngredient]] =
+  def complexIngredientsGen(recipeId: RecipeId, complexFoodIds: Seq[ComplexFoodId]): Gen[List[ComplexIngredient]] =
     for {
       subset  <- GenUtils.subset(complexFoodIds)
       factors <- Gen.listOfN(subset.size, GenUtils.smallBigDecimalGen)
