@@ -10,6 +10,7 @@ POST   /recipes                                          controllers.recipe.Reci
 PATCH  /recipes                                          controllers.recipe.RecipeController.update
 DELETE /recipes/:id                                      controllers.recipe.RecipeController.delete(id: java.util.UUID)
 GET    /recipes/:id/ingredients                          controllers.recipe.RecipeController.getIngredients(id: java.util.UUID)
+POST   /recipes/:id/duplicate                            controllers.recipe.RecipeController.duplicate(id: java.util.UUID)
 POST   /recipes/ingredients                              controllers.recipe.RecipeController.addIngredient
 PATCH  /recipes/ingredients                              controllers.recipe.RecipeController.updateIngredient
 DELETE /recipes/ingredients/:id                          controllers.recipe.RecipeController.removeIngredient(id: java.util.UUID)

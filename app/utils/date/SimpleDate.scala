@@ -15,4 +15,6 @@ object SimpleDate {
   implicit val order: Order[SimpleDate] =
     Order.fromLessThan((sd1, sd2) => sd1.date < sd2.date || (sd1.date == sd2.date && sd1.time < sd2.time))
 
+  def toPrettyString(simpleDate: SimpleDate): String = ???
+
 }
