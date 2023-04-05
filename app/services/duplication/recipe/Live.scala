@@ -35,7 +35,6 @@ class Live @Inject() (
       userId: UserId,
       id: RecipeId
   ): Future[ServerError.Or[Recipe]] = {
-
     val action = for {
       ingredients        <- recipeServiceCompanion.getIngredients(userId, id)
       complexIngredients <- complexIngredientServiceCompanion.all(userId, Seq(id))
