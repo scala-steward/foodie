@@ -98,70 +98,69 @@ object RecipeDuplicationProperties extends Properties("Recipe duplication") {
       )
       .toMap
 
-  propertyWithSeed("Duplication produces expected result", Some("guxVnmZph0PvL42sjuJ_ki16cNc5775N46C-21r2ohL=")) =
-    Prop.forAll(duplicationSetupGen :| "setup") { setup =>
-      val fullRecipe = FullRecipe(
-        recipe = setup.recipe,
-        ingredients = setup.ingredients
-      )
-      val recipeDao = DAOTestInstance.Recipe.instanceFrom(ContentsUtil.Recipe.from(setup.userId, Seq(setup.recipe)))
-      val complexFoodDao = DAOTestInstance.ComplexFood.instanceFrom(ContentsUtil.ComplexFood.from(setup.complexFoods))
-      val ingredientDao  = DAOTestInstance.Ingredient.instanceFrom(ContentsUtil.Ingredient.from(fullRecipe))
-      val complexIngredientDao = DAOTestInstance.ComplexIngredient.instanceFrom(
-        ContentsUtil.ComplexIngredient.from(setup.recipe.id, setup.complexIngredients)
-      )
+  property("Duplication produces expected result") = Prop.forAll(duplicationSetupGen :| "setup") { setup =>
+    val fullRecipe = FullRecipe(
+      recipe = setup.recipe,
+      ingredients = setup.ingredients
+    )
+    val recipeDao      = DAOTestInstance.Recipe.instanceFrom(ContentsUtil.Recipe.from(setup.userId, Seq(setup.recipe)))
+    val complexFoodDao = DAOTestInstance.ComplexFood.instanceFrom(ContentsUtil.ComplexFood.from(setup.complexFoods))
+    val ingredientDao  = DAOTestInstance.Ingredient.instanceFrom(ContentsUtil.Ingredient.from(fullRecipe))
+    val complexIngredientDao = DAOTestInstance.ComplexIngredient.instanceFrom(
+      ContentsUtil.ComplexIngredient.from(setup.recipe.id, setup.complexIngredients)
+    )
 
-      val recipeServiceCompanion = new services.recipe.Live.Companion(
-        recipeDao = recipeDao,
-        ingredientDao = ingredientDao,
-        generalTableConstants = DBTestUtil.generalTableConstants
-      )
-      val complexIngredientServiceCompanion = new services.complex.ingredient.Live.Companion(
-        recipeDao = recipeDao,
-        complexFoodDao = complexFoodDao,
-        complexIngredientDao = complexIngredientDao
-      )
+    val recipeServiceCompanion = new services.recipe.Live.Companion(
+      recipeDao = recipeDao,
+      ingredientDao = ingredientDao,
+      generalTableConstants = DBTestUtil.generalTableConstants
+    )
+    val complexIngredientServiceCompanion = new services.complex.ingredient.Live.Companion(
+      recipeDao = recipeDao,
+      complexFoodDao = complexFoodDao,
+      complexIngredientDao = complexIngredientDao
+    )
 
-      val recipeService = new services.recipe.Live(
+    val recipeService = new services.recipe.Live(
+      TestUtil.databaseConfigProvider,
+      recipeServiceCompanion
+    )
+    val complexIngredientService = new services.complex.ingredient.Live(
+      TestUtil.databaseConfigProvider,
+      complexIngredientServiceCompanion
+    )
+    val duplication =
+      new services.duplication.recipe.Live(
         TestUtil.databaseConfigProvider,
-        recipeServiceCompanion
+        new Live.Companion(
+          recipeServiceCompanion,
+          ingredientDao,
+          complexIngredientDao
+        ),
+        recipeServiceCompanion = recipeServiceCompanion,
+        complexIngredientServiceCompanion = complexIngredientServiceCompanion
       )
-      val complexIngredientService = new services.complex.ingredient.Live(
-        TestUtil.databaseConfigProvider,
-        complexIngredientServiceCompanion
+
+    val transformer = for {
+      duplicatedRecipe <- EitherT(duplication.duplicate(setup.userId, setup.recipe.id))
+      ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
+        recipeService.getIngredients(setup.userId, duplicatedRecipe.id)
       )
-      val duplication =
-        new services.duplication.recipe.Live(
-          TestUtil.databaseConfigProvider,
-          new Live.Companion(
-            recipeServiceCompanion,
-            ingredientDao,
-            complexIngredientDao
-          ),
-          recipeServiceCompanion = recipeServiceCompanion,
-          complexIngredientServiceCompanion = complexIngredientServiceCompanion
-        )
-
-      val transformer = for {
-        duplicatedRecipe <- EitherT(duplication.duplicate(setup.userId, setup.recipe.id))
-        ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
-          recipeService.getIngredients(setup.userId, duplicatedRecipe.id)
-        )
-        complexIngredients <- EitherT.liftF[Future, ServerError, Seq[ComplexIngredient]](
-          complexIngredientService.all(setup.userId, duplicatedRecipe.id)
-        )
-      } yield {
-        Prop.all(
-          groupIngredients(ingredients) ?= groupIngredients(setup.ingredients),
-          complexIngredients.sortBy(_.complexFoodId).map(_.copy(recipeId = setup.recipe.id)) ?= setup.complexIngredients
-            .sortBy(_.complexFoodId),
-          duplicatedRecipe.name.startsWith(setup.recipe.name),
-          duplicatedRecipe.description ?= setup.recipe.description,
-          duplicatedRecipe.numberOfServings ?= setup.recipe.numberOfServings,
-          duplicatedRecipe.servingSize ?= setup.recipe.servingSize
-        )
-      }
-
-      DBTestUtil.awaitProp(transformer)
+      complexIngredients <- EitherT.liftF[Future, ServerError, Seq[ComplexIngredient]](
+        complexIngredientService.all(setup.userId, duplicatedRecipe.id)
+      )
+    } yield {
+      Prop.all(
+        groupIngredients(ingredients) ?= groupIngredients(setup.ingredients),
+        complexIngredients.sortBy(_.complexFoodId).map(_.copy(recipeId = setup.recipe.id)) ?= setup.complexIngredients
+          .sortBy(_.complexFoodId),
+        duplicatedRecipe.name.startsWith(setup.recipe.name),
+        duplicatedRecipe.description ?= setup.recipe.description,
+        duplicatedRecipe.numberOfServings ?= setup.recipe.numberOfServings,
+        duplicatedRecipe.servingSize ?= setup.recipe.servingSize
+      )
     }
+
+    DBTestUtil.awaitProp(transformer)
+  }
 }
