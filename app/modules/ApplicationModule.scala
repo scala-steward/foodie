@@ -42,7 +42,9 @@ class ApplicationModule extends play.api.inject.Module {
       bind[ReferenceService.Companion].to[services.reference.Live.Companion],
       bind[ReferenceService].to[services.reference.Live],
       bind[services.duplication.recipe.Duplication.Companion].to[services.duplication.recipe.Live.Companion],
-      bind[services.duplication.recipe.Duplication].to[services.duplication.recipe.Live]
+      bind[services.duplication.recipe.Duplication].to[services.duplication.recipe.Live],
+      bind[services.duplication.meal.Duplication.Companion].to[services.duplication.meal.Live.Companion],
+      bind[services.duplication.meal.Duplication].to[services.duplication.meal.Live]
     )
     settings
   }
