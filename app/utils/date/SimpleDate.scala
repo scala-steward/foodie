@@ -1,11 +1,12 @@
 package utils.date
 
 import cats.Order
+import cats.effect.IO
 import cats.syntax.order._
 import io.circe.generic.JsonCodec
 import io.scalaland.chimney.dsl._
 
-import java.time.LocalDate
+import java.time.{ LocalDate, LocalTime }
 
 @JsonCodec
 case class SimpleDate(
@@ -20,5 +21,12 @@ object SimpleDate {
 
   def toPrettyString(simpleDate: SimpleDate): String =
     s"${simpleDate.date.transformInto[LocalDate].toString.replace("-", ".")} ${simpleDate.date.transformInto[Date].toString}"
+
+  def now: IO[SimpleDate] = IO {
+    SimpleDate(
+      date = LocalDate.now().transformInto[Date],
+      time = Some(LocalTime.now().transformInto[Time])
+    )
+  }
 
 }
