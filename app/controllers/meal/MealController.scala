@@ -21,6 +21,7 @@ import scala.util.chaining._
 class MealController @Inject() (
     controllerComponents: ControllerComponents,
     mealService: MealService,
+    mealDuplication: services.duplication.meal.Duplication,
     userAction: UserAction
 )(implicit ec: ExecutionContext)
     extends AbstractController(controllerComponents)
@@ -110,6 +111,24 @@ class MealController @Inject() (
             .pipe(_.map(_.transformInto[MealEntry]).asJson)
             .pipe(Ok(_))
         )
+        .recover(errorHandler)
+    }
+
+  def duplicate(id: UUID): Action[AnyContent] =
+    userAction.async { request =>
+      EitherT(
+        mealDuplication
+          .duplicate(
+            request.user.id,
+            id.transformInto[MealId]
+          )
+      )
+        .map(
+          _.pipe(_.transformInto[Meal])
+            .pipe(_.asJson)
+            .pipe(Ok(_))
+        )
+        .fold(controllers.badRequest, identity)
         .recover(errorHandler)
     }
 

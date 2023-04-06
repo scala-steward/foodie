@@ -31,6 +31,7 @@ POST   /meals                                            controllers.meal.MealCo
 PATCH  /meals                                            controllers.meal.MealController.update
 DELETE /meals/:id                                        controllers.meal.MealController.delete(id: java.util.UUID)
 GET    /meals/:id/entries                                controllers.meal.MealController.getMealEntries(id: java.util.UUID)
+POST   /meals/:id/duplicate                              controllers.meal.MealController.duplicate(id: java.util.UUID)
 POST   /meals/entries                                    controllers.meal.MealController.addMealEntry
 PATCH  /meals/entries                                    controllers.meal.MealController.updateMealEntry
 DELETE /meals/entries/:id                                controllers.meal.MealController.deleteMealEntry(id: java.util.UUID)
