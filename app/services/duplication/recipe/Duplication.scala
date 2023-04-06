@@ -5,7 +5,7 @@ import errors.ServerError
 import services.complex.ingredient.ComplexIngredient
 import services.recipe.{ Ingredient, Recipe }
 import slick.dbio.DBIO
-import utils.date.{ SimpleDate, Time }
+import utils.date.SimpleDate
 
 import scala.concurrent.{ ExecutionContext, Future }
 

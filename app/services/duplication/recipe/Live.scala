@@ -84,8 +84,6 @@ object Live {
     )(implicit
         ec: ExecutionContext
     ): DBIO[Recipe] = {
-      val timestampString =
-        s"${timestamp.date.transformInto[LocalDate].toString.replace("-", ".")} ${timestamp.date.transformInto[Date].toString}"
       val transformer = for {
         recipe <- OptionT(recipeServiceCompanion.getRecipe(userId, id))
         inserted <- OptionT.liftF(
@@ -93,7 +91,7 @@ object Live {
             userId = userId,
             id = newId,
             recipeCreation = RecipeCreation(
-              name = s"${recipe.name} (copy $timestampString)",
+              name = s"${recipe.name} (copy ${SimpleDate.toPrettyString(timestamp)})",
               description = recipe.description,
               numberOfServings = recipe.numberOfServings,
               servingSize = recipe.servingSize
