@@ -1,6 +1,7 @@
 package services.duplication.recipe
 
 import cats.data.OptionT
+import cats.effect.unsafe.implicits.global
 import db.generated.Tables
 import db.{ IngredientId, RecipeId, UserId }
 import errors.{ ErrorContext, ServerError }
@@ -12,11 +13,11 @@ import services.complex.ingredient.{ ComplexIngredient, ComplexIngredientService
 import services.recipe.{ Ingredient, Recipe, RecipeCreation, RecipeService }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
+import slickeffect.catsio.implicits._
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
-import utils.date.{ Date, SimpleDate, Time }
+import utils.date.SimpleDate
 
-import java.time.{ LocalDate, LocalTime }
 import java.util.UUID
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
@@ -45,15 +46,13 @@ class Live @Inject() (
         )
       }
       newRecipeId = UUID.randomUUID().transformInto[RecipeId]
+      timestamp <- SimpleDate.now.to[DBIO]
       newRecipe <-
         companion.duplicateRecipe(
           userId = userId,
           id = id,
           newId = newRecipeId,
-          timestamp = SimpleDate(
-            date = LocalDate.now().transformInto[Date],
-            time = Some(LocalTime.now().transformInto[Time])
-          )
+          timestamp = timestamp
         )
       _ <- companion.duplicateIngredients(newRecipeId, newIngredients)
       _ <- companion.duplicateComplexIngredients(newRecipeId, complexIngredients.values.flatten.toSeq)
