@@ -83,7 +83,7 @@ viewRecipeLine configuration recipe showControls =
                 ]
             , td [ Style.classes.controls ]
                 [ button
-                    [ Style.classes.button.delete, onClick (Pages.Util.ParentEditor.Page.RequestDelete recipe.id) ]
+                    [ Style.classes.button.delete, onClick <| Pages.Util.ParentEditor.Page.RequestDelete <| recipe.id ]
                     [ text "Delete" ]
                 ]
             , td [ Style.classes.controls ]
@@ -92,6 +92,11 @@ viewRecipeLine configuration recipe showControls =
                     , attributes = [ Style.classes.button.nutrients ]
                     , children = [ text "Nutrients" ]
                     }
+                ]
+            , td [ Style.classes.controls ]
+                [ button
+                    [ Style.classes.button.confirm, onClick <| Pages.Util.ParentEditor.Page.Duplicate <| recipe.id ]
+                    [ text "Duplicate" ]
                 ]
             ]
         , toggleMsg = Pages.Util.ParentEditor.Page.ToggleControls recipe.id

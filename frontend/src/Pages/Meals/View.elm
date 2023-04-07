@@ -93,6 +93,13 @@ viewMealLine configuration meal showControls =
                     , children = [ text "Nutrients" ]
                     }
                 ]
+            , td [ Style.classes.controls ]
+                [ button
+                    [ Style.classes.button.confirm
+                    , onClick <| Pages.Util.ParentEditor.Page.Duplicate <| meal.id
+                    ]
+                    [ text "Duplicate" ]
+                ]
             ]
         , toggleMsg = Pages.Util.ParentEditor.Page.ToggleControls meal.id
         , showControls = showControls
