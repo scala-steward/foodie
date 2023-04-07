@@ -25,6 +25,11 @@ viewMain main =
                                 [ Style.classes.button.delete, Pages.Util.Parent.Page.RequestDelete |> onClick ]
                                 [ text "Delete" ]
                             ]
+                        , td [ Style.classes.controls ]
+                            [ button
+                                [ Style.classes.button.confirm, Pages.Util.Parent.Page.Duplicate |> onClick ]
+                                [ text "Duplicate" ]
+                            ]
                         ]
                     , toggleMsg = Pages.Util.Parent.Page.ToggleControls
                     , showControls = showControls
