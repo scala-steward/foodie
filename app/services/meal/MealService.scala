@@ -2,6 +2,7 @@ package services.meal
 
 import db.{ MealEntryId, MealId, UserId }
 import errors.ServerError
+import services.DBError
 import services.common.RequestInterval
 import slick.dbio.DBIO
 
@@ -57,6 +58,7 @@ object MealService {
         id: MealEntryId
     )(implicit ec: ExecutionContext): DBIO[Boolean]
 
+    final def notFound[A]: DBIO[A] = DBIO.failed(DBError.Meal.NotFound)
   }
 
 }

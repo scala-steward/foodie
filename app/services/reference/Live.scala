@@ -286,7 +286,7 @@ object Live {
     )(action: => DBIO[A])(implicit ec: ExecutionContext): DBIO[A] =
       referenceMapDao.exists(ReferenceMapKey(userId, id)).flatMap(exists => if (exists) action else notFound)
 
-    private def notFound[A]: DBIO[A] = DBIO.failed(DBError.Reference.MapNotFound)
+
   }
 
 }
