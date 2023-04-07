@@ -8,6 +8,7 @@ import Pages.ReferenceMaps.ReferenceMapUpdateClientInput as ReferenceMapUpdateCl
 import Pages.ReferenceMaps.Requests as Requests
 import Pages.Util.ParentEditor.Handler
 import Pages.Util.ParentEditor.Page
+import Pages.Util.Requests
 import Pages.View.Tristate as Tristate
 
 
@@ -33,4 +34,5 @@ updateLogic =
         , create = \authorizedAccess -> ReferenceMapCreationClientInput.toCreation >> Requests.createReferenceMap authorizedAccess
         , save = \authorizedAccess -> ReferenceMapUpdateClientInput.to >> Requests.saveReferenceMap authorizedAccess
         , delete = Requests.deleteReferenceMap
+        , duplicate = Pages.Util.Requests.duplicateReferenceMapWith Pages.Util.ParentEditor.Page.GotDuplicateResponse
         }
