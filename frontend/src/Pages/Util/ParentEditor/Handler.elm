@@ -22,6 +22,7 @@ updateLogic :
     , create : AuthorizedAccess -> creation -> Cmd (Page.LogicMsg parentId parent creation update)
     , save : AuthorizedAccess -> update -> Cmd (Page.LogicMsg parentId parent creation update)
     , delete : AuthorizedAccess -> parentId -> Cmd (Page.LogicMsg parentId parent creation update)
+    , duplicate : AuthorizedAccess -> parentId -> Cmd (Page.LogicMsg parentId parent creation update)
     }
     -> Page.LogicMsg parentId parent creation update
     -> Page.Model parentId parent creation update
@@ -69,26 +70,36 @@ updateLogic ps msg model =
                 |> Maybe.withDefault Cmd.none
             )
 
-        gotCreateResponse result =
+        gotCreationResponseWith params result =
             result
                 |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
                     (\parent ->
                         let
                             parentId =
                                 parent |> ps.idOfParent
+
+                            parentCreationHandling =
+                                if params.resetParentCreation then
+                                    Page.lenses.main.parentCreation.set Nothing
+
+                                else
+                                    identity
                         in
                         ( model
                             |> Tristate.mapMain
                                 (LensUtil.insertAtId parentId
                                     Page.lenses.main.parents
                                     (parent |> Editing.asView)
-                                    >> Page.lenses.main.parentCreation.set Nothing
+                                    >> parentCreationHandling
                                 )
                         , parentId
                             |> ps.navigateToAddress
                             |> Links.loadFrontendPage model.configuration
                         )
                     )
+
+        gotCreateResponse =
+            gotCreationResponseWith { resetParentCreation = True }
 
         edit update =
             ( model
@@ -167,8 +178,8 @@ updateLogic ps msg model =
             , Cmd.none
             )
 
-        gotDeleteResponse deletedId dataOrError =
-            ( dataOrError
+        gotDeleteResponse deletedId result =
+            ( result
                 |> Result.Extra.unpack (Tristate.toError model)
                     (always
                         (model
@@ -177,6 +188,22 @@ updateLogic ps msg model =
                     )
             , Cmd.none
             )
+
+        duplicate parentId =
+            ( model
+            , model
+                |> Tristate.foldMain Cmd.none
+                    (\main ->
+                        ps.duplicate
+                            { configuration = model.configuration
+                            , jwt = main.jwt
+                            }
+                            parentId
+                    )
+            )
+
+        gotDuplicateResponse =
+            gotCreationResponseWith { resetParentCreation = False }
 
         setPagination pagination =
             ( model
@@ -241,6 +268,12 @@ updateLogic ps msg model =
 
         Page.GotFetchResponse result ->
             gotFetchResponse result
+
+        Page.Duplicate parentId ->
+            duplicate parentId
+
+        Page.GotDuplicateResponse result ->
+            gotDuplicateResponse result
 
         Page.SetPagination pagination ->
             setPagination pagination
