@@ -29,5 +29,7 @@ updateLogic =
                         authorizedAccess
                     >> Just
         , delete = Pages.Util.Requests.deleteRecipeWith Pages.Util.Parent.Page.GotDeleteResponse
+        , duplicate = Pages.Util.Requests.duplicateRecipeWith Pages.Util.Parent.Page.GotDuplicateResponse
         , navigateAfterDeletionAddress = Addresses.Frontend.recipes.address
+        , navigateAfterDuplicationAddress = Addresses.Frontend.ingredientEditor.address
         }
