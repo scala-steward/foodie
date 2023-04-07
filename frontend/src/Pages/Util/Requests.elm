@@ -114,6 +114,19 @@ deleteMealWith mkMsg authorizedAccess mealId =
         , expect = HttpUtil.expectWhatever mkMsg
         }
 
+duplicateMealWith :
+    (Result Error Meal -> msg)
+    -> AuthorizedAccess
+    -> MealId
+    -> Cmd msg
+duplicateMealWith mkMsg authorizedAccess mealId =
+    HttpUtil.runPatternWithJwt
+        authorizedAccess
+        (Addresses.Backend.meals.duplicate mealId)
+        { body = Http.emptyBody
+        , expect = HttpUtil.expectJson mkMsg decoderMeal
+        }
+
 
 saveRecipeWith :
     (Result Error Recipe -> msg)
@@ -142,6 +155,18 @@ deleteRecipeWith mkMsg authorizedAccess recipeId =
         , expect = HttpUtil.expectWhatever mkMsg
         }
 
+duplicateRecipeWith :
+    (Result Error Recipe -> msg)
+    -> AuthorizedAccess
+    -> RecipeId
+    -> Cmd msg
+duplicateRecipeWith mkMsg authorizedAccess recipeId =
+    HttpUtil.runPatternWithJwt
+        authorizedAccess
+        (Addresses.Backend.recipes.duplicate recipeId)
+        { body = Http.emptyBody
+        , expect = HttpUtil.expectJson mkMsg decoderRecipe
+        }
 
 saveReferenceMapWith :
     (Result Error ReferenceMap -> msg)
@@ -168,4 +193,17 @@ deleteReferenceMapWith mkMsg authorizedAccess referenceMapId =
         (Addresses.Backend.references.delete referenceMapId)
         { body = Http.emptyBody
         , expect = HttpUtil.expectWhatever mkMsg
+        }
+
+duplicateReferenceMapWith :
+    (Result Error ReferenceMap -> msg)
+    -> AuthorizedAccess
+    -> ReferenceMapId
+    -> Cmd msg
+duplicateReferenceMapWith mkMsg authorizedAccess referenceMapId =
+    HttpUtil.runPatternWithJwt
+        authorizedAccess
+        (Addresses.Backend.references.duplicate referenceMapId)
+        { body = Http.emptyBody
+        , expect = HttpUtil.expectJson mkMsg decoderReferenceMap
         }
