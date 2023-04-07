@@ -7,7 +7,6 @@ import db.{ IngredientId, RecipeId, UserId }
 import errors.{ ErrorContext, ServerError }
 import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
-import services.DBError
 import services.common.Transactionally.syntax._
 import services.complex.ingredient.{ ComplexIngredient, ComplexIngredientService }
 import services.recipe.{ Ingredient, Recipe, RecipeCreation, RecipeService }
@@ -99,7 +98,7 @@ object Live {
         )
       } yield inserted
 
-      transformer.getOrElseF(notFound)
+      transformer.getOrElseF(recipeServiceCompanion.notFound)
     }
 
     override def duplicateIngredients(
@@ -128,7 +127,6 @@ object Live {
         }
         .map(_.map(_.transformInto[ComplexIngredient]))
 
-    private def notFound[A]: DBIO[A] = DBIO.failed(DBError.Recipe.NotFound)
   }
 
 }

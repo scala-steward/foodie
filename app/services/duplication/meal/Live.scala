@@ -7,15 +7,14 @@ import db.{ MealEntryId, MealId, UserId }
 import errors.{ ErrorContext, ServerError }
 import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
-import services.DBError
 import services.common.Transactionally.syntax._
 import services.meal.{ Meal, MealCreation, MealEntry, MealService }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slickeffect.catsio.implicits._
+import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 import utils.date.SimpleDate
-import utils.DBIOUtil.instances._
 
 import java.util.UUID
 import javax.inject.Inject
@@ -94,7 +93,7 @@ object Live {
         )
       } yield inserted
 
-      transformer.getOrElseF(notFound)
+      transformer.getOrElseF(mealServiceCompanion.notFound)
     }
 
     override def duplicateMealEntries(
@@ -112,7 +111,6 @@ object Live {
         }
         .map(_.map(_.transformInto[MealEntry]))
 
-    private def notFound[A]: DBIO[A] = DBIO.failed(DBError.Meal.NotFound)
   }
 
 }
