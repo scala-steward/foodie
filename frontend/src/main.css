@@ -379,11 +379,11 @@ th {
 }
 
 .editor-button {
-    background-color: rgba(65, 105, 225);
+    background-color: rgb(65 105 225);
 }
 
 .editor-button:hover {
-    background-color: rgba(90, 130, 240);
+    background-color: rgb(90 130 240);
 }
 
 .select-button,
@@ -595,7 +595,7 @@ th {
 
 }
 
-@media screen and (min-width: 1200px) {
+@media screen and (width >= 1200px) {
     body {
         width: 61.8%;
         margin-left: auto;
