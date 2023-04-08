@@ -587,7 +587,12 @@ th {
     .confirm label,
     .confirm button,
     .confirm a {
-        font-size: medium;
+        font-size: smaller;
+    }
+
+    .searchArea label,
+    .searchArea input {
+        font-size: smaller;
     }
 
     select {
