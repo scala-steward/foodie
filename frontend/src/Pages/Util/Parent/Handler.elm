@@ -15,7 +15,9 @@ updateLogic :
     , idOf : parent -> parentId
     , save : AuthorizedAccess -> update -> Maybe (Cmd (Page.LogicMsg parent update))
     , delete : AuthorizedAccess -> parentId -> Cmd (Page.LogicMsg parent update)
+    , duplicate : AuthorizedAccess -> parentId -> Cmd (Page.LogicMsg parent update)
     , navigateAfterDeletionAddress : () -> List String
+    , navigateAfterDuplicationAddress : parentId -> List String
     }
     -> Page.LogicMsg parent update
     -> Page.Model parent update
@@ -125,13 +127,34 @@ updateLogic ps msg model =
                             (() |> ps.navigateAfterDeletionAddress)
                         )
                     )
+
+        duplicate =
+            ( model
+            , model
+                |> Tristate.foldMain Cmd.none
+                    (\main ->
+                        ps.duplicate
+                            { configuration = model.configuration
+                            , jwt = main.jwt
+                            }
+                            (main.parent.original |> ps.idOf)
+                    )
+            )
+
+        gotDuplicateResponse result =
+            result
+                |> Result.Extra.unpack (\error -> ( Tristate.toError model error, Cmd.none ))
+                    (\parent ->
+                        ( model
+                        , Links.loadFrontendPage
+                            model.configuration
+                            (parent |> ps.idOf |> ps.navigateAfterDuplicationAddress)
+                        )
+                    )
     in
     case msg of
         Page.GotFetchResponse result ->
             gotFetchResponse result
-
-        Page.ToggleControls ->
-            toggleControls
 
         Page.Edit update ->
             edit update
@@ -159,3 +182,12 @@ updateLogic ps msg model =
 
         Page.GotDeleteResponse result ->
             gotDeleteResponse result
+
+        Page.Duplicate ->
+            duplicate
+
+        Page.GotDuplicateResponse result ->
+            gotDuplicateResponse result
+
+        Page.ToggleControls ->
+            toggleControls

@@ -2,6 +2,7 @@ package services.reference
 
 import db.{ NutrientCode, ReferenceMapId, UserId }
 import errors.ServerError
+import services.DBError
 import services.nutrient.ReferenceNutrientMap
 import slick.dbio.DBIO
 
@@ -113,6 +114,7 @@ object ReferenceService {
         nutrientCode: NutrientCode
     )(implicit ec: ExecutionContext): DBIO[Boolean]
 
+    final def notFound[A]: DBIO[A] = DBIO.failed(DBError.Reference.MapNotFound)
   }
 
 }

@@ -17,6 +17,7 @@ recipes :
     , create : ResourcePattern
     , update : ResourcePattern
     , delete : RecipeId -> ResourcePattern
+    , duplicate : RecipeId -> ResourcePattern
     , ingredients :
         { allOf : RecipeId -> ResourcePattern
         , create : ResourcePattern
@@ -38,6 +39,9 @@ recipes =
         ingredientsWord =
             "ingredients"
 
+        duplicateWord =
+            "duplicate"
+
         foodsWord =
             "foods"
 
@@ -58,6 +62,7 @@ recipes =
     , create = post <| base []
     , update = patch <| base []
     , delete = \recipeId -> delete <| base <| [ recipeId |> Uuid.toString ]
+    , duplicate = \recipeId -> post <| base <| [ recipeId |> Uuid.toString, duplicateWord ]
     , ingredients =
         { allOf = \recipeId -> get <| base <| [ recipeId |> Uuid.toString, ingredientsWord ]
         , create = post <| ingredients []
@@ -79,6 +84,7 @@ meals :
     , create : ResourcePattern
     , update : ResourcePattern
     , delete : MealId -> ResourcePattern
+    , duplicate : MealId -> ResourcePattern
     , entries :
         { allOf : MealId -> ResourcePattern
         , create : ResourcePattern
@@ -94,6 +100,9 @@ meals =
         entriesWord =
             "entries"
 
+        duplicateWord =
+            "duplicate"
+
         entries =
             (::) entriesWord >> base
     in
@@ -102,6 +111,7 @@ meals =
     , create = post <| base []
     , update = patch <| base []
     , delete = \mealId -> delete <| base <| [ mealId |> Uuid.toString ]
+    , duplicate = \mealId -> post <| base <| [ mealId |> Uuid.toString, duplicateWord ]
     , entries =
         { allOf = \mealId -> get <| base <| [ mealId |> Uuid.toString, entriesWord ]
         , create = post <| entries []
@@ -201,6 +211,7 @@ references :
     , create : ResourcePattern
     , update : ResourcePattern
     , delete : ReferenceMapId -> ResourcePattern
+    , duplicate : ReferenceMapId -> ResourcePattern
     , entries :
         { allOf : ReferenceMapId -> ResourcePattern
         , create : ResourcePattern
@@ -216,6 +227,9 @@ references =
         entriesWord =
             "entries"
 
+        duplicateWord =
+            "duplicate"
+
         treesWord =
             "trees"
 
@@ -228,6 +242,7 @@ references =
     , create = post <| base []
     , update = patch <| base []
     , delete = \referenceMapId -> delete <| base <| [ referenceMapId |> Uuid.toString ]
+    , duplicate = \referenceMapId -> post <| base <| [ referenceMapId |> Uuid.toString, duplicateWord ]
     , entries =
         { allOf = \referenceMapId -> get <| base <| [ referenceMapId |> Uuid.toString, entriesWord ]
         , create = post <| entries []

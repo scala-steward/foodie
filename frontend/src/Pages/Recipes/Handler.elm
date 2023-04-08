@@ -7,6 +7,7 @@ import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput exposing
 import Pages.Recipes.Requests as Requests
 import Pages.Util.ParentEditor.Handler
 import Pages.Util.ParentEditor.Page
+import Pages.Util.Requests
 import Pages.View.Tristate as Tristate
 
 
@@ -32,4 +33,5 @@ updateLogic =
         , create = \authorizedAccess -> RecipeCreationClientInput.toCreation >> Requests.createRecipe authorizedAccess
         , save = \authorizedAccess -> RecipeUpdateClientInput.to >> Requests.saveRecipe authorizedAccess
         , delete = Requests.deleteRecipe
+        , duplicate = Pages.Util.Requests.duplicateRecipeWith Pages.Util.ParentEditor.Page.GotDuplicateResponse
         }

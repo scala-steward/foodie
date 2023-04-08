@@ -79,6 +79,11 @@ viewReferenceMapLine configuration referenceMap showControls =
                     [ Style.classes.button.delete, onClick <| Pages.Util.ParentEditor.Page.RequestDelete <| referenceMap.id ]
                     [ text "Delete" ]
                 ]
+            , td [ Style.classes.controls ]
+                [ button
+                    [ Style.classes.button.confirm, onClick <| Pages.Util.ParentEditor.Page.Duplicate <| referenceMap.id ]
+                    [ text "Duplicate" ]
+                ]
             ]
         , toggleMsg = Pages.Util.ParentEditor.Page.ToggleControls referenceMap.id
         , showControls = showControls

@@ -9,6 +9,7 @@ import Pages.Meals.Page as Page
 import Pages.Meals.Requests as Requests
 import Pages.Util.ParentEditor.Handler
 import Pages.Util.ParentEditor.Page
+import Pages.Util.Requests
 import Pages.View.Tristate as Tristate
 
 
@@ -34,4 +35,5 @@ updateLogic =
         , create = \authorizedAccess -> MealCreationClientInput.toCreation >> Maybe.Extra.unwrap Cmd.none (Requests.createMeal authorizedAccess)
         , save = \authorizedAccess -> MealUpdateClientInput.to >> Maybe.Extra.unwrap Cmd.none (Requests.saveMeal authorizedAccess)
         , delete = Requests.deleteMeal
+        , duplicate = Pages.Util.Requests.duplicateMealWith Pages.Util.ParentEditor.Page.GotDuplicateResponse
         }

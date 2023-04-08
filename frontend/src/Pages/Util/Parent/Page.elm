@@ -70,4 +70,6 @@ type LogicMsg parent update
     | ConfirmDelete
     | CancelDelete
     | GotDeleteResponse (Result Error ())
+    | Duplicate
+    | GotDuplicateResponse (Result Error parent)
     | ToggleControls

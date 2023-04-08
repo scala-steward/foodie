@@ -35,6 +35,11 @@ viewMain configuration main =
                                 , children = [ text "Nutrients" ]
                                 }
                             ]
+                        , td [ Style.classes.controls ]
+                            [ button
+                                [ Style.classes.button.confirm, Pages.Util.Parent.Page.Duplicate |> onClick ]
+                                [ text "Duplicate" ]
+                            ]
                         ]
                     , toggleMsg = Pages.Util.Parent.Page.ToggleControls
                     , showControls = showControls

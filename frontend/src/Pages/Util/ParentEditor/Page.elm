@@ -88,5 +88,7 @@ type LogicMsg parentId parent creation update
     | CancelDelete parentId
     | GotDeleteResponse parentId (Result Error ())
     | GotFetchResponse (Result Error (List parent))
+    | Duplicate parentId
+    | GotDuplicateResponse (Result Error parent)
     | SetPagination Pagination
     | SetSearchString String

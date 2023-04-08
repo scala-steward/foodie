@@ -21,6 +21,7 @@ import scala.util.chaining._
 class RecipeController @Inject() (
     controllerComponents: ControllerComponents,
     recipeService: RecipeService,
+    recipeDuplication: services.duplication.recipe.Duplication,
     complexIngredientService: ComplexIngredientService,
     userAction: UserAction
 )(implicit ec: ExecutionContext)
@@ -140,6 +141,24 @@ class RecipeController @Inject() (
           _.pipe(_.map(_.transformInto[Ingredient]).asJson)
             .pipe(Ok(_))
         )
+        .recover(errorHandler)
+    }
+
+  def duplicate(id: UUID): Action[AnyContent] =
+    userAction.async { request =>
+      EitherT(
+        recipeDuplication
+          .duplicate(
+            request.user.id,
+            id.transformInto[RecipeId]
+          )
+      )
+        .map(
+          _.pipe(_.transformInto[Recipe])
+            .pipe(_.asJson)
+            .pipe(Ok(_))
+        )
+        .fold(controllers.badRequest, identity)
         .recover(errorHandler)
     }
 

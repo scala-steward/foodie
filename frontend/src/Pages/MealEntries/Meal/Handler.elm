@@ -29,5 +29,7 @@ updateLogic =
                             authorizedAccess
                         )
         , delete = Pages.Util.Requests.deleteMealWith Pages.Util.Parent.Page.GotDeleteResponse
+        , duplicate = Pages.Util.Requests.duplicateMealWith Pages.Util.Parent.Page.GotDuplicateResponse
         , navigateAfterDeletionAddress = Addresses.Frontend.meals.address
+        , navigateAfterDuplicationAddress = Addresses.Frontend.mealEntryEditor.address
         }

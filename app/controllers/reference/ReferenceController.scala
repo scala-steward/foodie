@@ -20,6 +20,7 @@ import scala.util.chaining._
 class ReferenceController @Inject() (
     controllerComponents: ControllerComponents,
     referenceService: ReferenceService,
+    referenceDuplication: services.duplication.reference.Duplication,
     userAction: UserAction
 )(implicit ec: ExecutionContext)
     extends AbstractController(controllerComponents)
@@ -122,6 +123,24 @@ class ReferenceController @Inject() (
           _.pipe(_.map(_.transformInto[ReferenceEntry]).asJson)
             .pipe(Ok(_))
         )
+        .recover(errorHandler)
+    }
+
+  def duplicate(id: UUID): Action[AnyContent] =
+    userAction.async { request =>
+      EitherT(
+        referenceDuplication
+          .duplicate(
+            request.user.id,
+            id.transformInto[ReferenceMapId]
+          )
+      )
+        .map(
+          _.pipe(_.transformInto[ReferenceMap])
+            .pipe(_.asJson)
+            .pipe(Ok(_))
+        )
+        .fold(controllers.badRequest, identity)
         .recover(errorHandler)
     }
 

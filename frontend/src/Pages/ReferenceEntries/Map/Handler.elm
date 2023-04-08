@@ -29,5 +29,7 @@ updateLogic =
                         authorizedAccess
                     >> Just
         , delete = Pages.Util.Requests.deleteReferenceMapWith Pages.Util.Parent.Page.GotDeleteResponse
+        , duplicate = Pages.Util.Requests.duplicateReferenceMapWith Pages.Util.Parent.Page.GotDuplicateResponse
         , navigateAfterDeletionAddress = Addresses.Frontend.referenceMaps.address
+        , navigateAfterDuplicationAddress = Addresses.Frontend.referenceEntries.address
         }

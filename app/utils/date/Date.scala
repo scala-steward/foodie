@@ -3,7 +3,7 @@ package utils.date
 import cats.Order
 import io.circe.{ Decoder, Encoder }
 
-import java.time.LocalDate
+import java.time.{ LocalDate, LocalTime }
 import io.circe.generic.semiauto.{ deriveDecoder, deriveEncoder }
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl._

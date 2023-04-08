@@ -2,6 +2,7 @@ package services.recipe
 
 import db.{ FoodId, IngredientId, RecipeId, UserId }
 import errors.ServerError
+import services.DBError
 import slick.dbio.DBIO
 
 import scala.concurrent.{ ExecutionContext, Future }
@@ -93,6 +94,8 @@ object RecipeService {
         userId: UserId,
         id: IngredientId
     )(implicit ec: ExecutionContext): DBIO[Boolean]
+
+    final def notFound[A]: DBIO[A] = DBIO.failed(DBError.Recipe.NotFound)
 
   }
 
