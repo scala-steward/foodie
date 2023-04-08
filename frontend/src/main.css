@@ -137,7 +137,7 @@ table .toggle {
 select {
     white-space: nowrap;
     overflow: hidden;
-    font-size: larger;
+    font-size: medium;
 }
 
 .editButton:disabled,
@@ -425,7 +425,7 @@ th {
 }
 
 .elements {
-    font-size: larger;
+    font-size: large;
     padding-top: 10px;
     padding-bottom: 10px;
 }
@@ -451,7 +451,7 @@ th {
 .confirm label,
 .confirm button,
 .confirm a {
-    font-size: larger;
+    font-size: large;
 }
 
 #login input,
@@ -479,7 +479,7 @@ th {
 
 .request .info,
 .confirm .info {
-    font-size: larger;
+    font-size: large;
     text-transform: uppercase;
     margin-bottom: 10px;
 }
@@ -492,7 +492,7 @@ th {
 }
 
 #error label {
-    font-size: larger;
+    font-size: large;
     margin-right: 5px;
 }
 
@@ -587,18 +587,18 @@ th {
     .confirm label,
     .confirm button,
     .confirm a {
-        font-size: smaller;
+        font-size: small;
     }
 
     select {
-        font-size: medium;
+        font-size: small;
     }
 
 }
 
 @media screen and (min-width: 1200px) {
     body {
-        width: 60%;
+        width: 61.8%;
         margin-left: auto;
         margin-right: auto;
     }
