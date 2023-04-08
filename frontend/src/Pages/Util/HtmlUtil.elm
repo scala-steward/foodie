@@ -21,14 +21,14 @@ searchAreaWith ps =
     div [ Style.classes.search.area ]
         [ label [] [ text Links.lookingGlass ]
         , input
-            [ onInput ps.msg
+            [ onInput <| ps.msg
             , value <| ps.searchString
             , Style.classes.search.field
             ]
             []
         , button
             [ Style.classes.button.cancel
-            , onClick (ps.msg "")
+            , onClick <| ps.msg ""
             , disabled <| String.isEmpty <| ps.searchString
             ]
             [ text "Clear" ]
