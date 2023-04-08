@@ -94,7 +94,7 @@ body, button, input {
 
 .searchArea label,
 .searchArea input {
-    font-size: larger;
+    font-size: medium;
 }
 
 .editButton,
@@ -416,7 +416,7 @@ th {
 #statistics input:not(.searchField) {
     box-sizing: border-box;
     width: 100%;
-    font-size: larger;
+    font-size: medium;
 }
 
 .editing:not(.controls):hover,
@@ -587,11 +587,6 @@ th {
     .confirm label,
     .confirm button,
     .confirm a {
-        font-size: smaller;
-    }
-
-    .searchArea label,
-    .searchArea input {
         font-size: smaller;
     }
 
