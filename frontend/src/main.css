@@ -206,30 +206,43 @@ th {
     position: relative;
 }
 
-.elements-with-controls-table thead th:not(.number-label) {
-    text-align: left;
+.recipe-edit-table th:first-child {
+    width: 20%;
 }
 
-.search-area {
-    display: inline-block;
-    margin-top: 20px;
-    margin-bottom: 20px;
-    text-align: left;
+.recipe-edit-table th:nth-child(2) {
+    width: 27%;
 }
 
-.search-area input {
-    width: 50%;
-    margin: 3px;
+.recipe-edit-table th:nth-child(3) {
+    width: 23%;
 }
 
-.search-area label,
-.search-area button {
+.meal-edit-table th:first-child {
+    width: 25%;
+}
+
+.meal-edit-table th:nth-child(2):not(input) {
+    width: 15%;
+}
+
+#meal-entry-editor .element-edit-table th:first-child,
+#meal-entry-editor .add-view .add-element th:first-child {
     width: 20%
 }
 
-.search-area label,
-.search-area input {
-    font-size: medium;
+#meal-entry-editor .element-edit-table th:nth-child(2),
+#meal-entry-editor .add-view .add-element th:nth-child(2) {
+    width: 27%
+}
+
+#meal-entry-editor .element-edit-table th:nth-child(3),
+#meal-entry-editor .add-view .add-element th:nth-child(3) {
+    width: 20%
+}
+
+.elements-with-controls-table thead th:not(.number-label) {
+    text-align: left;
 }
 
 table .toggle {
@@ -256,40 +269,6 @@ select {
     word-wrap: break-word;
 }
 
-.recipe-edit-table th:first-child {
-    width: 20%;
-}
-
-.recipe-edit-table th:nth-child(2) {
-    width: 27%;
-}
-
-.recipe-edit-table th:nth-child(3) {
-    width: 23%;
-}
-
-.meal-edit-table th:first-child {
-    width: 25%;
-}
-
-.meal-edit-table th:nth-child(2):not(input) {
-    width: 15%;
-}
-
-#meal-entry-editor .add-view .add-element th:first-child,
-#meal-entry-editor .element-edit-table th:first-child {
-    width: 20%
-}
-
-#meal-entry-editor .add-view .add-element th:nth-child(2),
-#meal-entry-editor .element-edit-table th:nth-child(2) {
-    width: 27%
-}
-
-#meal-entry-editor .add-view .add-element th:nth-child(3),
-#meal-entry-editor .element-edit-table th:nth-child(3) {
-    width: 20%
-}
 
 #reference-entry-editor .element-edit-table th:first-child,
 #reference-entry-editor .add-view .add-element th:first-child {
@@ -440,7 +419,7 @@ select {
 }
 
 .editing:not(.controls):hover,
-.editLine:hover {
+.edit-line:hover {
     background-color: rgb(220 220 220);
 }
 
@@ -450,10 +429,7 @@ select {
     padding-bottom: 10px;
 }
 
-.search-field {
-    margin-top: 20px;
-    margin-bottom: 20px;
-}
+
 
 #login, .request, .confirm {
     display: inline-block;
@@ -557,6 +533,33 @@ select {
 #statistics-recipe-occurrence .sort-controls button {
     margin-left: 5px;
     margin-bottom: 5px;
+}
+
+.search-field {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.search-area {
+    display: inline-block;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.search-area input {
+    width: 50%;
+    margin: 3px;
+}
+
+.search-area label,
+.search-area button {
+    width: 20%
+}
+
+.search-area label,
+.search-area input {
+    font-size: medium;
 }
 
 @media only screen and (orientation: portrait) {
