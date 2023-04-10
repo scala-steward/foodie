@@ -132,7 +132,7 @@ body, button, input {
     cursor: not-allowed;
 }
 
-/* Hover */
+/* Buttons: hover */
 
 .add-button:hover {
     background-color: rgb(85 225 60);
@@ -180,7 +180,7 @@ body, button, input {
     background-color: rgb(40 230 250);
 }
 
-/* Tables: Headers */
+/* Tables: headers */
 
 th {
     white-space: break-spaces;
@@ -378,20 +378,10 @@ select {
     font-size: medium;
 }
 
-.partial-statistics .editable,
-#add-recipe-view .editable,
-#add-reference-map-view .editable,
-#ingredient-editor .editable,
-#reference-entry-editor .editable,
-#complex-food-editor .editable,
-#statistics-recipe-occurrence .editable,
-#add-meal-view .editable:not(.date, .time),
-#meal-entry-editor .editable:not(.date, .time),
-#statistics .editable:not(.date) {
+.editable:not(.date, .time) {
     white-space: break-spaces;
     word-wrap: break-word;
 }
-
 
 .low {
     color: #fa8128; /* tangerine */
@@ -410,7 +400,6 @@ select {
     text-align: right;
     padding-right: 5px;
 }
-
 
 #add-recipe-view input:not(.search-field),
 #add-meal-view input:not(.search-field),
@@ -435,7 +424,6 @@ select {
     padding-top: 10px;
     padding-bottom: 10px;
 }
-
 
 .request, .confirm {
     display: inline-block;
