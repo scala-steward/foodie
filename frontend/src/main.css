@@ -197,15 +197,6 @@ th {
     text-transform: uppercase;
 }
 
-#navigation table,
-.elements-with-controls-table {
-    border-spacing: 0;
-    width: 100%;
-    table-layout: fixed;
-    border-collapse: collapse;
-    position: relative;
-}
-
 .recipe-edit-table th:first-child {
     width: 20%;
 }
@@ -241,34 +232,15 @@ th {
     width: 20%
 }
 
-.elements-with-controls-table thead th:not(.number-label) {
-    text-align: left;
+#ingredient-editor .element-edit-table th:first-child,
+#ingredient-editor .add-view .add-element th:first-child {
+    width: 50%
 }
 
-table .toggle {
-    width: 35px;
+#ingredient-editor .element-edit-table th:nth-child(2),
+#ingredient-editor .add-view .add-element th:nth-child(2) {
+    width: 20%;
 }
-
-select {
-    white-space: nowrap;
-    overflow: hidden;
-    font-size: medium;
-}
-
-.partial-statistics .editable,
-#add-recipe-view .editable,
-#add-reference-map-view .editable,
-#ingredient-editor .editable,
-#reference-entry-editor .editable,
-#complex-food-editor .editable,
-#statistics-recipe-occurrence .editable,
-#add-meal-view .editable:not(.date, .time),
-#meal-entry-editor .editable:not(.date, .time),
-#statistics .editable:not(.date) {
-    white-space: break-spaces;
-    word-wrap: break-word;
-}
-
 
 #reference-entry-editor .element-edit-table th:first-child,
 #reference-entry-editor .add-view .add-element th:first-child {
@@ -280,16 +252,6 @@ select {
     width: 35%
 }
 
-#ingredient-editor .element-edit-table th:first-child,
-#ingredient-editor .add-view .add-element th:first-child {
-    width: 50%
-}
-
-#ingredient-editor .element-edit-table th:nth-child(2),
-#ingredient-editor .add-view .add-element th:first-child th:nth-child(2) {
-    width: 20%;
-}
-
 #statistics .interval-selection th:first-child,
 #statistics .interval-selection th:nth-child(2) {
     width: 10%;
@@ -299,8 +261,8 @@ select {
     width: 20%;
 }
 
-#statistics .nutrients th:first-child,
-.partial-statistics .nutrients th:first-child {
+.partial-statistics .nutrients th:first-child,
+#statistics .nutrients th:first-child {
     width: 20%;
 }
 
@@ -316,8 +278,8 @@ select {
     width: 17%;
 }
 
-#statistics .nutrients th:nth-child(5),
-.partial-statistics .nutrients th:nth-child(4) {
+.partial-statistics .nutrients th:nth-child(4),
+#statistics .nutrients th:nth-child(5) {
     width: 10%;
 }
 
@@ -386,6 +348,51 @@ select {
     width: 10%;
 }
 
+#navigation th {
+    font-size: smaller;
+    font-weight: lighter;
+}
+
+.elements-with-controls-table thead th:not(.number-label) {
+    text-align: left;
+}
+
+/* Table: general */
+
+table .toggle {
+    width: 35px;
+}
+
+.elements-with-controls-table,
+#navigation table {
+    border-spacing: 0;
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    position: relative;
+}
+
+select {
+    white-space: nowrap;
+    overflow: hidden;
+    font-size: medium;
+}
+
+.partial-statistics .editable,
+#add-recipe-view .editable,
+#add-reference-map-view .editable,
+#ingredient-editor .editable,
+#reference-entry-editor .editable,
+#complex-food-editor .editable,
+#statistics-recipe-occurrence .editable,
+#add-meal-view .editable:not(.date, .time),
+#meal-entry-editor .editable:not(.date, .time),
+#statistics .editable:not(.date) {
+    white-space: break-spaces;
+    word-wrap: break-word;
+}
+
+
 .low {
     color: #fa8128; /* tangerine */
 }
@@ -430,16 +437,12 @@ select {
 }
 
 
-
-#login, .request, .confirm {
+.request, .confirm {
     display: inline-block;
     text-align: center;
     width: 100%;
 }
 
-#login input,
-#login label,
-#login button,
 .request input,
 .request label,
 .request button,
@@ -450,21 +453,18 @@ select {
     font-size: large;
 }
 
-#login input,
 .request input,
 .confirm input {
     box-sizing: border-box;
     margin-bottom: 5px;
 }
 
-#login label,
 .request label,
 .confirm label {
     padding-right: 5px;
     width: 40%
 }
 
-#login button,
 .request button,
 .confirm button,
 .confirm a {
@@ -491,12 +491,6 @@ select {
     font-size: large;
     margin-right: 5px;
 }
-
-#navigation thead th {
-    font-size: smaller;
-    font-weight: lighter;
-}
-
 
 .nutrients-button {
     background-color: rgb(153 51 204);
@@ -528,7 +522,6 @@ select {
 .incomplete {
     text-decoration: underline dashed rgb(218 112 214);
 }
-
 
 #statistics-recipe-occurrence .sort-controls button {
     margin-left: 5px;
@@ -579,9 +572,6 @@ select {
     .menu-button,
     .error-button,
     .add-button,
-    #login input,
-    #login label,
-    #login button,
     .request input,
     .request label,
     .request button,
