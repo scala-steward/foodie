@@ -180,13 +180,14 @@ body, button, input {
     background-color: rgb(40 230 250);
 }
 
-#navigation table,
-.elements-with-controls-table {
-    border-spacing: 0;
-    width: 100%;
-    table-layout: fixed;
-    border-collapse: collapse;
-    position: relative;
+/* Tables: Headers */
+
+th {
+    white-space: break-spaces;
+    word-wrap: break-word;
+    position: sticky;
+    top: 0;
+    background: white;
 }
 
 .elements-with-controls-table thead th {
@@ -194,6 +195,15 @@ body, button, input {
     color: rgb(250 250 250);;
     background-color: gray;
     text-transform: uppercase;
+}
+
+#navigation table,
+.elements-with-controls-table {
+    border-spacing: 0;
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    position: relative;
 }
 
 .elements-with-controls-table thead th:not(.number-label) {
@@ -222,7 +232,6 @@ body, button, input {
     font-size: medium;
 }
 
-
 table .toggle {
     width: 35px;
 }
@@ -232,7 +241,6 @@ select {
     overflow: hidden;
     font-size: medium;
 }
-
 
 .partial-statistics .editable,
 #add-recipe-view .editable,
@@ -248,26 +256,15 @@ select {
     word-wrap: break-word;
 }
 
-th {
-    white-space: break-spaces;
-    word-wrap: break-word;
-    position: sticky;
-    top: 0;
-    background: white;
-}
-
-#add-recipe-view th:first-child,
-#ingredient-editor .recipe-edit-table th:first-child {
+.recipe-edit-table th:first-child {
     width: 20%;
 }
 
-#add-recipe-view th:nth-child(2),
-#ingredient-editor .recipe-edit-table th:nth-child(2) {
+.recipe-edit-table th:nth-child(2) {
     width: 27%;
 }
 
-#add-recipe-view th:nth-child(3),
-#ingredient-editor .recipe-edit-table th:nth-child(3) {
+.recipe-edit-table th:nth-child(3) {
     width: 23%;
 }
 
