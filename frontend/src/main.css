@@ -2,6 +2,8 @@ body, button, input {
     font-family: Arial, sans-serif;
 }
 
+/* Buttons */
+
 .overview-button {
     border: none;
     text-align: center;
@@ -18,23 +20,30 @@ body, button, input {
     background-color: rgb(66 100 160);
 }
 
-.overview-button:hover,
-.navigation-button:hover:not(.disabled),
-.pager-button:hover:not(.disabled),
-.error-button:hover:not(.disabled) {
-    background-color: rgb(100 149 237);
+.navigation-button,
+.pager-button {
+    color: rgb(250 250 250);
+    text-align: center;
+    border-radius: 5px;
+    text-decoration: none;
+    display: inline-block;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    word-wrap: break-word;
+    white-space: break-spaces;
+    width: 100%;
+    margin-bottom: 15px;
+    border: none;
+}
+
+.navigation-button,
+.pager-button,
+.error-button {
+    background-color: rgb(66 100 160);
 }
 
 .menu-button {
     background-color: rgb(23 162 184);
-}
-
-.menu-button:hover {
-    background-color: rgb(40 180 200);
-}
-
-.nutrients-button:hover {
-    background-color: rgb(170 102 204);
 }
 
 .add-button {
@@ -51,8 +60,51 @@ body, button, input {
     margin: auto auto 1%;
 }
 
-.add-button:hover {
-    background-color: rgb(85 225 60);
+.edit-button,
+.editor-button,
+.delete-button,
+.confirm-button,
+.cancel-button,
+.select-button,
+.logout-button,
+.alternative-button,
+.nutrients-button,
+.menu-button,
+.error-button {
+    color: rgb(250 250 250);
+    border: none;
+    text-align: center;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: large;
+    display: inline-block;
+    margin: auto;
+    vertical-align: center;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    height: 100%;
+    width: 100%;
+    word-wrap: break-word;
+    white-space: break-spaces;
+}
+
+.alternative-button {
+    width: auto;
+}
+
+/* Buttons: disabled */
+
+.edit-button:disabled,
+.editor-button:disabled,
+.delete-button:disabled,
+.confirm-button:disabled,
+.cancel-button:disabled,
+.select-button:disabled,
+.navigation-button:disabled,
+.pager-button:disabled,
+.alternative-button:disabled {
+    background-color: gray;
+    cursor: not-allowed;
 }
 
 #navigation table,
@@ -97,37 +149,6 @@ body, button, input {
     font-size: medium;
 }
 
-.edit-button,
-.editor-button,
-.delete-button,
-.confirm-button,
-.cancel-button,
-.select-button,
-.logout-button,
-.alternative-button,
-.nutrients-button,
-.menu-button,
-.error-button {
-    color: rgb(250 250 250);
-    border: none;
-    text-align: center;
-    border-radius: 5px;
-    text-decoration: none;
-    font-size: large;
-    display: inline-block;
-    margin: auto;
-    vertical-align: center;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    height: 100%;
-    width: 100%;
-    word-wrap: break-word;
-    white-space: break-spaces;
-}
-
-.alternative-button {
-    width: auto;
-}
 
 table .toggle {
     width: 35px;
@@ -139,29 +160,37 @@ select {
     font-size: medium;
 }
 
-.edit-button:disabled,
-.editor-button:disabled,
-.delete-button:disabled,
-.confirm-button:disabled,
-.cancel-button:disabled,
-.select-button:disabled,
-.navigation-button:disabled,
-.pager-button:disabled,
-.alternative-button:disabled {
-    background-color: gray;
-    cursor: not-allowed;
+/* Hover */
+
+.add-button:hover {
+    background-color: rgb(85 225 60);
 }
 
+.nutrients-button:hover {
+    background-color: rgb(170 102 204);
+}
+
+.overview-button:hover,
+.navigation-button:hover:not(.disabled),
+.pager-button:hover:not(.disabled),
+.error-button:hover:not(.disabled) {
+    background-color: rgb(100 149 237);
+}
+
+.menu-button:hover {
+    background-color: rgb(40 180 200);
+}
+
+.partial-statistics .editable,
 #add-recipe-view .editable,
-#add-meal-view .editable:not(.date, .time),
 #add-reference-map-view .editable,
 #ingredient-editor .editable,
-#meal-entry-editor .editable:not(.date, .time),
 #reference-entry-editor .editable,
-#statistics .editable:not(.date),
 #complex-food-editor .editable,
-.partial-statistics .editable,
-#statistics-recipe-occurrence .editable {
+#statistics-recipe-occurrence .editable,
+#add-meal-view .editable:not(.date, .time),
+#meal-entry-editor .editable:not(.date, .time),
+#statistics .editable:not(.date) {
     white-space: break-spaces;
     word-wrap: break-word;
 }
@@ -500,27 +529,6 @@ th {
     font-weight: lighter;
 }
 
-.navigation-button,
-.pager-button {
-    color: rgb(250 250 250);
-    text-align: center;
-    border-radius: 5px;
-    text-decoration: none;
-    display: inline-block;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    word-wrap: break-word;
-    white-space: break-spaces;
-    width: 100%;
-    margin-bottom: 15px;
-    border: none;
-}
-
-.navigation-button,
-.pager-button,
-.error-button {
-    background-color: rgb(66 100 160);
-}
 
 .nutrients-button {
     background-color: rgb(153 51 204);
