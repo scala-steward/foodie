@@ -88,7 +88,32 @@ body, button, input {
     white-space: break-spaces;
 }
 
+/* Buttons: Colours */
+
+.edit-button {
+    background-color: rgb(255 181 39);
+}
+
+.delete-button,
+.cancel-button {
+    background-color: rgb(214 69 70);
+}
+
+.logout-button {
+    background-color: rgb(66 100 160);
+}
+
+.editor-button {
+    background-color: rgb(65 105 225);
+}
+
+.select-button,
+.confirm-button {
+    background-color: rgb(54 217 54);
+}
+
 .alternative-button {
+    background-color: rgb(25 206 235);
     width: auto;
 }
 
@@ -105,6 +130,54 @@ body, button, input {
 .alternative-button:disabled {
     background-color: gray;
     cursor: not-allowed;
+}
+
+/* Hover */
+
+.add-button:hover {
+    background-color: rgb(85 225 60);
+}
+
+.nutrients-button:hover {
+    background-color: rgb(170 102 204);
+}
+
+.editor-button:hover {
+    background-color: rgb(90 130 240);
+}
+
+.menu-button:hover {
+    background-color: rgb(40 180 200);
+}
+
+.overview-button:hover,
+.navigation-button:hover:not(.disabled),
+.pager-button:hover:not(.disabled),
+.error-button:hover:not(.disabled) {
+    background-color: rgb(100 149 237);
+}
+
+.edit-button:hover:enabled {
+    background-color: rgb(255 210 50);
+}
+
+.delete-button:hover:enabled,
+.cancel-button:hover:enabled {
+    background-color: rgb(250 100 100);
+}
+
+.logout-button:hover:enabled {
+    background-color: rgb(100 149 237);
+}
+
+.select-button:hover:enabled,
+.select-button:hover:not(.disabled),
+.confirm-button:hover:enabled {
+    background-color: rgb(70 240 70);
+}
+
+.alternative-button:hover:enabled {
+    background-color: rgb(40 230 250);
 }
 
 #navigation table,
@@ -160,26 +233,6 @@ select {
     font-size: medium;
 }
 
-/* Hover */
-
-.add-button:hover {
-    background-color: rgb(85 225 60);
-}
-
-.nutrients-button:hover {
-    background-color: rgb(170 102 204);
-}
-
-.overview-button:hover,
-.navigation-button:hover:not(.disabled),
-.pager-button:hover:not(.disabled),
-.error-button:hover:not(.disabled) {
-    background-color: rgb(100 149 237);
-}
-
-.menu-button:hover {
-    background-color: rgb(40 180 200);
-}
 
 .partial-statistics .editable,
 #add-recipe-view .editable,
@@ -381,58 +434,6 @@ th {
     padding-right: 5px;
 }
 
-.edit-button {
-    background-color: rgb(255 181 39);
-}
-
-.edit-button:hover:enabled {
-    background-color: rgb(255 210 50);
-}
-
-.delete-button,
-.cancel-button {
-    background-color: rgb(214 69 70);
-}
-
-.delete-button:hover:enabled,
-.cancel-button:hover:enabled {
-    background-color: rgb(250 100 100);
-}
-
-.logout-button {
-    background-color: rgb(66 100 160);
-}
-
-.logout-button:hover:enabled {
-    background-color: rgb(100 149 237);
-}
-
-.editor-button {
-    background-color: rgb(65 105 225);
-}
-
-.editor-button:hover {
-    background-color: rgb(90 130 240);
-}
-
-.select-button,
-.confirm-button {
-    background-color: rgb(54 217 54);
-}
-
-.select-button:hover:enabled,
-.select-button:hover:not(.disabled),
-.confirm-button:hover:enabled {
-    background-color: rgb(70 240 70);
-}
-
-.alternative-button {
-    background-color: rgb(25 206 235);
-}
-
-.alternative-button:hover:enabled {
-    background-color: rgb(40 230 250);
-}
 
 #add-recipe-view input:not(.search-field),
 #add-meal-view input:not(.search-field),
