@@ -2,44 +2,53 @@ body, button, input {
     font-family: Arial, sans-serif;
 }
 
-.overviewButton {
+/* Buttons */
+
+.overview-button {
     border: none;
     text-align: center;
     padding: 5%;
     border-radius: 5px;
     text-decoration: none;
-    font-size: xxx-large;
+    font-size: 32pt;
     white-space: normal;
     word-wrap: break-word;
-    width: 95%;
+    width: 90%;
     display: block;
     margin: auto auto 1%;
-    color: rgb(250, 250, 250);
-    background-color: rgb(66, 100, 160);
+    color: rgb(250 250 250);
+    background-color: rgb(66 100 160);
 }
 
-.overviewButton:hover,
-.navigationButton:hover:not(.disabled),
-.pagerButton:hover:not(.disabled),
-.errorButton:hover:not(.disabled) {
-    background-color: rgb(100, 149, 237);
+.navigation-button,
+.pager-button {
+    color: rgb(250 250 250);
+    text-align: center;
+    border-radius: 5px;
+    text-decoration: none;
+    display: inline-block;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    word-wrap: break-word;
+    white-space: break-spaces;
+    width: 100%;
+    margin-bottom: 15px;
+    border: none;
 }
 
-.menuButton {
-    background-color: rgb(23, 162, 184);
+.navigation-button,
+.pager-button,
+.error-button {
+    background-color: rgb(66 100 160);
 }
 
-.menuButton:hover {
-    background-color: rgb(40, 180, 200);
+.menu-button {
+    background-color: rgb(23 162 184);
 }
 
-.nutrientsButton:hover {
-    background-color: rgb(170, 102, 204);
-}
-
-.addButton {
-    background-color: rgb(50, 180, 50);
-    color: rgb(250, 250, 250);
+.add-button {
+    background-color: rgb(50 180 50);
+    color: rgb(250 250 250);
     border: none;
     text-align: center;
     padding: 1%;
@@ -51,64 +60,18 @@ body, button, input {
     margin: auto auto 1%;
 }
 
-.addButton:hover {
-    background-color: rgb(85, 225, 60);
-}
-
-#navigation table,
-.elementsWithControlsTable {
-    border-spacing: 0;
-    width: 100%;
-    table-layout: fixed;
-    border-collapse: collapse;
-    position: relative;
-}
-
-.elementsWithControlsTable thead th {
-    font-weight: lighter;
-    color: rgb(250, 250, 250);;
-    background-color: gray;
-    text-transform: uppercase;
-}
-
-.elementsWithControlsTable thead th:not(.numberLabel) {
-    text-align: left;
-}
-
-.searchArea {
-    display: inline-block;
-    margin-top: 20px;
-    margin-bottom: 20px;
-    text-align: left;
-}
-
-.searchArea input {
-    width: 50%;
-    margin: 3px;
-}
-
-.searchArea label,
-.searchArea button {
-    width: 20%
-}
-
-.searchArea label,
-.searchArea input {
-    font-size: medium;
-}
-
-.editButton,
-.editorButton,
-.deleteButton,
-.confirmButton,
-.cancelButton,
-.selectButton,
-.logoutButton,
-.alternativeButton,
-.nutrientsButton,
-.menuButton,
-.errorButton {
-    color: rgb(250, 250, 250);
+.edit-button,
+.editor-button,
+.delete-button,
+.confirm-button,
+.cancel-button,
+.select-button,
+.logout-button,
+.alternative-button,
+.nutrients-button,
+.menu-button,
+.error-button {
+    color: rgb(250 250 250);
     border: none;
     text-align: center;
     border-radius: 5px;
@@ -119,53 +82,105 @@ body, button, input {
     vertical-align: center;
     padding-top: 5px;
     padding-bottom: 5px;
-    border: 0;
     height: 100%;
     width: 100%;
     word-wrap: break-word;
     white-space: break-spaces;
 }
 
-.alternativeButton {
+/* Buttons: Colours */
+
+.edit-button {
+    background-color: rgb(255 181 39);
+}
+
+.delete-button,
+.cancel-button {
+    background-color: rgb(214 69 70);
+}
+
+.logout-button {
+    background-color: rgb(66 100 160);
+}
+
+.editor-button {
+    background-color: rgb(65 105 225);
+}
+
+.select-button,
+.confirm-button {
+    background-color: rgb(54 217 54);
+}
+
+.alternative-button {
+    background-color: rgb(25 206 235);
     width: auto;
 }
 
-table .toggle {
-    width: 35px;
-}
+/* Buttons: disabled */
 
-select {
-    white-space: nowrap;
-    overflow: hidden;
-    font-size: medium;
-}
-
-.editButton:disabled,
-.editorButton:disabled,
-.deleteButton:disabled,
-.confirmButton:disabled,
-.cancelButton:disabled,
-.selectButton:disabled,
-.navigationButton:disabled,
-.pagerButton:disabled,
-.alternativeButton:disabled {
+.edit-button:disabled,
+.editor-button:disabled,
+.delete-button:disabled,
+.confirm-button:disabled,
+.cancel-button:disabled,
+.select-button:disabled,
+.navigation-button:disabled,
+.pager-button:disabled,
+.alternative-button:disabled {
     background-color: gray;
     cursor: not-allowed;
 }
 
-#addRecipeView .editable,
-#addMealView .editable:not(.date, .time),
-#addReferenceMapView .editable,
-#ingredientEditor .editable,
-#mealEntryEditor .editable:not(.date, .time),
-#referenceEntryEditor .editable,
-#statistics .editable:not(.date),
-#complexFoodEditor .editable,
-.partialStatistics .editable,
-#statisticsRecipeOccurrence .editable {
-    white-space: break-spaces;
-    word-wrap: break-word;
+/* Buttons: hover */
+
+.add-button:hover {
+    background-color: rgb(85 225 60);
 }
+
+.nutrients-button:hover {
+    background-color: rgb(170 102 204);
+}
+
+.editor-button:hover {
+    background-color: rgb(90 130 240);
+}
+
+.menu-button:hover {
+    background-color: rgb(40 180 200);
+}
+
+.overview-button:hover,
+.navigation-button:hover:not(.disabled),
+.pager-button:hover:not(.disabled),
+.error-button:hover:not(.disabled) {
+    background-color: rgb(100 149 237);
+}
+
+.edit-button:hover:enabled {
+    background-color: rgb(255 210 50);
+}
+
+.delete-button:hover:enabled,
+.cancel-button:hover:enabled {
+    background-color: rgb(250 100 100);
+}
+
+.logout-button:hover:enabled {
+    background-color: rgb(100 149 237);
+}
+
+.select-button:hover:enabled,
+.select-button:hover:not(.disabled),
+.confirm-button:hover:enabled {
+    background-color: rgb(70 240 70);
+}
+
+.alternative-button:hover:enabled {
+    background-color: rgb(40 230 250);
+}
+
+/* Tables: headers */
 
 th {
     white-space: break-spaces;
@@ -175,81 +190,79 @@ th {
     background: white;
 }
 
-#addRecipeView th:first-child,
-#ingredientEditor .recipeEditTable th:first-child {
+.elements-with-controls-table thead th {
+    font-weight: lighter;
+    color: rgb(250 250 250);;
+    background-color: gray;
+    text-transform: uppercase;
+}
+
+.recipe-edit-table th:first-child {
     width: 20%;
 }
 
-#addRecipeView th:nth-child(2),
-#ingredientEditor .recipeEditTable th:nth-child(2) {
+.recipe-edit-table th:nth-child(2) {
     width: 27%;
 }
 
-#addRecipeView th:nth-child(3),
-#ingredientEditor .recipeEditTable th:nth-child(3) {
+.recipe-edit-table th:nth-child(3) {
     width: 23%;
 }
 
-#addMealView th:first-child,
-#mealEntryEditor .mealEditTable th:first-child,
-#statistics .meals th:first-child,
-#statisticsMeal th:first-child {
+.meal-edit-table th:first-child {
     width: 25%;
 }
 
-#addMealView th:nth-child(2):not(input),
-#mealEntryEditor .mealEditTable th:nth-child(2):not(input),
-#statistics .meals th:nth-child(2),
-#statisticsMeal th:nth-child(2) {
+.meal-edit-table th:nth-child(2):not(input) {
     width: 15%;
 }
 
-#mealEntryEditor .addView .addElement th:first-child,
-#mealEntryEditor .elementEditTable th:first-child {
+#meal-entry-editor .element-edit-table th:first-child,
+#meal-entry-editor .add-view .add-element th:first-child {
     width: 20%
 }
 
-#mealEntryEditor .addView .addElement th:nth-child(2),
-#mealEntryEditor .elementEditTable th:nth-child(2) {
+#meal-entry-editor .element-edit-table th:nth-child(2),
+#meal-entry-editor .add-view .add-element th:nth-child(2) {
     width: 27%
 }
 
-#mealEntryEditor .addView .addElement th:nth-child(3),
-#mealEntryEditor .elementEditTable th:nth-child(3) {
+#meal-entry-editor .element-edit-table th:nth-child(3),
+#meal-entry-editor .add-view .add-element th:nth-child(3) {
     width: 20%
 }
 
-#referenceEntryEditor .elementEditTable th:first-child,
-#referenceEntryEditor .addView .addElement th:first-child {
-    width: 40%;
-}
-
-#referenceEntryEditor .elementEditTable th:nth-child(2),
-#referenceEntryEditor .addView .addElement th:nth-child(2) {
-    width: 35%
-}
-
-#ingredientEditor .elementEditTable th:first-child,
-#ingredientEditor .addView .addElement th:first-child {
+#ingredient-editor .element-edit-table th:first-child,
+#ingredient-editor .add-view .add-element th:first-child {
     width: 50%
 }
 
-#ingredientEditor .elementEditTable th:nth-child(2),
-#ingredientEditor .addView .addElement th:first-child th:nth-child(2) {
+#ingredient-editor .element-edit-table th:nth-child(2),
+#ingredient-editor .add-view .add-element th:nth-child(2) {
     width: 20%;
 }
 
-#statistics .intervalSelection th:first-child,
-#statistics .intervalSelection th:nth-child(2) {
+#reference-entry-editor .element-edit-table th:first-child,
+#reference-entry-editor .add-view .add-element th:first-child {
+    width: 40%;
+}
+
+#reference-entry-editor .element-edit-table th:nth-child(2),
+#reference-entry-editor .add-view .add-element th:nth-child(2) {
+    width: 35%
+}
+
+#statistics .interval-selection th:first-child,
+#statistics .interval-selection th:nth-child(2) {
     width: 10%;
 }
 
-#statistics .intervalSelection th:nth-child(3) {
+#statistics .interval-selection th:nth-child(3) {
     width: 20%;
 }
 
-#statistics .nutrients th:first-child,
-.partialStatistics .nutrients th:first-child {
+.partial-statistics .nutrients th:first-child,
+#statistics .nutrients th:first-child {
     width: 20%;
 }
 
@@ -265,74 +278,109 @@ th {
     width: 17%;
 }
 
-#statistics .nutrients th:nth-child(5),
-.partialStatistics .nutrients th:nth-child(4) {
+.partial-statistics .nutrients th:nth-child(4),
+#statistics .nutrients th:nth-child(5) {
     width: 10%;
 }
 
-.partialStatistics .nutrients th:nth-child(2),
-.partialStatistics .nutrients th:nth-child(3) {
+.partial-statistics .nutrients th:nth-child(2),
+.partial-statistics .nutrients th:nth-child(3) {
     width: 25%;
 }
 
-#statisticsFood th:first-child {
+#statistics-food th:first-child {
     width: 80%;
 }
 
-#statisticsComplexFood th:first-child {
+#statistics-complex-food th:first-child {
     width: 60%;
 }
 
-#statisticsRecipe th:first-child {
+#statistics-recipe th:first-child {
     width: 30%;
 }
 
-#statisticsRecipe th:nth-child(2) {
+#statistics-recipe th:nth-child(2) {
     width: 30%;
 }
 
-#complexFoodEditor .elementEditTable th:first-child {
+#complex-food-editor .element-edit-table th:first-child {
     width: 40%
 }
 
-#complexFoodEditor .elementEditTable th:nth-child(2) {
+#complex-food-editor .element-edit-table th:nth-child(2) {
     width: 22%
 }
 
-#complexFoodEditor .addView .addElement th:first-child {
+#complex-food-editor .add-view .add-element th:first-child {
     width: 10%
 }
 
-#complexFoodEditor .addView .addElement th:nth-child(2) {
+#complex-food-editor .add-view .add-element th:nth-child(2) {
     width: 23%
 }
 
-#complexFoodEditor .addView .addElement th:nth-child(3) {
+#complex-food-editor .add-view .add-element th:nth-child(3) {
     width: 10%
 }
 
-#complexFoodEditor .addView .addElement th:nth-child(4) {
+#complex-food-editor .add-view .add-element th:nth-child(4) {
     width: 15%
 }
 
-#complexFoodEditor .addView .addElement th:nth-child(5) {
+#complex-food-editor .add-view .add-element th:nth-child(5) {
     width: 15%
 }
 
-#statisticsRecipeOccurrence th:first-child {
+#statistics-recipe-occurrence th:first-child {
     width: 12.5%;
 }
 
-#statisticsRecipeOccurrence th:nth-child(2) {
+#statistics-recipe-occurrence th:nth-child(2) {
     width: 12.5%;
 }
 
-#statisticsRecipeOccurrence th:nth-child(3) {
+#statistics-recipe-occurrence th:nth-child(3) {
     width: 25%;
 }
 
-#statisticsRecipeOccurrence th:nth-child(4) {
+#statistics-recipe-occurrence th:nth-child(4) {
     width: 10%;
+}
+
+#navigation th {
+    font-size: smaller;
+    font-weight: lighter;
+}
+
+.elements-with-controls-table thead th:not(.number-label) {
+    text-align: left;
+}
+
+/* Table: general */
+
+table .toggle {
+    width: 35px;
+}
+
+.elements-with-controls-table,
+#navigation table {
+    border-spacing: 0;
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    position: relative;
+}
+
+select {
+    white-space: nowrap;
+    overflow: hidden;
+    font-size: medium;
+}
+
+.editable:not(.date, .time) {
+    white-space: break-spaces;
+    word-wrap: break-word;
 }
 
 .low {
@@ -347,81 +395,28 @@ th {
     color: #0492c2; /* cerulean */
 }
 
-.numberLabel,
-.numberCell {
+.number-label,
+.number-cell {
     text-align: right;
     padding-right: 5px;
 }
 
-.editButton {
-    background-color: rgb(255, 181, 39);
-}
-
-.editButton:hover:enabled {
-    background-color: rgb(255, 210, 50);
-}
-
-.deleteButton,
-.cancelButton {
-    background-color: rgb(214, 69, 70);
-}
-
-.deleteButton:hover:enabled,
-.cancelButton:hover:enabled {
-    background-color: rgb(250, 100, 100);
-}
-
-.logoutButton {
-    background-color: rgb(66, 100, 160);
-}
-
-.logoutButton:hover:enabled {
-    background-color: rgb(100, 149, 237);
-}
-
-.editorButton {
-    background-color: rgba(65, 105, 225);
-}
-
-.editorButton:hover {
-    background-color: rgba(90, 130, 240);
-}
-
-.selectButton,
-.confirmButton {
-    background-color: rgb(54, 217, 54);
-}
-
-.selectButton:hover:enabled,
-.selectButton:hover:not(.disabled),
-.confirmButton:hover:enabled {
-    background-color: rgb(70, 240, 70);
-}
-
-.alternativeButton {
-    background-color: rgb(25, 206, 235);
-}
-
-.alternativeButton:hover:enabled {
-    background-color: rgb(40, 230, 250);
-}
-
-#addRecipeView input:not(.searchField),
-#addMealView input:not(.searchField),
-#addReferenceMapView input:not(.searchField),
-#ingredientEditor input:not(.searchField),
-#complexFoodEditor input:not(.searchField),
-#mealEntryEditor input:not(.searchField),
-#referenceEntryEditor input:not(.searchField),
-#statistics input:not(.searchField) {
+#add-recipe-view input:not(.search-field),
+#add-meal-view input:not(.search-field),
+#add-reference-map-view input:not(.search-field),
+#ingredient-editor input:not(.search-field),
+#complex-food-editor input:not(.search-field),
+#meal-entry-editor input:not(.search-field),
+#reference-entry-editor input:not(.search-field),
+#statistics input:not(.search-field) {
     box-sizing: border-box;
     width: 100%;
     font-size: medium;
 }
 
 .editing:not(.controls):hover,
-.editLine:hover {
-    background-color: rgb(220, 220, 220);
+.edit-line:hover {
+    background-color: rgb(220 220 220);
 }
 
 .elements {
@@ -430,20 +425,12 @@ th {
     padding-bottom: 10px;
 }
 
-.searchField {
-    margin-top: 20px;
-    margin-bottom: 20px;
-}
-
-#login, .request, .confirm {
+.request, .confirm {
     display: inline-block;
     text-align: center;
     width: 100%;
 }
 
-#login input,
-#login label,
-#login button,
 .request input,
 .request label,
 .request button,
@@ -454,21 +441,18 @@ th {
     font-size: large;
 }
 
-#login input,
 .request input,
 .confirm input {
     box-sizing: border-box;
     margin-bottom: 5px;
 }
 
-#login label,
 .request label,
 .confirm label {
     padding-right: 5px;
     width: 40%
 }
 
-#login button,
 .request button,
 .confirm button,
 .confirm a {
@@ -496,35 +480,8 @@ th {
     margin-right: 5px;
 }
 
-#navigation thead th {
-    font-size: smaller;
-    font-weight: lighter;
-}
-
-.navigationButton,
-.pagerButton {
-    color: rgb(250, 250, 250);
-    text-align: center;
-    border-radius: 5px;
-    text-decoration: none;
-    display: inline-block;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    word-wrap: break-word;
-    white-space: break-spaces;
-    width: 100%;
-    margin-bottom: 15px;
-    border: none;
-}
-
-.navigationButton,
-.pagerButton,
-.errorButton {
-    background-color: rgb(66, 100, 160);
-}
-
-.nutrientsButton {
-    background-color: rgb(153, 51, 204);
+.nutrients-button {
+    background-color: rgb(153 51 204);
 }
 
 .ellipsis {
@@ -551,35 +508,58 @@ th {
 }
 
 .incomplete {
-    text-decoration: underline dashed rgb(218, 112, 214);
+    text-decoration: underline dashed rgb(218 112 214);
 }
 
-
-#statisticsRecipeOccurrence .sortControls button {
+#statistics-recipe-occurrence .sort-controls button {
     margin-left: 5px;
     margin-bottom: 5px;
 }
 
+.search-field {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.search-area {
+    display: inline-block;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.search-area input {
+    width: 50%;
+    margin: 3px;
+}
+
+.search-area label,
+.search-area button {
+    width: 20%
+}
+
+.search-area label,
+.search-area input {
+    font-size: medium;
+}
+
 @media only screen and (orientation: portrait) {
-    .elementsWithControlsTable thead th {
+    .elements-with-controls-table thead th {
         font-size: small;
     }
 
-    .editButton,
-    .editorButton,
-    .deleteButton,
-    .confirmButton,
-    .cancelButton,
-    .selectButton,
-    .logoutButton,
-    .alternativeButton,
-    .nutrientsButton,
-    .menuButton,
-    .errorButton,
-    .addButton,
-    #login input,
-    #login label,
-    #login button,
+    .edit-button,
+    .editor-button,
+    .delete-button,
+    .confirm-button,
+    .cancel-button,
+    .select-button,
+    .logout-button,
+    .alternative-button,
+    .nutrients-button,
+    .menu-button,
+    .error-button,
+    .add-button,
     .request input,
     .request label,
     .request button,
@@ -596,7 +576,7 @@ th {
 
 }
 
-@media screen and (min-width: 1200px) {
+@media screen and (width >= 1200px) {
     body {
         width: 61.8%;
         margin-left: auto;

@@ -71,7 +71,7 @@ viewMain configuration main =
                         }
                     , table [ Style.classes.elementsWithControlsTable ]
                         [ thead []
-                            [ tr [ Style.classes.tableHeader ]
+                            [ tr [ Style.classes.tableHeader, Style.classes.mealEditTable ]
                                 [ th [] [ label [] [ text "Date" ] ]
                                 , th [] [ label [] [ text "Time" ] ]
                                 , th [] [ label [] [ text "Name" ] ]
