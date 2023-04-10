@@ -5,8 +5,8 @@ import Api.Types.Date exposing (Date)
 import Api.Types.Meal exposing (Meal)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
-import Html exposing (Html, button, col, colgroup, div, input, label, table, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (colspan, scope, type_, value)
+import Html exposing (Html, button, div, input, label, table, tbody, td, text, th, thead, tr)
+import Html.Attributes exposing (type_, value)
 import Html.Events exposing (onClick, onInput)
 import Maybe.Extra
 import Monocle.Compose as Compose
@@ -81,7 +81,7 @@ viewMain configuration main =
                         main
                         ++ [ div [ Style.classes.elements ] [ text "Meals" ]
                            , div [ Style.classes.info, Style.classes.meals ]
-                                [ table [ Style.classes.elementsWithControlsTable ]
+                                [ table [ Style.classes.elementsWithControlsTable, Style.classes.mealEditTable ]
                                     [ thead []
                                         [ tr []
                                             [ th [] [ label [] [ text "Date" ] ]

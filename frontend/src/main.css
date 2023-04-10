@@ -268,17 +268,11 @@ select {
     width: 23%;
 }
 
-#add-meal-view th:first-child,
-#meal-entry-editor .meal-edit-table th:first-child,
-#statistics .meals th:first-child,
-#statistics-meal th:first-child {
+.meal-edit-table th:first-child {
     width: 25%;
 }
 
-#add-meal-view th:nth-child(2):not(input),
-#meal-entry-editor .meal-edit-table th:nth-child(2):not(input),
-#statistics .meals th:nth-child(2),
-#statistics-meal th:nth-child(2) {
+.meal-edit-table th:nth-child(2):not(input) {
     width: 15%;
 }
 
