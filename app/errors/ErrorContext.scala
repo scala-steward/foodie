@@ -55,6 +55,11 @@ object ErrorContext {
           s"Recipe update failed due to: $dbMessage"
         )
 
+    case class AutoScale(errorMessage: String)
+        extends ServerErrorInstance(
+          s"Cannot automatically determine the number of servings: $errorMessage"
+        )
+
     case class General(dbMessage: String)
         extends ServerErrorInstance(
           s"A database operation failed with the message: $dbMessage"
