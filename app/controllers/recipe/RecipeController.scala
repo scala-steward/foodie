@@ -11,6 +11,7 @@ import play.api.mvc._
 import services.DBError
 import services.complex.ingredient.ComplexIngredientService
 import services.recipe.RecipeService
+import services.rescale.RescaleService
 import utils.TransformerUtils.Implicits._
 
 import java.util.UUID
@@ -22,6 +23,7 @@ class RecipeController @Inject() (
     controllerComponents: ControllerComponents,
     recipeService: RecipeService,
     recipeDuplication: services.duplication.recipe.Duplication,
+    rescaleService: RescaleService,
     complexIngredientService: ComplexIngredientService,
     userAction: UserAction
 )(implicit ec: ExecutionContext)
@@ -149,6 +151,24 @@ class RecipeController @Inject() (
       EitherT(
         recipeDuplication
           .duplicate(
+            request.user.id,
+            id.transformInto[RecipeId]
+          )
+      )
+        .map(
+          _.pipe(_.transformInto[Recipe])
+            .pipe(_.asJson)
+            .pipe(Ok(_))
+        )
+        .fold(controllers.badRequest, identity)
+        .recover(errorHandler)
+    }
+
+  def rescale(id: UUID): Action[AnyContent] =
+    userAction.async { request =>
+      EitherT(
+        rescaleService
+          .rescale(
             request.user.id,
             id.transformInto[RecipeId]
           )
