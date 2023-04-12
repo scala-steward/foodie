@@ -154,4 +154,23 @@ object RescaleProperties extends Properties("Rescale properties") {
     DBTestUtil.awaitProp(transformer)
   }
 
+  property("Rescaling fails for wrong user id") = Prop.forAll(
+    rescaleSetupGen :| "setup",
+    GenUtils.taggedId[UserTag] :| "userId2"
+  ) { (setup, userId2) =>
+    val services = servicesWith(
+      userId = setup.userId,
+      complexFoods = setup.complexFoods,
+      recipe = setup.recipe,
+      referencedRecipes = setup.referencedRecipes,
+      ingredients = setup.ingredients,
+      complexIngredients = setup.complexIngredients
+    )
+    val propF = for {
+      result <- services.rescaleService.rescale(userId2, setup.recipe.id)
+    } yield result.isLeft
+
+    DBTestUtil.await(propF)
+  }
+
 }
