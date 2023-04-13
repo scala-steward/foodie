@@ -48,7 +48,7 @@ viewMain configuration main =
                             ]
                         , tr []
                             [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Servings" ] ]
-                            , td [] [ label [] [ text <| String.fromFloat <| .numberOfServings <| main.recipe ] ]
+                            , td [] [ label [] [ text <| StatisticsView.displayFloat <| .numberOfServings <| main.recipe ] ]
                             ]
                         , tr []
                             [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Serving size" ] ]
