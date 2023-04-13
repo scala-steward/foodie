@@ -72,13 +72,6 @@ toView =
     lenses.editState.set (EditState.View False)
 
 
-toViewWith : { showControls : Bool } -> Editing original update -> Editing original update
-toViewWith =
-    .showControls
-        >> EditState.View
-        >> lenses.editState.set
-
-
 extractUpdate : Editing original update -> Maybe update
 extractUpdate =
     lenses.editState
