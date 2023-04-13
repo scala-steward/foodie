@@ -22,6 +22,7 @@ classes :
         , nutrients : Attribute msg
         , overview : Attribute msg
         , pager : Attribute msg
+        , rescale : Attribute msg
         , select : Attribute msg
         }
     , choices : Attribute msg
@@ -84,6 +85,7 @@ classes =
         , nutrients = class "nutrients-button"
         , overview = class "overview-button"
         , pager = class "pager-button"
+        , rescale = class "rescale-button"
         , select = class "select-button"
         }
     , choices = class "choices"

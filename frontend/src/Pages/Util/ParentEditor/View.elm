@@ -9,7 +9,7 @@ import Monocle.Compose as Compose
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.ParentEditor.Page as Page
-import Pages.Util.ParentEditor.Pagination as Pagination
+import Pages.Util.ParentEditor.Pagination as Pagination exposing (Pagination)
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
 import Paginate
@@ -22,20 +22,23 @@ viewParentsWith :
     { currentPage : ViewUtil.Page
     , matchesSearchText : String -> parent -> Bool
     , sort : List (Editing parent update) -> List (Editing parent update)
-    , tableHeader : Html (Page.LogicMsg parentId parent creation update)
-    , viewLine : Configuration -> parent -> Bool -> List (Html (Page.LogicMsg parentId parent creation update))
-    , updateLine : parent -> update -> List (Html (Page.LogicMsg parentId parent creation update))
-    , deleteLine : parent -> List (Html (Page.LogicMsg parentId parent creation update))
+    , tableHeader : Html msg
+    , viewLine : Configuration -> parent -> Bool -> List (Html msg)
+    , updateLine : parent -> update -> List (Html msg)
+    , deleteLine : parent -> List (Html msg)
     , create :
-        { ifCreating : creation -> List (Html (Page.LogicMsg parentId parent creation update))
+        { ifCreating : creation -> List (Html msg)
         , default : creation
         , label : String
+        , update : Maybe creation -> msg
         }
-    , styling : Attribute (Page.LogicMsg parentId parent creation update)
+    , setSearchString : String -> msg
+    , setPagination : Pagination -> msg
+    , styling : Attribute msg
     }
     -> Configuration
     -> Page.Main parentId parent creation update
-    -> Html (Page.LogicMsg parentId parent creation update)
+    -> Html msg
 viewParentsWith ps configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
@@ -70,7 +73,11 @@ viewParentsWith ps configuration main =
                 main.parentCreation
                     |> Maybe.Extra.unwrap
                         ( [ div [ Style.ids.add ]
-                                [ creationButton { defaultCreation = ps.create.default, label = ps.create.label }
+                                [ creationButton
+                                    { defaultCreation = ps.create.default
+                                    , label = ps.create.label
+                                    , updateCreationMsg = ps.create.update
+                                    }
                                 ]
                           ]
                         , []
@@ -80,7 +87,7 @@ viewParentsWith ps configuration main =
         div [ ps.styling ]
             (button
                 ++ [ HtmlUtil.searchAreaWith
-                        { msg = Page.SetSearchString
+                        { msg = ps.setSearchString
                         , searchString = main.searchString
                         }
                    , table [ Style.classes.elementsWithControlsTable ]
@@ -99,7 +106,7 @@ viewParentsWith ps configuration main =
                                     , items = Pagination.lenses.parents
                                     }
                                     main
-                                    >> Page.SetPagination
+                                    >> ps.setPagination
                             , elements = viewParents
                             }
                         ]
@@ -165,12 +172,13 @@ lineWith ps parent =
 creationButton :
     { defaultCreation : creation
     , label : String
+    , updateCreationMsg : Maybe creation -> msg
     }
-    -> Html (Page.LogicMsg parentId parent creation update)
+    -> Html msg
 creationButton ps =
     button
         [ Style.classes.button.add
-        , onClick <| Page.UpdateCreation <| Just <| ps.defaultCreation
+        , onClick <| ps.updateCreationMsg <| Just <| ps.defaultCreation
         ]
         [ text <| ps.label ]
 

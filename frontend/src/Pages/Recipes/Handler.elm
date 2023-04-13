@@ -9,12 +9,15 @@ import Pages.Util.ParentEditor.Handler
 import Pages.Util.ParentEditor.Page
 import Pages.Util.Requests
 import Pages.View.Tristate as Tristate
+import Result.Extra
+import Util.Editing as Editing
+import Util.LensUtil as LensUtil
 
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
     ( Pages.Util.ParentEditor.Page.initial flags.authorizedAccess
-    , Requests.fetchRecipes flags.authorizedAccess |> Cmd.map Tristate.Logic
+    , Requests.fetchRecipes flags.authorizedAccess |> Cmd.map (Page.ParentMsg >> Tristate.Logic)
     )
 
 
@@ -24,14 +27,49 @@ update =
 
 
 updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
-updateLogic =
-    Pages.Util.ParentEditor.Handler.updateLogic
-        { idOfParent = .id
-        , idOfUpdate = .id
-        , toUpdate = RecipeUpdateClientInput.from
-        , navigateToAddress = Addresses.Frontend.ingredientEditor.address
-        , create = \authorizedAccess -> RecipeCreationClientInput.toCreation >> Requests.createRecipe authorizedAccess
-        , save = \authorizedAccess -> RecipeUpdateClientInput.to >> Requests.saveRecipe authorizedAccess
-        , delete = Requests.deleteRecipe
-        , duplicate = Pages.Util.Requests.duplicateRecipeWith Pages.Util.ParentEditor.Page.GotDuplicateResponse
-        }
+updateLogic msg model =
+    let
+        rescale recipeId =
+            ( model
+            , model
+                |> Tristate.foldMain Cmd.none
+                    (\main ->
+                        Pages.Util.Requests.rescaleRecipeWith Page.GotRescaleResponse
+                            { configuration = model.configuration
+                            , jwt = main.jwt
+                            }
+                            recipeId
+                    )
+            )
+
+        gotRescaleResponse result =
+            ( result
+                |> Result.Extra.unpack (Tristate.toError model)
+                    (\recipe ->
+                        model
+                            |> Tristate.mapMain (LensUtil.updateById recipe.id Pages.Util.ParentEditor.Page.lenses.main.parents (recipe |> Editing.asViewWithElement))
+                    )
+            , Cmd.none
+            )
+    in
+    case msg of
+        Page.ParentMsg parentMsg ->
+            Pages.Util.ParentEditor.Handler.updateLogic
+                { idOfParent = .id
+                , idOfUpdate = .id
+                , toUpdate = RecipeUpdateClientInput.from
+                , navigateToAddress = Addresses.Frontend.ingredientEditor.address
+                , create = \authorizedAccess -> RecipeCreationClientInput.toCreation >> Requests.createRecipe authorizedAccess
+                , save = \authorizedAccess -> RecipeUpdateClientInput.to >> Requests.saveRecipe authorizedAccess
+                , delete = Requests.deleteRecipe
+                , duplicate = Pages.Util.Requests.duplicateRecipeWith Pages.Util.ParentEditor.Page.GotDuplicateResponse
+                }
+                parentMsg
+                model
+                |> Tuple.mapSecond (Cmd.map Page.ParentMsg)
+
+        Page.Rescale recipeId ->
+            rescale recipeId
+
+        Page.GotRescaleResponse result ->
+            gotRescaleResponse result
