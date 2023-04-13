@@ -14,10 +14,10 @@ object RecipeCreation {
   def create(id: RecipeId, recipeCreation: RecipeCreation): Recipe =
     Recipe(
       id = id,
-      name = recipeCreation.name,
-      description = recipeCreation.description,
+      name = recipeCreation.name.trim,
+      description = recipeCreation.description.map(_.trim),
       numberOfServings = recipeCreation.numberOfServings,
-      servingSize = recipeCreation.servingSize
+      servingSize = recipeCreation.servingSize.map(_.trim)
     )
 
 }
