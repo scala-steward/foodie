@@ -7,13 +7,13 @@ import Util.Editing as Editing
 
 
 viewMain :
-    { tableHeader : Html (Page.LogicMsg parent update)
-    , onView : parent -> Bool -> List (Html (Page.LogicMsg parent update))
-    , onUpdate : parent -> update -> List (Html (Page.LogicMsg parent update))
-    , onDelete : parent -> List (Html (Page.LogicMsg parent update))
+    { tableHeader : Html msg
+    , onView : parent -> Bool -> List (Html msg)
+    , onUpdate : parent -> update -> List (Html msg)
+    , onDelete : parent -> List (Html msg)
     }
     -> Page.Main parent update
-    -> Html (Page.LogicMsg parent update)
+    -> Html msg
 viewMain ps main =
     table [ Style.classes.elementsWithControlsTable ]
         (ps.tableHeader
