@@ -1,11 +1,12 @@
 package services.rescale
 
 import cats.data.EitherT
+import cats.syntax.contravariantSemigroupal._
 import cats.syntax.traverse._
 import db.{ DAOTestInstance, UserId, UserTag }
 import errors.ErrorContext
 import org.scalacheck.Prop.AnyOperators
-import org.scalacheck.{ Gen, Prop, Properties }
+import org.scalacheck.{ Arbitrary, Gen, Prop, Properties }
 import services.GenUtils.implicits._
 import services.complex.food.{ ComplexFoodIncoming, ComplexFoodServiceProperties }
 import services.complex.ingredient.{ ComplexIngredient, ComplexIngredientService }
@@ -168,6 +169,52 @@ object RescaleProperties extends Properties("Rescale properties") {
     )
     val propF = for {
       result <- services.rescaleService.rescale(userId2, setup.recipe.id)
+    } yield result.isLeft
+
+    DBTestUtil.await(propF)
+  }
+
+  private val invalidServingSizeGen: Gen[RescaleSetup] = {
+    val invalidNumber = for {
+      letter   <- Gen.alphaChar
+      rest     <- Arbitrary.arbitrary[String]
+      permuted <- GenUtils.shuffle(letter +: rest.toList)
+    } yield permuted.mkString
+    val validNumber = for {
+      positive <- Gen.posNum[BigDecimal]
+    } yield positive.toString()
+    val invalidUnit = for {
+      string <- Arbitrary.arbitrary[String]
+    } yield if (string == "g") "invalid" else string
+    val invalidSizeGen = for {
+      invalidCombination <- Gen.oneOf(
+        (invalidNumber, Gen.const("g")).tupled,
+        (validNumber, invalidUnit).tupled,
+        (invalidNumber, invalidUnit).tupled
+      )
+      spaces <- Gen.choose(0, 25)
+    } yield s"${invalidCombination._1}${List.fill(spaces)(' ').mkString}${invalidCombination._2}"
+    for {
+      base        <- rescaleSetupGen
+      invalidSize <- Gen.option(invalidSizeGen)
+    } yield base.copy(
+      recipe = base.recipe.copy(
+        servingSize = invalidSize
+      )
+    )
+  }
+
+  property("Rescaling fails invalid serving sizes") = Prop.forAll(invalidServingSizeGen :| "setup") { setup =>
+    val services = servicesWith(
+      userId = setup.userId,
+      complexFoods = setup.complexFoods,
+      recipe = setup.recipe,
+      referencedRecipes = setup.referencedRecipes,
+      ingredients = setup.ingredients,
+      complexIngredients = setup.complexIngredients
+    )
+    val propF = for {
+      result <- services.rescaleService.rescale(setup.userId, setup.recipe.id)
     } yield result.isLeft
 
     DBTestUtil.await(propF)
