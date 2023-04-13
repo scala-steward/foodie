@@ -5,7 +5,7 @@ import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
 import Html exposing (Attribute, Html, button, input, label, td, text, th, tr)
-import Html.Attributes exposing (value)
+import Html.Attributes exposing (disabled, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
@@ -13,6 +13,7 @@ import Monocle.Lens exposing (Lens)
 import Pages.Recipes.Page as Page
 import Pages.Recipes.RecipeCreationClientInput as RecipeCreationClientInput exposing (RecipeCreationClientInput)
 import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
+import Pages.Recipes.Util
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Links as Links
 import Pages.Util.ParentEditor.Page
@@ -74,6 +75,18 @@ tableHeader =
 
 viewRecipeLine : Configuration -> Recipe -> Bool -> List (Html Page.LogicMsg)
 viewRecipeLine configuration recipe showControls =
+    let
+        rescalable =
+            recipe.servingSize
+                |> Maybe.Extra.unwrap False Pages.Recipes.Util.isRescalableServingSize
+
+        rescalableCmd =
+            if rescalable then
+                [ onClick <| Page.Rescale <| recipe.id ]
+
+            else
+                []
+    in
     recipeLineWith
         { controls =
             [ td [ Style.classes.controls ]
@@ -107,7 +120,11 @@ viewRecipeLine configuration recipe showControls =
                 ]
             , td [ Style.classes.controls ]
                 [ button
-                    [ Style.classes.button.rescale, onClick <| Page.Rescale <| recipe.id ]
+                    ([ Style.classes.button.rescale
+                     , disabled <| not <| rescalable
+                     ]
+                        ++ rescalableCmd
+                    )
                     [ text "Rescale" ]
                 ]
             ]
