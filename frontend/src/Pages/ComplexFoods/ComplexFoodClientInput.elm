@@ -6,6 +6,7 @@ import Api.Types.ComplexFoodIncoming exposing (ComplexFoodIncoming)
 import Api.Types.Recipe exposing (Recipe)
 import Maybe.Extra
 import Monocle.Lens exposing (Lens)
+import Pages.Recipes.Util
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
 import Parser exposing ((|.), (|=))
 
@@ -20,14 +21,10 @@ type alias ComplexFoodClientInput =
 withSuggestion : Recipe -> ComplexFoodClientInput
 withSuggestion recipe =
     let
-        gramsParser =
-            Parser.float
-                |. Parser.chompWhile ((==) ' ')
-                |. Parser.symbol "g"
 
         modifier =
             recipe.servingSize
-                |> Maybe.andThen (Parser.run gramsParser >> Result.toMaybe)
+                |> Maybe.andThen (Parser.run Pages.Recipes.Util.gramsParser >> Result.toMaybe)
                 |> Maybe.map ((*) recipe.numberOfServings)
                 |> Maybe.Extra.unwrap identity
                     (\value ->

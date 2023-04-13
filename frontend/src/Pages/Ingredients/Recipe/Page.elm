@@ -4,6 +4,7 @@ import Api.Types.Recipe exposing (Recipe)
 import Pages.Recipes.RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
 import Pages.Util.Parent.Page
 import Pages.View.Tristate as Tristate
+import Util.HttpUtil exposing (Error)
 
 
 type alias Model =
@@ -18,5 +19,11 @@ type alias Initial =
     Pages.Util.Parent.Page.Initial Recipe
 
 
-type alias LogicMsg =
+type alias ParentMsg =
     Pages.Util.Parent.Page.LogicMsg Recipe RecipeUpdateClientInput
+
+
+type LogicMsg
+    = ParentMsg ParentMsg
+    | Rescale
+    | GotRescaleResponse (Result Error Recipe)

@@ -3,9 +3,12 @@ module Pages.Ingredients.Recipe.View exposing (viewMain)
 import Addresses.Frontend
 import Configuration exposing (Configuration)
 import Html exposing (Attribute, Html, button, td, text)
+import Html.Attributes exposing (disabled)
 import Html.Events exposing (onClick)
+import Maybe.Extra
 import Pages.Ingredients.Recipe.Page as Page
 import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput
+import Pages.Recipes.Util
 import Pages.Recipes.View
 import Pages.Util.Links as Links
 import Pages.Util.Parent.Page
@@ -15,6 +18,18 @@ import Pages.Util.Style as Style
 
 viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
+    let
+        rescalable =
+            main.parent.original.servingSize
+                |> Maybe.Extra.unwrap False Pages.Recipes.Util.isRescalableServingSize
+
+        rescalableCmd =
+            if rescalable then
+                [ onClick <| Page.Rescale ]
+
+            else
+                []
+    in
     Pages.Util.Parent.View.viewMain
         { tableHeader = Pages.Recipes.View.tableHeader
         , onView =
@@ -22,10 +37,10 @@ viewMain configuration main =
                 Pages.Recipes.View.recipeLineWith
                     { controls =
                         [ td [ Style.classes.controls ]
-                            [ button [ Style.classes.button.edit, Pages.Util.Parent.Page.EnterEdit |> onClick ] [ text "Edit" ] ]
+                            [ button [ Style.classes.button.edit, onClick <| Page.ParentMsg <| Pages.Util.Parent.Page.EnterEdit ] [ text "Edit" ] ]
                         , td [ Style.classes.controls ]
                             [ button
-                                [ Style.classes.button.delete, Pages.Util.Parent.Page.RequestDelete |> onClick ]
+                                [ Style.classes.button.delete, onClick <| Page.ParentMsg <| Pages.Util.Parent.Page.RequestDelete ]
                                 [ text "Delete" ]
                             ]
                         , td [ Style.classes.controls ]
@@ -37,41 +52,50 @@ viewMain configuration main =
                             ]
                         , td [ Style.classes.controls ]
                             [ button
-                                [ Style.classes.button.confirm, Pages.Util.Parent.Page.Duplicate |> onClick ]
+                                [ Style.classes.button.confirm, onClick <| Page.ParentMsg <| Pages.Util.Parent.Page.Duplicate ]
                                 [ text "Duplicate" ]
                             ]
+                        , td [ Style.classes.controls ]
+                            [ button
+                                ([ Style.classes.button.rescale
+                                 , disabled <| not <| rescalable
+                                 ]
+                                    ++ rescalableCmd
+                                )
+                                [ text "Rescale" ]
+                            ]
                         ]
-                    , toggleMsg = Pages.Util.Parent.Page.ToggleControls
+                    , toggleMsg = Page.ParentMsg <| Pages.Util.Parent.Page.ToggleControls
                     , showControls = showControls
                     }
                     recipe
         , onUpdate =
             Pages.Recipes.View.editRecipeLineWith
-                { saveMsg = Pages.Util.Parent.Page.SaveEdit
+                { saveMsg = Page.ParentMsg <| Pages.Util.Parent.Page.SaveEdit
                 , nameLens = RecipeUpdateClientInput.lenses.name
                 , descriptionLens = RecipeUpdateClientInput.lenses.description
                 , numberOfServingsLens = RecipeUpdateClientInput.lenses.numberOfServings
                 , servingSizeLens = RecipeUpdateClientInput.lenses.servingSize
-                , updateMsg = Pages.Util.Parent.Page.Edit
+                , updateMsg = Page.ParentMsg << Pages.Util.Parent.Page.Edit
                 , confirmName = "Save"
-                , cancelMsg = Pages.Util.Parent.Page.ExitEdit
+                , cancelMsg = Page.ParentMsg <| Pages.Util.Parent.Page.ExitEdit
                 , cancelName = "Cancel"
                 , rowStyles = []
-                , toggleCommand = Just Pages.Util.Parent.Page.ToggleControls
+                , toggleCommand = Just <| Page.ParentMsg <| Pages.Util.Parent.Page.ToggleControls
                 }
                 |> always
         , onDelete =
             Pages.Recipes.View.recipeLineWith
                 { controls =
                     [ td [ Style.classes.controls ]
-                        [ button [ Style.classes.button.delete, onClick <| Pages.Util.Parent.Page.ConfirmDelete ] [ text "Delete?" ] ]
+                        [ button [ Style.classes.button.delete, onClick <| Page.ParentMsg <| Pages.Util.Parent.Page.ConfirmDelete ] [ text "Delete?" ] ]
                     , td [ Style.classes.controls ]
                         [ button
-                            [ Style.classes.button.confirm, onClick <| Pages.Util.Parent.Page.CancelDelete ]
+                            [ Style.classes.button.confirm, onClick <| Page.ParentMsg <| Pages.Util.Parent.Page.CancelDelete ]
                             [ text "Cancel" ]
                         ]
                     ]
-                , toggleMsg = Pages.Util.Parent.Page.ToggleControls
+                , toggleMsg = Page.ParentMsg <| Pages.Util.Parent.Page.ToggleControls
                 , showControls = True
                 }
         }

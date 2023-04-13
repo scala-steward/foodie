@@ -5,7 +5,7 @@ import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
 import Html exposing (Attribute, Html, button, input, label, td, text, th, tr)
-import Html.Attributes exposing (value)
+import Html.Attributes exposing (disabled, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
@@ -13,6 +13,7 @@ import Monocle.Lens exposing (Lens)
 import Pages.Recipes.Page as Page
 import Pages.Recipes.RecipeCreationClientInput as RecipeCreationClientInput exposing (RecipeCreationClientInput)
 import Pages.Recipes.RecipeUpdateClientInput as RecipeUpdateClientInput exposing (RecipeUpdateClientInput)
+import Pages.Recipes.Util
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Links as Links
 import Pages.Util.ParentEditor.Page
@@ -34,7 +35,7 @@ view =
 
 
 viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
-viewMain =
+viewMain configuration =
     Pages.Util.ParentEditor.View.viewParentsWith
         { currentPage = ViewUtil.Recipes
         , matchesSearchText =
@@ -50,9 +51,13 @@ viewMain =
             { ifCreating = createRecipeLine
             , default = RecipeCreationClientInput.default
             , label = "New recipe"
+            , update = Page.ParentMsg << Pages.Util.ParentEditor.Page.UpdateCreation
             }
+        , setSearchString = Page.ParentMsg << Pages.Util.ParentEditor.Page.SetSearchString
+        , setPagination = Page.ParentMsg << Pages.Util.ParentEditor.Page.SetPagination
         , styling = Style.ids.addRecipeView
         }
+        configuration
 
 
 tableHeader : Html msg
@@ -70,10 +75,25 @@ tableHeader =
 
 viewRecipeLine : Configuration -> Recipe -> Bool -> List (Html Page.LogicMsg)
 viewRecipeLine configuration recipe showControls =
+    let
+        rescalable =
+            recipe.servingSize
+                |> Maybe.Extra.unwrap False Pages.Recipes.Util.isRescalableServingSize
+
+        rescalableCmd =
+            if rescalable then
+                [ onClick <| Page.Rescale <| recipe.id ]
+
+            else
+                []
+    in
     recipeLineWith
         { controls =
             [ td [ Style.classes.controls ]
-                [ button [ Style.classes.button.edit, Pages.Util.ParentEditor.Page.EnterEdit recipe.id |> onClick ] [ text "Edit" ] ]
+                [ button
+                    [ Style.classes.button.edit, onClick <| Page.ParentMsg <| Pages.Util.ParentEditor.Page.EnterEdit <| recipe.id ]
+                    [ text "Edit" ]
+                ]
             , td [ Style.classes.controls ]
                 [ Links.linkButton
                     { url = Links.frontendPage configuration <| Addresses.Frontend.ingredientEditor.address <| recipe.id
@@ -83,7 +103,7 @@ viewRecipeLine configuration recipe showControls =
                 ]
             , td [ Style.classes.controls ]
                 [ button
-                    [ Style.classes.button.delete, onClick <| Pages.Util.ParentEditor.Page.RequestDelete <| recipe.id ]
+                    [ Style.classes.button.delete, onClick <| Page.ParentMsg <| Pages.Util.ParentEditor.Page.RequestDelete <| recipe.id ]
                     [ text "Delete" ]
                 ]
             , td [ Style.classes.controls ]
@@ -95,11 +115,20 @@ viewRecipeLine configuration recipe showControls =
                 ]
             , td [ Style.classes.controls ]
                 [ button
-                    [ Style.classes.button.confirm, onClick <| Pages.Util.ParentEditor.Page.Duplicate <| recipe.id ]
+                    [ Style.classes.button.confirm, onClick <| Page.ParentMsg <| Pages.Util.ParentEditor.Page.Duplicate <| recipe.id ]
                     [ text "Duplicate" ]
                 ]
+            , td [ Style.classes.controls ]
+                [ button
+                    ([ Style.classes.button.rescale
+                     , disabled <| not <| rescalable
+                     ]
+                        ++ rescalableCmd
+                    )
+                    [ text "Rescale" ]
+                ]
             ]
-        , toggleMsg = Pages.Util.ParentEditor.Page.ToggleControls recipe.id
+        , toggleMsg = Page.ParentMsg <| Pages.Util.ParentEditor.Page.ToggleControls recipe.id
         , showControls = showControls
         }
         recipe
@@ -117,7 +146,8 @@ deleteRecipeLine recipe =
                     [ text "Cancel" ]
                 ]
             ]
-        , toggleMsg = Pages.Util.ParentEditor.Page.ToggleControls recipe.id
+                |> List.map (Html.map Page.ParentMsg)
+        , toggleMsg = Page.ParentMsg <| Pages.Util.ParentEditor.Page.ToggleControls <| recipe.id
         , showControls = True
         }
         recipe
@@ -162,17 +192,17 @@ recipeLineWith ps =
 updateRecipeLine : RecipeUpdateClientInput -> List (Html Page.LogicMsg)
 updateRecipeLine recipeUpdateClientInput =
     editRecipeLineWith
-        { saveMsg = Pages.Util.ParentEditor.Page.SaveEdit recipeUpdateClientInput.id
+        { saveMsg = Page.ParentMsg <| Pages.Util.ParentEditor.Page.SaveEdit recipeUpdateClientInput.id
         , nameLens = RecipeUpdateClientInput.lenses.name
         , descriptionLens = RecipeUpdateClientInput.lenses.description
         , numberOfServingsLens = RecipeUpdateClientInput.lenses.numberOfServings
         , servingSizeLens = RecipeUpdateClientInput.lenses.servingSize
-        , updateMsg = Pages.Util.ParentEditor.Page.Edit
+        , updateMsg = Page.ParentMsg << Pages.Util.ParentEditor.Page.Edit
         , confirmName = "Save"
-        , cancelMsg = Pages.Util.ParentEditor.Page.ExitEdit recipeUpdateClientInput.id
+        , cancelMsg = Page.ParentMsg <| Pages.Util.ParentEditor.Page.ExitEdit <| recipeUpdateClientInput.id
         , cancelName = "Cancel"
         , rowStyles = [ Style.classes.editLine ]
-        , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls recipeUpdateClientInput.id |> Just
+        , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls recipeUpdateClientInput.id |> Page.ParentMsg |> Just
         }
         recipeUpdateClientInput
 
@@ -180,14 +210,14 @@ updateRecipeLine recipeUpdateClientInput =
 createRecipeLine : RecipeCreationClientInput -> List (Html Page.LogicMsg)
 createRecipeLine =
     editRecipeLineWith
-        { saveMsg = Pages.Util.ParentEditor.Page.Create
+        { saveMsg = Page.ParentMsg <| Pages.Util.ParentEditor.Page.Create
         , nameLens = RecipeCreationClientInput.lenses.name
         , descriptionLens = RecipeCreationClientInput.lenses.description
         , numberOfServingsLens = RecipeCreationClientInput.lenses.numberOfServings
         , servingSizeLens = RecipeCreationClientInput.lenses.servingSize
-        , updateMsg = Just >> Pages.Util.ParentEditor.Page.UpdateCreation
+        , updateMsg = Just >> Pages.Util.ParentEditor.Page.UpdateCreation >> Page.ParentMsg
         , confirmName = "Add"
-        , cancelMsg = Pages.Util.ParentEditor.Page.UpdateCreation Nothing
+        , cancelMsg = Nothing |> Pages.Util.ParentEditor.Page.UpdateCreation |> Page.ParentMsg
         , cancelName = "Cancel"
         , rowStyles = [ Style.classes.editLine ]
         , toggleCommand = Nothing

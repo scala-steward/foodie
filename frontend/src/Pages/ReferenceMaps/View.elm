@@ -48,7 +48,10 @@ viewMain =
             { ifCreating = createReferenceMapLine
             , default = ReferenceMapCreationClientInput.default
             , label = "New reference map"
+            , update = Pages.Util.ParentEditor.Page.UpdateCreation
             }
+        , setSearchString = Pages.Util.ParentEditor.Page.SetSearchString
+        , setPagination = Pages.Util.ParentEditor.Page.SetPagination
         , styling = Style.ids.addReferenceMapView
         }
 

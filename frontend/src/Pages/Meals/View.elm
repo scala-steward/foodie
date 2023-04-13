@@ -55,7 +55,10 @@ viewMain =
             { ifCreating = createMealLine
             , default = MealCreationClientInput.default
             , label = "New meal"
+            , update = Pages.Util.ParentEditor.Page.UpdateCreation
             }
+        , setSearchString = Pages.Util.ParentEditor.Page.SetSearchString
+        , setPagination = Pages.Util.ParentEditor.Page.SetPagination
         , styling = Style.ids.addMealView
         }
 

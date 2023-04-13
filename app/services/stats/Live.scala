@@ -267,8 +267,8 @@ object Live {
         )
         complexIngredients = complexIngredientsMap.values.flatten.toSeq
         complexFoods <- complexFoodService.getAll(userId, complexIngredients.map(_.complexFoodId))
-        complexFoodsMap = complexFoods.map(complexFood => complexFood.recipeId -> complexFood).toMap
       } yield {
+        val complexFoodsMap = complexFoods.map(complexFood => complexFood.recipeId -> complexFood).toMap
         val ingredientWeights =
           ingredientsMap.toList
             .traverse { case (recipeId, ingredients) =>

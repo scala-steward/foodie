@@ -136,4 +136,9 @@ object GenUtils {
   def taggedId[Tag]: Gen[UUID @@ Tag] =
     Gen.uuid.map(_.transformInto[UUID @@ Tag])
 
+  def shuffle[A](as: Seq[A]): Gen[Seq[A]] =
+    Gen
+      .pick(as.length, as)
+      .map(_.toSeq)
+
 }

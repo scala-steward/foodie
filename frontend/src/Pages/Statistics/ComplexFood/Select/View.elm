@@ -35,26 +35,36 @@ viewMain configuration main =
             , currentPage = Nothing
             }
         <|
+            let
+                millilitresLine =
+                    main.complexFood.amountMilliLitres
+                        |> Maybe.Extra.unwrap []
+                            (\amount ->
+                                [ tr []
+                                    [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Volume (set)" ] ]
+                                    , td [] [ label [] [ text <| flip (++) "ml" <| StatisticsView.displayFloat <| amount ] ]
+                                    ]
+                                ]
+                            )
+            in
             div [ Style.classes.partialStatistics ]
                 (div []
                     [ table [ Style.classes.info ]
-                        [ tr []
+                        ([ tr []
                             [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Complex food" ] ]
                             , td [] [ label [] [ text <| .name <| main.complexFood ] ]
                             ]
-                        , tr []
+                         , tr []
                             [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Description" ] ]
                             , td [] [ label [] [ text <| Maybe.withDefault "" <| .description <| main.complexFood ] ]
                             ]
-                        , tr []
+                         , tr []
                             [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Weight (set)" ] ]
                             , td [] [ label [] [ text <| flip (++) "g" <| StatisticsView.displayFloat <| .amountGrams <| main.complexFood ] ]
                             ]
-                        , tr []
-                            [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Volume (set)" ] ]
-                            , td [] [ label [] [ text <| flip (++) "ml" <| Maybe.Extra.unwrap "" StatisticsView.displayFloat <| .amountMilliLitres <| main.complexFood ] ]
-                            ]
-                        ]
+                         ]
+                            ++ millilitresLine
+                        )
                     ]
                     :: StatisticsView.referenceMapSelection
                         { onReferenceMapSelection = Maybe.andThen Uuid.fromString >> Page.SelectReferenceMap

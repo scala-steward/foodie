@@ -9,6 +9,7 @@ import Pages.Util.ParentEditor.Page
 import Pages.View.Tristate as Tristate
 import Util.DictList exposing (DictList)
 import Util.Editing exposing (Editing)
+import Util.HttpUtil exposing (Error)
 
 
 type alias Model =
@@ -40,5 +41,11 @@ type alias Msg =
     Tristate.Msg LogicMsg
 
 
-type alias LogicMsg =
+type alias ParentMsg =
     Pages.Util.ParentEditor.Page.LogicMsg RecipeId Recipe RecipeCreationClientInput RecipeUpdateClientInput
+
+
+type LogicMsg
+    = ParentMsg ParentMsg
+    | Rescale RecipeId
+    | GotRescaleResponse (Result Error Recipe)

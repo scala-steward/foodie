@@ -13,12 +13,12 @@ import Pages.Util.Requests
 import Util.HttpUtil as HttpUtil
 
 
-fetchRecipes : AuthorizedAccess -> Cmd Page.LogicMsg
+fetchRecipes : AuthorizedAccess -> Cmd Page.ParentMsg
 fetchRecipes =
     Pages.Util.Requests.fetchRecipesWith Pages.Util.ParentEditor.Page.GotFetchResponse
 
 
-createRecipe : AuthorizedAccess -> RecipeCreation -> Cmd Page.LogicMsg
+createRecipe : AuthorizedAccess -> RecipeCreation -> Cmd Page.ParentMsg
 createRecipe authorizedAccess recipeCreation =
     HttpUtil.runPatternWithJwt
         authorizedAccess
@@ -35,7 +35,7 @@ createRecipe authorizedAccess recipeCreation =
 saveRecipe :
     AuthorizedAccess
     -> RecipeUpdate
-    -> Cmd Page.LogicMsg
+    -> Cmd Page.ParentMsg
 saveRecipe =
     Pages.Util.Requests.saveRecipeWith
         Pages.Util.ParentEditor.Page.GotSaveEditResponse
@@ -44,7 +44,7 @@ saveRecipe =
 deleteRecipe :
     AuthorizedAccess
     -> RecipeId
-    -> Cmd Page.LogicMsg
+    -> Cmd Page.ParentMsg
 deleteRecipe authorizedAccess recipeId =
     Pages.Util.Requests.deleteRecipeWith (Pages.Util.ParentEditor.Page.GotDeleteResponse recipeId)
         authorizedAccess

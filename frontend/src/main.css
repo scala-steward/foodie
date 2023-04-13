@@ -68,6 +68,7 @@ body, button, input {
 .select-button,
 .logout-button,
 .alternative-button,
+.rescale-button,
 .nutrients-button,
 .menu-button,
 .error-button {
@@ -117,6 +118,10 @@ body, button, input {
     width: auto;
 }
 
+.rescale-button {
+    background-color: rgb(25 206 235);
+}
+
 /* Buttons: disabled */
 
 .edit-button:disabled,
@@ -127,7 +132,8 @@ body, button, input {
 .select-button:disabled,
 .navigation-button:disabled,
 .pager-button:disabled,
-.alternative-button:disabled {
+.alternative-button:disabled,
+.rescale-button:disabled {
     background-color: gray;
     cursor: not-allowed;
 }
@@ -176,7 +182,8 @@ body, button, input {
     background-color: rgb(70 240 70);
 }
 
-.alternative-button:hover:enabled {
+.alternative-button:hover:enabled,
+.rescale-button:hover:enabled {
     background-color: rgb(40 230 250);
 }
 
@@ -556,6 +563,7 @@ select {
     .select-button,
     .logout-button,
     .alternative-button,
+    .rescale-button,
     .nutrients-button,
     .menu-button,
     .error-button,
