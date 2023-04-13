@@ -9,6 +9,7 @@ gramsParser =
     Parser.float
         |. Parser.chompWhile ((==) ' ')
         |. Parser.symbol "g"
+        |. Parser.end
 
 
 isRescalableServingSize : String -> Bool
