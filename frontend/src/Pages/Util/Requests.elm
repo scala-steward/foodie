@@ -10,9 +10,11 @@ import Api.Types.Recipe exposing (Recipe, decoderRecipe)
 import Api.Types.RecipeUpdate exposing (RecipeUpdate, encoderRecipeUpdate)
 import Api.Types.ReferenceMap exposing (ReferenceMap, decoderReferenceMap)
 import Api.Types.ReferenceMapUpdate exposing (ReferenceMapUpdate, encoderReferenceMapUpdate)
+import Api.Types.SimpleDate exposing (encoderSimpleDate)
 import Http
 import Json.Decode as Decode
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.DateUtil as DateUtil
 import Util.HttpUtil as HttpUtil exposing (Error)
 
 
@@ -119,12 +121,13 @@ duplicateMealWith :
     (Result Error Meal -> msg)
     -> AuthorizedAccess
     -> MealId
+    -> DateUtil.Timestamp
     -> Cmd msg
-duplicateMealWith mkMsg authorizedAccess mealId =
+duplicateMealWith mkMsg authorizedAccess mealId timestamp =
     HttpUtil.runPatternWithJwt
         authorizedAccess
         (Addresses.Backend.meals.duplicate mealId)
-        { body = Http.emptyBody
+        { body = timestamp |> DateUtil.fromPosix |> encoderSimpleDate |> Http.jsonBody
         , expect = HttpUtil.expectJson mkMsg decoderMeal
         }
 
@@ -161,12 +164,13 @@ duplicateRecipeWith :
     (Result Error Recipe -> msg)
     -> AuthorizedAccess
     -> RecipeId
+    -> DateUtil.Timestamp
     -> Cmd msg
-duplicateRecipeWith mkMsg authorizedAccess recipeId =
+duplicateRecipeWith mkMsg authorizedAccess recipeId timestamp =
     HttpUtil.runPatternWithJwt
         authorizedAccess
         (Addresses.Backend.recipes.duplicate recipeId)
-        { body = Http.emptyBody
+        { body = timestamp |> DateUtil.fromPosix |> encoderSimpleDate |> Http.jsonBody
         , expect = HttpUtil.expectJson mkMsg decoderRecipe
         }
 
@@ -217,11 +221,12 @@ duplicateReferenceMapWith :
     (Result Error ReferenceMap -> msg)
     -> AuthorizedAccess
     -> ReferenceMapId
+    -> DateUtil.Timestamp
     -> Cmd msg
-duplicateReferenceMapWith mkMsg authorizedAccess referenceMapId =
+duplicateReferenceMapWith mkMsg authorizedAccess referenceMapId timestamp =
     HttpUtil.runPatternWithJwt
         authorizedAccess
         (Addresses.Backend.references.duplicate referenceMapId)
-        { body = Http.emptyBody
+        { body = timestamp |> DateUtil.fromPosix |> encoderSimpleDate |> Http.jsonBody
         , expect = HttpUtil.expectJson mkMsg decoderReferenceMap
         }
