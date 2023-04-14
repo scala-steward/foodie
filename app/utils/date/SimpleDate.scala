@@ -1,7 +1,6 @@
 package utils.date
 
 import cats.Order
-import cats.effect.IO
 import cats.syntax.order._
 import io.circe.generic.JsonCodec
 import io.scalaland.chimney.dsl._
@@ -26,13 +25,6 @@ object SimpleDate {
       Some(dateString),
       timeString
     ).flatten.mkString(" ")
-  }
-
-  def now: IO[SimpleDate] = IO {
-    SimpleDate(
-      date = LocalDate.now().transformInto[Date],
-      time = Some(LocalTime.now().transformInto[Time])
-    )
   }
 
 }
