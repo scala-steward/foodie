@@ -25,6 +25,7 @@ import Uuid
 displayFloat : Float -> String
 displayFloat =
     FormatNumber.format FormatNumber.Locales.frenchLocale
+        >> String.replace "," "."
 
 
 quotientInfo :
