@@ -3,6 +3,7 @@ module Pages.Util.ParentEditor.Page exposing (..)
 import Api.Auxiliary exposing (JWT)
 import Monocle.Lens exposing (Lens)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.DateUtil as DateUtil
 import Pages.Util.ParentEditor.Pagination as Pagination exposing (Pagination)
 import Pages.View.Tristate as Tristate
 import Util.DictList exposing (DictList)
@@ -89,6 +90,7 @@ type LogicMsg parentId parent creation update
     | GotDeleteResponse parentId (Result Error ())
     | GotFetchResponse (Result Error (List parent))
     | Duplicate parentId
+    | GotDuplicateTimestamp parentId DateUtil.Timestamp
     | GotDuplicateResponse (Result Error parent)
     | SetPagination Pagination
     | SetSearchString String

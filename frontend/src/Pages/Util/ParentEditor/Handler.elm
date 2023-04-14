@@ -3,12 +3,14 @@ module Pages.Util.ParentEditor.Handler exposing (updateLogic)
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.DateUtil as DateUtil
 import Pages.Util.Links as Links
 import Pages.Util.PaginationSettings as PaginationSettings
 import Pages.Util.ParentEditor.Page as Page
 import Pages.Util.ParentEditor.Pagination as Pagination
 import Pages.View.Tristate as Tristate
 import Result.Extra
+import Task
 import Util.DictList as DictList
 import Util.Editing as Editing exposing (Editing)
 import Util.LensUtil as LensUtil
@@ -22,7 +24,7 @@ updateLogic :
     , create : AuthorizedAccess -> creation -> Cmd (Page.LogicMsg parentId parent creation update)
     , save : AuthorizedAccess -> update -> Cmd (Page.LogicMsg parentId parent creation update)
     , delete : AuthorizedAccess -> parentId -> Cmd (Page.LogicMsg parentId parent creation update)
-    , duplicate : AuthorizedAccess -> parentId -> Cmd (Page.LogicMsg parentId parent creation update)
+    , duplicate : AuthorizedAccess -> parentId -> DateUtil.Timestamp -> Cmd (Page.LogicMsg parentId parent creation update)
     }
     -> Page.LogicMsg parentId parent creation update
     -> Page.Model parentId parent creation update
@@ -189,7 +191,13 @@ updateLogic ps msg model =
             , Cmd.none
             )
 
-        duplicate parentId =
+        prepareDuplicate parentId =
+            ( model
+            , DateUtil.now
+                |> Task.perform (Page.GotDuplicateTimestamp parentId)
+            )
+
+        gotDuplicateTimestamp parentId timestamp =
             ( model
             , model
                 |> Tristate.foldMain Cmd.none
@@ -199,6 +207,7 @@ updateLogic ps msg model =
                             , jwt = main.jwt
                             }
                             parentId
+                            timestamp
                     )
             )
 
@@ -270,7 +279,10 @@ updateLogic ps msg model =
             gotFetchResponse result
 
         Page.Duplicate parentId ->
-            duplicate parentId
+            prepareDuplicate parentId
+
+        Page.GotDuplicateTimestamp parentId posix ->
+            gotDuplicateTimestamp parentId posix
 
         Page.GotDuplicateResponse result ->
             gotDuplicateResponse result

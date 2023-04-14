@@ -2,6 +2,7 @@ module Pages.Util.Parent.Page exposing (..)
 
 import Api.Auxiliary exposing (JWT)
 import Monocle.Lens exposing (Lens)
+import Pages.Util.DateUtil as DateUtil
 import Pages.View.Tristate as Tristate
 import Util.Editing as Editing exposing (Editing)
 import Util.HttpUtil exposing (Error)
@@ -71,5 +72,6 @@ type LogicMsg parent update
     | CancelDelete
     | GotDeleteResponse (Result Error ())
     | Duplicate
+    | GotDuplicationTimestamp DateUtil.Timestamp
     | GotDuplicateResponse (Result Error parent)
     | ToggleControls

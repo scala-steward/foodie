@@ -3,10 +3,12 @@ module Pages.Util.Parent.Handler exposing (..)
 import Monocle.Compose as Compose
 import Monocle.Lens as Lens
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.DateUtil as DateUtil
 import Pages.Util.Links as Links
 import Pages.Util.Parent.Page as Page
 import Pages.View.Tristate as Tristate
 import Result.Extra
+import Task
 import Util.Editing as Editing
 
 
@@ -15,7 +17,7 @@ updateLogic :
     , idOf : parent -> parentId
     , save : AuthorizedAccess -> update -> Maybe (Cmd (Page.LogicMsg parent update))
     , delete : AuthorizedAccess -> parentId -> Cmd (Page.LogicMsg parent update)
-    , duplicate : AuthorizedAccess -> parentId -> Cmd (Page.LogicMsg parent update)
+    , duplicate : AuthorizedAccess -> parentId -> DateUtil.Timestamp -> Cmd (Page.LogicMsg parent update)
     , navigateAfterDeletionAddress : () -> List String
     , navigateAfterDuplicationAddress : parentId -> List String
     }
@@ -130,6 +132,12 @@ updateLogic ps msg model =
 
         duplicate =
             ( model
+            , DateUtil.now
+                |> Task.perform Page.GotDuplicationTimestamp
+            )
+
+        gotDuplicationTimestamp timestamp =
+            ( model
             , model
                 |> Tristate.foldMain Cmd.none
                     (\main ->
@@ -138,6 +146,7 @@ updateLogic ps msg model =
                             , jwt = main.jwt
                             }
                             (main.parent.original |> ps.idOf)
+                            timestamp
                     )
             )
 
@@ -185,6 +194,9 @@ updateLogic ps msg model =
 
         Page.Duplicate ->
             duplicate
+
+        Page.GotDuplicationTimestamp timestamp ->
+            gotDuplicationTimestamp timestamp
 
         Page.GotDuplicateResponse result ->
             gotDuplicateResponse result
