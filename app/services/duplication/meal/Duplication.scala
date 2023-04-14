@@ -13,7 +13,7 @@ trait Duplication {
   def duplicate(
       userId: UserId,
       id: MealId,
-      simpleDate: SimpleDate
+      timeOfDuplication: SimpleDate
   ): Future[ServerError.Or[Meal]]
 
 }

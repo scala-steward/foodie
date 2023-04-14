@@ -32,7 +32,7 @@ class Live @Inject() (
   override def duplicate(
       userId: UserId,
       id: RecipeId,
-      simpleDate: SimpleDate
+      timeOfDuplication: SimpleDate
   ): Future[ServerError.Or[Recipe]] = {
     val action = for {
       ingredients        <- recipeServiceCompanion.getIngredients(userId, id)
@@ -49,7 +49,7 @@ class Live @Inject() (
           userId = userId,
           id = id,
           newId = newRecipeId,
-          timestamp = simpleDate
+          timestamp = timeOfDuplication
         )
       _ <- companion.duplicateIngredients(newRecipeId, newIngredients)
       _ <- companion.duplicateComplexIngredients(newRecipeId, complexIngredients.values.flatten.toSeq)

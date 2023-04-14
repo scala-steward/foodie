@@ -30,7 +30,7 @@ class Live @Inject() (
   override def duplicate(
       userId: UserId,
       id: MealId,
-      simpleDate: SimpleDate
+      timeOfDuplication: SimpleDate
   ): Future[ServerError.Or[Meal]] = {
     val action = for {
       mealEntries <- mealServiceCompanion
@@ -47,7 +47,7 @@ class Live @Inject() (
         userId = userId,
         id = id,
         newId = newMealId,
-        timestamp = simpleDate
+        timestamp = timeOfDuplication
       )
       _ <- companion.duplicateMealEntries(newMealId, newMealEntries)
     } yield newMeal

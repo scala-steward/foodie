@@ -13,7 +13,7 @@ trait Duplication {
   def duplicate(
       userId: UserId,
       id: ReferenceMapId,
-      simpleDate: SimpleDate
+      timeOfDuplication: SimpleDate
   ): Future[ServerError.Or[ReferenceMap]]
 
 }

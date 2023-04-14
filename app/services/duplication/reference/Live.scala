@@ -30,9 +30,9 @@ class Live @Inject() (
     with HasDatabaseConfigProvider[PostgresProfile] {
 
   override def duplicate(
-      userId: UserId,
-      id: ReferenceMapId,
-      simpleDate: SimpleDate
+                          userId: UserId,
+                          id: ReferenceMapId,
+                          timeOfDuplication: SimpleDate
   ): Future[ServerError.Or[ReferenceMap]] = {
     val action = for {
       referenceEntries <- referenceServiceCompanion
@@ -43,7 +43,7 @@ class Live @Inject() (
         userId = userId,
         id = id,
         newId = newReferenceMapId,
-        timestamp = simpleDate
+        timestamp = timeOfDuplication
       )
       _ <- companion.duplicateReferenceEntries(newReferenceMapId, referenceEntries)
     } yield newReferenceMap
