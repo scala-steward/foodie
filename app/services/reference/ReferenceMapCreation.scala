@@ -11,7 +11,7 @@ object ReferenceMapCreation {
   def create(id: ReferenceMapId, referenceMapCreation: ReferenceMapCreation): ReferenceMap =
     ReferenceMap(
       id = id,
-      name = referenceMapCreation.name
+      name = referenceMapCreation.name.trim
     )
 
 }

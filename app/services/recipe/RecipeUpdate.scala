@@ -14,10 +14,10 @@ object RecipeUpdate {
 
   def update(recipe: Recipe, recipeUpdate: RecipeUpdate): Recipe =
     recipe.copy(
-      name = recipeUpdate.name,
-      description = recipeUpdate.description,
+      name = recipeUpdate.name.trim,
+      description = recipeUpdate.description.map(_.trim),
       numberOfServings = recipeUpdate.numberOfServings,
-      servingSize = recipeUpdate.servingSize
+      servingSize = recipeUpdate.servingSize.map(_.trim)
     )
 
 }

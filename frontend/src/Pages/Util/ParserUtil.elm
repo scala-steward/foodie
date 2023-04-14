@@ -1,6 +1,5 @@
 module Pages.Util.ParserUtil exposing (AddressWithParser, foldl1, nicknameEmailParser, uuidParser, with1, with1Multiple, with2)
 
-import List.Extra
 import Url.Parser as Parser exposing ((</>), Parser, s)
 import Uuid exposing (Uuid)
 
@@ -80,24 +79,6 @@ with2 ps =
             </> s ps.step2
             </> ps.paramParser2
     }
-
-
-
--- todo: Move splitAt to a more sensible position
-
-
-splitAt : a -> List a -> List (List a)
-splitAt sep xs =
-    case xs of
-        [] ->
-            []
-
-        l ->
-            let
-                ( start, end ) =
-                    List.Extra.break ((==) sep) l
-            in
-            start :: splitAt sep (List.drop 1 end)
 
 
 foldl1 : String -> List String -> Parser a a

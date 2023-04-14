@@ -1,7 +1,6 @@
 package services.duplication.meal
 
 import cats.data.OptionT
-import cats.effect.unsafe.implicits.global
 import db.generated.Tables
 import db.{ MealEntryId, MealId, UserId }
 import errors.{ ErrorContext, ServerError }
@@ -11,7 +10,6 @@ import services.common.Transactionally.syntax._
 import services.meal.{ Meal, MealCreation, MealEntry, MealService }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
-import slickeffect.catsio.implicits._
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 import utils.date.SimpleDate
@@ -31,7 +29,8 @@ class Live @Inject() (
 
   override def duplicate(
       userId: UserId,
-      id: MealId
+      id: MealId,
+      timeOfDuplication: SimpleDate
   ): Future[ServerError.Or[Meal]] = {
     val action = for {
       mealEntries <- mealServiceCompanion
@@ -44,12 +43,11 @@ class Live @Inject() (
         )
       }
       newMealId = UUID.randomUUID().transformInto[MealId]
-      timestamp <- SimpleDate.now.to[DBIO]
       newMeal <- companion.duplicateMeal(
         userId = userId,
         id = id,
         newId = newMealId,
-        timestamp = timestamp
+        timestamp = timeOfDuplication
       )
       _ <- companion.duplicateMealEntries(newMealId, newMealEntries)
     } yield newMeal

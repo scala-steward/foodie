@@ -14,7 +14,7 @@ object MealCreation {
     Meal(
       id = id,
       date = mealCreation.date,
-      name = mealCreation.name
+      name = mealCreation.name.map(_.trim)
     )
 
 }

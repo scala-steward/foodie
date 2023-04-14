@@ -85,18 +85,6 @@ class UserController @Inject() (
       }
     }
 
-  // TODO: Remove after testing
-  def create: Action[String] =
-    Action.async(circe.tolerantJson[String]) { request =>
-      toResult("An error occurred while creating the user") {
-        EitherT
-          .fromEither[Future](
-            JwtUtil.validateJwt[UserCreation](request.body, jwtConfiguration.signaturePublicKey)
-          )
-          .flatMap(createUser)
-      }
-    }
-
   def update: Action[UserUpdate] =
     userAction.async(circe.tolerantJson[UserUpdate]) { request =>
       userService

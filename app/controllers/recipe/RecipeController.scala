@@ -13,6 +13,7 @@ import services.complex.ingredient.ComplexIngredientService
 import services.recipe.RecipeService
 import services.rescale.RescaleService
 import utils.TransformerUtils.Implicits._
+import utils.date.SimpleDate
 
 import java.util.UUID
 import javax.inject.Inject
@@ -146,13 +147,14 @@ class RecipeController @Inject() (
         .recover(errorHandler)
     }
 
-  def duplicate(id: UUID): Action[AnyContent] =
-    userAction.async { request =>
+  def duplicate(id: UUID): Action[SimpleDate] =
+    userAction.async(circe.tolerantJson[SimpleDate]) { request =>
       EitherT(
         recipeDuplication
           .duplicate(
-            request.user.id,
-            id.transformInto[RecipeId]
+            userId = request.user.id,
+            id = id.transformInto[RecipeId],
+            timeOfDuplication = request.body
           )
       )
         .map(

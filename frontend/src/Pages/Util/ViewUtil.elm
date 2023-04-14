@@ -1,5 +1,6 @@
 module Pages.Util.ViewUtil exposing (Page(..), navigationBarWith, navigationToPageButton, navigationToPageButtonWith, pagerButtons, paginate, viewMainWith)
 
+import Addresses.Frontend
 import Api.Auxiliary exposing (JWT)
 import Api.Types.LoginContent exposing (decoderLoginContent)
 import Configuration exposing (Configuration)
@@ -70,36 +71,36 @@ navigationPages nickname =
     [ Recipes, Meals, ComplexFoods, Statistics, ReferenceMaps, UserSettings nickname ]
 
 
-
--- todo: Use real addresses
-
-
 addressSuffix : Page -> String
 addressSuffix page =
-    case page of
-        Recipes ->
-            "recipes"
+    let
+        parts =
+            case page of
+                Recipes ->
+                    Addresses.Frontend.recipes.address ()
 
-        Meals ->
-            "meals"
+                Meals ->
+                    Addresses.Frontend.meals.address ()
 
-        Statistics ->
-            "statistics"
+                Statistics ->
+                    Addresses.Frontend.statisticsTime.address ()
 
-        ReferenceMaps ->
-            "reference-maps"
+                ReferenceMaps ->
+                    Addresses.Frontend.referenceMaps.address ()
 
-        UserSettings _ ->
-            "user-settings"
+                UserSettings _ ->
+                    Addresses.Frontend.userSettings.address ()
 
-        Login ->
-            "login"
+                Login ->
+                    Addresses.Frontend.login.address ()
 
-        Overview ->
-            "overview"
+                Overview ->
+                    Addresses.Frontend.overview.address ()
 
-        ComplexFoods ->
-            "complex-foods"
+                ComplexFoods ->
+                    Addresses.Frontend.complexFoods.address ()
+    in
+    parts |> String.concat
 
 
 nameOf : Page -> String

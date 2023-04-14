@@ -14,7 +14,7 @@ object MealUpdate {
   def update(meal: Meal, mealUpdate: MealUpdate): Meal =
     meal.copy(
       date = mealUpdate.date,
-      name = mealUpdate.name
+      name = mealUpdate.name.map(_.trim)
     )
 
 }

@@ -1,6 +1,7 @@
 package services.duplication.meal
 
 import cats.data.{ EitherT, NonEmptyList }
+import cats.instances.future._
 import db._
 import errors.ServerError
 import org.scalacheck.Prop.AnyOperators
@@ -9,6 +10,8 @@ import services.common.RequestInterval
 import services.meal.{ FullMeal, Meal, MealEntry, MealService }
 import services.recipe.Recipe
 import services.{ ContentsUtil, DBTestUtil, GenUtils, TestUtil }
+import util.DateUtil
+import utils.date.SimpleDate
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -86,7 +89,8 @@ object MealDuplicationProperties extends Properties("Meal duplication") {
       fullMeal = setup.fullMeal
     )
     val transformer = for {
-      duplicatedMeal <- EitherT(services.duplication.duplicate(setup.userId, setup.fullMeal.meal.id))
+      timestamp      <- EitherT.liftF[Future, ServerError, SimpleDate](DateUtil.now)
+      duplicatedMeal <- EitherT(services.duplication.duplicate(setup.userId, setup.fullMeal.meal.id, timestamp))
       mealEntries <- EitherT
         .liftF[Future, ServerError, Map[MealId, Seq[MealEntry]]](
           services.mealService.getMealEntries(setup.userId, Seq(duplicatedMeal.id))
@@ -113,7 +117,8 @@ object MealDuplicationProperties extends Properties("Meal duplication") {
       allMealsBefore <- EitherT.liftF[Future, ServerError, Seq[Meal]](
         services.mealService.allMeals(setup.userId, RequestInterval(None, None))
       )
-      duplicated <- EitherT(services.duplication.duplicate(setup.userId, setup.fullMeal.meal.id))
+      timestamp  <- EitherT.liftF[Future, ServerError, SimpleDate](DateUtil.now)
+      duplicated <- EitherT(services.duplication.duplicate(setup.userId, setup.fullMeal.meal.id, timestamp))
       allMealsAfter <- EitherT.liftF[Future, ServerError, Seq[Meal]](
         services.mealService.allMeals(setup.userId, RequestInterval(None, None))
       )
@@ -133,7 +138,8 @@ object MealDuplicationProperties extends Properties("Meal duplication") {
       fullMeal = setup.fullMeal
     )
     val propF = for {
-      result <- services.duplication.duplicate(userId2, setup.fullMeal.meal.id)
+      timestamp <- DateUtil.now
+      result    <- services.duplication.duplicate(userId2, setup.fullMeal.meal.id, timestamp)
     } yield result.isLeft
 
     DBTestUtil.await(propF)

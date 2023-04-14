@@ -29,19 +29,21 @@ class Live @Inject() (
 ) extends Duplication
     with HasDatabaseConfigProvider[PostgresProfile] {
 
-  override def duplicate(userId: UserId, id: ReferenceMapId): Future[ServerError.Or[ReferenceMap]] = {
+  override def duplicate(
+                          userId: UserId,
+                          id: ReferenceMapId,
+                          timeOfDuplication: SimpleDate
+  ): Future[ServerError.Or[ReferenceMap]] = {
     val action = for {
       referenceEntries <- referenceServiceCompanion
         .allReferenceEntries(userId, Seq(id))
         .map(_.getOrElse(id, Seq.empty))
-
       newReferenceMapId = UUID.randomUUID().transformInto[ReferenceMapId]
-      timestamp <- SimpleDate.now.to[DBIO]
       newReferenceMap <- companion.duplicateReferenceMap(
         userId = userId,
         id = id,
         newId = newReferenceMapId,
-        timestamp = timestamp
+        timestamp = timeOfDuplication
       )
       _ <- companion.duplicateReferenceEntries(newReferenceMapId, referenceEntries)
     } yield newReferenceMap

@@ -11,6 +11,7 @@ import services.complex.food.ComplexFoodIncoming
 import services.complex.ingredient.{ ComplexIngredient, ComplexIngredientService }
 import services.recipe._
 import services.{ ContentsUtil, DBTestUtil, GenUtils, TestUtil }
+import util.DateUtil
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -129,7 +130,8 @@ object RecipeDuplicationProperties extends Properties("Recipe duplication") {
       complexIngredients = setup.complexIngredients
     )
     val transformer = for {
-      duplicatedRecipe <- EitherT(services.duplication.duplicate(setup.userId, setup.recipe.id))
+      timestamp        <- EitherT.liftF(DateUtil.now)
+      duplicatedRecipe <- EitherT(services.duplication.duplicate(setup.userId, setup.recipe.id, timestamp))
       ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
         services.recipeService.getIngredients(setup.userId, duplicatedRecipe.id)
       )
@@ -160,10 +162,11 @@ object RecipeDuplicationProperties extends Properties("Recipe duplication") {
       complexIngredients = setup.complexIngredients
     )
     val transformer = for {
+      timestamp <- EitherT.liftF(DateUtil.now)
       allRecipesBefore <- EitherT.liftF[Future, ServerError, Seq[Recipe]](
         services.recipeService.allRecipes(setup.userId)
       )
-      duplicated <- EitherT(services.duplication.duplicate(setup.userId, setup.recipe.id))
+      duplicated <- EitherT(services.duplication.duplicate(setup.userId, setup.recipe.id, timestamp))
       allRecipesAfter <- EitherT.liftF[Future, ServerError, Seq[Recipe]](
         services.recipeService.allRecipes(setup.userId)
       )
@@ -186,7 +189,8 @@ object RecipeDuplicationProperties extends Properties("Recipe duplication") {
       complexIngredients = setup.complexIngredients
     )
     val propF = for {
-      result <- services.duplication.duplicate(userId2, setup.recipe.id)
+      timestamp <- DateUtil.now
+      result    <- services.duplication.duplicate(userId2, setup.recipe.id, timestamp)
     } yield result.isLeft
 
     DBTestUtil.await(propF)

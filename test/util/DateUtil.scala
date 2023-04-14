@@ -1,8 +1,12 @@
 package util
 
-import spire.math.Interval
-import utils.date.Date
 import cats.syntax.order._
+import io.scalaland.chimney.dsl._
+import spire.math.Interval
+import utils.date.{ Date, SimpleDate, Time }
+
+import java.time.{ LocalDate, LocalTime }
+import scala.concurrent.{ ExecutionContext, Future }
 
 object DateUtil {
 
@@ -16,5 +20,12 @@ object DateUtil {
       case (None, Some(d2)) => Interval.atOrBelow(d2)
       case _                => Interval.all[Date]
     }
+
+  def now(implicit executionContext: ExecutionContext): Future[SimpleDate] = Future {
+    SimpleDate(
+      date = LocalDate.now().transformInto[Date],
+      time = Some(LocalTime.now().transformInto[Time])
+    )
+  }
 
 }
