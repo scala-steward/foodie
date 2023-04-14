@@ -28,10 +28,6 @@ createRecipe authorizedAccess recipeCreation =
         }
 
 
-
--- Todo: Remove entirely in favour of the generalised function?
-
-
 saveRecipe :
     AuthorizedAccess
     -> RecipeUpdate
