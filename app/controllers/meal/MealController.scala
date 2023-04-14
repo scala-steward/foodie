@@ -12,6 +12,7 @@ import services.DBError
 import services.common.RequestInterval
 import services.meal.MealService
 import utils.TransformerUtils.Implicits._
+import utils.date.SimpleDate
 
 import java.util.UUID
 import javax.inject.Inject
@@ -114,13 +115,14 @@ class MealController @Inject() (
         .recover(errorHandler)
     }
 
-  def duplicate(id: UUID): Action[AnyContent] =
-    userAction.async { request =>
+  def duplicate(id: UUID): Action[SimpleDate] =
+    userAction.async(circe.tolerantJson[SimpleDate]) { request =>
       EitherT(
         mealDuplication
           .duplicate(
-            request.user.id,
-            id.transformInto[MealId]
+            userId = request.user.id,
+            id = id.transformInto[MealId],
+            timeOfDuplication = request.body
           )
       )
         .map(

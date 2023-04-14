@@ -11,6 +11,7 @@ import play.api.mvc._
 import services.DBError
 import services.reference.ReferenceService
 import utils.TransformerUtils.Implicits._
+import utils.date.SimpleDate
 
 import java.util.UUID
 import javax.inject.Inject
@@ -126,13 +127,14 @@ class ReferenceController @Inject() (
         .recover(errorHandler)
     }
 
-  def duplicate(id: UUID): Action[AnyContent] =
-    userAction.async { request =>
+  def duplicate(id: UUID): Action[SimpleDate] =
+    userAction.async(circe.tolerantJson[SimpleDate]) { request =>
       EitherT(
         referenceDuplication
           .duplicate(
-            request.user.id,
-            id.transformInto[ReferenceMapId]
+            userId = request.user.id,
+            id = id.transformInto[ReferenceMapId],
+            timeOfDuplication = request.body
           )
       )
         .map(
