@@ -60,7 +60,6 @@ GET    /stats/recipe-occurrences                         controllers.stats.Stats
 GET    /                                                 controllers.home.HomeController.home
 POST   /users/login                                      controllers.user.UserController.login
 POST   /users/logout                                     controllers.user.UserController.logout
-POST   /users/create                                     controllers.user.UserController.create
 PATCH  /users                                            controllers.user.UserController.update
 GET    /users                                            controllers.user.UserController.fetch
 PATCH  /users/password                                   controllers.user.UserController.updatePassword
