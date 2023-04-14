@@ -1,7 +1,6 @@
 package services.duplication.recipe
 
 import cats.data.OptionT
-import cats.effect.unsafe.implicits.global
 import db.generated.Tables
 import db.{ IngredientId, RecipeId, UserId }
 import errors.{ ErrorContext, ServerError }
@@ -12,7 +11,6 @@ import services.complex.ingredient.{ ComplexIngredient, ComplexIngredientService
 import services.recipe.{ Ingredient, Recipe, RecipeCreation, RecipeService }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
-import slickeffect.catsio.implicits._
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 import utils.date.SimpleDate
@@ -33,7 +31,8 @@ class Live @Inject() (
 
   override def duplicate(
       userId: UserId,
-      id: RecipeId
+      id: RecipeId,
+      simpleDate: SimpleDate
   ): Future[ServerError.Or[Recipe]] = {
     val action = for {
       ingredients        <- recipeServiceCompanion.getIngredients(userId, id)
@@ -45,13 +44,12 @@ class Live @Inject() (
         )
       }
       newRecipeId = UUID.randomUUID().transformInto[RecipeId]
-      timestamp <- SimpleDate.now.to[DBIO]
       newRecipe <-
         companion.duplicateRecipe(
           userId = userId,
           id = id,
           newId = newRecipeId,
-          timestamp = timestamp
+          timestamp = simpleDate
         )
       _ <- companion.duplicateIngredients(newRecipeId, newIngredients)
       _ <- companion.duplicateComplexIngredients(newRecipeId, complexIngredients.values.flatten.toSeq)

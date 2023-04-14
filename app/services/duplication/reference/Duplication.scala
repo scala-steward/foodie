@@ -10,7 +10,12 @@ import scala.concurrent.{ ExecutionContext, Future }
 
 trait Duplication {
 
-  def duplicate(userId: UserId, id: ReferenceMapId): Future[ServerError.Or[ReferenceMap]]
+  def duplicate(
+      userId: UserId,
+      id: ReferenceMapId,
+      simpleDate: SimpleDate
+  ): Future[ServerError.Or[ReferenceMap]]
+
 }
 
 object Duplication {
