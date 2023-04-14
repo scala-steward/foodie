@@ -7,6 +7,7 @@ import org.scalacheck.Prop.AnyOperators
 import org.scalacheck.{ Gen, Prop, Properties }
 import services.reference.{ FullReferenceMap, ReferenceEntry, ReferenceMap, ReferenceService }
 import services.{ ContentsUtil, DBTestUtil, GenUtils, TestUtil }
+import util.DateUtil
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -69,8 +70,9 @@ object ReferenceMapDuplicationProperties extends Properties("Reference map dupli
       fullReferenceMap = setup.fullReferenceMap
     )
     val transformer = for {
+      timestamp <- EitherT.liftF(DateUtil.now)
       duplicatedReferenceMap <- EitherT(
-        services.duplication.duplicate(setup.userId, setup.fullReferenceMap.referenceMap.id)
+        services.duplication.duplicate(setup.userId, setup.fullReferenceMap.referenceMap.id, timestamp)
       )
       referenceEntries <- EitherT
         .liftF[Future, ServerError, List[ReferenceEntry]](
@@ -95,7 +97,10 @@ object ReferenceMapDuplicationProperties extends Properties("Reference map dupli
       allReferenceMapsBefore <- EitherT.liftF[Future, ServerError, Seq[ReferenceMap]](
         services.referenceService.allReferenceMaps(setup.userId)
       )
-      duplicated <- EitherT(services.duplication.duplicate(setup.userId, setup.fullReferenceMap.referenceMap.id))
+      timestamp <- EitherT.liftF(DateUtil.now)
+      duplicated <- EitherT(
+        services.duplication.duplicate(setup.userId, setup.fullReferenceMap.referenceMap.id, timestamp)
+      )
       allReferenceMapsAfter <- EitherT.liftF[Future, ServerError, Seq[ReferenceMap]](
         services.referenceService.allReferenceMaps(setup.userId)
       )
@@ -115,7 +120,8 @@ object ReferenceMapDuplicationProperties extends Properties("Reference map dupli
       fullReferenceMap = setup.fullReferenceMap
     )
     val propF = for {
-      result <- services.duplication.duplicate(userId2, setup.fullReferenceMap.referenceMap.id)
+      timestamp <- DateUtil.now
+      result    <- services.duplication.duplicate(userId2, setup.fullReferenceMap.referenceMap.id, timestamp)
     } yield result.isLeft
 
     DBTestUtil.await(propF)
