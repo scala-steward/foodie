@@ -32,4 +32,4 @@ jobs:
       - name: Call Elm test runner
         run: |
           cd frontend
-          elm-test
+          elm-app test
