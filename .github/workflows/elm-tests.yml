@@ -23,7 +23,9 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: '16.x'
+      - name: Install create-elm-app
+        run: npm install create-elm-app -g
       - name: Set up Elm tests
         run:
           npm install elm-test -g
