@@ -77,6 +77,7 @@ onLoginClick =
                 |> Event.simulate Event.click
                 |> Event.expect Pages.Login.Page.Login
 
+
 registrationLink : Test
 registrationLink =
     test "Registration link is correct" <|
@@ -92,6 +93,7 @@ registrationLink =
                                 Addresses.Frontend.requestRegistration.address <|
                                     ()
                     ]
+
 
 recoveryLink : Test
 recoveryLink =
