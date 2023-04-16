@@ -1,0 +1,33 @@
+name: Run Elm tests
+
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+      - frontend/**
+  pull_request:
+    branches:
+      - "main"
+    paths:
+      - frontend/**
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Set up Elm tests
+        run:
+          npm install elm-test -g
+      - name: Call Elm test runner
+        run: |
+          cd frontend
+          elm-test
