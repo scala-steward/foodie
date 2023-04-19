@@ -2,7 +2,6 @@ package controllers.user
 
 import cats.effect.unsafe.IORuntime
 import db.UserId
-import io.circe.generic.JsonCodec
 import io.scalaland.chimney.dsl._
 import security.Hash
 import services.user.User
@@ -12,7 +11,6 @@ import utils.random.RandomGenerator
 
 import scala.concurrent.Future
 
-@JsonCodec
 case class UserCreation(
     nickname: String,
     password: String,
