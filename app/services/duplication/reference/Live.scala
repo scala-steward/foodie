@@ -1,7 +1,6 @@
 package services.duplication.reference
 
 import cats.data.OptionT
-import cats.effect.unsafe.implicits.global
 import db.generated.Tables
 import db.{ ReferenceMapId, UserId }
 import errors.{ ErrorContext, ServerError }
@@ -11,10 +10,9 @@ import services.common.Transactionally.syntax._
 import services.reference.{ ReferenceEntry, ReferenceMap, ReferenceMapCreation, ReferenceService }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
-import slickeffect.catsio.implicits._
+import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 import utils.date.SimpleDate
-import utils.DBIOUtil.instances._
 
 import java.util.UUID
 import javax.inject.Inject
@@ -30,9 +28,9 @@ class Live @Inject() (
     with HasDatabaseConfigProvider[PostgresProfile] {
 
   override def duplicate(
-                          userId: UserId,
-                          id: ReferenceMapId,
-                          timeOfDuplication: SimpleDate
+      userId: UserId,
+      id: ReferenceMapId,
+      timeOfDuplication: SimpleDate
   ): Future[ServerError.Or[ReferenceMap]] = {
     val action = for {
       referenceEntries <- referenceServiceCompanion
