@@ -19,9 +19,6 @@ object RandomGenerator {
         .mkString
     }
 
-  def randomString(length: Natural): IO[String] =
-    IO(1.to(length.intValue).map(_ => Random.nextPrintableChar()).mkString)
-
   def randomAlphaNumericString(length: Natural): IO[String] =
     randomStringFrom(alphaNumericCharacters, length)
 
