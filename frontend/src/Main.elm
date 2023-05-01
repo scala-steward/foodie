@@ -552,152 +552,178 @@ parsePage =
 
 followRoute : Model -> ( Model, Cmd Msg )
 followRoute model =
-    case ( model.jwt, model.entryRoute ) of
-        ( _, Nothing ) ->
+    let
+        authorizedAccessWith jwt =
+            { configuration = model.configuration
+            , jwt = jwt
+            }
+    in
+    case model.entryRoute of
+        Nothing ->
             ( { model | page = NotFound }, Cmd.none )
 
-        ( Nothing, Just _ ) ->
-            Pages.Login.Handler.init { configuration = model.configuration } |> stepThrough steps.login model
+        Just entryRoute ->
+            case ( entryRoute, model.jwt ) of
+                ( LoginRoute, _ ) ->
+                    Pages.Login.Handler.init { configuration = model.configuration }
+                        |> stepThrough steps.login model
 
-        ( Just userJWT, Just entryRoute ) ->
-            let
-                authorizedAccess =
-                    { configuration = model.configuration, jwt = userJWT }
+                ( OverviewRoute, Just _ ) ->
+                    Pages.Overview.Handler.init { configuration = model.configuration }
+                        |> stepThrough steps.overview model
 
-                flags =
-                    { authorizedAccess = authorizedAccess }
-            in
-            case entryRoute of
-                LoginRoute ->
-                    Pages.Login.Handler.init { configuration = model.configuration } |> stepThrough steps.login model
+                ( RecipesRoute, Just userJWT ) ->
+                    Pages.Recipes.Handler.init
+                        { authorizedAccess = authorizedAccessWith userJWT
+                        }
+                        |> stepThrough steps.recipes model
 
-                OverviewRoute ->
-                    Pages.Overview.Handler.init { configuration = model.configuration } |> stepThrough steps.overview model
-
-                RecipesRoute ->
-                    Pages.Recipes.Handler.init flags |> stepThrough steps.recipes model
-
-                IngredientRoute recipeId ->
+                ( IngredientRoute recipeId, Just userJWT ) ->
                     Pages.Ingredients.Handler.init
-                        { authorizedAccess = authorizedAccess
+                        { authorizedAccess = authorizedAccessWith userJWT
                         , recipeId = recipeId
                         }
                         |> stepThrough steps.ingredients model
 
-                MealsRoute ->
-                    Pages.Meals.Handler.init flags |> stepThrough steps.meals model
+                ( MealsRoute, Just userJWT ) ->
+                    Pages.Meals.Handler.init
+                        { authorizedAccess = authorizedAccessWith userJWT
+                        }
+                        |> stepThrough steps.meals model
 
-                MealEntriesRoute mealId ->
+                ( MealEntriesRoute mealId, Just userJWT ) ->
                     Pages.MealEntries.Handler.init
-                        { authorizedAccess = authorizedAccess
+                        { authorizedAccess = authorizedAccessWith userJWT
                         , mealId = mealId
                         }
                         |> stepThrough steps.mealEntries model
 
-                StatisticsTimeRoute ->
+                ( StatisticsTimeRoute, Just userJWT ) ->
                     Pages.Statistics.Time.Handler.init
-                        flags
+                        { authorizedAccess = authorizedAccessWith userJWT
+                        }
                         |> stepThrough steps.statisticsTime model
 
-                StatisticsFoodSearchRoute ->
+                ( StatisticsFoodSearchRoute, Just userJWT ) ->
                     Pages.Statistics.Food.Search.Handler.init
-                        flags
+                        { authorizedAccess = authorizedAccessWith userJWT
+                        }
                         |> stepThrough steps.statisticsFoodSearch model
 
-                StatisticsFoodSelectRoute foodId ->
+                ( StatisticsFoodSelectRoute foodId, Just userJWT ) ->
                     Pages.Statistics.Food.Select.Handler.init
-                        { authorizedAccess = authorizedAccess
+                        { authorizedAccess = authorizedAccessWith userJWT
                         , foodId = foodId
                         }
                         |> stepThrough steps.statisticsFoodSelect model
 
-                StatisticsComplexFoodSearchRoute ->
+                ( StatisticsComplexFoodSearchRoute, Just userJWT ) ->
                     Pages.Statistics.ComplexFood.Search.Handler.init
-                        flags
+                        { authorizedAccess = authorizedAccessWith userJWT
+                        }
                         |> stepThrough steps.statisticsComplexFoodSearch model
 
-                StatisticsComplexFoodSelectRoute complexFoodId ->
+                ( StatisticsComplexFoodSelectRoute complexFoodId, Just userJWT ) ->
                     Pages.Statistics.ComplexFood.Select.Handler.init
-                        { authorizedAccess = authorizedAccess
+                        { authorizedAccess = authorizedAccessWith userJWT
                         , complexFoodId = complexFoodId
                         }
                         |> stepThrough steps.statisticsComplexFoodSelect model
 
-                StatisticsRecipeSearchRoute ->
+                ( StatisticsRecipeSearchRoute, Just userJWT ) ->
                     Pages.Statistics.Recipe.Search.Handler.init
-                        flags
+                        { authorizedAccess = authorizedAccessWith userJWT
+                        }
                         |> stepThrough steps.statisticsRecipeSearch model
 
-                StatisticsRecipeSelectRoute recipeId ->
+                ( StatisticsRecipeSelectRoute recipeId, Just userJWT ) ->
                     Pages.Statistics.Recipe.Select.Handler.init
-                        { authorizedAccess = authorizedAccess
+                        { authorizedAccess = authorizedAccessWith userJWT
                         , recipeId = recipeId
                         }
                         |> stepThrough steps.statisticsRecipeSelect model
 
-                StatisticsMealSearchRoute ->
+                ( StatisticsMealSearchRoute, Just userJWT ) ->
                     Pages.Statistics.Meal.Search.Handler.init
-                        flags
+                        { authorizedAccess = authorizedAccessWith userJWT
+                        }
                         |> stepThrough steps.statisticsMealSearch model
 
-                StatisticsMealSelectRoute mealId ->
+                ( StatisticsMealSelectRoute mealId, Just userJWT ) ->
                     Pages.Statistics.Meal.Select.Handler.init
-                        { authorizedAccess = authorizedAccess
+                        { authorizedAccess = authorizedAccessWith userJWT
                         , mealId = mealId
                         }
                         |> stepThrough steps.statisticsMealSelect model
 
-                StatisticsRecipeOccurrencesRoute ->
+                ( StatisticsRecipeOccurrencesRoute, Just userJWT ) ->
                     Pages.Statistics.RecipeOccurrences.Handler.init
-                        flags
+                        { authorizedAccess = authorizedAccessWith userJWT
+                        }
                         |> stepThrough steps.statisticsRecipeOccurrences model
 
-                ReferenceMapsRoute ->
-                    Pages.ReferenceMaps.Handler.init flags |> stepThrough steps.referenceMaps model
+                ( ReferenceMapsRoute, Just userJWT ) ->
+                    Pages.ReferenceMaps.Handler.init
+                        { authorizedAccess = authorizedAccessWith userJWT
+                        }
+                        |> stepThrough steps.referenceMaps model
 
-                ReferenceEntriesRoute referenceMapId ->
+                ( ReferenceEntriesRoute referenceMapId, Just userJWT ) ->
                     Pages.ReferenceEntries.Handler.init
-                        { authorizedAccess = authorizedAccess
+                        { authorizedAccess = authorizedAccessWith userJWT
                         , referenceMapId = referenceMapId
                         }
                         |> stepThrough steps.referenceEntries model
 
-                RequestRegistrationRoute ->
-                    Pages.Registration.Request.Handler.init { configuration = model.configuration } |> stepThrough steps.requestRegistration model
+                ( RequestRegistrationRoute, _ ) ->
+                    Pages.Registration.Request.Handler.init { configuration = model.configuration }
+                        |> stepThrough steps.requestRegistration model
 
-                ConfirmRegistrationRoute userIdentifier jwt ->
+                ( ConfirmRegistrationRoute userIdentifier jwt, _ ) ->
                     Pages.Registration.Confirm.Handler.init
-                        { configuration = authorizedAccess.configuration
+                        { configuration = model.configuration
                         , userIdentifier = userIdentifier
                         , registrationJWT = jwt
                         }
                         |> stepThrough steps.confirmRegistration model
 
-                UserSettingsRoute ->
-                    Pages.UserSettings.Handler.init flags |> stepThrough steps.userSettings model
+                ( UserSettingsRoute, Just userJWT ) ->
+                    Pages.UserSettings.Handler.init
+                        { authorizedAccess = authorizedAccessWith userJWT
+                        }
+                        |> stepThrough steps.userSettings model
 
-                DeletionRoute userIdentifier jwt ->
+                ( DeletionRoute userIdentifier jwt, _ ) ->
                     Pages.Deletion.Handler.init
-                        { configuration = authorizedAccess.configuration
+                        { configuration = model.configuration
                         , userIdentifier = userIdentifier
                         , deletionJWT = jwt
                         }
                         |> stepThrough steps.deletion model
 
-                RequestRecoveryRoute ->
-                    Pages.Recovery.Request.Handler.init { configuration = model.configuration } |> stepThrough steps.requestRecovery model
+                ( RequestRecoveryRoute, _ ) ->
+                    Pages.Recovery.Request.Handler.init { configuration = model.configuration }
+                        |> stepThrough steps.requestRecovery model
 
-                ConfirmRecoveryRoute userIdentifier jwt ->
+                ( ConfirmRecoveryRoute userIdentifier jwt, _ ) ->
                     Pages.Recovery.Confirm.Handler.init
-                        { configuration = authorizedAccess.configuration
+                        { configuration = model.configuration
                         , userIdentifier = userIdentifier
                         , recoveryJwt = jwt
                         }
                         |> stepThrough steps.confirmRecovery model
 
-                ComplexFoodsRoute ->
-                    Pages.ComplexFoods.Handler.init { authorizedAccess = authorizedAccess }
+                ( ComplexFoodsRoute, Just userJWT ) ->
+                    Pages.ComplexFoods.Handler.init
+                        { authorizedAccess = authorizedAccessWith userJWT }
                         |> stepThrough steps.complexFoods model
+
+                _ ->
+                    Pages.Login.Handler.init
+                        { configuration =
+                            model.configuration
+                        }
+                        |> stepThrough steps.login model
 
 
 fragmentToPath : Url -> Url
