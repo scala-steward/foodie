@@ -1,6 +1,5 @@
 package services.common
 
-import slick.dbio.{ DBIOAction, NoStream }
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
 

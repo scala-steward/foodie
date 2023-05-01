@@ -225,7 +225,7 @@ class UserController @Inject() (
 
   def confirmRecovery: Action[PasswordChangeRequest] =
     Action.async(circe.tolerantJson[PasswordChangeRequest]) { request =>
-      toResult("An error occurred while creating the user") {
+      toResult("An error occurred while recovering the user") {
         for {
           token <- EitherT.fromOption(
             request.headers.get(RequestHeaders.userToken),

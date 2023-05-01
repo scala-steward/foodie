@@ -14,7 +14,6 @@ object ErrorContext {
   }
 
   object Login {
-    case object Failure extends ServerErrorInstance("Invalid combination of user name and password.")
     case object Session extends ServerErrorInstance("The user has been logged out.")
   }
 
@@ -34,8 +33,6 @@ object ErrorContext {
     case object Exists extends ServerErrorInstance("A user with the given nickname already exists.")
 
     case object Confirmation extends ServerErrorInstance("Confirmation token missing or invalid.")
-
-    case object Mismatch extends ServerErrorInstance("Settings do not correspond to requested settings")
 
     case object PasswordUpdate extends ServerErrorInstance("Password update failed")
 
