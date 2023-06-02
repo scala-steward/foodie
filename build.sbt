@@ -8,7 +8,7 @@ version := "0.1"
 
 val circeVersion = "0.14.5"
 val slickVersion = "3.4.1"
-val jwtVersion   = "9.2.0"
+val jwtVersion   = "9.3.0"
 
 val config = ConfigFactory
   .parseFile(new File("conf/application.conf"))
@@ -33,15 +33,16 @@ lazy val root = (project in file("."))
       "org.typelevel"         %% "spire"               % "0.18.0",
       "org.flywaydb"          %% "flyway-play"         % "7.38.0",
       "com.typesafe.play"     %% "play-slick"          % "5.1.0",
-      "com.dripower"          %% "play-circe"          % "2814.2",
+      "com.dripower"          %% "play-circe"          % "2814.4",
       "com.davegurnell"       %% "bridges"             % "0.24.0",
       "com.github.pathikrit"  %% "better-files"        % "3.9.2",
       "com.typesafe"           % "config"              % "1.4.2",
-      "io.scalaland"          %% "chimney"             % "0.7.4",
+      "io.scalaland"          %% "chimney"             % "0.7.5",
       "com.github.jwt-scala"  %% "jwt-core"            % jwtVersion,
       "com.github.jwt-scala"  %% "jwt-circe"           % jwtVersion,
       "com.github.pureconfig" %% "pureconfig"          % "0.17.4",
       "org.typelevel"         %% "cats-effect"         % "3.4.9",
+      "org.typelevel"         %% "cats-effect"         % "3.4.11",
       "org.typelevel"         %% "cats-core"           % "2.9.0",
       "com.beachape"          %% "enumeratum-circe"    % "1.7.2",
       "com.typesafe.play"     %% "play-mailer"         % "8.0.1",
@@ -50,7 +51,7 @@ lazy val root = (project in file("."))
       "com.kubukoz"           %% "slick-effect"        % "0.5.0",
       "com.kubukoz"           %% "slick-effect-catsio" % "0.5.0",
       // Transitive dependency. Override added for proper version.
-      "com.fasterxml.jackson.module" %% "jackson-module-scala"      % "2.15.0",
+      "com.fasterxml.jackson.module" %% "jackson-module-scala"      % "2.15.1",
       "org.scalacheck"               %% "scalacheck"                % "1.17.0" % Test,
       "org.typelevel"                %% "cats-laws"                 % "2.9.0"  % Test,
       "com.github.alexarchambault"   %% "scalacheck-shapeless_1.15" % "1.3.0"  % Test

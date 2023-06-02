@@ -1,19 +1,13 @@
 module Pages.ReferenceEntries.Page exposing (..)
 
 import Api.Auxiliary exposing (JWT, NutrientCode, ReferenceMapId)
-import Api.Types.Nutrient exposing (Nutrient)
-import Api.Types.ReferenceEntry exposing (ReferenceEntry)
 import Monocle.Lens exposing (Lens)
 import Pages.ReferenceEntries.Entries.Page
 import Pages.ReferenceEntries.Map.Page
-import Pages.ReferenceEntries.ReferenceEntryCreationClientInput exposing (ReferenceEntryCreationClientInput)
-import Pages.ReferenceEntries.ReferenceEntryUpdateClientInput exposing (ReferenceEntryUpdateClientInput)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.Choice.Page
 import Pages.Util.Parent.Page
 import Pages.View.Tristate as Tristate
-import Util.DictList exposing (DictList)
-import Util.Editing exposing (Editing)
 
 
 type alias Model =
@@ -59,22 +53,6 @@ initialToMain i =
                             }
                         )
             )
-
-
-type alias ReferenceEntryState =
-    Editing ReferenceEntry ReferenceEntryUpdateClientInput
-
-
-type alias NutrientMap =
-    DictList NutrientCode Nutrient
-
-
-type alias AddNutrientMap =
-    DictList NutrientCode ReferenceEntryCreationClientInput
-
-
-type alias ReferenceEntryStateMap =
-    DictList NutrientCode ReferenceEntryState
 
 
 type alias Flags =

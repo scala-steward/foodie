@@ -13,6 +13,13 @@
    psql> grant pg_read_server_files to "<foodie>";
    ```
    The last command is important for the population of the actual CNF database.
+   When `psql` is running in Docker it may also be necessary to add
+   ```
+   psql>\c <foodie>
+   foodie>grant all privileges on all tables in schema public to <foodie>;
+   ```
+   Additionally, at least one migration may require super-user access for the user,
+   unless the extension `uuid-ossp` is already defined.
 2. Populate the CNF database by once running the script under `scripts/populate_cnf_db.sql`.
    To achieve that run the following steps:
    1. Open a console in the project folder 
