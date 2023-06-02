@@ -1,20 +1,14 @@
 module Pages.MealEntries.Page exposing (..)
 
 import Api.Auxiliary exposing (JWT, MealEntryId, MealId, RecipeId)
-import Api.Types.MealEntry exposing (MealEntry)
-import Api.Types.Recipe exposing (Recipe)
 import Monocle.Lens exposing (Lens)
 import Pages.MealEntries.Entries.Page
 import Pages.MealEntries.Meal.Page
-import Pages.MealEntries.MealEntryCreationClientInput exposing (MealEntryCreationClientInput)
-import Pages.MealEntries.MealEntryUpdateClientInput exposing (MealEntryUpdateClientInput)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.Choice.Page
 import Pages.Util.Parent.Page
 import Pages.View.Tristate as Tristate
 import Pages.View.TristateUtil as TristateUtil
-import Util.DictList exposing (DictList)
-import Util.Editing exposing (Editing)
 
 
 type alias Model =
@@ -76,22 +70,6 @@ initialToMain i =
                             }
                         )
             )
-
-
-type alias MealEntryState =
-    Editing MealEntry MealEntryUpdateClientInput
-
-
-type alias RecipeMap =
-    DictList RecipeId Recipe
-
-
-type alias AddMealEntriesMap =
-    DictList RecipeId MealEntryCreationClientInput
-
-
-type alias MealEntryStateMap =
-    DictList MealEntryId MealEntryState
 
 
 type alias Flags =

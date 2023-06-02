@@ -7,9 +7,6 @@ import Api.Types.Food exposing (Food)
 import Api.Types.Ingredient exposing (Ingredient)
 import Monocle.Lens exposing (Lens)
 import Pages.Ingredients.Complex.Page
-import Pages.Ingredients.ComplexIngredientClientInput exposing (ComplexIngredientClientInput)
-import Pages.Ingredients.IngredientCreationClientInput exposing (IngredientCreationClientInput)
-import Pages.Ingredients.IngredientUpdateClientInput exposing (IngredientUpdateClientInput)
 import Pages.Ingredients.Plain.Page
 import Pages.Ingredients.Recipe.Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
@@ -17,8 +14,6 @@ import Pages.Util.Choice.Page
 import Pages.Util.Parent.Page
 import Pages.View.Tristate as Tristate exposing (Status(..))
 import Pages.View.TristateUtil as TristateUtil
-import Util.DictList exposing (DictList)
-import Util.Editing exposing (Editing)
 
 
 type alias Model =
@@ -99,30 +94,6 @@ initialToMain i =
                                     )
                         )
             )
-
-
-type alias PlainIngredientState =
-    Editing Ingredient IngredientUpdateClientInput
-
-
-type alias ComplexIngredientState =
-    Editing ComplexIngredient ComplexIngredientClientInput
-
-
-type alias FoodMap =
-    DictList FoodId (Editing Food IngredientCreationClientInput)
-
-
-type alias ComplexFoodMap =
-    DictList ComplexFoodId (Editing ComplexFood ComplexIngredientClientInput)
-
-
-type alias PlainIngredientStateMap =
-    DictList IngredientId PlainIngredientState
-
-
-type alias ComplexIngredientStateMap =
-    DictList ComplexIngredientId ComplexIngredientState
 
 
 type FoodsMode
