@@ -176,7 +176,7 @@ updateMealLine mealUpdateClientInput =
 
 
 createMealLine : MealCreationClientInput -> List (Html Page.LogicMsg)
-createMealLine mealCreation =
+createMealLine =
     editMealLineWith
         { saveMsg = Pages.Util.ParentEditor.Page.Create
         , dateLens = MealCreationClientInput.lenses.date
@@ -189,7 +189,6 @@ createMealLine mealCreation =
         , rowStyles = [ Style.classes.editLine ]
         , toggleCommand = Nothing
         }
-        mealCreation
 
 
 editMealLineWith :
