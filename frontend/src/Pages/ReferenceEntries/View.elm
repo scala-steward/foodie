@@ -4,7 +4,7 @@ import Configuration exposing (Configuration)
 import Html exposing (Attribute, Html, div, label, text)
 import Pages.ReferenceEntries.Entries.View
 import Pages.ReferenceEntries.Map.View
-import Pages.ReferenceEntries.Page as Page exposing (NutrientMap)
+import Pages.ReferenceEntries.Page as Page
 import Pages.Util.Style as Style
 import Pages.Util.ViewUtil as ViewUtil
 import Pages.View.Tristate as Tristate
