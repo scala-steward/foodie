@@ -49,7 +49,6 @@ viewMain configuration main =
             Pages.Meals.View.editMealLineWith
                 { saveMsg = Pages.Util.Parent.Page.SaveEdit
                 , dateLens = MealUpdateClientInput.lenses.date
-                , setDate = True
                 , nameLens = MealUpdateClientInput.lenses.name
                 , updateMsg = Pages.Util.Parent.Page.Edit
                 , confirmName = "Save"
