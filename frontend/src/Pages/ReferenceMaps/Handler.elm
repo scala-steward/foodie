@@ -31,6 +31,7 @@ updateLogic =
         , idOfUpdate = .id
         , toUpdate = ReferenceMapUpdateClientInput.from
         , navigateToAddress = Addresses.Frontend.referenceEntries.address
+        , updateCreationTimestamp = always identity
         , create = \authorizedAccess -> ReferenceMapCreationClientInput.toCreation >> Requests.createReferenceMap authorizedAccess
         , save = \authorizedAccess -> ReferenceMapUpdateClientInput.to >> Requests.saveReferenceMap authorizedAccess
         , delete = Requests.deleteReferenceMap

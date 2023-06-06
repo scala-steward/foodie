@@ -59,6 +59,7 @@ updateLogic msg model =
                 , idOfUpdate = .id
                 , toUpdate = RecipeUpdateClientInput.from
                 , navigateToAddress = Addresses.Frontend.ingredientEditor.address
+                , updateCreationTimestamp = always identity
                 , create = \authorizedAccess -> RecipeCreationClientInput.toCreation >> Requests.createRecipe authorizedAccess
                 , save = \authorizedAccess -> RecipeUpdateClientInput.to >> Requests.saveRecipe authorizedAccess
                 , delete = Requests.deleteRecipe
