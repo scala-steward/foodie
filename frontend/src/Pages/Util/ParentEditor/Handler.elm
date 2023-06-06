@@ -2,6 +2,7 @@ module Pages.Util.ParentEditor.Handler exposing (updateLogic)
 
 import Maybe.Extra
 import Monocle.Compose as Compose
+import Monocle.Lens as Lens
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.DateUtil as DateUtil
 import Pages.Util.Links as Links
@@ -21,6 +22,7 @@ updateLogic :
     , idOfUpdate : update -> parentId
     , toUpdate : parent -> update
     , navigateToAddress : parentId -> List String
+    , updateCreationTimestamp : DateUtil.Timestamp -> creation -> creation
     , create : AuthorizedAccess -> creation -> Cmd (Page.LogicMsg parentId parent creation update)
     , save : AuthorizedAccess -> update -> Cmd (Page.LogicMsg parentId parent creation update)
     , delete : AuthorizedAccess -> parentId -> Cmd (Page.LogicMsg parentId parent creation update)
@@ -49,10 +51,31 @@ updateLogic ps msg model =
             , Cmd.none
             )
 
+        gotUpdateCreationTimestamp creation timestamp =
+            ( model
+                |> Tristate.mapMain
+                    (Lens.modify Page.lenses.main.parentCreation
+                        (\currentCreation ->
+                            let
+                                -- The timestamp is only set automatically, if there is no current creation.
+                                modifier =
+                                    if currentCreation |> Maybe.Extra.isNothing then
+                                        Maybe.map (ps.updateCreationTimestamp timestamp)
+
+                                    else
+                                        identity
+                            in
+                            creation |> modifier
+                        )
+                    )
+            , Cmd.none
+            )
+
+        -- Here we only fetch the current time, the actual update is handled in 'gotUpdateCreationTimestamp'
         updateCreation creation =
             ( model
-                |> Tristate.mapMain (Page.lenses.main.parentCreation.set creation)
-            , Cmd.none
+            , DateUtil.now
+                |> Task.perform (Page.GotUpdateCreationTimestamp creation)
             )
 
         create =
@@ -241,6 +264,9 @@ updateLogic ps msg model =
 
         Page.Create ->
             create
+
+        Page.GotUpdateCreationTimestamp creation timestamp ->
+            gotUpdateCreationTimestamp creation timestamp
 
         Page.GotCreateResponse result ->
             gotCreateResponse result

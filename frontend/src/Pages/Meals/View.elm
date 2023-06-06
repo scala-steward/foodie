@@ -163,7 +163,6 @@ updateMealLine mealUpdateClientInput =
     editMealLineWith
         { saveMsg = Pages.Util.ParentEditor.Page.SaveEdit mealUpdateClientInput.id
         , dateLens = MealUpdateClientInput.lenses.date
-        , setDate = True
         , nameLens = MealUpdateClientInput.lenses.name
         , updateMsg = Pages.Util.ParentEditor.Page.Edit
         , confirmName = "Save"
@@ -176,11 +175,10 @@ updateMealLine mealUpdateClientInput =
 
 
 createMealLine : MealCreationClientInput -> List (Html Page.LogicMsg)
-createMealLine mealCreation =
+createMealLine =
     editMealLineWith
         { saveMsg = Pages.Util.ParentEditor.Page.Create
         , dateLens = MealCreationClientInput.lenses.date
-        , setDate = False
         , nameLens = MealCreationClientInput.lenses.name
         , updateMsg = Just >> Pages.Util.ParentEditor.Page.UpdateCreation
         , confirmName = "Add"
@@ -189,13 +187,11 @@ createMealLine mealCreation =
         , rowStyles = [ Style.classes.editLine ]
         , toggleCommand = Nothing
         }
-        mealCreation
 
 
 editMealLineWith :
     { saveMsg : msg
     , dateLens : Lens editedValue SimpleDateInput
-    , setDate : Bool
     , nameLens : Optional editedValue String
     , updateMsg : editedValue -> msg
     , confirmName : String
@@ -222,7 +218,6 @@ editMealLineWith handling editedValue =
         dateValue =
             date
                 |> .date
-                |> Maybe.Extra.filter (\_ -> handling.setDate)
                 |> Maybe.map (DateUtil.dateToString >> value)
                 |> Maybe.Extra.toList
 
@@ -240,7 +235,6 @@ editMealLineWith handling editedValue =
         timeValue =
             date
                 |> .time
-                |> Maybe.Extra.filter (\_ -> handling.setDate)
                 |> Maybe.map (DateUtil.timeToString >> value)
                 |> Maybe.Extra.toList
 
@@ -261,9 +255,9 @@ editMealLineWith handling editedValue =
         infoColumns =
             [ td [ Style.classes.editable, Style.classes.date ]
                 [ input
-                    ([ type_ "date"
+                    ([ type_ <| "date"
                      , Style.classes.date
-                     , onInput dateParsedInteraction
+                     , onInput <| dateParsedInteraction
                      , HtmlUtil.onEscape handling.cancelMsg
                      ]
                         ++ dateValue
