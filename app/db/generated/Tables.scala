@@ -110,30 +110,36 @@ trait Tables {
     *   Database column complex_food_id SqlType(uuid)
     * @param factor
     *   Database column factor SqlType(numeric)
+    * @param scalingMode
+    *   Database column scaling_mode SqlType(text)
     */
   case class ComplexIngredientRow(
       recipeId: java.util.UUID,
       complexFoodId: java.util.UUID,
-      factor: scala.math.BigDecimal
+      factor: scala.math.BigDecimal,
+      scalingMode: String
   )
 
   /** GetResult implicit for fetching ComplexIngredientRow objects using plain SQL queries */
   implicit def GetResultComplexIngredientRow(implicit
       e0: GR[java.util.UUID],
-      e1: GR[scala.math.BigDecimal]
+      e1: GR[scala.math.BigDecimal],
+      e2: GR[String]
   ): GR[ComplexIngredientRow] = GR { prs =>
     import prs._
-    ComplexIngredientRow.tupled((<<[java.util.UUID], <<[java.util.UUID], <<[scala.math.BigDecimal]))
+    ComplexIngredientRow.tupled((<<[java.util.UUID], <<[java.util.UUID], <<[scala.math.BigDecimal], <<[String]))
   }
 
   /** Table description of table complex_ingredient. Objects of this class serve as prototypes for rows in queries. */
   class ComplexIngredient(_tableTag: Tag)
       extends profile.api.Table[ComplexIngredientRow](_tableTag, "complex_ingredient") {
-    def * = (recipeId, complexFoodId, factor) <> (ComplexIngredientRow.tupled, ComplexIngredientRow.unapply)
+
+    def * =
+      (recipeId, complexFoodId, factor, scalingMode) <> (ComplexIngredientRow.tupled, ComplexIngredientRow.unapply)
 
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = ((Rep.Some(recipeId), Rep.Some(complexFoodId), Rep.Some(factor))).shaped.<>(
-      { r => import r._; _1.map(_ => ComplexIngredientRow.tupled((_1.get, _2.get, _3.get))) },
+    def ? = ((Rep.Some(recipeId), Rep.Some(complexFoodId), Rep.Some(factor), Rep.Some(scalingMode))).shaped.<>(
+      { r => import r._; _1.map(_ => ComplexIngredientRow.tupled((_1.get, _2.get, _3.get, _4.get))) },
       (_: Any) => throw new Exception("Inserting into ? projection not supported.")
     )
 
@@ -145,6 +151,9 @@ trait Tables {
 
     /** Database column factor SqlType(numeric) */
     val factor: Rep[scala.math.BigDecimal] = column[scala.math.BigDecimal]("factor")
+
+    /** Database column scaling_mode SqlType(text) */
+    val scalingMode: Rep[String] = column[String]("scaling_mode")
 
     /** Primary key of ComplexIngredient (database name complex_ingredient_pk) */
     val pk = primaryKey("complex_ingredient_pk", (recipeId, complexFoodId))
