@@ -48,6 +48,13 @@ object Bridge {
             imports = s"\nimport $elmModule.ComplexFoodUnit exposing (..)",
             encoder = "encoderComplexFoodUnit",
             decoder = "decoderComplexFoodUnit"
+          ),
+        Ref("ScalingMode")
+          -> TypeReplacement(
+            "ScalingMode",
+            imports = s"\nimport $elmModule.ScalingMode exposing (..)",
+            encoder = "encoderScalingMode",
+            decoder = "decoderScalingMode"
           )
       )
     )
