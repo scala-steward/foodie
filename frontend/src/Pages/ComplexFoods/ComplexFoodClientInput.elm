@@ -21,7 +21,6 @@ type alias ComplexFoodClientInput =
 withSuggestion : Recipe -> ComplexFoodClientInput
 withSuggestion recipe =
     let
-
         modifier =
             recipe.servingSize
                 |> Maybe.andThen (Parser.run Pages.Recipes.Util.gramsParser >> Result.toMaybe)
