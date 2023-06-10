@@ -9,6 +9,8 @@ object DBError {
     object Food {
       case object NotFound extends DBError("No complex food with the given id found")
 
+      case object MissingVolume extends DBError("The given complex food does not have a volume")
+
       case object RecipeNotFound extends DBError("No recipe with the given id found")
     }
 
