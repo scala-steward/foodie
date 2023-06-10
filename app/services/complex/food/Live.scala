@@ -7,16 +7,16 @@ import errors.{ ErrorContext, ServerError }
 import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
+import services.common.Transactionally.syntax._
 import services.recipe.{ Recipe, RecipeService }
 import slick.dbio.DBIO
-import slick.jdbc.{ JdbcBackend, PostgresProfile }
+import slick.jdbc.PostgresProfile
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 
 import java.util.UUID
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
-import services.common.Transactionally.syntax._
 
 class Live @Inject() (
     override protected val dbConfigProvider: DatabaseConfigProvider,
