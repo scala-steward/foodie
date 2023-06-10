@@ -11,7 +11,8 @@ import java.util.UUID
 @JsonCodec
 case class ComplexIngredient(
     complexFoodId: UUID,
-    factor: BigDecimal
+    factor: BigDecimal,
+    scalingMode: ScalingMode
 )
 
 object ComplexIngredient {
@@ -26,7 +27,8 @@ object ComplexIngredient {
       services.complex.ingredient.ComplexIngredient(
         recipeId = recipeId.transformInto[RecipeId],
         complexFoodId = complexIngredient.complexFoodId.transformInto[ComplexFoodId],
-        factor = complexIngredient.factor
+        factor = complexIngredient.factor,
+        scalingMode = complexIngredient.scalingMode.transformInto[services.complex.ingredient.ScalingMode]
       )
   }
 
