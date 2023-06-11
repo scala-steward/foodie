@@ -17,9 +17,11 @@ type alias ComplexIngredientClientInput =
 
 lenses :
     { factor : Lens ComplexIngredientClientInput (ValidatedInput Float)
+    , scalingMode : Lens ComplexIngredientClientInput ScalingMode
     }
 lenses =
     { factor = Lens .factor (\b a -> { a | factor = b })
+    , scalingMode = Lens .scalingMode (\b a -> { a | scalingMode = b })
     }
 
 
