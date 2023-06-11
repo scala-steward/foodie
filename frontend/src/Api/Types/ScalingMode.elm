@@ -51,3 +51,19 @@ toString scalingMode =
 
         Volume ->
             "Volume"
+
+
+fromString : String -> Maybe ScalingMode
+fromString string =
+    case string of
+        "Recipe" ->
+            Just Recipe
+
+        "Weight" ->
+            Just Weight
+
+        "Volume" ->
+            Just Volume
+
+        _ ->
+            Nothing
