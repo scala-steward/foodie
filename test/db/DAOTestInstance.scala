@@ -16,6 +16,7 @@ import services.complex.ingredient.ComplexIngredient
 import services.meal.{ Meal, MealEntry }
 import services.recipe.{ Ingredient, Recipe }
 import services.reference.{ ReferenceEntry, ReferenceMap }
+import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
 import slickeffect.catsio.implicits._
 import util.DateUtil
@@ -109,6 +110,13 @@ object DAOTestInstance {
             map.view
               .filterKeys(recipe => recipeIds.contains(recipe.recipeId))
               .values
+              .toSeq
+          }
+
+        override def findReferencing(complexFoodId: ComplexFoodId): DBIO[Seq[Tables.ComplexIngredientRow]] =
+          fromIO {
+            map.values
+              .filter(_.complexFoodId.transformInto[ComplexFoodId] == complexFoodId)
               .toSeq
           }
 

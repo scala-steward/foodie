@@ -1,7 +1,7 @@
 package db.daos.complexIngredient
 
 import db.generated.Tables
-import db.{ DAOActions, RecipeId }
+import db.{ ComplexFoodId, DAOActions, RecipeId }
 import io.scalaland.chimney.dsl._
 import slick.jdbc.PostgresProfile.api._
 import utils.TransformerUtils.Implicits._
@@ -13,6 +13,8 @@ trait DAO extends DAOActions[Tables.ComplexIngredientRow, ComplexIngredientKey] 
   override val keyOf: Tables.ComplexIngredientRow => ComplexIngredientKey = ComplexIngredientKey.of
 
   def findAllFor(recipeIds: Seq[RecipeId]): DBIO[Seq[Tables.ComplexIngredientRow]]
+
+  def findReferencing(complexFoodId: ComplexFoodId): DBIO[Seq[Tables.ComplexIngredientRow]]
 }
 
 object DAO {
@@ -29,6 +31,13 @@ object DAO {
         val untypedIds = recipeIds.distinct.map(_.transformInto[UUID])
         Tables.ComplexIngredient
           .filter(_.recipeId.inSetBind(untypedIds))
+          .result
+      }
+
+      override def findReferencing(complexFoodId: ComplexFoodId): DBIO[Seq[Tables.ComplexIngredientRow]] = {
+        val untypedId = complexFoodId.transformInto[UUID]
+        Tables.ComplexIngredient
+          .filter(_.complexFoodId === untypedId)
           .result
       }
 
