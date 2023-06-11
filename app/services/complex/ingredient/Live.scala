@@ -9,6 +9,7 @@ import errors.{ ErrorContext, ServerError }
 import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
+import services.common.Transactionally.syntax._
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
@@ -17,7 +18,6 @@ import utils.CycleCheck.Arc
 import utils.DBIOUtil.instances._
 import utils.TransformerUtils.Implicits._
 import utils.collection.MapUtil
-import services.common.Transactionally.syntax._
 
 import javax.inject.Inject
 import scala.concurrent.{ ExecutionContext, Future }
@@ -90,11 +90,15 @@ object Live {
         userId = userId,
         recipeId = complexIngredient.recipeId,
         complexFoodId = complexIngredient.complexFoodId
-      ) {
+      ) { complexFoodRow =>
         for {
           createsCycle <- cycleCheck(complexIngredient.recipeId, complexIngredient.complexFoodId)
           _            <- if (!createsCycle) DBIO.successful(()) else DBIO.failed(DBError.Complex.Ingredient.Cycle)
-          row          <- complexIngredientDao.insert(complexIngredientRow)
+          _ <-
+            if (isValidScalingMode(complexFoodRow.amountMilliLitres, complexIngredient.scalingMode))
+              DBIO.successful(())
+            else DBIO.failed(DBError.Complex.Ingredient.ScalingModeMismatch)
+          row <- complexIngredientDao.insert(complexIngredientRow)
         } yield row.transformInto[ComplexIngredient]
       }
     }
@@ -112,8 +116,10 @@ object Live {
           userId = userId,
           recipeId = complexIngredient.recipeId,
           complexFoodId = complexIngredient.complexFoodId
-        ) {
-          complexIngredientDao.update(complexIngredient.transformInto[Tables.ComplexIngredientRow])
+        ) { complexFoodRow =>
+          if (isValidScalingMode(complexFoodRow.amountMilliLitres, complexIngredient.scalingMode))
+            complexIngredientDao.update(complexIngredient.transformInto[Tables.ComplexIngredientRow])
+          else DBIO.failed(DBError.Complex.Ingredient.ScalingModeMismatch)
         }
         updatedIngredient <- findAction
       } yield updatedIngredient.transformInto[ComplexIngredient]
@@ -136,14 +142,13 @@ object Live {
         userId: UserId,
         recipeId: RecipeId,
         complexFoodId: ComplexFoodId
-    )(action: => DBIO[A])(implicit ec: ExecutionContext): DBIO[A] =
+    )(action: Tables.ComplexFoodRow => DBIO[A])(implicit ec: ExecutionContext): DBIO[A] =
       for {
-        recipeExists      <- recipeDao.exists(RecipeKey(userId, recipeId))
-        complexFoodExists <- complexFoodDao.exists(complexFoodId)
+        recipeExists         <- recipeDao.exists(RecipeKey(userId, recipeId))
+        complexFoodCandidate <- complexFoodDao.find(complexFoodId)
         result <-
           if (!recipeExists) DBIO.failed(DBError.Complex.Ingredient.RecipeNotFound)
-          else if (!complexFoodExists) DBIO.failed(DBError.Complex.Ingredient.NotFound)
-          else action
+          else complexFoodCandidate.fold(DBIO.failed(DBError.Complex.Ingredient.NotFound): DBIO[A])(action)
       } yield result
 
     private def cycleCheck(recipeId: RecipeId, newReferenceRecipeId: RecipeId)(implicit
@@ -169,6 +174,14 @@ object Live {
         CycleCheck.onCycle(recipeId.toString, graph)
       }
 
+    }
+
+    private def isValidScalingMode(
+        volumeAmount: Option[BigDecimal],
+        scalingMode: ScalingMode
+    ): Boolean = (volumeAmount, scalingMode) match {
+      case (None, ScalingMode.Volume) => false
+      case _                          => true
     }
 
   }
