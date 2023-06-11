@@ -8,6 +8,7 @@ import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
 import services.common.Transactionally.syntax._
+import services.complex.ingredient.ScalingMode
 import services.recipe.{ Recipe, RecipeService }
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
@@ -63,7 +64,8 @@ object Live {
 
   class Companion @Inject() (
       recipeService: RecipeService.Companion,
-      dao: db.daos.complexFood.DAO
+      dao: db.daos.complexFood.DAO,
+      complexIngredientDao: db.daos.complexIngredient.DAO
   ) extends ComplexFoodService.Companion {
 
     override def all(userId: UserId)(implicit ec: ExecutionContext): DBIO[Seq[ComplexFood]] =
@@ -121,6 +123,11 @@ object Live {
           .getOrElseF(DBIO.failed(DBError.Complex.Food.NotFound))
       for {
         _           <- findAction
+        referencing <- complexIngredientDao.findReferencing(complexFood.recipeId)
+        _ <-
+          if (breaksVolumeReference(referencing, complexFood.amountMilliLitres))
+            DBIO.failed(DBError.Complex.Food.VolumeReferenceExists)
+          else DBIO.successful(())
         _           <- dao.update(complexFood.transformInto[Tables.ComplexFoodRow])
         updatedFood <- findAction
       } yield updatedFood
@@ -140,6 +147,12 @@ object Live {
       recipeService
         .getRecipe(userId, recipeId)
         .flatMap(maybeRecipe => maybeRecipe.fold(DBIO.failed(DBError.Complex.Food.RecipeNotFound): DBIO[A])(action))
+
+    private def breaksVolumeReference(
+        referencing: Seq[Tables.ComplexIngredientRow],
+        volumeAmount: Option[BigDecimal]
+    ): Boolean =
+      referencing.exists(_.scalingMode == ScalingMode.Volume.entryName) && volumeAmount.isEmpty
 
   }
 

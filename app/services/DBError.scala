@@ -11,6 +11,11 @@ object DBError {
 
       case object MissingVolume extends DBError("The given complex food does not have a volume")
 
+      case object VolumeReferenceExists
+          extends DBError(
+            "There exists a recipe that uses the volume amount of this complex food. Update this reference before continuing"
+          )
+
       case object RecipeNotFound extends DBError("No recipe with the given id found")
     }
 
