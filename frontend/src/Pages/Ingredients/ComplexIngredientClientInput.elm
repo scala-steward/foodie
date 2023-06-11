@@ -32,7 +32,7 @@ from complexIngredient =
         ValidatedInput.positive
             |> ValidatedInput.lenses.value.set complexIngredient.factor
             |> ValidatedInput.lenses.text.set (complexIngredient.factor |> String.fromFloat)
-    , scalingMode = ScalingMode.Recipe
+    , scalingMode = complexIngredient.scalingMode
     }
 
 
