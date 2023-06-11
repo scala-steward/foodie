@@ -94,7 +94,7 @@ viewComplexIngredients configuration main =
                 , { attributes = [ Style.classes.numberLabel ]
                   , children =
                         [ dropdown
-                            { items = complexFood |> Maybe.Extra.unwrap "" amountInfoOf |> unitDropdownItems
+                            { items = complexFood |> Maybe.Extra.unwrap [] unitDropdownItems
                             , emptyItem = Nothing
                             , onChange =
                                 \unit ->
@@ -171,7 +171,7 @@ viewFoods configuration main =
                     , { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
                       , children =
                             [ dropdown
-                                { items = complexFood |> amountInfoOf |> unitDropdownItems
+                                { items = complexFood |> unitDropdownItems
                                 , emptyItem = Nothing
                                 , onChange =
                                     \u ->
@@ -247,13 +247,23 @@ amountInfoOf complexFood =
         ]
 
 
-unitDropdownItems : String -> List Dropdown.Item
-unitDropdownItems fullSize =
-    [ ScalingMode.Recipe
-    , ScalingMode.Weight
-    , ScalingMode.Volume
-    ]
-        |> List.map (\scalingMode -> scalingModeName fullSize scalingMode |> flip unitDropdownItem scalingMode)
+unitDropdownItems : ComplexFood -> List Dropdown.Item
+unitDropdownItems complexFood =
+    let
+        volumeMode =
+            complexFood.amountMilliLitres |> Maybe.Extra.unwrap [] (always [ ScalingMode.Volume ])
+
+        scalingModes =
+            [ ScalingMode.Recipe
+            , ScalingMode.Weight
+            ]
+                ++ volumeMode
+
+        amountInfo =
+            amountInfoOf complexFood
+    in
+    scalingModes
+        |> List.map (\scalingMode -> scalingModeName amountInfo scalingMode |> flip unitDropdownItem scalingMode)
 
 
 unitDropdownItem : String -> ScalingMode -> Dropdown.Item
