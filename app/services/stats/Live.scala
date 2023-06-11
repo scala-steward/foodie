@@ -288,7 +288,16 @@ object Live {
               .traverse { complexIngredient =>
                 complexFoodsMap
                   .get(complexIngredient.complexFoodId)
-                  .map(complexFood => complexIngredient.factor * complexFood.amountGrams)
+                  .flatMap { complexFood =>
+                    val scalingFactor = complexIngredient.scalingMode match {
+                      case ScalingMode.Recipe => Some(BigDecimal(1))
+                      case ScalingMode.Weight => Some(BigDecimal(100) / complexFood.amountGrams)
+                      case ScalingMode.Volume => complexFood.amountMilliLitres.map(BigDecimal(100) / _)
+                    }
+                    scalingFactor.map { factor =>
+                      complexIngredient.factor * factor * complexFood.amountGrams
+                    }
+                  }
               }
               .map(weights => recipeId -> weights.sum)
           }
