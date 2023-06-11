@@ -121,27 +121,25 @@ viewRecipes configuration main =
                 in
                 { display =
                     recipeInfo recipe
-                        ++ [ { attributes = [ Style.classes.numberCell ]
+                        ++ [ { attributes = [ Style.classes.numberLabel ]
                              , children =
-                                [ td []
-                                    [ input
-                                        ([ MaybeUtil.defined <| value creation.numberOfServings.text
-                                         , MaybeUtil.defined <|
-                                            onInput <|
-                                                flip
-                                                    (ValidatedInput.lift
-                                                        MealEntryCreationClientInput.lenses.numberOfServings
-                                                    ).set
-                                                    creation
-                                                    >> Pages.Util.Choice.Page.UpdateCreation
-                                         , MaybeUtil.defined <| Style.classes.numberLabel
-                                         , MaybeUtil.defined <| HtmlUtil.onEscape <| cancelMsg
-                                         , MaybeUtil.optional validInput <| onEnter <| addMsg
-                                         ]
-                                            |> Maybe.Extra.values
-                                        )
-                                        []
-                                    ]
+                                [ input
+                                    ([ MaybeUtil.defined <| value creation.numberOfServings.text
+                                     , MaybeUtil.defined <|
+                                        onInput <|
+                                            flip
+                                                (ValidatedInput.lift
+                                                    MealEntryCreationClientInput.lenses.numberOfServings
+                                                ).set
+                                                creation
+                                                >> Pages.Util.Choice.Page.UpdateCreation
+                                     , MaybeUtil.defined <| Style.classes.numberLabel
+                                     , MaybeUtil.defined <| HtmlUtil.onEscape <| cancelMsg
+                                     , MaybeUtil.optional validInput <| onEnter <| addMsg
+                                     ]
+                                        |> Maybe.Extra.values
+                                    )
+                                    []
                                 ]
                              }
                            ]
