@@ -117,7 +117,7 @@ object RescaleProperties extends Properties("Rescale properties") {
     complexFoods          <- subsetForComplexFoods.traverse(services.complex.food.Gens.complexFood)
     ingredients           <- Gen.listOf(services.recipe.Gens.ingredientGen)
     complexIngredients <- services.complex.ingredient.Gens
-      .complexIngredientsGen(recipe.id, complexFoods.map(_.recipeId))
+      .complexIngredientsGen(recipe.id, complexFoods)
     servingSize <- GenUtils.smallBigDecimalGen
     spaces      <- Gen.choose(0, 10)
   } yield RescaleSetup(

@@ -73,7 +73,7 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
   private val fetchAllSetupGen: Gen[FetchAllSetup] = for {
     setupBase <- setupBaseGen
     complexIngredients <-
-      Gens.complexIngredientsGen(setupBase.recipe.id, setupBase.recipesAsComplexFoods.map(_._1.id)) // As intended
+      Gens.complexIngredientsGen(setupBase.recipe.id, setupBase.recipesAsComplexFoods.map(_._2)) // As intended
   } yield FetchAllSetup(
     base = setupBase,
     complexIngredients = complexIngredients
@@ -98,7 +98,7 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
 
   private val createSetupGen: Gen[CreateSetup] = for {
     base              <- setupBaseGen
-    complexIngredient <- Gens.complexIngredientGen(base.recipe.id, base.recipesAsComplexFoods.map(_._1.id))
+    complexIngredient <- Gens.complexIngredientGen(base.recipe.id, base.recipesAsComplexFoods.map(_._2))
   } yield CreateSetup(
     base = base,
     complexIngredient = complexIngredient
@@ -218,8 +218,9 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
 
   private val updateSetupGen: Gen[UpdateSetup] = for {
     base              <- setupBaseGen
-    complexIngredient <- Gens.complexIngredientGen(base.recipe.id, base.recipesAsComplexFoods.map(_._1.id))
-    update            <- Gens.complexIngredientGen(complexIngredient.recipeId, Seq(complexIngredient.complexFoodId))
+    complexFood       <- Gen.oneOf(base.recipesAsComplexFoods.map(_._2))
+    complexIngredient <- Gens.complexIngredientGen(base.recipe.id, Seq(complexFood))
+    update            <- Gens.complexIngredientGen(complexIngredient.recipeId, Seq(complexFood))
   } yield UpdateSetup(
     base,
     complexIngredient,
@@ -248,9 +249,9 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
 
   private val updateFailureSetupGen: Gen[UpdateSetup] = for {
     base              <- setupBaseGen
-    complexIngredient <- Gens.complexIngredientGen(base.recipe.id, base.recipesAsComplexFoods.map(_._1.id))
+    complexIngredient <- Gens.complexIngredientGen(base.recipe.id, base.recipesAsComplexFoods.map(_._2))
     other             <- asComplexFoodGen
-    update            <- Gens.complexIngredientGen(complexIngredient.recipeId, Seq(other._1.id))
+    update            <- Gens.complexIngredientGen(complexIngredient.recipeId, Seq(other._2))
   } yield UpdateSetup(
     base.copy(
       recipesAsComplexFoods = base.recipesAsComplexFoods :+ other

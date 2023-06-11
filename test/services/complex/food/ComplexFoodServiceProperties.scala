@@ -26,7 +26,9 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
         recipeContents = recipeContents,
         ingredientContents = Seq.empty
       ),
-      dao = DAOTestInstance.ComplexFood.instanceFrom(complexFoodContents)
+      dao = DAOTestInstance.ComplexFood.instanceFrom(complexFoodContents),
+      // TODO: Adjust ingredients so there are references, and references that use volume amounts.
+      complexIngredientDao = DAOTestInstance.ComplexIngredient.instance(Seq.empty)
     )
 
   private def complexFoodServiceWith(

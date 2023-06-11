@@ -95,7 +95,7 @@ object RecipeDuplicationProperties extends Properties("Recipe duplication") {
     complexFoods          <- subsetForComplexFoods.traverse(services.complex.food.Gens.complexFood)
     ingredients           <- Gen.listOf(services.recipe.Gens.ingredientGen)
     complexIngredients <- services.complex.ingredient.Gens
-      .complexIngredientsGen(recipe.id, complexFoods.map(_.recipeId))
+      .complexIngredientsGen(recipe.id, complexFoods)
   } yield DuplicationSetup(
     userId = userId,
     recipe = recipe,
