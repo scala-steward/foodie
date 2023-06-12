@@ -2,7 +2,6 @@ module Pages.Util.ParentEditor.Handler exposing (updateLogic)
 
 import Maybe.Extra
 import Monocle.Compose as Compose
-import Monocle.Lens as Lens
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.DateUtil as DateUtil
 import Pages.Util.Links as Links
@@ -51,32 +50,26 @@ updateLogic ps msg model =
             , Cmd.none
             )
 
-        gotUpdateCreationTimestamp creation timestamp =
+        finishUpdateCreation creation =
             ( model
-                |> Tristate.mapMain
-                    (Lens.modify Page.lenses.main.parentCreation
-                        (\currentCreation ->
-                            let
-                                -- The timestamp is only set automatically, if there is no current creation.
-                                modifier =
-                                    if currentCreation |> Maybe.Extra.isNothing then
-                                        Maybe.map (ps.updateCreationTimestamp timestamp)
-
-                                    else
-                                        identity
-                            in
-                            creation |> modifier
-                        )
-                    )
+                |> Tristate.mapMain (Page.lenses.main.parentCreation.set creation)
             , Cmd.none
             )
 
-        -- Here we only fetch the current time, the actual update is handled in 'gotUpdateCreationTimestamp'
-        updateCreation creation =
-            ( model
-            , DateUtil.now
-                |> Task.perform (Page.GotUpdateCreationTimestamp creation)
-            )
+        -- The timestamp is only set if there is no current creation.
+        prepareUpdateCreation creation =
+            model
+                |> Tristate.lenses.main.getOption
+                |> Maybe.andThen Page.lenses.main.parentCreation.get
+                |> Maybe.Extra.unwrap
+                    ( model
+                    , DateUtil.now
+                        |> Task.map (\timestamp -> creation |> Maybe.map (ps.updateCreationTimestamp timestamp))
+                        |> Task.perform Page.FinishUpdateCreation
+                    )
+                    (\_ ->
+                        finishUpdateCreation creation
+                    )
 
         create =
             ( model
@@ -260,13 +253,13 @@ updateLogic ps msg model =
     in
     case msg of
         Page.UpdateCreation creation ->
-            updateCreation creation
+            prepareUpdateCreation creation
 
         Page.Create ->
             create
 
-        Page.GotUpdateCreationTimestamp creation timestamp ->
-            gotUpdateCreationTimestamp creation timestamp
+        Page.FinishUpdateCreation creation ->
+            finishUpdateCreation creation
 
         Page.GotCreateResponse result ->
             gotCreateResponse result
