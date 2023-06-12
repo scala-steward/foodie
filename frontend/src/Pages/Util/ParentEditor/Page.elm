@@ -76,7 +76,7 @@ lenses =
 
 type LogicMsg parentId parent creation update
     = UpdateCreation (Maybe creation)
-    | GotUpdateCreationTimestamp (Maybe creation) DateUtil.Timestamp
+    | FinishUpdateCreation (Maybe creation)
     | Create
     | GotCreateResponse (Result Error parent)
     | Edit update
