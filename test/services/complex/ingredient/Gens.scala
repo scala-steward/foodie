@@ -5,7 +5,7 @@ import db.RecipeId
 import org.scalacheck.Gen
 import services.GenUtils
 import services.GenUtils.implicits._
-import services.complex.food.{ ComplexFood, ComplexFoodIncoming }
+import services.complex.food.ComplexFoodIncoming
 
 import scala.util.chaining._
 
