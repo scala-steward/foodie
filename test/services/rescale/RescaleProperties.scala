@@ -72,7 +72,8 @@ object RescaleProperties extends Properties("Rescale properties") {
       nutrientService = nutrientServiceCompanion,
       complexFoodService = ComplexFoodServiceProperties.companionWith(
         recipeContents = ContentsUtil.Recipe.from(userId, referencedRecipes),
-        complexFoodContents = ContentsUtil.ComplexFood.from(complexFoods)
+        complexFoodContents = ContentsUtil.ComplexFood.from(complexFoods),
+        complexIngredientContents = Seq.empty
       ),
       complexIngredientService = complexIngredientServiceCompanion
     )

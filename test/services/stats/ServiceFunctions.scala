@@ -45,7 +45,8 @@ object ServiceFunctions {
         complexFoodService = ComplexFoodServiceProperties.companionWith(
           recipeContents = recipeContents,
           // TODO #64: Use provided complex food values.
-          complexFoodContents = Seq.empty
+          complexFoodContents = Seq.empty,
+          complexIngredientContents = Seq.empty
         ),
         complexIngredientService = ComplexIngredientServiceProperties.companionWith(
           recipeContents = recipeContents,
