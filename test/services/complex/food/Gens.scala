@@ -12,6 +12,8 @@ object Gens {
     case object NoVolume extends VolumeAmountOption
 
     case object OptionalVolume extends VolumeAmountOption
+
+    case object DefinedVolume extends VolumeAmountOption
   }
 
   def complexFood(recipeId: RecipeId, volumeAmountOption: VolumeAmountOption): Gen[ComplexFoodIncoming] =
@@ -21,6 +23,7 @@ object Gens {
         volumeAmountOption match {
           case VolumeAmountOption.NoVolume       => Gen.const(None)
           case VolumeAmountOption.OptionalVolume => Gen.option(GenUtils.smallBigDecimalGen)
+          case VolumeAmountOption.DefinedVolume  => GenUtils.smallBigDecimalGen.map(Some(_))
         }
     } yield ComplexFoodIncoming(
       recipeId = recipeId,
