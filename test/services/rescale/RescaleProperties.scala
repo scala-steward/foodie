@@ -8,6 +8,7 @@ import errors.ErrorContext
 import org.scalacheck.Prop.AnyOperators
 import org.scalacheck.{ Arbitrary, Gen, Prop, Properties }
 import services.GenUtils.implicits._
+import services.complex.food.Gens.VolumeAmountOption
 import services.complex.food.{ ComplexFoodIncoming, ComplexFoodServiceProperties }
 import services.complex.ingredient.{ ComplexIngredient, ComplexIngredientService }
 import services.nutrient.NutrientService
@@ -71,7 +72,8 @@ object RescaleProperties extends Properties("Rescale properties") {
       nutrientService = nutrientServiceCompanion,
       complexFoodService = ComplexFoodServiceProperties.companionWith(
         recipeContents = ContentsUtil.Recipe.from(userId, referencedRecipes),
-        complexFoodContents = ContentsUtil.ComplexFood.from(complexFoods)
+        complexFoodContents = ContentsUtil.ComplexFood.from(complexFoods),
+        complexIngredientContents = Seq.empty
       ),
       complexIngredientService = complexIngredientServiceCompanion
     )
@@ -114,10 +116,12 @@ object RescaleProperties extends Properties("Rescale properties") {
     recipe                <- services.recipe.Gens.recipeGen
     referencedRecipes     <- Gen.nonEmptyListOf(services.recipe.Gens.recipeGen)
     subsetForComplexFoods <- GenUtils.subset(referencedRecipes).map(_.map(_.id))
-    complexFoods          <- subsetForComplexFoods.traverse(services.complex.food.Gens.complexFood)
-    ingredients           <- Gen.listOf(services.recipe.Gens.ingredientGen)
+    complexFoods <- subsetForComplexFoods.traverse(
+      services.complex.food.Gens.complexFood(_, VolumeAmountOption.OptionalVolume)
+    )
+    ingredients <- Gen.listOf(services.recipe.Gens.ingredientGen)
     complexIngredients <- services.complex.ingredient.Gens
-      .complexIngredientsGen(recipe.id, complexFoods.map(_.recipeId))
+      .complexIngredientsGen(recipe.id, complexFoods)
     servingSize <- GenUtils.smallBigDecimalGen
     spaces      <- Gen.choose(0, 10)
   } yield RescaleSetup(

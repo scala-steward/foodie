@@ -11,6 +11,7 @@ import services.recipe.Recipe
 import services.{ ContentsUtil, DBTestUtil, GenUtils, TestUtil }
 import GenUtils.implicits._
 import config.TestConfiguration
+import services.complex.food.Gens.VolumeAmountOption
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -48,15 +49,15 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
       recipesAsComplexFoods: Seq[(Recipe, ComplexFoodIncoming)] // recipes that are available as complex ingredients
   )
 
-  private val asComplexFoodGen: Gen[(Recipe, ComplexFoodIncoming)] = for {
+  private def asComplexFoodGen(volumeAmountOption: VolumeAmountOption): Gen[(Recipe, ComplexFoodIncoming)] = for {
     recipe      <- services.recipe.Gens.recipeGen
-    complexFood <- services.complex.food.Gens.complexFood(recipe.id)
+    complexFood <- services.complex.food.Gens.complexFood(recipe.id, volumeAmountOption)
   } yield recipe -> complexFood
 
-  private val setupBaseGen: Gen[SetupBase] = for {
+  private def setupBaseGen(volumeAmountOption: VolumeAmountOption): Gen[SetupBase] = for {
     userId                <- GenUtils.taggedId[UserTag]
     recipe                <- services.recipe.Gens.recipeGen
-    recipesAsComplexFoods <- Gen.nonEmptyListOf(asComplexFoodGen)
+    recipesAsComplexFoods <- Gen.nonEmptyListOf(asComplexFoodGen(volumeAmountOption))
   } yield {
     SetupBase(
       userId = userId,
@@ -71,9 +72,9 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
   )
 
   private val fetchAllSetupGen: Gen[FetchAllSetup] = for {
-    setupBase <- setupBaseGen
+    setupBase <- setupBaseGen(VolumeAmountOption.OptionalVolume)
     complexIngredients <-
-      Gens.complexIngredientsGen(setupBase.recipe.id, setupBase.recipesAsComplexFoods.map(_._1.id)) // As intended
+      Gens.complexIngredientsGen(setupBase.recipe.id, setupBase.recipesAsComplexFoods.map(_._2)) // As intended
   } yield FetchAllSetup(
     base = setupBase,
     complexIngredients = complexIngredients
@@ -97,8 +98,8 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
   )
 
   private val createSetupGen: Gen[CreateSetup] = for {
-    base              <- setupBaseGen
-    complexIngredient <- Gens.complexIngredientGen(base.recipe.id, base.recipesAsComplexFoods.map(_._1.id))
+    base              <- setupBaseGen(VolumeAmountOption.OptionalVolume)
+    complexIngredient <- Gens.complexIngredientGen(base.recipe.id, base.recipesAsComplexFoods.map(_._2))
   } yield CreateSetup(
     base = base,
     complexIngredient = complexIngredient
@@ -143,6 +144,39 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
       Prop.all(
         created.isLeft,
         fetched ?= Seq(setup.complexIngredient)
+      )
+    }
+
+    DBTestUtil.await(propF)
+  }
+
+  private val createSetupUnitMismatchGen: Gen[CreateSetup] = for {
+    base <- setupBaseGen(VolumeAmountOption.NoVolume)
+    complexIngredient <- Gens.complexIngredientGen(
+      recipeId = base.recipe.id,
+      complexFoods = base.recipesAsComplexFoods.map(_._2)
+    )
+  } yield CreateSetup(
+    base = base,
+    complexIngredient = complexIngredient
+  )
+
+  property("Create (failure, unit mismatch)") = Prop.forAll(createSetupUnitMismatchGen :| "setup") { setup =>
+    val complexIngredientService = complexIngredientServiceWith(
+      recipeContents = ContentsUtil.Recipe.from(setup.base.userId, Seq(setup.base.recipe)),
+      complexFoodContents = ContentsUtil.ComplexFood.from(setup.base.recipesAsComplexFoods.map(_._2)),
+      complexIngredientContents = ContentsUtil.ComplexIngredient.from(setup.base.recipe.id, Seq.empty)
+    )
+    val propF = for {
+      created <- complexIngredientService.create(
+        setup.base.userId,
+        setup.complexIngredient.copy(scalingMode = ScalingMode.Volume)
+      )
+      fetched <- complexIngredientService.all(setup.base.userId, setup.base.recipe.id)
+    } yield {
+      Prop.all(
+        created.isLeft,
+        fetched ?= Seq.empty
       )
     }
 
@@ -217,9 +251,10 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
   )
 
   private val updateSetupGen: Gen[UpdateSetup] = for {
-    base              <- setupBaseGen
-    complexIngredient <- Gens.complexIngredientGen(base.recipe.id, base.recipesAsComplexFoods.map(_._1.id))
-    update            <- Gens.complexIngredientGen(complexIngredient.recipeId, Seq(complexIngredient.complexFoodId))
+    base              <- setupBaseGen(VolumeAmountOption.OptionalVolume)
+    complexFood       <- Gen.oneOf(base.recipesAsComplexFoods.map(_._2))
+    complexIngredient <- Gens.complexIngredientGen(base.recipe.id, Seq(complexFood))
+    update            <- Gens.complexIngredientGen(complexIngredient.recipeId, Seq(complexFood))
   } yield UpdateSetup(
     base,
     complexIngredient,
@@ -247,10 +282,10 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
   }
 
   private val updateFailureSetupGen: Gen[UpdateSetup] = for {
-    base              <- setupBaseGen
-    complexIngredient <- Gens.complexIngredientGen(base.recipe.id, base.recipesAsComplexFoods.map(_._1.id))
-    other             <- asComplexFoodGen
-    update            <- Gens.complexIngredientGen(complexIngredient.recipeId, Seq(other._1.id))
+    base              <- setupBaseGen(VolumeAmountOption.OptionalVolume)
+    complexIngredient <- Gens.complexIngredientGen(base.recipe.id, base.recipesAsComplexFoods.map(_._2))
+    other             <- asComplexFoodGen(VolumeAmountOption.OptionalVolume)
+    update            <- Gens.complexIngredientGen(complexIngredient.recipeId, Seq(other._2))
   } yield UpdateSetup(
     base.copy(
       recipesAsComplexFoods = base.recipesAsComplexFoods :+ other

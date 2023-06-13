@@ -9,14 +9,22 @@ object DBError {
     object Food {
       case object NotFound extends DBError("No complex food with the given id found")
 
+      case object MissingVolume extends DBError("The given complex food does not have a volume")
+
+      case object VolumeReferenceExists
+          extends DBError(
+            "There exists a recipe that uses the volume amount of this complex food. Update this reference before continuing"
+          )
+
       case object RecipeNotFound extends DBError("No recipe with the given id found")
     }
 
     object Ingredient {
       case object NotFound extends DBError("No complex ingredient with the given id found")
 
-      case object RecipeNotFound extends DBError("No recipe with the given id found")
-      case object Cycle          extends DBError("Adding this ingredient introduces a cycle")
+      case object RecipeNotFound      extends DBError("No recipe with the given id found")
+      case object Cycle               extends DBError("Adding this ingredient introduces a cycle")
+      case object ScalingModeMismatch extends DBError("The underlying complex food does not have a volume amount")
     }
 
   }

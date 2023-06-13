@@ -5,7 +5,7 @@ import Api.Auxiliary exposing (ComplexFoodId, FoodId, JWT, MealId, RecipeId, Ref
 import Api.Types.LoginContent exposing (decoderLoginContent)
 import Api.Types.UserIdentifier exposing (UserIdentifier)
 import Basics.Extra exposing (flip)
-import Browser as Browser
+import Browser
 import Browser.Navigation
 import Configuration exposing (Configuration)
 import Html exposing (Html, div, text)

@@ -1,17 +1,18 @@
 package services.stats
 
 import algebra.ring.AdditiveMonoid
-import cats.data.OptionT
+import cats.data.{ EitherT, OptionT }
 import cats.syntax.contravariantSemigroupal._
 import cats.syntax.traverse._
 import db._
 import db.generated.Tables
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
+import services.DBError
 import services.common.RequestInterval
 import services.common.Transactionally.syntax._
 import services.complex.food.ComplexFoodService
-import services.complex.ingredient.ComplexIngredientService
+import services.complex.ingredient.{ ComplexIngredient, ComplexIngredientService, ScalingMode }
 import services.meal.{ MealEntry, MealService }
 import services.nutrient.NutrientService.ConversionFactorKey
 import services.nutrient.{ AmountEvaluation, Nutrient, NutrientMap, NutrientService }
@@ -287,7 +288,16 @@ object Live {
               .traverse { complexIngredient =>
                 complexFoodsMap
                   .get(complexIngredient.complexFoodId)
-                  .map(complexFood => complexIngredient.factor * complexFood.amountGrams)
+                  .flatMap { complexFood =>
+                    val scalingFactor = complexIngredient.scalingMode match {
+                      case ScalingMode.Recipe => Some(BigDecimal(1))
+                      case ScalingMode.Weight => Some(BigDecimal(100) / complexFood.amountGrams)
+                      case ScalingMode.Volume => complexFood.amountMilliLitres.map(BigDecimal(100) / _)
+                    }
+                    scalingFactor.map { factor =>
+                      complexIngredient.factor * factor * complexFood.amountGrams
+                    }
+                  }
               }
               .map(weights => recipeId -> weights.sum)
           }
@@ -315,19 +325,40 @@ object Live {
           foodIds: Set[FoodId]
       )
 
+      def nutrientsOfComplexIngredient(complexIngredient: ComplexIngredient): DBIO[NutrientsAndFoods] =
+        for {
+          rescaleFactor <- complexIngredient.scalingMode match {
+            case ScalingMode.Recipe => DBIO.successful(BigDecimal(1))
+            case ScalingMode.Weight =>
+              OptionT(complexFoodService.get(userId, complexIngredient.complexFoodId))
+                .map(complexFood => BigDecimal(100) / complexFood.amountGrams)
+                .getOrElseF(DBIO.failed(DBError.Complex.Food.NotFound))
+            case ScalingMode.Volume =>
+              val transformer = for {
+                complexFood <- EitherT.fromOptionF(
+                  complexFoodService.get(userId, complexIngredient.complexFoodId),
+                  DBError.Complex.Food.NotFound: DBError
+                )
+                volume <- EitherT.fromOption(
+                  complexFood.amountMilliLitres,
+                  DBError.Complex.Food.MissingVolume: DBError
+                )
+              } yield BigDecimal(100) / volume
+
+              transformer.valueOrF(DBIO.failed)
+          }
+          recipeNutrientMap <- descend(complexIngredient.complexFoodId)
+        } yield recipeNutrientMap.copy(nutrientMap =
+          complexIngredient.factor *: rescaleFactor *: recipeNutrientMap.nutrientMap
+        )
+
       def descend(recipeId: RecipeId): DBIO[NutrientsAndFoods] =
         for {
           ingredients        <- recipeService.getIngredients(userId, recipeId)
           complexIngredients <- complexIngredientService.all(userId, Seq(recipeId))
           nutrients          <- nutrientService.nutrientsOfIngredients(ingredients)
-          recipeNutrientMapsOfComplexNutrients <-
-            complexIngredients.values.flatten.toList
-              .traverse { complexIngredient =>
-                descend(complexIngredient.complexFoodId)
-                  .map(recipeNutrientMap =>
-                    recipeNutrientMap.copy(nutrientMap = complexIngredient.factor *: recipeNutrientMap.nutrientMap)
-                  ): DBIO[NutrientsAndFoods]
-              }
+          recipeNutrientMapsOfComplexNutrients <- complexIngredients.values.flatten.toList
+            .traverse(nutrientsOfComplexIngredient)
         } yield NutrientsAndFoods(
           nutrientMap = nutrients + recipeNutrientMapsOfComplexNutrients.map(_.nutrientMap).qsum,
           foodIds = ingredients.map(_.foodId).toSet ++ recipeNutrientMapsOfComplexNutrients.flatMap(_.foodIds)

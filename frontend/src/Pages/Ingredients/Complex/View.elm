@@ -1,13 +1,16 @@
 module Pages.Ingredients.Complex.View exposing (viewComplexIngredients, viewFoods)
 
 import Api.Types.ComplexFood exposing (ComplexFood)
+import Api.Types.ScalingMode as ScalingMode exposing (ScalingMode)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
+import Dropdown exposing (dropdown)
 import Html exposing (Html, button, input, label, td, text, th)
 import Html.Attributes exposing (disabled, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
+import Monocle.Lens
 import Pages.Ingredients.Complex.Page as Page
 import Pages.Ingredients.ComplexIngredientClientInput as ComplexIngredientClientInput
 import Pages.Util.Choice.Page
@@ -32,7 +35,7 @@ viewComplexIngredients configuration main =
         , elementHeaderColumns =
             [ th [] [ label [] [ text "Name" ] ]
             , th [ Style.classes.numberLabel ] [ label [] [ text "Factor" ] ]
-            , th [ Style.classes.numberLabel ] [ label [] [ text "Amount" ] ]
+            , th [ Style.classes.numberLabel ] [ label [] [ text "Unit" ] ]
             ]
         , info =
             \complexIngredient ->
@@ -49,8 +52,8 @@ viewComplexIngredients configuration main =
                 in
                 { display =
                     [ { attributes = [ Style.classes.editable ], children = [ label [] [ text <| Maybe.Extra.unwrap "" .name <| complexFood ] ] }
-                    , { attributes = [ Style.classes.editable, Style.classes.numberLabel ], children = [ label [] [ text <| String.fromFloat <| complexIngredient.factor ] ] }
-                    , { attributes = [ Style.classes.editable, Style.classes.numberLabel ], children = [ label [] [ text <| amountInfo ] ] }
+                    , { attributes = [ Style.classes.editable, Style.classes.numberLabel ], children = [ label [] [ text <| String.fromFloat <| .factor <| complexIngredient ] ] }
+                    , { attributes = [ Style.classes.editable, Style.classes.numberLabel ], children = [ label [] [ text <| scalingModeName amountInfo <| .scalingMode <| complexIngredient ] ] }
                     ]
                 , controls =
                     [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, editMsg ] [ text "Edit" ] ]
@@ -88,9 +91,19 @@ viewComplexIngredients configuration main =
                             []
                         ]
                   }
-                , { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
+                , { attributes = [ Style.classes.numberLabel ]
                   , children =
-                        [ label [] [ text <| Maybe.Extra.unwrap "" amountInfoOf <| complexFood ]
+                        [ dropdown
+                            { items = complexFood |> Maybe.Extra.unwrap [] unitDropdownItems
+                            , emptyItem = Nothing
+                            , onChange =
+                                \unit ->
+                                    complexIngredientUpdateClientInput
+                                        |> (unit |> Maybe.andThen ScalingMode.fromString |> Maybe.Extra.unwrap identity ComplexIngredientClientInput.lenses.scalingMode.set)
+                                        |> Pages.Util.Choice.Page.Edit
+                            }
+                            []
+                            (complexIngredient |> .scalingMode |> ScalingMode.toString |> Just)
                         ]
                   }
                 ]
@@ -101,9 +114,9 @@ viewComplexIngredients configuration main =
 viewFoods : Configuration -> Page.Main -> Html Page.LogicMsg
 viewFoods configuration main =
     let
-        ( factor, amount ) =
+        ( factor, unit ) =
             if DictListUtil.existsValue Editing.isUpdate main.choices then
-                ( "Factor", "Amount" )
+                ( "Factor", "Unit" )
 
             else
                 ( "", "" )
@@ -114,7 +127,7 @@ viewFoods configuration main =
         , choiceHeaderColumns =
             [ th [] [ label [] [ text "Name" ] ]
             , th [ Style.classes.numberLabel ] [ label [] [ text factor ] ]
-            , th [ Style.classes.numberLabel ] [ label [] [ text amount ] ]
+            , th [ Style.classes.numberLabel ] [ label [] [ text unit ] ]
             ]
         , idOfChoice = .recipeId
         , elementCreationLine =
@@ -155,8 +168,20 @@ viewFoods configuration main =
                                 []
                             ]
                       }
-                    , { attributes = [ Style.classes.editable, Style.classes.numberLabel, onClick <| Pages.Util.Choice.Page.SelectChoice <| complexFood ]
-                      , children = [ label [] [ text <| amountInfoOf <| complexFood ] ]
+                    , { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
+                      , children =
+                            [ dropdown
+                                { items = complexFood |> unitDropdownItems
+                                , emptyItem = Nothing
+                                , onChange =
+                                    \u ->
+                                        creation
+                                            |> (u |> Maybe.andThen ScalingMode.fromString |> Maybe.Extra.unwrap identity ComplexIngredientClientInput.lenses.scalingMode.set)
+                                            |> Pages.Util.Choice.Page.UpdateCreation
+                                }
+                                []
+                                (creation |> .scalingMode |> ScalingMode.toString |> Just)
+                            ]
                       }
                     ]
                 , controls =
@@ -220,3 +245,43 @@ amountInfoOf complexFood =
             (\amountMillilitres -> String.concat [ " = ", amountMillilitres |> String.fromFloat, "ml" ])
             complexFood.amountMilliLitres
         ]
+
+
+unitDropdownItems : ComplexFood -> List Dropdown.Item
+unitDropdownItems complexFood =
+    let
+        volumeMode =
+            complexFood.amountMilliLitres |> Maybe.Extra.unwrap [] (always [ ScalingMode.Volume ])
+
+        scalingModes =
+            [ ScalingMode.Recipe
+            , ScalingMode.Weight
+            ]
+                ++ volumeMode
+
+        amountInfo =
+            amountInfoOf complexFood
+    in
+    scalingModes
+        |> List.map (\scalingMode -> scalingModeName amountInfo scalingMode |> flip unitDropdownItem scalingMode)
+
+
+unitDropdownItem : String -> ScalingMode -> Dropdown.Item
+unitDropdownItem sizeText scalingMode =
+    { value = scalingMode |> ScalingMode.toString
+    , text = sizeText
+    , enabled = True
+    }
+
+
+scalingModeName : String -> ScalingMode -> String
+scalingModeName fullSize scalingMode =
+    case scalingMode of
+        ScalingMode.Recipe ->
+            "Full recipe (" ++ fullSize ++ ")"
+
+        ScalingMode.Weight ->
+            "100g"
+
+        ScalingMode.Volume ->
+            "100ml"

@@ -11,7 +11,8 @@ import java.util.UUID
 case class ComplexIngredient(
     recipeId: RecipeId,
     complexFoodId: ComplexFoodId,
-    factor: BigDecimal
+    factor: BigDecimal,
+    scalingMode: ScalingMode
 )
 
 object ComplexIngredient {
@@ -21,14 +22,16 @@ object ComplexIngredient {
       ComplexIngredient(
         recipeId = row.recipeId.transformInto[RecipeId],
         complexFoodId = row.complexFoodId.transformInto[ComplexFoodId],
-        factor = row.factor
+        factor = row.factor,
+        scalingMode = row.scalingMode.transformInto[ScalingMode]
       )
 
   implicit val toDB: Transformer[ComplexIngredient, Tables.ComplexIngredientRow] = complexIngredient =>
     Tables.ComplexIngredientRow(
       recipeId = complexIngredient.recipeId.transformInto[UUID],
       complexFoodId = complexIngredient.complexFoodId.transformInto[UUID],
-      factor = complexIngredient.factor
+      factor = complexIngredient.factor,
+      scalingMode = complexIngredient.scalingMode.transformInto[String]
     )
 
 }

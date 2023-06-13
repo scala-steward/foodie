@@ -8,6 +8,7 @@ import org.scalacheck.Prop.AnyOperators
 import org.scalacheck.{ Gen, Prop, Properties }
 import services.GenUtils.implicits._
 import services.complex.food.ComplexFoodIncoming
+import services.complex.food.Gens.VolumeAmountOption
 import services.complex.ingredient.{ ComplexIngredient, ComplexIngredientService }
 import services.recipe._
 import services.{ ContentsUtil, DBTestUtil, GenUtils, TestUtil }
@@ -92,10 +93,12 @@ object RecipeDuplicationProperties extends Properties("Recipe duplication") {
     recipe                <- services.recipe.Gens.recipeGen
     referencedRecipes     <- Gen.nonEmptyListOf(services.recipe.Gens.recipeGen)
     subsetForComplexFoods <- GenUtils.subset(referencedRecipes).map(_.map(_.id))
-    complexFoods          <- subsetForComplexFoods.traverse(services.complex.food.Gens.complexFood)
-    ingredients           <- Gen.listOf(services.recipe.Gens.ingredientGen)
+    complexFoods <- subsetForComplexFoods.traverse(
+      services.complex.food.Gens.complexFood(_, VolumeAmountOption.OptionalVolume)
+    )
+    ingredients <- Gen.listOf(services.recipe.Gens.ingredientGen)
     complexIngredients <- services.complex.ingredient.Gens
-      .complexIngredientsGen(recipe.id, complexFoods.map(_.recipeId))
+      .complexIngredientsGen(recipe.id, complexFoods)
   } yield DuplicationSetup(
     userId = userId,
     recipe = recipe,
