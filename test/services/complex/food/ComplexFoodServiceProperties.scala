@@ -9,6 +9,7 @@ import io.scalaland.chimney.dsl._
 import org.scalacheck.Prop.AnyOperators
 import org.scalacheck.{ Gen, Prop, Properties, Test }
 import services.GenUtils.implicits._
+import services.complex.food.Gens.VolumeAmountOption
 import services.recipe.{ Recipe, RecipeServiceProperties }
 import services.{ ContentsUtil, DBTestUtil, GenUtils, TestUtil }
 
@@ -56,7 +57,7 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
     userId        <- GenUtils.taggedId[UserTag]
     recipes       <- Gen.nonEmptyListOf(services.recipe.Gens.recipeGen)
     recipesSubset <- GenUtils.nonEmptySubset(NonEmptyList.fromListUnsafe(recipes.map(_.id)))
-    complexFoods  <- recipesSubset.traverse(Gens.complexFood)
+    complexFoods  <- recipesSubset.traverse(Gens.complexFood(_, VolumeAmountOption.OptionalVolume))
   } yield SetupBase(
     userId = userId,
     recipes = recipes,
@@ -147,7 +148,7 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
   private val creationSetupGen: Gen[CreationSetup] = for {
     userId              <- GenUtils.taggedId[UserTag]
     recipe              <- services.recipe.Gens.recipeGen
-    complexFoodIncoming <- Gens.complexFood(recipe.id)
+    complexFoodIncoming <- Gens.complexFood(recipe.id, VolumeAmountOption.OptionalVolume)
   } yield CreationSetup(
     userId = userId,
     recipe = recipe,
@@ -195,7 +196,7 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
 
   private val updateSetupGen: Gen[UpdateSetup] = for {
     creationSetup <- creationSetupGen
-    update        <- Gens.complexFood(creationSetup.recipe.id)
+    update        <- Gens.complexFood(creationSetup.recipe.id, VolumeAmountOption.OptionalVolume)
   } yield UpdateSetup(
     creationSetup = creationSetup,
     update = update

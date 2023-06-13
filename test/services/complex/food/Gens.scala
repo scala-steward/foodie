@@ -6,10 +6,22 @@ import services.GenUtils
 
 object Gens {
 
-  def complexFood(recipeId: RecipeId): Gen[ComplexFoodIncoming] =
+  sealed trait VolumeAmountOption
+
+  object VolumeAmountOption {
+    case object NoVolume extends VolumeAmountOption
+
+    case object OptionalVolume extends VolumeAmountOption
+  }
+
+  def complexFood(recipeId: RecipeId, volumeAmountOption: VolumeAmountOption): Gen[ComplexFoodIncoming] =
     for {
-      amountGrams       <- GenUtils.smallBigDecimalGen
-      amountMilliLitres <- Gen.option(GenUtils.smallBigDecimalGen)
+      amountGrams <- GenUtils.smallBigDecimalGen
+      amountMilliLitres <-
+        volumeAmountOption match {
+          case VolumeAmountOption.NoVolume       => Gen.const(None)
+          case VolumeAmountOption.OptionalVolume => Gen.option(GenUtils.smallBigDecimalGen)
+        }
     } yield ComplexFoodIncoming(
       recipeId = recipeId,
       amountGrams = amountGrams,
