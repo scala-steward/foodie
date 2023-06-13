@@ -34,9 +34,8 @@ jobs:
           POSTGRES_PASSWORD: 2JoGcxcx8ibZrOdQ9y3zv9cJyB20xkvzwlaRC8Vz
           POSTGRES_PORT: 5432
           POSTGRES_USER: foodie_test
-          POSTGRES_HOST: localhost
         ports:
-          - 5433:5432
+          - 5432:5433
         # set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
