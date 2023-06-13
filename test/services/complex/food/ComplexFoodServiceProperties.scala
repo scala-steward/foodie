@@ -10,6 +10,7 @@ import org.scalacheck.Prop.AnyOperators
 import org.scalacheck.{ Gen, Prop, Properties, Test }
 import services.GenUtils.implicits._
 import services.complex.food.Gens.VolumeAmountOption
+import services.complex.ingredient.ComplexIngredient
 import services.recipe.{ Recipe, RecipeServiceProperties }
 import services.{ ContentsUtil, DBTestUtil, GenUtils, TestUtil }
 
@@ -20,7 +21,8 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
 
   def companionWith(
       recipeContents: Seq[(UserId, Recipe)],
-      complexFoodContents: Seq[(RecipeId, ComplexFoodIncoming)]
+      complexFoodContents: Seq[(RecipeId, ComplexFoodIncoming)],
+      complexIngredientContents: Seq[(RecipeId, ComplexIngredient)]
   ): Live.Companion =
     new Live.Companion(
       recipeService = RecipeServiceProperties.companionWith(
@@ -28,19 +30,20 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
         ingredientContents = Seq.empty
       ),
       dao = DAOTestInstance.ComplexFood.instanceFrom(complexFoodContents),
-      // TODO: Adjust ingredients so there are references, and references that use volume amounts.
-      complexIngredientDao = DAOTestInstance.ComplexIngredient.instance(Seq.empty)
+      complexIngredientDao = DAOTestInstance.ComplexIngredient.instanceFrom(complexIngredientContents)
     )
 
   private def complexFoodServiceWith(
       recipeContents: Seq[(UserId, Recipe)],
-      complexFoodContents: Seq[(RecipeId, ComplexFoodIncoming)]
+      complexFoodContents: Seq[(RecipeId, ComplexFoodIncoming)],
+      complexIngredientContents: Seq[(RecipeId, ComplexIngredient)]
   ): ComplexFoodService =
     new Live(
       dbConfigProvider = TestUtil.databaseConfigProvider,
       companion = companionWith(
         recipeContents = recipeContents,
-        complexFoodContents = complexFoodContents
+        complexFoodContents = complexFoodContents,
+        complexIngredientContents = complexIngredientContents
       )
     )
 
@@ -81,7 +84,8 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
   property("Fetch all") = Prop.forAll(fetchAllSetupGen :| "setup") { setup =>
     val complexFoodService = complexFoodServiceWith(
       recipeContents = ContentsUtil.Recipe.from(setup.userId, setup.recipes),
-      complexFoodContents = ContentsUtil.ComplexFood.from(setup.complexFoods)
+      complexFoodContents = ContentsUtil.ComplexFood.from(setup.complexFoods),
+      complexIngredientContents = Seq.empty
     )
     val recipeMap = setup.recipes.map(recipe => recipe.id -> recipe).toMap
     val propF = for {
@@ -116,7 +120,8 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
   property("Fetch single") = Prop.forAll(fetchSingleSetupGen :| "setup") { setup =>
     val complexFoodService = complexFoodServiceWith(
       recipeContents = ContentsUtil.Recipe.from(setup.userId, setup.recipes),
-      complexFoodContents = ContentsUtil.ComplexFood.from(setup.complexFoods)
+      complexFoodContents = ContentsUtil.ComplexFood.from(setup.complexFoods),
+      complexIngredientContents = Seq.empty
     )
     val transformer = for {
       complexFood <- EitherT.fromOptionF(
@@ -158,7 +163,8 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
   property("Creation (success)") = Prop.forAll(creationSetupGen :| "setup") { setup =>
     val complexFoodService = complexFoodServiceWith(
       recipeContents = ContentsUtil.Recipe.from(setup.userId, Seq(setup.recipe)),
-      complexFoodContents = Seq.empty
+      complexFoodContents = Seq.empty,
+      complexIngredientContents = Seq.empty
     )
     val transformer = for {
       inserted <- EitherT(complexFoodService.create(setup.userId, setup.complexFoodIncoming))
@@ -180,7 +186,8 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
   property("Creation (failure)") = Prop.forAll(creationSetupGen :| "setup") { setup =>
     val complexFoodService = complexFoodServiceWith(
       recipeContents = ContentsUtil.Recipe.from(setup.userId, Seq(setup.recipe)),
-      complexFoodContents = ContentsUtil.ComplexFood.from(Seq(setup.complexFoodIncoming))
+      complexFoodContents = ContentsUtil.ComplexFood.from(Seq(setup.complexFoodIncoming)),
+      complexIngredientContents = Seq.empty
     )
     val propF = for {
       created <- complexFoodService.create(setup.userId, setup.complexFoodIncoming)
@@ -205,7 +212,8 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
   property("Update (success)") = Prop.forAll(updateSetupGen :| "setup") { setup =>
     val complexFoodService = complexFoodServiceWith(
       recipeContents = ContentsUtil.Recipe.from(setup.creationSetup.userId, Seq(setup.creationSetup.recipe)),
-      complexFoodContents = ContentsUtil.ComplexFood.from(Seq(setup.creationSetup.complexFoodIncoming))
+      complexFoodContents = ContentsUtil.ComplexFood.from(Seq(setup.creationSetup.complexFoodIncoming)),
+      complexIngredientContents = Seq.empty
     )
     val transformer = for {
       updated <- EitherT(complexFoodService.update(setup.creationSetup.userId, setup.update))
@@ -227,7 +235,8 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
   property("Update (failure)") = Prop.forAll(updateSetupGen :| "setup") { setup =>
     val complexFoodService = complexFoodServiceWith(
       recipeContents = ContentsUtil.Recipe.from(setup.creationSetup.userId, Seq(setup.creationSetup.recipe)),
-      complexFoodContents = Seq.empty
+      complexFoodContents = Seq.empty,
+      complexIngredientContents = Seq.empty
     )
     val propF = for {
       result <- complexFoodService.update(setup.creationSetup.userId, setup.update)
@@ -239,7 +248,8 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
   property("Delete (existent)") = Prop.forAll(creationSetupGen :| "setup") { setup =>
     val complexFoodService = complexFoodServiceWith(
       recipeContents = ContentsUtil.Recipe.from(setup.userId, Seq(setup.recipe)),
-      complexFoodContents = ContentsUtil.ComplexFood.from(Seq(setup.complexFoodIncoming))
+      complexFoodContents = ContentsUtil.ComplexFood.from(Seq(setup.complexFoodIncoming)),
+      complexIngredientContents = Seq.empty
     )
     val propF = for {
       result  <- complexFoodService.delete(setup.userId, setup.recipe.id)
@@ -255,7 +265,8 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
   property("Delete (non-existent)") = Prop.forAll(creationSetupGen :| "setup") { setup =>
     val complexFoodService = complexFoodServiceWith(
       recipeContents = ContentsUtil.Recipe.from(setup.userId, Seq(setup.recipe)),
-      complexFoodContents = Seq.empty
+      complexFoodContents = Seq.empty,
+      complexIngredientContents = Seq.empty
     )
     val propF = for {
       result <- complexFoodService.delete(setup.userId, setup.recipe.id)
@@ -270,7 +281,8 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
   ) { (setup, userId2) =>
     val complexFoodService = complexFoodServiceWith(
       recipeContents = ContentsUtil.Recipe.from(setup.userId, setup.recipes),
-      complexFoodContents = ContentsUtil.ComplexFood.from(setup.complexFoods)
+      complexFoodContents = ContentsUtil.ComplexFood.from(setup.complexFoods),
+      complexIngredientContents = Seq.empty
     )
 
     val propF = for {
@@ -288,7 +300,8 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
   ) { (setup, userId2) =>
     val complexFoodService = complexFoodServiceWith(
       recipeContents = ContentsUtil.Recipe.from(setup.userId, setup.recipes),
-      complexFoodContents = ContentsUtil.ComplexFood.from(setup.complexFoods)
+      complexFoodContents = ContentsUtil.ComplexFood.from(setup.complexFoods),
+      complexIngredientContents = Seq.empty
     )
     val propF = for {
       result <- complexFoodService.get(userId2, setup.complexFoodId)
@@ -303,7 +316,8 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
   ) { (setup, userId2) =>
     val complexFoodService = complexFoodServiceWith(
       recipeContents = ContentsUtil.Recipe.from(setup.userId, Seq(setup.recipe)),
-      complexFoodContents = Seq.empty
+      complexFoodContents = Seq.empty,
+      complexIngredientContents = Seq.empty
     )
     val propF = for {
       result <- complexFoodService.create(userId2, setup.complexFoodIncoming)
@@ -318,7 +332,8 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
   ) { (setup, userId2) =>
     val complexFoodService = complexFoodServiceWith(
       recipeContents = ContentsUtil.Recipe.from(setup.creationSetup.userId, Seq(setup.creationSetup.recipe)),
-      complexFoodContents = ContentsUtil.ComplexFood.from(Seq(setup.creationSetup.complexFoodIncoming))
+      complexFoodContents = ContentsUtil.ComplexFood.from(Seq(setup.creationSetup.complexFoodIncoming)),
+      complexIngredientContents = Seq.empty
     )
     val transformer = for {
       result <- EitherT.liftF(complexFoodService.update(userId2, setup.update))
@@ -343,7 +358,8 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
   ) { (setup, userId2) =>
     val complexFoodService = complexFoodServiceWith(
       recipeContents = ContentsUtil.Recipe.from(setup.userId, Seq(setup.recipe)),
-      complexFoodContents = ContentsUtil.ComplexFood.from(Seq(setup.complexFoodIncoming))
+      complexFoodContents = ContentsUtil.ComplexFood.from(Seq(setup.complexFoodIncoming)),
+      complexIngredientContents = Seq.empty
     )
     val transformer = for {
       result <- EitherT.liftF(complexFoodService.delete(userId2, setup.recipe.id))
