@@ -44,7 +44,7 @@ lazy val root = (project in file("."))
       "org.typelevel"         %% "cats-effect"         % "3.4.9",
       "org.typelevel"         %% "cats-effect"         % "3.5.1",
       "org.typelevel"         %% "cats-core"           % "2.9.0",
-      "com.beachape"          %% "enumeratum-circe"    % "1.7.2",
+      "com.beachape"          %% "enumeratum-circe"    % "1.7.3",
       "com.typesafe.play"     %% "play-mailer"         % "8.0.1",
       "com.typesafe.play"     %% "play-mailer-guice"   % "8.0.1",
       "com.lihaoyi"           %% "pprint"              % "0.8.1",
