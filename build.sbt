@@ -43,7 +43,7 @@ lazy val root = (project in file("."))
       "com.github.pureconfig" %% "pureconfig"          % "0.17.4",
       "org.typelevel"         %% "cats-effect"         % "3.4.9",
       "org.typelevel"         %% "cats-effect"         % "3.5.1",
-      "org.typelevel"         %% "cats-core"           % "2.9.0",
+      "org.typelevel"         %% "cats-core"           % "2.10.0",
       "com.beachape"          %% "enumeratum-circe"    % "1.7.3",
       "com.typesafe.play"     %% "play-mailer"         % "8.0.1",
       "com.typesafe.play"     %% "play-mailer-guice"   % "8.0.1",
@@ -53,7 +53,7 @@ lazy val root = (project in file("."))
       // Transitive dependency. Override added for proper version.
       "com.fasterxml.jackson.module" %% "jackson-module-scala"      % "2.15.2",
       "org.scalacheck"               %% "scalacheck"                % "1.17.0" % Test,
-      "org.typelevel"                %% "cats-laws"                 % "2.9.0"  % Test,
+      "org.typelevel"                %% "cats-laws"                 % "2.10.0" % Test,
       "com.github.alexarchambault"   %% "scalacheck-shapeless_1.15" % "1.3.0"  % Test
     ),
     dependencyOverrides ++= Seq(
