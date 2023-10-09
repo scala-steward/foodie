@@ -1,7 +1,7 @@
 module Pages.Util.ParentEditor.View exposing (..)
 
 import Configuration exposing (Configuration)
-import Html exposing (Attribute, Html, button, div, table, tbody, td, text, th, thead, tr)
+import Html exposing (Attribute, Html, button, caption, div, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, disabled)
 import Html.Events exposing (onClick)
 import Maybe.Extra
@@ -83,6 +83,9 @@ viewParentsWith ps configuration main =
                         , []
                         )
                         (ps.create.ifCreating >> Tuple.pair [])
+
+            numberOfParents =
+                Paginate.length viewParents
         in
         div [ ps.styling ]
             (button
@@ -92,6 +95,7 @@ viewParentsWith ps configuration main =
                         }
                    , table [ Style.classes.elementsWithControlsTable ]
                         (ps.tableHeader
+                            :: caption [ Style.classes.search.info ] [ text <| (String.fromInt numberOfParents ++ " matches") ]
                             :: [ tbody []
                                     (creationLine
                                         ++ (viewParents |> Paginate.page |> List.concatMap viewParent)

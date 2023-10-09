@@ -550,6 +550,11 @@ select {
     font-size: medium;
 }
 
+.search-info {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
 @media only screen and (orientation: portrait) {
     .elements-with-controls-table thead th {
         font-size: small;

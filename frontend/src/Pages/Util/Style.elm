@@ -61,6 +61,7 @@ classes :
     , search :
         { area : Attribute msg
         , field : Attribute msg
+        , info : Attribute msg
         }
     , sortControls : Attribute msg
     , tableHeader : Attribute msg
@@ -124,6 +125,7 @@ classes =
     , search =
         { area = class "search-area"
         , field = class "search-field"
+        , info = class "search-info"
         }
     , sortControls = class "sort-controls"
     , tableHeader = class "table-header"

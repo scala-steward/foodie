@@ -1,6 +1,6 @@
 module Pages.Util.HtmlUtil exposing (Column, RowWithControls, menuIcon, onEscape, searchAreaWith, toggleControlsCell, withExtraAttributes)
 
-import Html exposing (Attribute, Html, button, div, input, label, td, text)
+import Html exposing (Attribute, Html, button, form, input, td, text)
 import Html.Attributes exposing (disabled, value)
 import Html.Events exposing (on, onClick, onInput)
 import Keyboard.Event exposing (KeyboardEvent)
@@ -18,8 +18,8 @@ searchAreaWith :
     }
     -> Html msg
 searchAreaWith ps =
-    div [ Style.classes.search.area ]
-        [ label [] [ text Links.lookingGlass ]
+    form [ Style.classes.search.area ]
+        [ text Links.lookingGlass
         , input
             [ onInput <| ps.msg
             , value <| ps.searchString
