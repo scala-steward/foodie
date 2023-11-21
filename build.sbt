@@ -33,7 +33,7 @@ lazy val root = (project in file("."))
       "org.typelevel"         %% "spire"               % "0.18.0",
       "org.flywaydb"          %% "flyway-play"         % "7.41.0",
       "com.typesafe.play"     %% "play-slick"          % "5.1.0",
-      "com.dripower"          %% "play-circe"          % "2814.4",
+      "com.dripower"          %% "play-circe"          % "3014.1",
       "com.davegurnell"       %% "bridges"             % "0.24.0",
       "com.github.pathikrit"  %% "better-files"        % "3.9.2",
       "com.typesafe"           % "config"              % "1.4.3",
