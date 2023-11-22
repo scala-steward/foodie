@@ -10,6 +10,7 @@ on:
       - conf/**
       - scripts/**
       - build.sbt
+  workflow_dispatch:
 
 permissions:
   contents: read
