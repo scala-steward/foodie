@@ -22,32 +22,34 @@ jobs:
         id: back-end
         with:
           filters: |
-            - 'app/**'
-            - 'test/**' 
-            - 'conf/**' 
-            - 'scripts/**'
-            - 'build.sbt'
-            - 'project/**'
-            - '.scalafmt.conf'
+            src:
+              - 'app/**'
+              - 'test/**' 
+              - 'conf/**' 
+              - 'scripts/**'
+              - 'build.sbt'
+              - 'project/**'
+              - '.scalafmt.conf'
       - uses: dorny/paths-filter@v2
         id: front-end
         with:
           filters: |
-            - 'frontend/**'
+            src:
+              - 'frontend/**'
 
   back-end-test:
     needs: changes
     # The output is a string, hence the string comparison.
     if: ${{ needs.changes.outputs.back-end-paths-changed == 'true' }}
-    uses: .github/workflows/scala-tests.yml
+    uses: ./.github/workflows/scala-tests.yml
 
   front-end-test:
     needs: changes
     # The output is a string, hence the string comparison.
     if: ${{ needs.changes.outputs.front-end-paths-changed == 'true' }}
-    uses: .github/workflows/elm-tests.yml
+    uses: ./.github/workflows/elm-tests.yml
 
-  test:
+  combine-tests:
     needs:
       - back-end-test
       - front-end-test
