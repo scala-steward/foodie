@@ -1,0 +1,58 @@
+name: Verify pull request
+
+on:
+  pull_request:
+    branches:
+      - "main"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      back-end-paths-changed: ${{ steps.back-end.outputs.paths-changed }}
+      front-end-paths-changed: ${{ steps.front-end.outputs.paths-changed }}
+    steps:
+      - uses: dorny/paths-filter@v2
+        id: back-end
+        with:
+          filters: |
+            - 'app/**'
+            - 'test/**' 
+            - 'conf/**' 
+            - 'scripts/**'
+            - 'build.sbt'
+            - 'project/**'
+            - '.scalafmt.conf'
+      - uses: dorny/paths-filter@v2
+        id: front-end
+        with:
+          filters: |
+            - 'frontend/**'
+
+  back-end-test:
+    needs: changes
+    # The output is a string, hence the string comparison.
+    if: ${{ needs.changes.outputs.back-end-paths-changed == 'true' }}
+    uses: .github/workflows/scala-tests.yml
+
+  front-end-test:
+    needs: changes
+    # The output is a string, hence the string comparison.
+    if: ${{ needs.changes.outputs.front-end-paths-changed == 'true' }}
+    uses: .github/workflows/elm-tests.yml
+
+  test:
+    needs:
+      - back-end-test
+      - front-end-test
+    runs-on: ubuntu-latest
+    if: always() && (needs.back-end-test.result == 'success' || needs.back-end-test.result == 'skipped') && (needs.front-end-test.result == 'success' || needs.front-end-test.result == 'skipped')
+    steps:
+      - name: Finish test
+        run: echo "All tests passed"
