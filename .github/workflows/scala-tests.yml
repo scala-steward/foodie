@@ -4,19 +4,37 @@ on:
   pull_request:
     branches:
       - "main"
-    paths:
-      - app/**
-      - test/**
-      - conf/**
-      - scripts/**
-      - build.sbt
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      paths-changed: ${{ steps.relevant-changes-filter.outputs.paths-changed }}
+    steps:
+      - uses: dorny/paths-filter@v2
+        id: relevant-changes-filter
+        with:
+          filters: |
+            src:
+              - 'app/**'
+              - 'test/**' 
+              - 'conf/**' 
+              - 'scripts/**'
+              - 'build.sbt'
+              - 'project/**'
+              - '.scalafmt.conf'
+
   test:
+    needs: changes
+    # The output is a string, hence the string comparison.
+    if: ${{ needs.changes.outputs.paths-changed == 'true' }}
+    name: Prepare environment, and run Scala tests
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -44,7 +62,7 @@ jobs:
           cache: 'sbt'
         # Workaround: A placeholder test initializes all migrations.
         # Then the database is populated with CNF data via the standard script.
-        # Afterwards, the actual tests can be performed.
+        # After the initialization, the actual tests can be performed.
       - name: Run migrations
         run: sbt 'testOnly *Initializer'
       - name: Populate with CNF data
