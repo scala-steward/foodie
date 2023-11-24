@@ -9,9 +9,6 @@ permissions:
 
 jobs:
   test:
-    needs: changes
-    # The output is a string, hence the string comparison.
-    if: ${{ needs.changes.outputs.paths-changed == 'true' }}
     name: Prepare environment, and run Scala tests
     runs-on: ubuntu-latest
     services:
