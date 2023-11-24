@@ -15,14 +15,14 @@ jobs:
     permissions:
       pull-requests: read
     outputs:
-      back-end-paths-changed: ${{ steps.back-end.outputs.paths-changed }}
-      front-end-paths-changed: ${{ steps.front-end.outputs.paths-changed }}
+      back-end-paths-changed: ${{ steps.back-end.outputs.back-end-src }}
+      front-end-paths-changed: ${{ steps.front-end.outputs.front-end-src }}
     steps:
       - uses: dorny/paths-filter@v2
         id: back-end
         with:
           filters: |
-            src:
+            back-end-src:
               - 'app/**'
               - 'test/**' 
               - 'conf/**' 
@@ -34,7 +34,7 @@ jobs:
         id: front-end
         with:
           filters: |
-            src:
+            front-end-src:
               - 'frontend/**'
 
   back-end-test:
