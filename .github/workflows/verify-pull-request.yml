@@ -47,7 +47,7 @@ jobs:
     if: ${{ needs.changes.outputs.front-end-paths-changed == 'true' }}
     uses: .github/workflows/elm-tests.yml
 
-  test:
+  combine-tests:
     needs:
       - back-end-test
       - front-end-test
