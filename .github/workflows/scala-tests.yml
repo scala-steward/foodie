@@ -1,15 +1,7 @@
 name: Run Scala tests
 
 on:
-  pull_request:
-    branches:
-      - "main"
-    paths:
-      - app/**
-      - test/**
-      - conf/**
-      - scripts/**
-      - build.sbt
+  workflow_call:
   workflow_dispatch:
 
 permissions:
@@ -17,6 +9,7 @@ permissions:
 
 jobs:
   test:
+    name: Prepare environment, and run Scala tests
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -44,7 +37,7 @@ jobs:
           cache: 'sbt'
         # Workaround: A placeholder test initializes all migrations.
         # Then the database is populated with CNF data via the standard script.
-        # Afterwards, the actual tests can be performed.
+        # After the initialization, the actual tests can be performed.
       - name: Run migrations
         run: sbt 'testOnly *Initializer'
       - name: Populate with CNF data
