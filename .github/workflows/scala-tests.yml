@@ -1,35 +1,13 @@
 name: Run Scala tests
 
 on:
-  pull_request:
-    branches:
-      - "main"
+  workflow_call:
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  changes:
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
-    outputs:
-      paths-changed: ${{ steps.relevant-changes-filter.outputs.paths-changed }}
-    steps:
-      - uses: dorny/paths-filter@v2
-        id: relevant-changes-filter
-        with:
-          filters: |
-            src:
-              - 'app/**'
-              - 'test/**' 
-              - 'conf/**' 
-              - 'scripts/**'
-              - 'build.sbt'
-              - 'project/**'
-              - '.scalafmt.conf'
-
   test:
     needs: changes
     # The output is a string, hence the string comparison.
