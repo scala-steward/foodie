@@ -22,18 +22,20 @@ jobs:
         id: back-end
         with:
           filters: |
-            - 'app/**'
-            - 'test/**' 
-            - 'conf/**' 
-            - 'scripts/**'
-            - 'build.sbt'
-            - 'project/**'
-            - '.scalafmt.conf'
+            src:
+              - 'app/**'
+              - 'test/**' 
+              - 'conf/**' 
+              - 'scripts/**'
+              - 'build.sbt'
+              - 'project/**'
+              - '.scalafmt.conf'
       - uses: dorny/paths-filter@v2
         id: front-end
         with:
           filters: |
-            - 'frontend/**'
+            src:
+              - 'frontend/**'
 
   back-end-test:
     needs: changes
