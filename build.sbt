@@ -8,7 +8,7 @@ version := "0.1"
 
 val circeVersion = "0.14.6"
 val slickVersion = "3.4.1"
-val jwtVersion   = "9.4.4"
+val jwtVersion   = "9.4.5"
 
 val config = ConfigFactory
   .parseFile(new File("conf/application.conf"))
@@ -25,7 +25,7 @@ lazy val root = (project in file("."))
       "com.typesafe.slick"    %% "slick"               % slickVersion,
       "com.typesafe.slick"    %% "slick-hikaricp"      % slickVersion,
       "com.typesafe.slick"    %% "slick-codegen"       % slickVersion,
-      "org.postgresql"         % "postgresql"          % "42.6.0",
+      "org.postgresql"         % "postgresql"          % "42.7.0",
       "ch.qos.logback"         % "logback-classic"     % "1.4.8",
       "io.circe"              %% "circe-core"          % circeVersion,
       "io.circe"              %% "circe-generic"       % circeVersion,
@@ -37,7 +37,7 @@ lazy val root = (project in file("."))
       "com.davegurnell"       %% "bridges"             % "0.24.0",
       "com.github.pathikrit"  %% "better-files"        % "3.9.2",
       "com.typesafe"           % "config"              % "1.4.3",
-      "io.scalaland"          %% "chimney"             % "0.8.2",
+      "io.scalaland"          %% "chimney"             % "0.8.3",
       "com.github.jwt-scala"  %% "jwt-core"            % jwtVersion,
       "com.github.jwt-scala"  %% "jwt-circe"           % jwtVersion,
       "com.github.pureconfig" %% "pureconfig"          % "0.17.4",
@@ -45,13 +45,13 @@ lazy val root = (project in file("."))
       "org.typelevel"         %% "cats-effect"         % "3.5.2",
       "org.typelevel"         %% "cats-core"           % "2.10.0",
       "com.beachape"          %% "enumeratum-circe"    % "1.7.3",
-      "com.typesafe.play"     %% "play-mailer"         % "9.0.0",
-      "com.typesafe.play"     %% "play-mailer-guice"   % "9.0.0",
+      "org.playframework"     %% "play-mailer"         % "10.0.0",
+      "org.playframework"     %% "play-mailer-guice"   % "10.0.0",
       "com.lihaoyi"           %% "pprint"              % "0.8.1",
       "com.kubukoz"           %% "slick-effect"        % "0.5.0",
       "com.kubukoz"           %% "slick-effect-catsio" % "0.5.0",
       // Transitive dependency. Override added for proper version.
-      "com.fasterxml.jackson.module" %% "jackson-module-scala"      % "2.15.3",
+      "com.fasterxml.jackson.module" %% "jackson-module-scala"      % "2.16.0",
       "org.scalacheck"               %% "scalacheck"                % "1.17.0" % Test,
       "org.typelevel"                %% "cats-laws"                 % "2.10.0" % Test,
       "com.github.alexarchambault"   %% "scalacheck-shapeless_1.15" % "1.3.0"  % Test

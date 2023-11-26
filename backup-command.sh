@@ -1,0 +1,1 @@
+pg_dump -d foodie -U foodie -t public.complex_food -t public.complex_ingredient -t public.flyway_schema_history -t public.meal -t public.meal_entry -t public.recipe -t public.recipe_ingredient -t public.reference_entry -t public.reference_map -t public.session -t public.user --inserts -W > /tmp/2023-10-09.sql
