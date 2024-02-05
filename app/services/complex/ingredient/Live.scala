@@ -1,6 +1,7 @@
 package services.complex.ingredient
 
 import cats.data.OptionT
+import db.daos.complexFood.ComplexFoodKey
 import db.daos.complexIngredient.ComplexIngredientKey
 import db.daos.recipe.RecipeKey
 import db.generated.Tables
@@ -150,7 +151,7 @@ object Live {
     )(action: Tables.ComplexFoodRow => DBIO[A])(implicit ec: ExecutionContext): DBIO[A] =
       for {
         recipeExists         <- recipeDao.exists(RecipeKey(userId, recipeId))
-        complexFoodCandidate <- complexFoodDao.find(complexFoodId)
+        complexFoodCandidate <- complexFoodDao.find(ComplexFoodKey(userId, complexFoodId))
         result <-
           if (!recipeExists) DBIO.failed(DBError.Complex.Ingredient.RecipeNotFound)
           else complexFoodCandidate.fold(DBIO.failed(DBError.Complex.Ingredient.NotFound): DBIO[A])(action)

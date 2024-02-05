@@ -2,6 +2,7 @@ package db
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
+import db.daos.complexFood.ComplexFoodKey
 import db.daos.complexIngredient.ComplexIngredientKey
 import db.daos.meal.MealKey
 import db.daos.recipe.RecipeKey
@@ -74,15 +75,15 @@ object DAOTestInstance {
 
   object ComplexFood {
 
-    def instance(contents: Seq[(RecipeId, Tables.ComplexFoodRow)]): db.daos.complexFood.DAO =
-      new DAOTestInstance[Tables.ComplexFoodRow, RecipeId](
+    def instance(contents: Seq[(ComplexFoodKey, Tables.ComplexFoodRow)]): db.daos.complexFood.DAO =
+      new DAOTestInstance[Tables.ComplexFoodRow, ComplexFoodKey](
         contents
       ) with db.daos.complexFood.DAO {
 
-        override def findByKeys(keys: Seq[RecipeId]): DBIO[Seq[Tables.ComplexFoodRow]] =
+        override def allOf(userId: UserId, ids: Seq[RecipeId]): DBIO[Seq[Tables.ComplexFoodRow]] =
           fromIO {
             map.collect {
-              case (recipeId, complexFood) if keys.contains(recipeId) => complexFood
+              case (key, complexFood) if key.userId == userId && ids.contains(key.recipeId) => complexFood
             }.toList
           }
 
@@ -91,7 +92,7 @@ object DAOTestInstance {
     def instanceFrom(contents: Seq[(UserId, RecipeId, ComplexFoodIncoming)]): db.daos.complexFood.DAO =
       instance(
         contents.map { case (userId, recipeId, complexFoodIncoming) =>
-          recipeId -> ComplexFoodIncoming
+          ComplexFoodKey(userId, recipeId) -> ComplexFoodIncoming
             .TransformableToDB(userId, complexFoodIncoming)
             .transformInto[Tables.ComplexFoodRow]
         }
