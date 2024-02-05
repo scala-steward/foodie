@@ -163,7 +163,7 @@ object Live {
         ec: ExecutionContext
     ): DBIO[Recipe] = {
       val recipe    = RecipeCreation.create(id, recipeCreation)
-      val recipeRow = (recipe, userId).transformInto[Tables.RecipeRow]
+      val recipeRow = Recipe.TransformableToDB(userId, recipe).transformInto[Tables.RecipeRow]
       recipeDao
         .insert(recipeRow)
         .map(_.transformInto[Recipe])
@@ -179,11 +179,11 @@ object Live {
       for {
         recipe <- findAction
         _ <- recipeDao.update(
-          (
-            RecipeUpdate
-              .update(recipe, recipeUpdate),
-            userId
-          )
+          Recipe
+            .TransformableToDB(
+              userId,
+              RecipeUpdate.update(recipe, recipeUpdate)
+            )
             .transformInto[Tables.RecipeRow]
         )
         updatedRecipe <- findAction

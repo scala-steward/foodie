@@ -121,7 +121,8 @@ object Live {
       complexIngredientDao
         .insertAll {
           complexIngredients.map(complexIngredient =>
-            (complexIngredient.copy(recipeId = newRecipeId), userId)
+            ComplexIngredient
+              .TransformableToDB(userId, complexIngredient.copy(recipeId = newRecipeId))
               .transformInto[Tables.ComplexIngredientRow]
           )
         }

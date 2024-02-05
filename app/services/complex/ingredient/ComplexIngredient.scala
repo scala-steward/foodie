@@ -26,15 +26,19 @@ object ComplexIngredient {
         scalingMode = row.scalingMode.transformInto[ScalingMode]
       )
 
-  implicit val toDB: Transformer[(ComplexIngredient, UserId), Tables.ComplexIngredientRow] = {
-    case (complexIngredient, userId) =>
-      Tables.ComplexIngredientRow(
-        recipeId = complexIngredient.recipeId.transformInto[UUID],
-        complexFoodId = complexIngredient.complexFoodId.transformInto[UUID],
-        factor = complexIngredient.factor,
-        scalingMode = complexIngredient.scalingMode.transformInto[String],
-        userId = userId.transformInto[UUID]
-      )
+  case class TransformableToDB(
+      userId: UserId,
+      complexIngredient: ComplexIngredient
+  )
+
+  implicit val toDB: Transformer[TransformableToDB, Tables.ComplexIngredientRow] = { transformableToDB =>
+    Tables.ComplexIngredientRow(
+      recipeId = transformableToDB.complexIngredient.recipeId.transformInto[UUID],
+      complexFoodId = transformableToDB.complexIngredient.complexFoodId.transformInto[UUID],
+      factor = transformableToDB.complexIngredient.factor,
+      scalingMode = transformableToDB.complexIngredient.scalingMode.transformInto[String],
+      userId = transformableToDB.userId.transformInto[UUID]
+    )
   }
 
 }

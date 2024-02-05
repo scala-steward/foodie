@@ -20,14 +20,19 @@ object ReferenceEntry {
       .define[Tables.ReferenceEntryRow, ReferenceEntry]
       .buildTransformer
 
-  implicit val toDB: Transformer[(ReferenceEntry, ReferenceMapId, UserId), Tables.ReferenceEntryRow] = {
-    case (referenceEntry, referenceMapId, userId) =>
-      Tables.ReferenceEntryRow(
-        referenceMapId = referenceMapId.transformInto[UUID],
-        nutrientCode = referenceEntry.nutrientCode.transformInto[Int],
-        amount = referenceEntry.amount,
-        userId = userId.transformInto[UUID]
-      )
+  case class TransformableToDB(
+      userId: UserId,
+      referenceMapId: ReferenceMapId,
+      referenceEntry: ReferenceEntry
+  )
+
+  implicit val toDB: Transformer[TransformableToDB, Tables.ReferenceEntryRow] = { transformableToDB =>
+    Tables.ReferenceEntryRow(
+      referenceMapId = transformableToDB.referenceMapId.transformInto[UUID],
+      nutrientCode = transformableToDB.referenceEntry.nutrientCode.transformInto[Int],
+      amount = transformableToDB.referenceEntry.amount,
+      userId = transformableToDB.userId.transformInto[UUID]
+    )
 
   }
 

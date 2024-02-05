@@ -16,12 +16,17 @@ case class ComplexFoodIncoming(
 
 object ComplexFoodIncoming {
 
-  implicit val toDB: Transformer[(ComplexFoodIncoming, UserId), Tables.ComplexFoodRow] = { case (complexFood, userId) =>
+  case class TransformableToDB(
+      userId: UserId,
+      complexFood: ComplexFoodIncoming
+  )
+
+  implicit val toDB: Transformer[TransformableToDB, Tables.ComplexFoodRow] = { transformable =>
     Tables.ComplexFoodRow(
-      recipeId = complexFood.recipeId.transformInto[UUID],
-      amountGrams = complexFood.amountGrams,
-      amountMilliLitres = complexFood.amountMilliLitres,
-      userId = userId.transformInto[UUID]
+      recipeId = transformable.complexFood.recipeId.transformInto[UUID],
+      amountGrams = transformable.complexFood.amountGrams,
+      amountMilliLitres = transformable.complexFood.amountMilliLitres,
+      userId = transformable.userId.transformInto[UUID]
     )
   }
 

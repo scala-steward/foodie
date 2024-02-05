@@ -94,7 +94,9 @@ object Live {
       referenceEntryDao
         .insertAll {
           referenceEntries.map { referenceEntry =>
-            (referenceEntry, newReferenceMapId, userId).transformInto[Tables.ReferenceEntryRow]
+            ReferenceEntry
+              .TransformableToDB(userId, newReferenceMapId, referenceEntry)
+              .transformInto[Tables.ReferenceEntryRow]
           }
         }
         .map(_.map(_.transformInto[ReferenceEntry]))

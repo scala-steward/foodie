@@ -75,7 +75,7 @@ object Live {
       } yield {
         val recipeMap = recipes.map(r => r.id.transformInto[UUID] -> r).toMap
         complex.map { complexFood =>
-          (complexFood, recipeMap(complexFood.recipeId)).transformInto[ComplexFood]
+          ComplexFood.TransformableFromDB(complexFood, recipeMap(complexFood.recipeId)).transformInto[ComplexFood]
         }
       }
 
@@ -83,7 +83,7 @@ object Live {
       val transformer = for {
         recipe         <- OptionT(recipeService.getRecipe(userId, recipeId))
         complexFoodRow <- OptionT(dao.find(recipeId))
-      } yield (complexFoodRow, recipe).transformInto[ComplexFood]
+      } yield ComplexFood.TransformableFromDB(complexFoodRow, recipe).transformInto[ComplexFood]
 
       transformer.value
     }
@@ -100,18 +100,19 @@ object Live {
         recipes.flatMap { recipe =>
           complexFoodMap
             .get(recipe.id.transformInto[UUID])
-            .map(complexFoodRow => (complexFoodRow, recipe).transformInto[ComplexFood])
+            .map(complexFoodRow => ComplexFood.TransformableFromDB(complexFoodRow, recipe).transformInto[ComplexFood])
         }
       }
 
     override def create(userId: UserId, complexFood: ComplexFoodIncoming)(implicit
         ec: ExecutionContext
     ): DBIO[ComplexFood] = {
-      val complexFoodRow = (complexFood, userId).transformInto[Tables.ComplexFoodRow]
+      val complexFoodRow =
+        ComplexFoodIncoming.TransformableToDB(userId, complexFood).transformInto[Tables.ComplexFoodRow]
       ifRecipeExists(userId, complexFood.recipeId) { recipe =>
         dao
           .insert(complexFoodRow)
-          .map(complexFood => (complexFood, recipe).transformInto[ComplexFood])
+          .map(complexFood => ComplexFood.TransformableFromDB(complexFood, recipe).transformInto[ComplexFood])
       }
     }
 
@@ -128,7 +129,7 @@ object Live {
           if (breaksVolumeReference(referencing, complexFood.amountMilliLitres))
             DBIO.failed(DBError.Complex.Food.VolumeReferenceExists)
           else DBIO.successful(())
-        _           <- dao.update((complexFood, userId).transformInto[Tables.ComplexFoodRow])
+        _ <- dao.update(ComplexFoodIncoming.TransformableToDB(userId, complexFood).transformInto[Tables.ComplexFoodRow])
         updatedFood <- findAction
       } yield updatedFood
     }

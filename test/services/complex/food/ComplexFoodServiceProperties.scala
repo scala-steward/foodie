@@ -48,7 +48,12 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
     )
 
   private def toComplexFood(userId: UserId, complexFoodIncoming: ComplexFoodIncoming, recipe: Recipe): ComplexFood =
-    ((complexFoodIncoming, userId).transformInto[Tables.ComplexFoodRow], recipe).transformInto[ComplexFood]
+    ComplexFood
+      .TransformableFromDB(
+        ComplexFoodIncoming.TransformableToDB(userId, complexFoodIncoming).transformInto[Tables.ComplexFoodRow],
+        recipe
+      )
+      .transformInto[ComplexFood]
 
   private case class SetupBase(
       userId: UserId,

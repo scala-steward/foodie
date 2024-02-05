@@ -168,7 +168,7 @@ object Live {
         ec: ExecutionContext
     ): DBIO[ReferenceMap] = {
       val referenceMap    = ReferenceMapCreation.create(id, referenceMapCreation)
-      val referenceMapRow = (referenceMap, userId).transformInto[Tables.ReferenceMapRow]
+      val referenceMapRow = ReferenceMap.TransformableToDB(userId, referenceMap).transformInto[Tables.ReferenceMapRow]
       referenceMapDao
         .insert(referenceMapRow)
         .map(_.transformInto[ReferenceMap])
@@ -182,11 +182,11 @@ object Live {
       for {
         referenceMap <- findAction
         _ <- referenceMapDao.update(
-          (
-            ReferenceMapUpdate
-              .update(referenceMap, referenceMapUpdate),
-            userId
-          )
+          ReferenceMap
+            .TransformableToDB(
+              userId,
+              ReferenceMapUpdate.update(referenceMap, referenceMapUpdate)
+            )
             .transformInto[Tables.ReferenceMapRow]
         )
         updatedReferenceMap <- findAction
@@ -229,7 +229,9 @@ object Live {
     ): DBIO[ReferenceEntry] = {
       val referenceEntry = ReferenceEntryCreation.create(referenceEntryCreation)
       val referenceEntryRow =
-        (referenceEntry, referenceEntryCreation.referenceMapId, userId).transformInto[Tables.ReferenceEntryRow]
+        ReferenceEntry
+          .TransformableToDB(userId, referenceEntryCreation.referenceMapId, referenceEntry)
+          .transformInto[Tables.ReferenceEntryRow]
       ifReferenceMapExists(userId, referenceEntryCreation.referenceMapId) {
         referenceMapEntryDao
           .insert(referenceEntryRow)
@@ -251,12 +253,12 @@ object Live {
         referenceEntryRow <- findAction
         _ <- ifReferenceMapExists(userId, referenceEntryRow.referenceMapId.transformInto[ReferenceMapId]) {
           referenceMapEntryDao.update(
-            (
-              ReferenceEntryUpdate
-                .update(referenceEntryRow.transformInto[ReferenceEntry], referenceEntryUpdate),
-              referenceEntryRow.referenceMapId.transformInto[ReferenceMapId],
-              userId
-            )
+            ReferenceEntry
+              .TransformableToDB(
+                userId,
+                referenceEntryRow.referenceMapId.transformInto[ReferenceMapId],
+                ReferenceEntryUpdate.update(referenceEntryRow.transformInto[ReferenceEntry], referenceEntryUpdate)
+              )
               .transformInto[Tables.ReferenceEntryRow]
           )
         }

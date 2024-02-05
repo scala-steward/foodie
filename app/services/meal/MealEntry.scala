@@ -21,15 +21,20 @@ object MealEntry {
       .define[Tables.MealEntryRow, MealEntry]
       .buildTransformer
 
-  implicit val toDB: Transformer[(MealEntry, MealId, UserId), Tables.MealEntryRow] = {
-    case (mealEntry, mealId, userId) =>
-      Tables.MealEntryRow(
-        id = mealEntry.id.transformInto[UUID],
-        mealId = mealId.transformInto[UUID],
-        recipeId = mealEntry.recipeId.transformInto[UUID],
-        numberOfServings = mealEntry.numberOfServings,
-        userId = userId.transformInto[UUID]
-      )
+  case class TransformableToDB(
+      userId: UserId,
+      mealId: MealId,
+      mealEntry: MealEntry
+  )
+
+  implicit val toDB: Transformer[TransformableToDB, Tables.MealEntryRow] = { transformableToDB =>
+    Tables.MealEntryRow(
+      id = transformableToDB.mealEntry.id.transformInto[UUID],
+      mealId = transformableToDB.mealId.transformInto[UUID],
+      recipeId = transformableToDB.mealEntry.recipeId.transformInto[UUID],
+      numberOfServings = transformableToDB.mealEntry.numberOfServings,
+      userId = transformableToDB.userId.transformInto[UUID]
+    )
   }
 
 }

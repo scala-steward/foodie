@@ -105,7 +105,7 @@ object Live {
         .insertAll {
           mealEntries.map { duplicatedMealEntry =>
             val newMealEntry = duplicatedMealEntry.mealEntry.copy(id = duplicatedMealEntry.newId)
-            (newMealEntry, newMealId, userId).transformInto[Tables.MealEntryRow]
+            MealEntry.TransformableToDB(userId, newMealId, newMealEntry).transformInto[Tables.MealEntryRow]
           }
         }
         .map(_.map(_.transformInto[MealEntry]))
