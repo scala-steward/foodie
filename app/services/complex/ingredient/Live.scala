@@ -107,7 +107,9 @@ object Live {
         ec: ExecutionContext
     ): DBIO[ComplexIngredient] = {
       val findAction = OptionT(
-        complexIngredientDao.find(ComplexIngredientKey(complexIngredient.recipeId, complexIngredient.complexFoodId))
+        complexIngredientDao.find(
+          ComplexIngredientKey(userId, complexIngredient.recipeId, complexIngredient.complexFoodId)
+        )
       ).getOrElseF(DBIO.failed(DBError.Complex.Ingredient.NotFound))
 
       for {
@@ -133,7 +135,7 @@ object Live {
         result <-
           if (exists)
             complexIngredientDao
-              .delete(ComplexIngredientKey(recipeId, complexFoodId))
+              .delete(ComplexIngredientKey(userId, recipeId, complexFoodId))
               .map(_ > 0)
           else DBIO.successful(false)
       } yield result

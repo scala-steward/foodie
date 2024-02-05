@@ -243,7 +243,7 @@ object Live {
       val findAction =
         OptionT(
           referenceMapEntryDao.find(
-            ReferenceMapEntryKey(referenceEntryUpdate.referenceMapId, referenceEntryUpdate.nutrientCode)
+            ReferenceMapEntryKey(userId, referenceEntryUpdate.referenceMapId, referenceEntryUpdate.nutrientCode)
           )
         )
           .getOrElseF(DBIO.failed(DBError.Reference.EntryNotFound))
@@ -272,7 +272,7 @@ object Live {
         result <-
           if (exists)
             referenceMapEntryDao
-              .delete(ReferenceMapEntryKey(referenceMapId, nutrientCode))
+              .delete(ReferenceMapEntryKey(userId, referenceMapId, nutrientCode))
               .map(_ > 0)
           else DBIO.successful(false)
       } yield result
