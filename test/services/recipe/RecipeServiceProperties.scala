@@ -15,7 +15,7 @@ object RecipeServiceProperties extends Properties("Recipe service") {
 
   def companionWith(
       recipeContents: Seq[(UserId, Recipe)],
-      ingredientContents: Seq[(RecipeId, Ingredient)]
+      ingredientContents: Seq[(UserId, RecipeId, Ingredient)]
   ): services.recipe.Live.Companion =
     new services.recipe.Live.Companion(
       recipeDao = DAOTestInstance.Recipe.instanceFrom(recipeContents),
@@ -25,7 +25,7 @@ object RecipeServiceProperties extends Properties("Recipe service") {
 
   def recipeServiceWith(
       recipeContents: Seq[(UserId, Recipe)],
-      ingredientContents: Seq[(RecipeId, Ingredient)]
+      ingredientContents: Seq[(UserId, RecipeId, Ingredient)]
   ): RecipeService =
     new services.recipe.Live(
       dbConfigProvider = TestUtil.databaseConfigProvider,
@@ -162,7 +162,7 @@ object RecipeServiceProperties extends Properties("Recipe service") {
   ) { (userId, fullRecipe, ingredient) =>
     val recipeService = recipeServiceWith(
       recipeContents = ContentsUtil.Recipe.from(userId, Seq(fullRecipe.recipe)),
-      ingredientContents = ContentsUtil.Ingredient.from(fullRecipe)
+      ingredientContents = ContentsUtil.Ingredient.from(userId, fullRecipe)
     )
     val ingredientCreation = IngredientCreation(fullRecipe.recipe.id, ingredient.foodId, ingredient.amountUnit)
     val transformer = for {
@@ -184,7 +184,7 @@ object RecipeServiceProperties extends Properties("Recipe service") {
   ) { (userId, fullRecipe) =>
     val recipeService = recipeServiceWith(
       recipeContents = ContentsUtil.Recipe.from(userId, Seq(fullRecipe.recipe)),
-      ingredientContents = ContentsUtil.Ingredient.from(fullRecipe)
+      ingredientContents = ContentsUtil.Ingredient.from(userId, fullRecipe)
     )
     val transformer = for {
       ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
@@ -220,7 +220,7 @@ object RecipeServiceProperties extends Properties("Recipe service") {
   ) { setup =>
     val recipeService = recipeServiceWith(
       recipeContents = ContentsUtil.Recipe.from(setup.userId, Seq(setup.fullRecipe.recipe)),
-      ingredientContents = ContentsUtil.Ingredient.from(setup.fullRecipe)
+      ingredientContents = ContentsUtil.Ingredient.from(setup.userId, setup.fullRecipe)
     )
 
     val transformer = for {
@@ -269,7 +269,7 @@ object RecipeServiceProperties extends Properties("Recipe service") {
   ) { setup =>
     val recipeService = recipeServiceWith(
       recipeContents = ContentsUtil.Recipe.from(setup.userId, Seq(setup.fullRecipe.recipe)),
-      ingredientContents = ContentsUtil.Ingredient.from(setup.fullRecipe)
+      ingredientContents = ContentsUtil.Ingredient.from(setup.userId, setup.fullRecipe)
     )
 
     val transformer = for {
@@ -383,7 +383,7 @@ object RecipeServiceProperties extends Properties("Recipe service") {
   ) { case (userId1, userId2, fullRecipe, ingredient) =>
     val recipeService = recipeServiceWith(
       recipeContents = ContentsUtil.Recipe.from(userId1, Seq(fullRecipe.recipe)),
-      ingredientContents = ContentsUtil.Ingredient.from(fullRecipe)
+      ingredientContents = ContentsUtil.Ingredient.from(userId1, fullRecipe)
     )
     val ingredientCreation = IngredientCreation(fullRecipe.recipe.id, ingredient.foodId, ingredient.amountUnit)
     val transformer = for {
@@ -406,7 +406,7 @@ object RecipeServiceProperties extends Properties("Recipe service") {
   ) { case (userId1, userId2, fullRecipe) =>
     val recipeService = recipeServiceWith(
       recipeContents = ContentsUtil.Recipe.from(userId1, Seq(fullRecipe.recipe)),
-      ingredientContents = ContentsUtil.Ingredient.from(fullRecipe)
+      ingredientContents = ContentsUtil.Ingredient.from(userId1, fullRecipe)
     )
     val transformer = for {
       ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
@@ -423,7 +423,7 @@ object RecipeServiceProperties extends Properties("Recipe service") {
   ) { (setup, userId2) =>
     val recipeService = recipeServiceWith(
       recipeContents = ContentsUtil.Recipe.from(setup.userId, Seq(setup.fullRecipe.recipe)),
-      ingredientContents = ContentsUtil.Ingredient.from(setup.fullRecipe)
+      ingredientContents = ContentsUtil.Ingredient.from(setup.userId, setup.fullRecipe)
     )
     val transformer = for {
       result <- EitherT.liftF(
@@ -449,7 +449,7 @@ object RecipeServiceProperties extends Properties("Recipe service") {
   ) { (setup, userId2) =>
     val recipeService = recipeServiceWith(
       recipeContents = ContentsUtil.Recipe.from(setup.userId, Seq(setup.fullRecipe.recipe)),
-      ingredientContents = ContentsUtil.Ingredient.from(setup.fullRecipe)
+      ingredientContents = ContentsUtil.Ingredient.from(setup.userId, setup.fullRecipe)
     )
     val transformer = for {
       deletionResult <- EitherT.liftF(recipeService.removeIngredient(userId2, setup.ingredientId))

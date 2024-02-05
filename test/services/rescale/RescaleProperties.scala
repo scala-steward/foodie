@@ -39,9 +39,10 @@ object RescaleProperties extends Properties("Rescale properties") {
       complexIngredients: List[ComplexIngredient]
   ): Services = {
     val recipeDao = DAOTestInstance.Recipe.instanceFrom(ContentsUtil.Recipe.from(userId, recipe +: referencedRecipes))
-    val complexFoodDao = DAOTestInstance.ComplexFood.instanceFrom(ContentsUtil.ComplexFood.from(complexFoods))
+    val complexFoodDao = DAOTestInstance.ComplexFood.instanceFrom(ContentsUtil.ComplexFood.from(userId, complexFoods))
     val ingredientDao = DAOTestInstance.Ingredient.instanceFrom(
       ContentsUtil.Ingredient.from(
+        userId,
         FullRecipe(
           recipe = recipe,
           ingredients = ingredients
@@ -49,7 +50,7 @@ object RescaleProperties extends Properties("Rescale properties") {
       )
     )
     val complexIngredientDao = DAOTestInstance.ComplexIngredient.instanceFrom(
-      ContentsUtil.ComplexIngredient.from(recipe.id, complexIngredients)
+      ContentsUtil.ComplexIngredient.from(userId, recipe.id, complexIngredients)
     )
 
     val recipeServiceCompanion = new services.recipe.Live.Companion(
@@ -72,7 +73,7 @@ object RescaleProperties extends Properties("Rescale properties") {
       nutrientService = nutrientServiceCompanion,
       complexFoodService = ComplexFoodServiceProperties.companionWith(
         recipeContents = ContentsUtil.Recipe.from(userId, referencedRecipes),
-        complexFoodContents = ContentsUtil.ComplexFood.from(complexFoods),
+        complexFoodContents = ContentsUtil.ComplexFood.from(userId, complexFoods),
         complexIngredientContents = Seq.empty
       ),
       complexIngredientService = complexIngredientServiceCompanion

@@ -11,22 +11,26 @@ object ContentsUtil {
 
   object ComplexFood {
 
-    def from(complexFoods: Seq[ComplexFoodIncoming]): Seq[(RecipeId, ComplexFoodIncoming)] =
-      complexFoods.map(complexFood => complexFood.recipeId -> complexFood)
+    def from(userId: UserId, complexFoods: Seq[ComplexFoodIncoming]): Seq[(UserId, RecipeId, ComplexFoodIncoming)] =
+      complexFoods.map(complexFood => (userId, complexFood.recipeId, complexFood))
 
   }
 
   object ComplexIngredient {
 
-    def from(recipeId: RecipeId, complexIngredients: Seq[ComplexIngredient]): Seq[(RecipeId, ComplexIngredient)] =
-      complexIngredients.map(recipeId -> _)
+    def from(
+        userId: UserId,
+        recipeId: RecipeId,
+        complexIngredients: Seq[ComplexIngredient]
+    ): Seq[(UserId, RecipeId, ComplexIngredient)] =
+      complexIngredients.map(complexIngredient => (userId, recipeId, complexIngredient))
 
   }
 
   object Ingredient {
 
-    def from(fullRecipe: FullRecipe): Seq[(RecipeId, Ingredient)] =
-      fullRecipe.ingredients.map(fullRecipe.recipe.id -> _)
+    def from(userId: UserId, fullRecipe: FullRecipe): Seq[(UserId, RecipeId, Ingredient)] =
+      fullRecipe.ingredients.map(ingredient => (userId, fullRecipe.recipe.id, ingredient))
 
   }
 
@@ -39,8 +43,8 @@ object ContentsUtil {
 
   object MealEntry {
 
-    def from(fullMeal: FullMeal): Seq[(MealId, MealEntry)] =
-      fullMeal.mealEntries.map(fullMeal.meal.id -> _)
+    def from(userId: UserId, fullMeal: FullMeal): Seq[(UserId, MealId, MealEntry)] =
+      fullMeal.mealEntries.map(entry => (userId, fullMeal.meal.id, entry))
 
   }
 
@@ -53,8 +57,8 @@ object ContentsUtil {
 
   object ReferenceEntry {
 
-    def from(fullReferenceMap: FullReferenceMap): Seq[(ReferenceMapId, ReferenceEntry)] =
-      fullReferenceMap.referenceEntries.map(fullReferenceMap.referenceMap.id -> _)
+    def from(userId: UserId, fullReferenceMap: FullReferenceMap): Seq[(UserId, ReferenceMapId, ReferenceEntry)] =
+      fullReferenceMap.referenceEntries.map(entry => (userId, fullReferenceMap.referenceMap.id, entry))
 
   }
 

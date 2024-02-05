@@ -19,7 +19,7 @@ object MealServiceProperties extends Properties("Meal service") {
 
   private def mealServiceWith(
       mealContents: Seq[(UserId, Meal)],
-      mealEntryContents: Seq[(MealId, MealEntry)]
+      mealEntryContents: Seq[(UserId, MealId, MealEntry)]
   ): MealService =
     new Live(
       dbConfigProvider = TestUtil.databaseConfigProvider,
@@ -175,7 +175,7 @@ object MealServiceProperties extends Properties("Meal service") {
   ) { setup =>
     val mealService = mealServiceWith(
       mealContents = ContentsUtil.Meal.from(setup.userId, Seq(setup.fullMeal.meal)),
-      mealEntryContents = ContentsUtil.MealEntry.from(setup.fullMeal)
+      mealEntryContents = ContentsUtil.MealEntry.from(setup.userId, setup.fullMeal)
     )
     val transformer = for {
       mealEntry <- EitherT(mealService.addMealEntry(setup.userId, setup.mealEntryCreation))
@@ -209,7 +209,7 @@ object MealServiceProperties extends Properties("Meal service") {
   ) { setup =>
     val mealService = mealServiceWith(
       mealContents = ContentsUtil.Meal.from(setup.userId, Seq(setup.fullMeal.meal)),
-      mealEntryContents = ContentsUtil.MealEntry.from(setup.fullMeal)
+      mealEntryContents = ContentsUtil.MealEntry.from(setup.userId, setup.fullMeal)
     )
     val transformer = for {
       mealEntries <- EitherT.liftF[Future, ServerError, Seq[MealEntry]](
@@ -245,7 +245,7 @@ object MealServiceProperties extends Properties("Meal service") {
   ) { setup =>
     val mealService = mealServiceWith(
       mealContents = ContentsUtil.Meal.from(setup.userId, Seq(setup.fullMeal.meal)),
-      mealEntryContents = ContentsUtil.MealEntry.from(setup.fullMeal)
+      mealEntryContents = ContentsUtil.MealEntry.from(setup.userId, setup.fullMeal)
     )
     val transformer = for {
       updatedMealEntry <- EitherT(mealService.updateMealEntry(setup.userId, setup.mealEntryUpdate))
@@ -293,7 +293,7 @@ object MealServiceProperties extends Properties("Meal service") {
   ) { setup =>
     val mealService = mealServiceWith(
       mealContents = ContentsUtil.Meal.from(setup.userId, Seq(setup.fullMeal.meal)),
-      mealEntryContents = ContentsUtil.MealEntry.from(setup.fullMeal)
+      mealEntryContents = ContentsUtil.MealEntry.from(setup.userId, setup.fullMeal)
     )
     val transformer = for {
       deletionResult <- EitherT.liftF(mealService.removeMealEntry(setup.userId, setup.mealEntryId))
@@ -422,7 +422,7 @@ object MealServiceProperties extends Properties("Meal service") {
   ) { (setup, userId2) =>
     val mealService = mealServiceWith(
       mealContents = ContentsUtil.Meal.from(setup.userId, Seq(setup.fullMeal.meal)),
-      mealEntryContents = ContentsUtil.MealEntry.from(setup.fullMeal)
+      mealEntryContents = ContentsUtil.MealEntry.from(setup.userId, setup.fullMeal)
     )
     val transformer = for {
       result <- EitherT.liftF(mealService.addMealEntry(userId2, setup.mealEntryCreation))
@@ -443,7 +443,7 @@ object MealServiceProperties extends Properties("Meal service") {
   ) { (setup, userId2) =>
     val mealService = mealServiceWith(
       mealContents = ContentsUtil.Meal.from(setup.userId, Seq(setup.fullMeal.meal)),
-      mealEntryContents = ContentsUtil.MealEntry.from(setup.fullMeal)
+      mealEntryContents = ContentsUtil.MealEntry.from(setup.userId, setup.fullMeal)
     )
     val transformer = for {
       mealEntries <- EitherT.liftF[Future, ServerError, Seq[MealEntry]](
@@ -460,7 +460,7 @@ object MealServiceProperties extends Properties("Meal service") {
   ) { (setup, userId2) =>
     val mealService = mealServiceWith(
       mealContents = ContentsUtil.Meal.from(setup.userId, Seq(setup.fullMeal.meal)),
-      mealEntryContents = ContentsUtil.MealEntry.from(setup.fullMeal)
+      mealEntryContents = ContentsUtil.MealEntry.from(setup.userId, setup.fullMeal)
     )
     val transformer = for {
       result <- EitherT.liftF(mealService.updateMealEntry(userId2, setup.mealEntryUpdate))
@@ -483,7 +483,7 @@ object MealServiceProperties extends Properties("Meal service") {
   ) { (setup, userId2) =>
     val mealService = mealServiceWith(
       mealContents = ContentsUtil.Meal.from(setup.userId, Seq(setup.fullMeal.meal)),
-      mealEntryContents = ContentsUtil.MealEntry.from(setup.fullMeal)
+      mealEntryContents = ContentsUtil.MealEntry.from(setup.userId, setup.fullMeal)
     )
     val transformer = for {
       deletionResult <- EitherT.liftF(mealService.removeMealEntry(userId2, setup.mealEntryId))

@@ -28,7 +28,7 @@ object MealDuplicationProperties extends Properties("Meal duplication") {
       fullMeal: FullMeal
   ): Services = {
     val mealDao      = DAOTestInstance.Meal.instanceFrom(ContentsUtil.Meal.from(userId, Seq(fullMeal.meal)))
-    val mealEntryDao = DAOTestInstance.MealEntry.instanceFrom(ContentsUtil.MealEntry.from(fullMeal))
+    val mealEntryDao = DAOTestInstance.MealEntry.instanceFrom(ContentsUtil.MealEntry.from(userId, fullMeal))
 
     val mealServiceCompanion = new services.meal.Live.Companion(
       mealDao = mealDao,

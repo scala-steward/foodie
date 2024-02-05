@@ -16,7 +16,6 @@ import services.complex.ingredient.ComplexIngredient
 import services.meal.{ Meal, MealEntry }
 import services.recipe.{ Ingredient, Recipe }
 import services.reference.{ ReferenceEntry, ReferenceMap }
-import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
 import slickeffect.catsio.implicits._
 import util.DateUtil
@@ -89,10 +88,10 @@ object DAOTestInstance {
 
       }
 
-    def instanceFrom(contents: Seq[(RecipeId, ComplexFoodIncoming)]): db.daos.complexFood.DAO =
+    def instanceFrom(contents: Seq[(UserId, RecipeId, ComplexFoodIncoming)]): db.daos.complexFood.DAO =
       instance(
-        contents.map { case (recipeId, complexFoodIncoming) =>
-          recipeId -> complexFoodIncoming.transformInto[Tables.ComplexFoodRow]
+        contents.map { case (userId, recipeId, complexFoodIncoming) =>
+          recipeId -> (complexFoodIncoming, userId).transformInto[Tables.ComplexFoodRow]
         }
       )
 
@@ -122,11 +121,11 @@ object DAOTestInstance {
 
       }
 
-    def instanceFrom(contents: Seq[(RecipeId, ComplexIngredient)]): db.daos.complexIngredient.DAO =
+    def instanceFrom(contents: Seq[(UserId, RecipeId, ComplexIngredient)]): db.daos.complexIngredient.DAO =
       instance(
-        contents.map { case (recipeId, complexIngredient) =>
-          ComplexIngredientKey(recipeId, complexIngredient.complexFoodId) ->
-            complexIngredient.transformInto[Tables.ComplexIngredientRow]
+        contents.map { case (userId, recipeId, complexIngredient) =>
+          ComplexIngredientKey(userId, recipeId, complexIngredient.complexFoodId) ->
+            (complexIngredient, userId).transformInto[Tables.ComplexIngredientRow]
         }
       )
 
@@ -148,10 +147,10 @@ object DAOTestInstance {
 
       }
 
-    def instanceFrom(contents: Seq[(RecipeId, Ingredient)]): db.daos.ingredient.DAO =
+    def instanceFrom(contents: Seq[(UserId, RecipeId, Ingredient)]): db.daos.ingredient.DAO =
       instance(
-        contents.map { case (recipeId, ingredient) =>
-          ingredient.id -> (ingredient, recipeId).transformInto[Tables.RecipeIngredientRow]
+        contents.map { case (userId, recipeId, ingredient) =>
+          ingredient.id -> (ingredient, recipeId, userId).transformInto[Tables.RecipeIngredientRow]
         }
       )
 
@@ -218,10 +217,10 @@ object DAOTestInstance {
 
       }
 
-    def instanceFrom(contents: Seq[(MealId, MealEntry)]): db.daos.mealEntry.DAO =
+    def instanceFrom(contents: Seq[(UserId, MealId, MealEntry)]): db.daos.mealEntry.DAO =
       instance(
-        contents.map { case (mealId, mealEntry) =>
-          mealEntry.id -> (mealEntry, mealId).transformInto[Tables.MealEntryRow]
+        contents.map { case (userId, mealId, mealEntry) =>
+          mealEntry.id -> (mealEntry, mealId, userId).transformInto[Tables.MealEntryRow]
         }
       )
 
@@ -312,10 +311,14 @@ object DAOTestInstance {
 
       }
 
-    def instanceFrom(contents: Seq[(ReferenceMapId, ReferenceEntry)]): db.daos.referenceMapEntry.DAO =
+    def instanceFrom(contents: Seq[(UserId, ReferenceMapId, ReferenceEntry)]): db.daos.referenceMapEntry.DAO =
       instance(
-        contents.map { case (referenceMapId, referenceEntry) =>
-          ReferenceMapEntryKey(referenceMapId, referenceEntry.nutrientCode) -> (referenceEntry, referenceMapId)
+        contents.map { case (userId, referenceMapId, referenceEntry) =>
+          ReferenceMapEntryKey(userId, referenceMapId, referenceEntry.nutrientCode) -> (
+            referenceEntry,
+            referenceMapId,
+            userId
+          )
             .transformInto[Tables.ReferenceEntryRow]
         }
       )

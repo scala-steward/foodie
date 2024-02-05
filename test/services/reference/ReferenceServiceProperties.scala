@@ -15,7 +15,7 @@ object ReferenceServiceProperties extends Properties("Reference service properti
 
   def companionWith(
       referenceMapContents: Seq[(UserId, ReferenceMap)],
-      referenceMapEntryContents: Seq[(ReferenceMapId, ReferenceEntry)]
+      referenceMapEntryContents: Seq[(UserId, ReferenceMapId, ReferenceEntry)]
   ): services.reference.Live.Companion =
     new services.reference.Live.Companion(
       referenceMapDao = DAOTestInstance.ReferenceMap.instanceFrom(referenceMapContents),
@@ -25,7 +25,7 @@ object ReferenceServiceProperties extends Properties("Reference service properti
 
   def referenceMapServiceWith(
       referenceMapContents: Seq[(UserId, ReferenceMap)],
-      referenceMapEntryContents: Seq[(ReferenceMapId, ReferenceEntry)]
+      referenceMapEntryContents: Seq[(UserId, ReferenceMapId, ReferenceEntry)]
   ): ReferenceService =
     new services.reference.Live(
       dbConfigProvider = TestUtil.databaseConfigProvider,
@@ -179,7 +179,7 @@ object ReferenceServiceProperties extends Properties("Reference service properti
   ) { (userId, setup) =>
     val referenceMapService = referenceMapServiceWith(
       referenceMapContents = ContentsUtil.ReferenceMap.from(userId, Seq(setup.fullReferenceMap.referenceMap)),
-      referenceMapEntryContents = ContentsUtil.ReferenceEntry.from(setup.fullReferenceMap)
+      referenceMapEntryContents = ContentsUtil.ReferenceEntry.from(userId, setup.fullReferenceMap)
     )
     val referenceMapEntryCreation =
       ReferenceEntryCreation(
@@ -214,7 +214,7 @@ object ReferenceServiceProperties extends Properties("Reference service properti
   ) { (userId, fullReferenceMap) =>
     val referenceMapService = referenceMapServiceWith(
       referenceMapContents = ContentsUtil.ReferenceMap.from(userId, Seq(fullReferenceMap.referenceMap)),
-      referenceMapEntryContents = ContentsUtil.ReferenceEntry.from(fullReferenceMap)
+      referenceMapEntryContents = ContentsUtil.ReferenceEntry.from(userId, fullReferenceMap)
     )
     val transformer = for {
       referenceMapEntries <- EitherT.liftF[Future, ServerError, List[ReferenceEntry]](
@@ -251,7 +251,7 @@ object ReferenceServiceProperties extends Properties("Reference service properti
   ) { setup =>
     val referenceMapService = referenceMapServiceWith(
       referenceMapContents = ContentsUtil.ReferenceMap.from(setup.userId, Seq(setup.fullReferenceMap.referenceMap)),
-      referenceMapEntryContents = ContentsUtil.ReferenceEntry.from(setup.fullReferenceMap)
+      referenceMapEntryContents = ContentsUtil.ReferenceEntry.from(setup.userId, setup.fullReferenceMap)
     )
 
     val transformer = for {
@@ -303,7 +303,7 @@ object ReferenceServiceProperties extends Properties("Reference service properti
   ) { setup =>
     val referenceMapService = referenceMapServiceWith(
       referenceMapContents = ContentsUtil.ReferenceMap.from(setup.userId, Seq(setup.fullReferenceMap.referenceMap)),
-      referenceMapEntryContents = ContentsUtil.ReferenceEntry.from(setup.fullReferenceMap)
+      referenceMapEntryContents = ContentsUtil.ReferenceEntry.from(setup.userId, setup.fullReferenceMap)
     )
 
     val transformer = for {
@@ -427,7 +427,7 @@ object ReferenceServiceProperties extends Properties("Reference service properti
   ) { case (userId1, userId2, fullReferenceMap, referenceMapEntry) =>
     val referenceMapService = referenceMapServiceWith(
       referenceMapContents = ContentsUtil.ReferenceMap.from(userId1, Seq(fullReferenceMap.referenceMap)),
-      referenceMapEntryContents = ContentsUtil.ReferenceEntry.from(fullReferenceMap)
+      referenceMapEntryContents = ContentsUtil.ReferenceEntry.from(userId1, fullReferenceMap)
     )
     val referenceMapEntryCreation =
       ReferenceEntryCreation(
@@ -455,7 +455,7 @@ object ReferenceServiceProperties extends Properties("Reference service properti
   ) { case (userId1, userId2, fullReferenceMap) =>
     val referenceMapService = referenceMapServiceWith(
       referenceMapContents = ContentsUtil.ReferenceMap.from(userId1, Seq(fullReferenceMap.referenceMap)),
-      referenceMapEntryContents = ContentsUtil.ReferenceEntry.from(fullReferenceMap)
+      referenceMapEntryContents = ContentsUtil.ReferenceEntry.from(userId1, fullReferenceMap)
     )
     val transformer = for {
       referenceMapEntries <- EitherT.liftF[Future, ServerError, List[ReferenceEntry]](
@@ -472,7 +472,7 @@ object ReferenceServiceProperties extends Properties("Reference service properti
   ) { (setup, userId2) =>
     val referenceMapService = referenceMapServiceWith(
       referenceMapContents = ContentsUtil.ReferenceMap.from(setup.userId, Seq(setup.fullReferenceMap.referenceMap)),
-      referenceMapEntryContents = ContentsUtil.ReferenceEntry.from(setup.fullReferenceMap)
+      referenceMapEntryContents = ContentsUtil.ReferenceEntry.from(setup.userId, setup.fullReferenceMap)
     )
     val transformer = for {
       result <- EitherT.liftF(
@@ -497,7 +497,7 @@ object ReferenceServiceProperties extends Properties("Reference service properti
   ) { (setup, userId2) =>
     val referenceMapService = referenceMapServiceWith(
       referenceMapContents = ContentsUtil.ReferenceMap.from(setup.userId, Seq(setup.fullReferenceMap.referenceMap)),
-      referenceMapEntryContents = ContentsUtil.ReferenceEntry.from(setup.fullReferenceMap)
+      referenceMapEntryContents = ContentsUtil.ReferenceEntry.from(setup.userId, setup.fullReferenceMap)
     )
     val transformer = for {
       deletionResult <- EitherT.liftF(

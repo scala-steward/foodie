@@ -85,10 +85,11 @@ object MealStatsProperties extends Properties("Meal stats") {
     val recipeMap = setup.userAndRecipes.fullRecipes.map(fr => fr.recipe.id -> fr).toList.toMap
     val statsService = ServiceFunctions.statsServiceWith(
       mealContents = ContentsUtil.Meal.from(setup.userAndRecipes.userId, Seq(setup.fullMeal.meal)),
-      mealEntryContents = ContentsUtil.MealEntry.from(setup.fullMeal),
+      mealEntryContents = ContentsUtil.MealEntry.from(setup.userAndRecipes.userId, setup.fullMeal),
       recipeContents =
         ContentsUtil.Recipe.from(setup.userAndRecipes.userId, setup.userAndRecipes.fullRecipes.toList.map(_.recipe)),
-      ingredientContents = setup.userAndRecipes.fullRecipes.toList.flatMap(ContentsUtil.Ingredient.from)
+      ingredientContents =
+        setup.userAndRecipes.fullRecipes.toList.flatMap(ContentsUtil.Ingredient.from(setup.userAndRecipes.userId, _))
     )
 
     val transformer = for {
@@ -156,12 +157,12 @@ object MealStatsProperties extends Properties("Meal stats") {
   property("Over time stats") = Prop.forAll(
     overTimeSetupGen() :| "Over time setup"
   ) { setup =>
+    val userId = setup.userIdAndRecipes.userId
     val statsService = ServiceFunctions.statsServiceWith(
-      mealContents = ContentsUtil.Meal.from(setup.userIdAndRecipes.userId, setup.fullMeals.map(_.meal)),
-      mealEntryContents = setup.fullMeals.flatMap(ContentsUtil.MealEntry.from),
-      recipeContents = ContentsUtil.Recipe
-        .from(setup.userIdAndRecipes.userId, setup.userIdAndRecipes.fullRecipes.toList.map(_.recipe)),
-      ingredientContents = setup.userIdAndRecipes.fullRecipes.toList.flatMap(ContentsUtil.Ingredient.from)
+      mealContents = ContentsUtil.Meal.from(userId, setup.fullMeals.map(_.meal)),
+      mealEntryContents = setup.fullMeals.flatMap(ContentsUtil.MealEntry.from(userId, _)),
+      recipeContents = ContentsUtil.Recipe.from(userId, setup.userIdAndRecipes.fullRecipes.toList.map(_.recipe)),
+      ingredientContents = setup.userIdAndRecipes.fullRecipes.toList.flatMap(ContentsUtil.Ingredient.from(userId, _))
     )
 
     val mealsInInterval =

@@ -27,7 +27,7 @@ object ReferenceMapDuplicationProperties extends Properties("Reference map dupli
       ContentsUtil.ReferenceMap.from(userId, Seq(fullReferenceMap.referenceMap))
     )
     val referenceEntryDao =
-      DAOTestInstance.ReferenceMapEntry.instanceFrom(ContentsUtil.ReferenceEntry.from(fullReferenceMap))
+      DAOTestInstance.ReferenceMapEntry.instanceFrom(ContentsUtil.ReferenceEntry.from(userId, fullReferenceMap))
 
     val referenceServiceCompanion = new services.reference.Live.Companion(
       referenceMapDao = referenceMapDao,

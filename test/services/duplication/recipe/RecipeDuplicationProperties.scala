@@ -33,9 +33,10 @@ object RecipeDuplicationProperties extends Properties("Recipe duplication") {
       complexIngredients: List[ComplexIngredient]
   ): Services = {
     val recipeDao      = DAOTestInstance.Recipe.instanceFrom(ContentsUtil.Recipe.from(userId, Seq(recipe)))
-    val complexFoodDao = DAOTestInstance.ComplexFood.instanceFrom(ContentsUtil.ComplexFood.from(complexFoods))
+    val complexFoodDao = DAOTestInstance.ComplexFood.instanceFrom(ContentsUtil.ComplexFood.from(userId, complexFoods))
     val ingredientDao = DAOTestInstance.Ingredient.instanceFrom(
       ContentsUtil.Ingredient.from(
+        userId,
         FullRecipe(
           recipe = recipe,
           ingredients = ingredients
@@ -43,7 +44,7 @@ object RecipeDuplicationProperties extends Properties("Recipe duplication") {
       )
     )
     val complexIngredientDao = DAOTestInstance.ComplexIngredient.instanceFrom(
-      ContentsUtil.ComplexIngredient.from(recipe.id, complexIngredients)
+      ContentsUtil.ComplexIngredient.from(userId, recipe.id, complexIngredients)
     )
 
     val recipeServiceCompanion = new services.recipe.Live.Companion(
