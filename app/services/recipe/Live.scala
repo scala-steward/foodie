@@ -239,7 +239,7 @@ object Live {
         ec: ExecutionContext
     ): DBIO[Ingredient] = {
       val ingredient    = IngredientCreation.create(id, ingredientCreation)
-      val ingredientRow = (ingredient, ingredientCreation.recipeId).transformInto[Tables.RecipeIngredientRow]
+      val ingredientRow = (ingredient, ingredientCreation.recipeId, userId).transformInto[Tables.RecipeIngredientRow]
       ifRecipeExists(userId, ingredientCreation.recipeId) {
         ingredientDao
           .insert(ingredientRow)
@@ -263,7 +263,8 @@ object Live {
             (
               IngredientUpdate
                 .update(ingredientRow.transformInto[Ingredient], ingredientUpdate),
-              ingredientRow.recipeId.transformInto[RecipeId]
+              ingredientRow.recipeId.transformInto[RecipeId],
+              userId
             )
               .transformInto[Tables.RecipeIngredientRow]
           )

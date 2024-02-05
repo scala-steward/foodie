@@ -107,7 +107,7 @@ object Live {
     override def create(userId: UserId, complexFood: ComplexFoodIncoming)(implicit
         ec: ExecutionContext
     ): DBIO[ComplexFood] = {
-      val complexFoodRow = complexFood.transformInto[Tables.ComplexFoodRow]
+      val complexFoodRow = (complexFood, userId).transformInto[Tables.ComplexFoodRow]
       ifRecipeExists(userId, complexFood.recipeId) { recipe =>
         dao
           .insert(complexFoodRow)
@@ -128,7 +128,7 @@ object Live {
           if (breaksVolumeReference(referencing, complexFood.amountMilliLitres))
             DBIO.failed(DBError.Complex.Food.VolumeReferenceExists)
           else DBIO.successful(())
-        _           <- dao.update(complexFood.transformInto[Tables.ComplexFoodRow])
+        _           <- dao.update((complexFood, userId).transformInto[Tables.ComplexFoodRow])
         updatedFood <- findAction
       } yield updatedFood
     }

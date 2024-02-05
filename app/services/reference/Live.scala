@@ -229,7 +229,7 @@ object Live {
     ): DBIO[ReferenceEntry] = {
       val referenceEntry = ReferenceEntryCreation.create(referenceEntryCreation)
       val referenceEntryRow =
-        (referenceEntry, referenceEntryCreation.referenceMapId).transformInto[Tables.ReferenceEntryRow]
+        (referenceEntry, referenceEntryCreation.referenceMapId, userId).transformInto[Tables.ReferenceEntryRow]
       ifReferenceMapExists(userId, referenceEntryCreation.referenceMapId) {
         referenceMapEntryDao
           .insert(referenceEntryRow)
@@ -254,7 +254,8 @@ object Live {
             (
               ReferenceEntryUpdate
                 .update(referenceEntryRow.transformInto[ReferenceEntry], referenceEntryUpdate),
-              referenceEntryRow.referenceMapId.transformInto[ReferenceMapId]
+              referenceEntryRow.referenceMapId.transformInto[ReferenceMapId],
+              userId
             )
               .transformInto[Tables.ReferenceEntryRow]
           )

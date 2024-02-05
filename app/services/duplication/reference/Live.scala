@@ -43,7 +43,7 @@ class Live @Inject() (
         newId = newReferenceMapId,
         timestamp = timeOfDuplication
       )
-      _ <- companion.duplicateReferenceEntries(newReferenceMapId, referenceEntries)
+      _ <- companion.duplicateReferenceEntries(userId, newReferenceMapId, referenceEntries)
     } yield newReferenceMap
 
     db.runTransactionally(action)
@@ -85,6 +85,7 @@ object Live {
     }
 
     override def duplicateReferenceEntries(
+        userId: UserId,
         newReferenceMapId: ReferenceMapId,
         referenceEntries: Seq[ReferenceEntry]
     )(implicit
@@ -93,7 +94,7 @@ object Live {
       referenceEntryDao
         .insertAll {
           referenceEntries.map { referenceEntry =>
-            (referenceEntry, newReferenceMapId).transformInto[Tables.ReferenceEntryRow]
+            (referenceEntry, newReferenceMapId, userId).transformInto[Tables.ReferenceEntryRow]
           }
         }
         .map(_.map(_.transformInto[ReferenceEntry]))

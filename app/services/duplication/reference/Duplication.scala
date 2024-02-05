@@ -30,6 +30,7 @@ object Duplication {
     )(implicit ec: ExecutionContext): DBIO[ReferenceMap]
 
     def duplicateReferenceEntries(
+        userId: UserId,
         newReferenceMapId: ReferenceMapId,
         referenceEntries: Seq[ReferenceEntry]
     )(implicit ec: ExecutionContext): DBIO[Seq[ReferenceEntry]]

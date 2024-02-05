@@ -1,7 +1,7 @@
 package services.meal
 
 import db.generated.Tables
-import db.{ MealEntryId, MealId, RecipeId }
+import db.{ MealEntryId, MealId, RecipeId, UserId }
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl.TransformerOps
 import utils.TransformerUtils.Implicits._
@@ -21,13 +21,15 @@ object MealEntry {
       .define[Tables.MealEntryRow, MealEntry]
       .buildTransformer
 
-  implicit val toDB: Transformer[(MealEntry, MealId), Tables.MealEntryRow] = { case (mealEntry, mealId) =>
-    Tables.MealEntryRow(
-      id = mealEntry.id.transformInto[UUID],
-      mealId = mealId.transformInto[UUID],
-      recipeId = mealEntry.recipeId.transformInto[UUID],
-      numberOfServings = mealEntry.numberOfServings
-    )
+  implicit val toDB: Transformer[(MealEntry, MealId, UserId), Tables.MealEntryRow] = {
+    case (mealEntry, mealId, userId) =>
+      Tables.MealEntryRow(
+        id = mealEntry.id.transformInto[UUID],
+        mealId = mealId.transformInto[UUID],
+        recipeId = mealEntry.recipeId.transformInto[UUID],
+        numberOfServings = mealEntry.numberOfServings,
+        userId = userId.transformInto[UUID]
+      )
   }
 
 }

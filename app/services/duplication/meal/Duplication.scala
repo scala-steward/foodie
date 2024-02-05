@@ -35,6 +35,7 @@ object Duplication {
     )(implicit ec: ExecutionContext): DBIO[Meal]
 
     def duplicateMealEntries(
+        userId: UserId,
         newMealId: MealId,
         mealEntries: Seq[DuplicatedMealEntry]
     )(implicit ec: ExecutionContext): DBIO[Seq[MealEntry]]

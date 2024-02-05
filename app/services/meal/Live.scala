@@ -169,7 +169,7 @@ object Live {
         ec: ExecutionContext
     ): DBIO[MealEntry] = {
       val mealEntry    = MealEntryCreation.create(id, mealEntryCreation)
-      val mealEntryRow = (mealEntry, mealEntryCreation.mealId).transformInto[Tables.MealEntryRow]
+      val mealEntryRow = (mealEntry, mealEntryCreation.mealId, userId).transformInto[Tables.MealEntryRow]
       ifMealExists(userId, mealEntryCreation.mealId) {
         mealEntryDao.insert(mealEntryRow).map(_.transformInto[MealEntry])
       }
@@ -190,7 +190,8 @@ object Live {
             (
               MealEntryUpdate
                 .update(mealEntryRow.transformInto[MealEntry], mealEntryUpdate),
-              mealEntryRow.mealId.transformInto[MealId]
+              mealEntryRow.mealId.transformInto[MealId],
+              userId
             )
               .transformInto[Tables.MealEntryRow]
           )

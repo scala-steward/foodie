@@ -85,7 +85,7 @@ object Live {
     override def create(userId: UserId, complexIngredient: ComplexIngredient)(implicit
         ec: ExecutionContext
     ): DBIO[ComplexIngredient] = {
-      val complexIngredientRow = complexIngredient.transformInto[Tables.ComplexIngredientRow]
+      val complexIngredientRow = (complexIngredient, userId).transformInto[Tables.ComplexIngredientRow]
       ifRecipeAndComplexFoodExist(
         userId = userId,
         recipeId = complexIngredient.recipeId,
@@ -118,7 +118,7 @@ object Live {
           complexFoodId = complexIngredient.complexFoodId
         ) { complexFoodRow =>
           if (isValidScalingMode(complexFoodRow.amountMilliLitres, complexIngredient.scalingMode))
-            complexIngredientDao.update(complexIngredient.transformInto[Tables.ComplexIngredientRow])
+            complexIngredientDao.update((complexIngredient, userId).transformInto[Tables.ComplexIngredientRow])
           else DBIO.failed(DBError.Complex.Ingredient.ScalingModeMismatch)
         }
         updatedIngredient <- findAction

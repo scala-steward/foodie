@@ -1,6 +1,6 @@
 package services.complex.food
 
-import db.RecipeId
+import db.{ RecipeId, UserId }
 import db.generated.Tables
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl._
@@ -16,11 +16,13 @@ case class ComplexFoodIncoming(
 
 object ComplexFoodIncoming {
 
-  implicit val toDB: Transformer[ComplexFoodIncoming, Tables.ComplexFoodRow] = complexFood =>
+  implicit val toDB: Transformer[(ComplexFoodIncoming, UserId), Tables.ComplexFoodRow] = { case (complexFood, userId) =>
     Tables.ComplexFoodRow(
       recipeId = complexFood.recipeId.transformInto[UUID],
       amountGrams = complexFood.amountGrams,
-      amountMilliLitres = complexFood.amountMilliLitres
+      amountMilliLitres = complexFood.amountMilliLitres,
+      userId = userId.transformInto[UUID]
     )
+  }
 
 }

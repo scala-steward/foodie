@@ -49,7 +49,7 @@ class Live @Inject() (
         newId = newMealId,
         timestamp = timeOfDuplication
       )
-      _ <- companion.duplicateMealEntries(newMealId, newMealEntries)
+      _ <- companion.duplicateMealEntries(userId, newMealId, newMealEntries)
     } yield newMeal
 
     db.runTransactionally(action)
@@ -95,6 +95,7 @@ object Live {
     }
 
     override def duplicateMealEntries(
+        userId: UserId,
         newMealId: MealId,
         mealEntries: Seq[Duplication.DuplicatedMealEntry]
     )(implicit
@@ -104,7 +105,7 @@ object Live {
         .insertAll {
           mealEntries.map { duplicatedMealEntry =>
             val newMealEntry = duplicatedMealEntry.mealEntry.copy(id = duplicatedMealEntry.newId)
-            (newMealEntry, newMealId).transformInto[Tables.MealEntryRow]
+            (newMealEntry, newMealId, userId).transformInto[Tables.MealEntryRow]
           }
         }
         .map(_.map(_.transformInto[MealEntry]))
