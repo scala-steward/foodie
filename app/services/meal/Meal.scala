@@ -18,7 +18,7 @@ case class Meal(
 
 object Meal {
 
-  implicit val fromRepresentation: Transformer[Tables.MealRow, Meal] =
+  implicit val fromDB: Transformer[Tables.MealRow, Meal] =
     Transformer
       .define[Tables.MealRow, Meal]
       .withFieldComputed(_.id, _.id.transformInto[MealId])
@@ -32,13 +32,18 @@ object Meal {
       )
       .buildTransformer
 
-  implicit val toRepresentation: Transformer[(Meal, UserId), Tables.MealRow] = { case (meal, userId) =>
+  case class TransformableToDB(
+      userId: UserId,
+      meal: Meal
+  )
+
+  implicit val toDB: Transformer[TransformableToDB, Tables.MealRow] = { transformableToDB =>
     Tables.MealRow(
-      id = meal.id.transformInto[UUID],
-      userId = userId.transformInto[UUID],
-      consumedOnDate = meal.date.date.transformInto[LocalDate].transformInto[java.sql.Date],
-      consumedOnTime = meal.date.time.map(_.transformInto[LocalTime].transformInto[java.sql.Time]),
-      name = meal.name
+      id = transformableToDB.meal.id.transformInto[UUID],
+      userId = transformableToDB.userId.transformInto[UUID],
+      consumedOnDate = transformableToDB.meal.date.date.transformInto[LocalDate].transformInto[java.sql.Date],
+      consumedOnTime = transformableToDB.meal.date.time.map(_.transformInto[LocalTime].transformInto[java.sql.Time]),
+      name = transformableToDB.meal.name
     )
   }
 

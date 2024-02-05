@@ -154,7 +154,9 @@ object DAOTestInstance {
     def instanceFrom(contents: Seq[(UserId, RecipeId, Ingredient)]): db.daos.ingredient.DAO =
       instance(
         contents.map { case (userId, recipeId, ingredient) =>
-          ingredient.id -> (ingredient, recipeId, userId).transformInto[Tables.RecipeIngredientRow]
+          ingredient.id -> services.recipe.Ingredient
+            .TransformableToDB(userId, recipeId, ingredient)
+            .transformInto[Tables.RecipeIngredientRow]
         }
       )
 
@@ -195,7 +197,9 @@ object DAOTestInstance {
 
     def instanceFrom(contents: Seq[(UserId, Meal)]): db.daos.meal.DAO =
       instance(
-        contents.map { case (userId, meal) => MealKey(userId, meal.id) -> (meal, userId).transformInto[Tables.MealRow] }
+        contents.map { case (userId, meal) =>
+          MealKey(userId, meal.id) -> services.meal.Meal.TransformableToDB(userId, meal).transformInto[Tables.MealRow]
+        }
       )
 
   }

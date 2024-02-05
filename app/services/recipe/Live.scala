@@ -238,8 +238,10 @@ object Live {
     )(implicit
         ec: ExecutionContext
     ): DBIO[Ingredient] = {
-      val ingredient    = IngredientCreation.create(id, ingredientCreation)
-      val ingredientRow = (ingredient, ingredientCreation.recipeId, userId).transformInto[Tables.RecipeIngredientRow]
+      val ingredient = IngredientCreation.create(id, ingredientCreation)
+      val ingredientRow = Ingredient
+        .TransformableToDB(userId, ingredientCreation.recipeId, ingredient)
+        .transformInto[Tables.RecipeIngredientRow]
       ifRecipeExists(userId, ingredientCreation.recipeId) {
         ingredientDao
           .insert(ingredientRow)
@@ -260,12 +262,12 @@ object Live {
         ingredientRow <- findAction
         _ <- ifRecipeExists(userId, ingredientRow.recipeId.transformInto[RecipeId]) {
           ingredientDao.update(
-            (
-              IngredientUpdate
-                .update(ingredientRow.transformInto[Ingredient], ingredientUpdate),
-              ingredientRow.recipeId.transformInto[RecipeId],
-              userId
-            )
+            Ingredient
+              .TransformableToDB(
+                userId,
+                ingredientRow.recipeId.transformInto[RecipeId],
+                IngredientUpdate.update(ingredientRow.transformInto[Ingredient], ingredientUpdate)
+              )
               .transformInto[Tables.RecipeIngredientRow]
           )
         }

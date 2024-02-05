@@ -115,7 +115,7 @@ object Live {
         mealCreation: MealCreation
     )(implicit ec: ExecutionContext): DBIO[Meal] = {
       val meal    = MealCreation.create(id, mealCreation)
-      val mealRow = (meal, userId).transformInto[Tables.MealRow]
+      val mealRow = Meal.TransformableToDB(userId, meal).transformInto[Tables.MealRow]
       mealDao
         .insert(mealRow)
         .map(_.transformInto[Meal])
@@ -131,11 +131,11 @@ object Live {
       for {
         meal <- findAction
         _ <- mealDao.update(
-          (
-            MealUpdate
-              .update(meal, mealUpdate),
-            userId
-          )
+          Meal
+            .TransformableToDB(
+              userId,
+              MealUpdate.update(meal, mealUpdate)
+            )
             .transformInto[Tables.MealRow]
         )
         updatedMeal <- findAction
