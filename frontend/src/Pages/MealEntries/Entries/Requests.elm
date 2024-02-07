@@ -45,11 +45,11 @@ saveMealEntry authorizedAccess mealEntryUpdate =
         }
 
 
-deleteMealEntry : AuthorizedAccess -> MealEntryId -> Cmd Page.LogicMsg
-deleteMealEntry authorizedAccess mealEntryId =
+deleteMealEntry : AuthorizedAccess -> MealId -> MealEntryId -> Cmd Page.LogicMsg
+deleteMealEntry authorizedAccess mealId mealEntryId =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        (Addresses.Backend.meals.entries.delete mealEntryId)
+        (Addresses.Backend.meals.entries.delete mealId mealEntryId)
         { body = Http.emptyBody
         , expect = HttpUtil.expectWhatever (Pages.Util.Choice.Page.GotDeleteResponse mealEntryId)
         }

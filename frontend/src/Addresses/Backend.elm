@@ -94,7 +94,7 @@ meals :
         { allOf : MealId -> ResourcePattern
         , create : ResourcePattern
         , update : ResourcePattern
-        , delete : MealEntryId -> ResourcePattern
+        , delete : MealId -> MealEntryId -> ResourcePattern
         }
     }
 meals =
@@ -121,7 +121,13 @@ meals =
         { allOf = \mealId -> get <| base <| [ mealId |> Uuid.toString, entriesWord ]
         , create = post <| entries []
         , update = patch <| entries []
-        , delete = \mealEntryId -> delete <| entries <| [ mealEntryId |> Uuid.toString ]
+        , delete =
+            \mealId mealEntryId ->
+                delete <|
+                    base <|
+                        (::) (mealId |> Uuid.toString) <|
+                            (::) entriesWord <|
+                                [ mealEntryId |> Uuid.toString ]
         }
     }
 
