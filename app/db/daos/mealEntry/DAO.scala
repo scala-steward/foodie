@@ -1,42 +1,51 @@
 package db.daos.mealEntry
 
+import db.daos.meal.MealKey
 import db.generated.Tables
-import db.{ DAOActions, MealEntryId, MealId }
-import io.scalaland.chimney.dsl._
+import db.{ DAOActions, MealId, UserId }
+import io.scalaland.chimney.syntax._
 import slick.jdbc.PostgresProfile.api._
 import utils.TransformerUtils.Implicits._
 
 import java.util.UUID
 import scala.concurrent.ExecutionContext
 
-trait DAO extends DAOActions[Tables.MealEntryRow, MealEntryId] {
+trait DAO extends DAOActions[Tables.MealEntryRow, MealEntryKey] {
 
-  override def keyOf: Tables.MealEntryRow => MealEntryId = _.id.transformInto[MealEntryId]
+  override def keyOf: Tables.MealEntryRow => MealEntryKey = MealEntryKey.of
 
-  def findAllFor(mealIds: Seq[MealId])(implicit ec: ExecutionContext): DBIO[Map[MealId, Seq[Tables.MealEntryRow]]]
+  def findAllFor(
+      userId: UserId,
+      mealIds: Seq[MealId]
+  )(implicit
+      ec: ExecutionContext
+  ): DBIO[Map[MealKey, Seq[Tables.MealEntryRow]]]
+
 }
 
 object DAO {
 
   val instance: DAO =
-    new DAOActions.Instance[Tables.MealEntryRow, Tables.MealEntry, MealEntryId](
+    new DAOActions.Instance[Tables.MealEntryRow, Tables.MealEntry, MealEntryKey](
       Tables.MealEntry,
-      (table, key) => table.id === key.transformInto[UUID]
+      (table, key) =>
+        table.userId === key.userId.transformInto[UUID] &&
+          table.mealId === key.mealId.transformInto[UUID] &&
+          table.id === key.id.transformInto[UUID]
     ) with DAO {
 
       override def findAllFor(
+          userId: UserId,
           mealIds: Seq[MealId]
-      )(implicit ec: ExecutionContext): DBIO[Map[MealId, Seq[Tables.MealEntryRow]]] = {
+      )(implicit ec: ExecutionContext): DBIO[Map[MealKey, Seq[Tables.MealEntryRow]]] = {
         val untypedIds = mealIds.distinct.map(_.transformInto[UUID])
         Tables.MealEntry
-          .filter(
-            _.mealId.inSetBind(untypedIds)
-          )
+          .filter(meal => meal.userId === userId.transformInto[UUID] && meal.mealId.inSetBind(untypedIds))
           .result
           .map { mealEntries =>
             mealEntries
               .groupBy(_.mealId)
-              .map { case (mealId, entries) => mealId.transformInto[MealId] -> entries }
+              .map { case (mealId, entries) => MealKey(userId, mealId.transformInto[MealId]) -> entries }
           }
       }
 
