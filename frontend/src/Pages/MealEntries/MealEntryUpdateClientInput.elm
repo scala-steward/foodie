@@ -1,6 +1,6 @@
 module Pages.MealEntries.MealEntryUpdateClientInput exposing (..)
 
-import Api.Auxiliary exposing (MealEntryId, RecipeId)
+import Api.Auxiliary exposing (MealEntryId, MealId, RecipeId)
 import Api.Types.MealEntry exposing (MealEntry)
 import Api.Types.MealEntryUpdate exposing (MealEntryUpdate)
 import Monocle.Lens exposing (Lens)
@@ -31,9 +31,10 @@ from mealEntry =
     }
 
 
-to : MealEntryUpdateClientInput -> MealEntryUpdate
-to input =
-    { mealEntryId = input.mealEntryId
+to : MealId -> MealEntryUpdateClientInput -> MealEntryUpdate
+to mealId input =
+    { mealId = mealId
+    , mealEntryId = input.mealEntryId
     , recipeId = input.recipeId
     , numberOfServings = input.numberOfServings.value
     }
