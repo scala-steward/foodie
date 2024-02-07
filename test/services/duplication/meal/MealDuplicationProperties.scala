@@ -3,6 +3,7 @@ package services.duplication.meal
 import cats.data.{ EitherT, NonEmptyList }
 import cats.instances.future._
 import db._
+import db.daos.meal.MealKey
 import errors.ServerError
 import org.scalacheck.Prop.AnyOperators
 import org.scalacheck.{ Gen, Prop, Properties }
@@ -92,10 +93,10 @@ object MealDuplicationProperties extends Properties("Meal duplication") {
       timestamp      <- EitherT.liftF[Future, ServerError, SimpleDate](DateUtil.now)
       duplicatedMeal <- EitherT(services.duplication.duplicate(setup.userId, setup.fullMeal.meal.id, timestamp))
       mealEntries <- EitherT
-        .liftF[Future, ServerError, Map[MealId, Seq[MealEntry]]](
+        .liftF[Future, ServerError, Map[MealKey, Seq[MealEntry]]](
           services.mealService.getMealEntries(setup.userId, Seq(duplicatedMeal.id))
         )
-        .map(_.getOrElse(duplicatedMeal.id, List.empty))
+        .map(_.getOrElse(MealKey(setup.userId, duplicatedMeal.id), List.empty))
     } yield {
       Prop.all(
         groupMealEntries(mealEntries) ?= groupMealEntries(setup.fullMeal.mealEntries),

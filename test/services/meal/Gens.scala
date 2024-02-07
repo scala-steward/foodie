@@ -47,11 +47,16 @@ object Gens {
       numberOfServings = numberOfServings
     )
 
-  def mealEntryUpdateGen(mealEntryId: MealEntryId, recipeIds: NonEmptyList[RecipeId]): Gen[MealEntryUpdate] =
+  def mealEntryUpdateGen(
+      mealId: MealId,
+      mealEntryId: MealEntryId,
+      recipeIds: NonEmptyList[RecipeId]
+  ): Gen[MealEntryUpdate] =
     for {
       recipeId         <- Gen.oneOf(recipeIds.toList)
       numberOfServings <- GenUtils.smallBigDecimalGen
     } yield MealEntryUpdate(
+      mealId = mealId,
       id = mealEntryId,
       recipeId = recipeId,
       numberOfServings = numberOfServings

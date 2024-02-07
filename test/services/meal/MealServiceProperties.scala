@@ -232,7 +232,7 @@ object MealServiceProperties extends Properties("Meal service") {
     recipeIds       <- recipeIdsGen
     fullMeal        <- Gens.fullMealGen(recipeIds)
     mealEntry       <- Gen.oneOf(fullMeal.mealEntries)
-    mealEntryUpdate <- Gens.mealEntryUpdateGen(mealEntry.id, recipeIds)
+    mealEntryUpdate <- Gens.mealEntryUpdateGen(fullMeal.meal.id, mealEntry.id, recipeIds)
   } yield UpdateMealEntrySetup(
     userId = userId,
     fullMeal = fullMeal,
@@ -296,7 +296,9 @@ object MealServiceProperties extends Properties("Meal service") {
       mealEntryContents = ContentsUtil.MealEntry.from(setup.userId, setup.fullMeal)
     )
     val transformer = for {
-      deletionResult <- EitherT.liftF(mealService.removeMealEntry(setup.userId, setup.mealEntryId))
+      deletionResult <- EitherT.liftF(
+        mealService.removeMealEntry(setup.userId, setup.fullMeal.meal.id, setup.mealEntryId)
+      )
       mealEntries <- EitherT.liftF[Future, ServerError, Seq[MealEntry]](
         flattenedMealEntries(mealService)(setup.userId, Seq(setup.fullMeal.meal.id))
       )
@@ -477,6 +479,7 @@ object MealServiceProperties extends Properties("Meal service") {
     DBTestUtil.awaitProp(transformer)
   }
 
+  // TODO: There should be properties for the case of a mealId mismatch, and a userId-mealId mismatch as well.
   property("Delete mealEntry (wrong userId)") = Prop.forAll(
     deleteMealEntrySetupGen :| "setup",
     GenUtils.taggedId[UserTag] :| "userId2"
@@ -486,7 +489,7 @@ object MealServiceProperties extends Properties("Meal service") {
       mealEntryContents = ContentsUtil.MealEntry.from(setup.userId, setup.fullMeal)
     )
     val transformer = for {
-      deletionResult <- EitherT.liftF(mealService.removeMealEntry(userId2, setup.mealEntryId))
+      deletionResult <- EitherT.liftF(mealService.removeMealEntry(userId2, setup.fullMeal.meal.id, setup.mealEntryId))
       mealEntries <- EitherT.liftF[Future, ServerError, Seq[MealEntry]](
         flattenedMealEntries(mealService)(setup.userId, Seq(setup.fullMeal.meal.id))
       )

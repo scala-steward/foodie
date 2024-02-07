@@ -5,6 +5,7 @@ import cats.effect.unsafe.implicits.global
 import db.daos.complexFood.ComplexFoodKey
 import db.daos.complexIngredient.ComplexIngredientKey
 import db.daos.meal.MealKey
+import db.daos.mealEntry.MealEntryKey
 import db.daos.recipe.RecipeKey
 import db.daos.referenceMap.ReferenceMapKey
 import db.daos.referenceMapEntry.ReferenceMapEntryKey
@@ -207,18 +208,19 @@ object DAOTestInstance {
 
   object MealEntry {
 
-    def instance(contents: Seq[(MealEntryId, Tables.MealEntryRow)]): db.daos.mealEntry.DAO =
-      new DAOTestInstance[Tables.MealEntryRow, MealEntryId](
+    def instance(contents: Seq[(MealEntryKey, Tables.MealEntryRow)]): db.daos.mealEntry.DAO =
+      new DAOTestInstance[Tables.MealEntryRow, MealEntryKey](
         contents
       ) with db.daos.mealEntry.DAO {
 
         override def findAllFor(
+            userId: UserId,
             mealIds: Seq[MealId]
-        )(implicit ec: ExecutionContext): DBIO[Map[MealId, Seq[Tables.MealEntryRow]]] =
+        )(implicit ec: ExecutionContext): DBIO[Map[MealKey, Seq[Tables.MealEntryRow]]] =
           fromIO {
             map.values
               .filter(meal => mealIds.contains(meal.mealId.transformInto[MealId]))
-              .groupBy(_.mealId.transformInto[MealId])
+              .groupBy(mealEntry => MealKey(userId, mealEntry.mealId.transformInto[MealId]))
               .view
               .mapValues(_.toSeq)
               .toMap
@@ -229,7 +231,7 @@ object DAOTestInstance {
     def instanceFrom(contents: Seq[(UserId, MealId, MealEntry)]): db.daos.mealEntry.DAO =
       instance(
         contents.map { case (userId, mealId, mealEntry) =>
-          mealEntry.id -> services.meal.MealEntry
+          MealEntryKey(userId, mealId, mealEntry.id) -> services.meal.MealEntry
             .TransformableToDB(userId, mealId, mealEntry)
             .transformInto[Tables.MealEntryRow]
         }
