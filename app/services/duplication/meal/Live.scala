@@ -1,6 +1,7 @@
 package services.duplication.meal
 
 import cats.data.OptionT
+import db.daos.meal.MealKey
 import db.generated.Tables
 import db.{ MealEntryId, MealId, UserId }
 import errors.{ ErrorContext, ServerError }
@@ -35,7 +36,7 @@ class Live @Inject() (
     val action = for {
       mealEntries <- mealServiceCompanion
         .getMealEntries(userId, Seq(id))
-        .map(_.getOrElse(id, Seq.empty))
+        .map(_.getOrElse(MealKey(userId, id), Seq.empty))
       newMealEntries = mealEntries.map { mealEntry =>
         Duplication.DuplicatedMealEntry(
           mealEntry = mealEntry,

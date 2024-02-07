@@ -168,10 +168,10 @@ class MealController @Inject() (
         .recover(errorHandler)
     }
 
-  def deleteMealEntry(id: UUID): Action[AnyContent] =
+  def deleteMealEntry(mealId: UUID, id: UUID): Action[AnyContent] =
     userAction.async { request =>
       mealService
-        .removeMealEntry(request.user.id, id.transformInto[MealEntryId])
+        .removeMealEntry(request.user.id, mealId.transformInto[MealId], id.transformInto[MealEntryId])
         .map(
           _.pipe(_.asJson)
             .pipe(Ok(_))

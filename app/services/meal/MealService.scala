@@ -1,5 +1,6 @@
 package services.meal
 
+import db.daos.meal.MealKey
 import db.{ MealEntryId, MealId, UserId }
 import errors.ServerError
 import services.DBError
@@ -16,10 +17,16 @@ trait MealService {
   def updateMeal(userId: UserId, mealUpdate: MealUpdate): Future[ServerError.Or[Meal]]
   def deleteMeal(userId: UserId, id: MealId): Future[Boolean]
 
-  def getMealEntries(userId: UserId, ids: Seq[MealId]): Future[Map[MealId, Seq[MealEntry]]]
+  def getMealEntries(userId: UserId, ids: Seq[MealId]): Future[Map[MealKey, Seq[MealEntry]]]
+
   def addMealEntry(userId: UserId, mealEntryCreation: MealEntryCreation): Future[ServerError.Or[MealEntry]]
-  def updateMealEntry(userId: UserId, mealEntryUpdate: MealEntryUpdate): Future[ServerError.Or[MealEntry]]
-  def removeMealEntry(userId: UserId, mealEntryId: MealEntryId): Future[Boolean]
+
+  def updateMealEntry(
+      userId: UserId,
+      mealEntryUpdate: MealEntryUpdate
+  ): Future[ServerError.Or[MealEntry]]
+
+  def removeMealEntry(userId: UserId, mealId: MealId, mealEntryId: MealEntryId): Future[Boolean]
 }
 
 object MealService {
@@ -36,7 +43,7 @@ object MealService {
 
     def getMealEntries(userId: UserId, ids: Seq[MealId])(implicit
         ec: ExecutionContext
-    ): DBIO[Map[MealId, Seq[MealEntry]]]
+    ): DBIO[Map[MealKey, Seq[MealEntry]]]
 
     def addMealEntry(
         userId: UserId,
@@ -55,6 +62,7 @@ object MealService {
 
     def removeMealEntry(
         userId: UserId,
+        mealId: MealId,
         id: MealEntryId
     )(implicit ec: ExecutionContext): DBIO[Boolean]
 

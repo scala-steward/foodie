@@ -1,8 +1,9 @@
 package services.meal
 
-import db.{ MealEntryId, RecipeId }
+import db.{ MealEntryId, MealId, RecipeId }
 
 case class MealEntryUpdate(
+    mealId: MealId,
     id: MealEntryId,
     recipeId: RecipeId,
     numberOfServings: BigDecimal

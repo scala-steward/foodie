@@ -35,7 +35,7 @@ GET    /meals/:id/entries                                controllers.meal.MealCo
 POST   /meals/:id/duplicate                              controllers.meal.MealController.duplicate(id: java.util.UUID)
 POST   /meals/entries                                    controllers.meal.MealController.addMealEntry
 PATCH  /meals/entries                                    controllers.meal.MealController.updateMealEntry
-DELETE /meals/entries/:id                                controllers.meal.MealController.deleteMealEntry(id: java.util.UUID)
+DELETE /meals/:mealId/entries/:id                        controllers.meal.MealController.deleteMealEntry(mealId: java.util.UUID, id: java.util.UUID)
 
 GET    /reference-maps                                   controllers.reference.ReferenceController.all
 GET    /reference-maps/trees                             controllers.reference.ReferenceController.allTrees

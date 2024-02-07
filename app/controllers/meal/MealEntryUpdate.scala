@@ -8,6 +8,7 @@ import java.util.UUID
 
 @JsonCodec
 case class MealEntryUpdate(
+    mealId: UUID,
     mealEntryId: UUID,
     recipeId: UUID,
     numberOfServings: BigDecimal
