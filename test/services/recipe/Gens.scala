@@ -70,9 +70,9 @@ object Gens {
       ingredients = ingredients.toList
     )
 
-  def ingredientUpdateGen(recipeId: RecipeId, ingredientId: IngredientId, foodId: FoodId): Gen[IngredientUpdate] = {
+  def ingredientUpdateGen(foodId: FoodId): Gen[IngredientUpdate] = {
     val food = GenUtils.allFoods(foodId)
-    amountUnitGen(food).map(IngredientUpdate(recipeId, ingredientId, _))
+    amountUnitGen(food).map(IngredientUpdate(_))
   }
 
 }
