@@ -207,7 +207,7 @@ object RecipeServiceProperties extends Properties("Recipe service") {
       userId           <- GenUtils.taggedId[UserTag]
       fullRecipe       <- Gens.fullRecipeGen()
       ingredient       <- Gen.oneOf(fullRecipe.ingredients)
-      ingredientUpdate <- Gens.ingredientUpdateGen(ingredient.id, ingredient.foodId)
+      ingredientUpdate <- Gens.ingredientUpdateGen(fullRecipe.recipe.id, ingredient.id, ingredient.foodId)
     } yield IngredientUpdateSetup(
       userId = userId,
       fullRecipe = fullRecipe,
@@ -273,7 +273,9 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     )
 
     val transformer = for {
-      deletionResult <- EitherT.liftF(recipeService.removeIngredient(setup.userId, setup.ingredientId))
+      deletionResult <- EitherT.liftF(
+        recipeService.removeIngredient(setup.userId, setup.fullRecipe.recipe.id, setup.ingredientId)
+      )
       ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
         recipeService.getIngredients(setup.userId, setup.fullRecipe.recipe.id)
       )
@@ -443,6 +445,7 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     DBTestUtil.awaitProp(transformer)
   }
 
+  // TODO: There should be properties for other userId/recipeId mismatches as well
   property("Delete ingredient (wrong user)") = Prop.forAll(
     deleteIngredientSetupGen :| "wrong delete ingredient setup",
     GenUtils.taggedId[UserTag] :| "userId2"
@@ -452,7 +455,9 @@ object RecipeServiceProperties extends Properties("Recipe service") {
       ingredientContents = ContentsUtil.Ingredient.from(setup.userId, setup.fullRecipe)
     )
     val transformer = for {
-      deletionResult <- EitherT.liftF(recipeService.removeIngredient(userId2, setup.ingredientId))
+      deletionResult <- EitherT.liftF(
+        recipeService.removeIngredient(userId2, setup.fullRecipe.recipe.id, setup.ingredientId)
+      )
       ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
         recipeService.getIngredients(setup.userId, setup.fullRecipe.recipe.id)
       )

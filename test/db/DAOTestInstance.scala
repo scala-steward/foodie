@@ -4,6 +4,7 @@ import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import db.daos.complexFood.ComplexFoodKey
 import db.daos.complexIngredient.ComplexIngredientKey
+import db.daos.ingredient.IngredientKey
 import db.daos.meal.MealKey
 import db.daos.mealEntry.MealEntryKey
 import db.daos.recipe.RecipeKey
@@ -139,12 +140,12 @@ object DAOTestInstance {
 
   object Ingredient {
 
-    def instance(contents: Seq[(IngredientId, Tables.RecipeIngredientRow)]): db.daos.ingredient.DAO =
-      new DAOTestInstance[Tables.RecipeIngredientRow, IngredientId](
+    def instance(contents: Seq[(IngredientKey, Tables.RecipeIngredientRow)]): db.daos.ingredient.DAO =
+      new DAOTestInstance[Tables.RecipeIngredientRow, IngredientKey](
         contents
       ) with db.daos.ingredient.DAO {
 
-        override def findAllFor(recipeIds: Seq[RecipeId]): DBIO[Seq[Tables.RecipeIngredientRow]] =
+        override def findAllFor(userId: UserId, recipeIds: Seq[RecipeId]): DBIO[Seq[Tables.RecipeIngredientRow]] =
           fromIO {
             map.values.collect {
               case ingredient if recipeIds.contains(ingredient.recipeId.transformInto[RecipeId]) => ingredient
@@ -156,9 +157,10 @@ object DAOTestInstance {
     def instanceFrom(contents: Seq[(UserId, RecipeId, Ingredient)]): db.daos.ingredient.DAO =
       instance(
         contents.map { case (userId, recipeId, ingredient) =>
-          ingredient.id -> services.recipe.Ingredient
+          val row = services.recipe.Ingredient
             .TransformableToDB(userId, recipeId, ingredient)
             .transformInto[Tables.RecipeIngredientRow]
+          IngredientKey.of(row) -> row
         }
       )
 
@@ -231,9 +233,10 @@ object DAOTestInstance {
     def instanceFrom(contents: Seq[(UserId, MealId, MealEntry)]): db.daos.mealEntry.DAO =
       instance(
         contents.map { case (userId, mealId, mealEntry) =>
-          MealEntryKey(userId, mealId, mealEntry.id) -> services.meal.MealEntry
+          val row = services.meal.MealEntry
             .TransformableToDB(userId, mealId, mealEntry)
             .transformInto[Tables.MealEntryRow]
+          MealEntryKey.of(row) -> row
         }
       )
 
@@ -332,10 +335,10 @@ object DAOTestInstance {
     def instanceFrom(contents: Seq[(UserId, ReferenceMapId, ReferenceEntry)]): db.daos.referenceMapEntry.DAO =
       instance(
         contents.map { case (userId, referenceMapId, referenceEntry) =>
-          ReferenceMapEntryKey(userId, referenceMapId, referenceEntry.nutrientCode) ->
-            services.reference.ReferenceEntry
-              .TransformableToDB(userId, referenceMapId, referenceEntry)
-              .transformInto[Tables.ReferenceEntryRow]
+          val row = services.reference.ReferenceEntry
+            .TransformableToDB(userId, referenceMapId, referenceEntry)
+            .transformInto[Tables.ReferenceEntryRow]
+          ReferenceMapEntryKey.of(row) -> row
         }
       )
 
