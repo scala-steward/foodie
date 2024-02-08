@@ -1,8 +1,9 @@
 package services.recipe
 
-import db.IngredientId
+import db.{ IngredientId, RecipeId }
 
 case class IngredientUpdate(
+    recipeId: RecipeId,
     id: IngredientId,
     amountUnit: AmountUnit
 )

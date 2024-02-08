@@ -201,10 +201,10 @@ class RecipeController @Inject() (
         .recover(errorHandler)
     }
 
-  def removeIngredient(id: UUID): Action[AnyContent] =
+  def removeIngredient(recipeId: UUID, id: UUID): Action[AnyContent] =
     userAction.async { request =>
       recipeService
-        .removeIngredient(request.user.id, id.transformInto[IngredientId])
+        .removeIngredient(request.user.id, recipeId.transformInto[RecipeId], id.transformInto[IngredientId])
         .map(
           _.pipe(_.asJson)
             .pipe(Ok(_))

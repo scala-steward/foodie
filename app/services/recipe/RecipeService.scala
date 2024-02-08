@@ -22,7 +22,7 @@ trait RecipeService {
   def getIngredients(userId: UserId, recipeId: RecipeId): Future[List[Ingredient]]
   def addIngredient(userId: UserId, ingredientCreation: IngredientCreation): Future[ServerError.Or[Ingredient]]
   def updateIngredient(userId: UserId, ingredientUpdate: IngredientUpdate): Future[ServerError.Or[Ingredient]]
-  def removeIngredient(userId: UserId, ingredientId: IngredientId): Future[Boolean]
+  def removeIngredient(userId: UserId, recipeId: RecipeId, ingredientId: IngredientId): Future[Boolean]
 }
 
 object RecipeService {
@@ -92,6 +92,7 @@ object RecipeService {
 
     def removeIngredient(
         userId: UserId,
+        recipeId: RecipeId,
         id: IngredientId
     )(implicit ec: ExecutionContext): DBIO[Boolean]
 
