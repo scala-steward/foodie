@@ -29,9 +29,7 @@ from ingredient =
     }
 
 
-to : RecipeId -> IngredientUpdateClientInput -> IngredientUpdate
-to recipeId input =
-    { recipeId = recipeId
-    , ingredientId = input.ingredientId
-    , amountUnit = AmountUnitClientInput.to input.amountUnit
+to : IngredientUpdateClientInput -> IngredientUpdate
+to input =
+    { amountUnit = AmountUnitClientInput.to input.amountUnit
     }

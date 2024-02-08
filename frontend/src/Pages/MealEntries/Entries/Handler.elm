@@ -28,7 +28,7 @@ updateLogic =
         , toUpdate = MealEntryUpdateClientInput.from
         , toCreation = \recipe -> MealEntryCreationClientInput.default recipe.id
         , createElement = \authorizedAccess mealId -> MealEntryCreationClientInput.toCreation mealId >> Requests.createMealEntry authorizedAccess
-        , saveElement = \authorizedAccess mealId updateInput -> MealEntryUpdateClientInput.to mealId updateInput |> Requests.saveMealEntry authorizedAccess
+        , saveElement = \authorizedAccess mealId _ updateInput -> MealEntryUpdateClientInput.to mealId updateInput |> Requests.saveMealEntry authorizedAccess
         , deleteElement = Requests.deleteMealEntry
         , storeChoices = \_ -> Cmd.none
         }

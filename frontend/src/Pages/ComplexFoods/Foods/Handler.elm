@@ -26,7 +26,7 @@ updateLogic =
         , toUpdate = ComplexFoodClientInput.from
         , toCreation = ComplexFoodClientInput.withSuggestion
         , createElement = \authorizedAccess _ -> ComplexFoodClientInput.to >> Requests.createComplexFood authorizedAccess
-        , saveElement = \authorizedAccess _ -> ComplexFoodClientInput.to >> Requests.updateComplexFood authorizedAccess
+        , saveElement = \authorizedAccess _ _ -> ComplexFoodClientInput.to >> Requests.updateComplexFood authorizedAccess
         , deleteElement = \authorizedAccess _ -> Requests.deleteComplexFood authorizedAccess
         , storeChoices = Cmd.none |> always
         }

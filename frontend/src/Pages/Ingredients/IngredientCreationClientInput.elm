@@ -24,10 +24,9 @@ amountUnit =
     Lens .amountUnit (\b a -> { a | amountUnit = b })
 
 
-toCreation : RecipeId -> IngredientCreationClientInput -> IngredientCreation
-toCreation recipeId input =
-    { recipeId = recipeId
-    , foodId = input.foodId
+toCreation : IngredientCreationClientInput -> IngredientCreation
+toCreation input =
+    { foodId = input.foodId
     , amountUnit =
         { factor = input.amountUnit.factor.value
         , measureId = input.amountUnit.measureId

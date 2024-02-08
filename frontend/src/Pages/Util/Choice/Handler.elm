@@ -22,7 +22,7 @@ updateLogic :
     , toUpdate : element -> update
     , toCreation : choice -> creation
     , createElement : AuthorizedAccess -> parentId -> creation -> Cmd (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
-    , saveElement : AuthorizedAccess -> parentId -> update -> Cmd (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
+    , saveElement : AuthorizedAccess -> parentId -> elementId -> update -> Cmd (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
     , deleteElement : AuthorizedAccess -> parentId -> elementId -> Cmd (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
     , storeChoices : List choice -> Cmd (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
     }
@@ -38,7 +38,7 @@ updateLogic ps msg model =
             , Cmd.none
             )
 
-        saveEdit elementUpdateClientInput =
+        saveEdit elementId elementUpdateClientInput =
             ( model
             , model
                 |> Tristate.foldMain Cmd.none
@@ -49,6 +49,7 @@ updateLogic ps msg model =
                                 , jwt = main.jwt
                                 }
                                 main.parentId
+                                elementId
                     )
             )
 
@@ -266,8 +267,8 @@ updateLogic ps msg model =
         Pages.Util.Choice.Page.Edit update ->
             edit update
 
-        Pages.Util.Choice.Page.SaveEdit update ->
-            saveEdit update
+        Pages.Util.Choice.Page.SaveEdit elementId update ->
+            saveEdit elementId update
 
         Pages.Util.Choice.Page.GotSaveEditResponse result ->
             gotSaveEditResponse result

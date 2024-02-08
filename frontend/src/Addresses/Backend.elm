@@ -21,8 +21,8 @@ recipes :
     , rescale : RecipeId -> ResourcePattern
     , ingredients :
         { allOf : RecipeId -> ResourcePattern
-        , create : ResourcePattern
-        , update : ResourcePattern
+        , create : RecipeId -> ResourcePattern
+        , update : RecipeId -> IngredientId -> ResourcePattern
         , delete : RecipeId -> IngredientId -> ResourcePattern
         }
     , complexIngredients :
@@ -49,8 +49,8 @@ recipes =
         foodsWord =
             "foods"
 
-        ingredients =
-            (::) ingredientsWord >> base
+        ingredients recipeId =
+            (::) ingredientsWord >> (::) (recipeId |> Uuid.toString) >> base
 
         complexIngredientsWord =
             "complex-ingredients"
@@ -70,8 +70,14 @@ recipes =
     , rescale = \recipeId -> patch <| base <| [ recipeId |> Uuid.toString, rescaleWord ]
     , ingredients =
         { allOf = \recipeId -> get <| base <| [ recipeId |> Uuid.toString, ingredientsWord ]
-        , create = post <| ingredients []
-        , update = patch <| ingredients []
+        , create = \recipeId -> post <| ingredients recipeId []
+        , update =
+            \recipeId ingredientId ->
+                patch <|
+                    base <|
+                        (::) (recipeId |> Uuid.toString) <|
+                            (::) ingredientsWord <|
+                                [ ingredientId |> Uuid.toString ]
         , delete =
             \recipeId ingredientId ->
                 delete <|

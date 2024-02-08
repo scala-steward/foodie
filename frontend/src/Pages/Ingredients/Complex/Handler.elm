@@ -30,7 +30,7 @@ updateLogic =
             \authorizedAccess recipeId ->
                 ComplexIngredientClientInput.to
                     >> Requests.createComplexIngredient authorizedAccess recipeId
-        , saveElement = \authorizedAccess recipeId updateInput -> ComplexIngredientClientInput.to updateInput |> Requests.saveComplexIngredient authorizedAccess recipeId
+        , saveElement = \authorizedAccess recipeId _ updateInput -> ComplexIngredientClientInput.to updateInput |> Requests.saveComplexIngredient authorizedAccess recipeId
         , deleteElement = Requests.deleteComplexIngredient
         , storeChoices = \_ -> Cmd.none
         }

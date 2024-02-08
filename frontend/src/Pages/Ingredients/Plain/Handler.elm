@@ -32,8 +32,8 @@ updateLogic =
         , choiceIdOfCreation = .foodId
         , toUpdate = IngredientUpdateClientInput.from
         , toCreation = \food -> IngredientCreationClientInput.default food.id (food.measures |> List.head |> Maybe.Extra.unwrap 0 .id)
-        , createElement = \authorizedAccess recipeId -> IngredientCreationClientInput.toCreation recipeId >> Requests.createIngredient authorizedAccess
-        , saveElement = \authorizedAccess recipeId updateInput -> IngredientUpdateClientInput.to recipeId updateInput |> Requests.saveIngredient authorizedAccess
+        , createElement = \authorizedAccess recipeId -> IngredientCreationClientInput.toCreation >> Requests.createIngredient authorizedAccess recipeId
+        , saveElement = \authorizedAccess recipeId ingredientId updateInput -> IngredientUpdateClientInput.to updateInput |> Requests.saveIngredient authorizedAccess recipeId ingredientId
         , deleteElement = Requests.deleteIngredient
         , storeChoices =
             Encode.list encoderFood

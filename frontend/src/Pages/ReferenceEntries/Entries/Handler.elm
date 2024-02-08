@@ -32,7 +32,7 @@ updateLogic =
         , toCreation = \nutrient -> ReferenceEntryCreationClientInput.default nutrient.code
         , createElement = \authorizedAccess referenceMapId -> ReferenceEntryCreationClientInput.toCreation referenceMapId >> Requests.createReferenceEntry authorizedAccess
         , saveElement =
-            \authorizedAccess referenceMapId update ->
+            \authorizedAccess referenceMapId _ update ->
                 ReferenceEntryUpdateClientInput.to referenceMapId update
                     |> Requests.saveReferenceEntry authorizedAccess
         , deleteElement = Requests.deleteReferenceEntry
