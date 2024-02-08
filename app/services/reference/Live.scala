@@ -232,11 +232,9 @@ object Live {
         ReferenceEntry
           .TransformableToDB(userId, referenceEntryCreation.referenceMapId, referenceEntry)
           .transformInto[Tables.ReferenceEntryRow]
-      ifReferenceMapExists(userId, referenceEntryCreation.referenceMapId) {
-        referenceMapEntryDao
-          .insert(referenceEntryRow)
-          .map(_.transformInto[ReferenceEntry])
-      }
+      referenceMapEntryDao
+        .insert(referenceEntryRow)
+        .map(_.transformInto[ReferenceEntry])
     }
 
     override def updateReferenceEntry(userId: UserId, referenceEntryUpdate: ReferenceEntryUpdate)(implicit
@@ -251,7 +249,7 @@ object Live {
           .getOrElseF(DBIO.failed(DBError.Reference.EntryNotFound))
       for {
         referenceEntryRow <- findAction
-        _ <- ifReferenceMapExists(userId, referenceEntryRow.referenceMapId.transformInto[ReferenceMapId]) {
+        _ <-
           referenceMapEntryDao.update(
             ReferenceEntry
               .TransformableToDB(
@@ -261,7 +259,6 @@ object Live {
               )
               .transformInto[Tables.ReferenceEntryRow]
           )
-        }
         updatedReferenceEntryRow <- findAction
       } yield updatedReferenceEntryRow.transformInto[ReferenceEntry]
     }
@@ -269,25 +266,13 @@ object Live {
     override def deleteReferenceEntry(userId: UserId, referenceMapId: ReferenceMapId, nutrientCode: NutrientCode)(
         implicit ec: ExecutionContext
     ): DBIO[Boolean] =
-      for {
-        exists <- referenceMapDao.exists(ReferenceMapKey(userId, referenceMapId))
-        result <-
-          if (exists)
-            referenceMapEntryDao
-              .delete(ReferenceMapEntryKey(userId, referenceMapId, nutrientCode))
-              .map(_ > 0)
-          else DBIO.successful(false)
-      } yield result
+      referenceMapEntryDao
+        .delete(ReferenceMapEntryKey(userId, referenceMapId, nutrientCode))
+        .map(_ > 0)
 
     private def nutrientNameByCode(nutrientCode: Int): Option[Nutrient] =
       nutrientTableConstants.allNutrients
         .get(nutrientCode.transformInto[NutrientCode])
-
-    private def ifReferenceMapExists[A](
-        userId: UserId,
-        id: ReferenceMapId
-    )(action: => DBIO[A])(implicit ec: ExecutionContext): DBIO[A] =
-      referenceMapDao.exists(ReferenceMapKey(userId, id)).flatMap(exists => if (exists) action else notFound)
 
   }
 
