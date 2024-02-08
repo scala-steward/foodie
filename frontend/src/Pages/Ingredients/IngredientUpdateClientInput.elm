@@ -1,6 +1,6 @@
 module Pages.Ingredients.IngredientUpdateClientInput exposing (..)
 
-import Api.Auxiliary exposing (IngredientId)
+import Api.Auxiliary exposing (IngredientId, RecipeId)
 import Api.Types.Ingredient exposing (Ingredient)
 import Api.Types.IngredientUpdate exposing (IngredientUpdate)
 import Monocle.Lens exposing (Lens)
@@ -29,8 +29,9 @@ from ingredient =
     }
 
 
-to : IngredientUpdateClientInput -> IngredientUpdate
-to input =
-    { ingredientId = input.ingredientId
+to : RecipeId -> IngredientUpdateClientInput -> IngredientUpdate
+to recipeId input =
+    { recipeId = recipeId
+    , ingredientId = input.ingredientId
     , amountUnit = AmountUnitClientInput.to input.amountUnit
     }

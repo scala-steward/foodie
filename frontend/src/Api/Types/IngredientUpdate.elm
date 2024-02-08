@@ -8,14 +8,14 @@ import Uuid exposing (Uuid)
 
 
 type alias IngredientUpdate =
-    { ingredientId : Uuid, amountUnit : AmountUnit }
+    { recipeId : Uuid, ingredientId : Uuid, amountUnit : AmountUnit }
 
 
 decoderIngredientUpdate : Decode.Decoder IngredientUpdate
 decoderIngredientUpdate =
-    Decode.succeed IngredientUpdate |> required "ingredientId" Uuid.decoder |> required "amountUnit" (Decode.lazy (\_ -> decoderAmountUnit))
+    Decode.succeed IngredientUpdate |> required "recipeId" Uuid.decoder |> required "ingredientId" Uuid.decoder |> required "amountUnit" (Decode.lazy (\_ -> decoderAmountUnit))
 
 
 encoderIngredientUpdate : IngredientUpdate -> Encode.Value
 encoderIngredientUpdate obj =
-    Encode.object [ ( "ingredientId", Uuid.encode obj.ingredientId ), ( "amountUnit", encoderAmountUnit obj.amountUnit ) ]
+    Encode.object [ ( "recipeId", Uuid.encode obj.recipeId ), ( "ingredientId", Uuid.encode obj.ingredientId ), ( "amountUnit", encoderAmountUnit obj.amountUnit ) ]

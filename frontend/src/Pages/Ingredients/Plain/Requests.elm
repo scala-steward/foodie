@@ -52,11 +52,11 @@ saveIngredient flags ingredientUpdate =
         }
 
 
-deleteIngredient : AuthorizedAccess -> IngredientId -> Cmd Page.LogicMsg
-deleteIngredient flags ingredientId =
+deleteIngredient : AuthorizedAccess -> RecipeId -> IngredientId -> Cmd Page.LogicMsg
+deleteIngredient flags recipeId ingredientId =
     HttpUtil.runPatternWithJwt
         flags
-        (Addresses.Backend.recipes.ingredients.delete ingredientId)
+        (Addresses.Backend.recipes.ingredients.delete recipeId ingredientId)
         { body = Http.emptyBody
         , expect = HttpUtil.expectWhatever (Pages.Util.Choice.Page.GotDeleteResponse ingredientId)
         }
