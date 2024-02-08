@@ -12,8 +12,8 @@ DELETE        /recipes/:id                                        controllers.re
 GET           /recipes/:id/ingredients                            controllers.recipe.RecipeController.getIngredients(id: java.util.UUID)
 POST          /recipes/:id/duplicate                              controllers.recipe.RecipeController.duplicate(id: java.util.UUID)
 PATCH         /recipes/:id/rescale                                controllers.recipe.RecipeController.rescale(id: java.util.UUID)
-POST          /recipes/ingredients                                controllers.recipe.RecipeController.addIngredient
-PATCH         /recipes/ingredients                                controllers.recipe.RecipeController.updateIngredient
+POST          /recipes/:recipeId/ingredients                      controllers.recipe.RecipeController.addIngredient(recipeId: java.util.UUID)
+PATCH         /recipes/:recipeId/ingredients/:id                  controllers.recipe.RecipeController.updateIngredient(recipeId: java.util.UUID, id: java.util.UUID)
 DELETE        /recipes/:recipeId/ingredients/:id                  controllers.recipe.RecipeController.removeIngredient(recipeId: java.util.UUID, id: java.util.UUID)
 GET           /recipes/:recipeId/complex-ingredients              controllers.recipe.RecipeController.getComplexIngredients(recipeId: java.util.UUID)
 POST          /recipes/:recipeId/complex-ingredients              controllers.recipe.RecipeController.addComplexIngredient(recipeId: java.util.UUID)

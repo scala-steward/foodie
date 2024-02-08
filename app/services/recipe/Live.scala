@@ -77,10 +77,11 @@ class Live @Inject() (
 
   override def addIngredient(
       userId: UserId,
+      recipeId: RecipeId,
       ingredientCreation: IngredientCreation
   ): Future[ServerError.Or[Ingredient]] =
     db.runTransactionally(
-      companion.addIngredient(userId, UUID.randomUUID().transformInto[IngredientId], ingredientCreation)
+      companion.addIngredient(userId, recipeId, UUID.randomUUID().transformInto[IngredientId], ingredientCreation)
     ).map(Right(_))
       .recover { case error =>
         Left(ErrorContext.Recipe.Ingredient.Creation(error.getMessage).asServerError)
@@ -88,9 +89,11 @@ class Live @Inject() (
 
   override def updateIngredient(
       userId: UserId,
+      recipeId: RecipeId,
+      ingredientId: IngredientId,
       ingredientUpdate: IngredientUpdate
   ): Future[ServerError.Or[Ingredient]] =
-    db.runTransactionally(companion.updateIngredient(userId, ingredientUpdate))
+    db.runTransactionally(companion.updateIngredient(userId, recipeId, ingredientId, ingredientUpdate))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.Recipe.Ingredient.Update(error.getMessage).asServerError)
@@ -234,6 +237,7 @@ object Live {
 
     override def addIngredient(
         userId: UserId,
+        recipeId: RecipeId,
         id: IngredientId,
         ingredientCreation: IngredientCreation
     )(implicit
@@ -241,7 +245,7 @@ object Live {
     ): DBIO[Ingredient] = {
       val ingredient = IngredientCreation.create(id, ingredientCreation)
       val ingredientRow = Ingredient
-        .TransformableToDB(userId, ingredientCreation.recipeId, ingredient)
+        .TransformableToDB(userId, recipeId, ingredient)
         .transformInto[Tables.RecipeIngredientRow]
       ingredientDao
         .insert(ingredientRow)
@@ -251,12 +255,14 @@ object Live {
 
     override def updateIngredient(
         userId: UserId,
+        recipeId: RecipeId,
+        ingredientId: IngredientId,
         ingredientUpdate: IngredientUpdate
     )(implicit
         ec: ExecutionContext
     ): DBIO[Ingredient] = {
       val findAction =
-        OptionT(ingredientDao.find(IngredientKey(userId, ingredientUpdate.recipeId, ingredientUpdate.id)))
+        OptionT(ingredientDao.find(IngredientKey(userId, recipeId, ingredientId)))
           .getOrElseF(DBIO.failed(DBError.Recipe.IngredientNotFound))
       for {
         ingredientRow <- findAction

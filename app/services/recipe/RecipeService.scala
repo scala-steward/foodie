@@ -20,8 +20,20 @@ trait RecipeService {
   def deleteRecipe(userId: UserId, id: RecipeId): Future[Boolean]
 
   def getIngredients(userId: UserId, recipeId: RecipeId): Future[List[Ingredient]]
-  def addIngredient(userId: UserId, ingredientCreation: IngredientCreation): Future[ServerError.Or[Ingredient]]
-  def updateIngredient(userId: UserId, ingredientUpdate: IngredientUpdate): Future[ServerError.Or[Ingredient]]
+
+  def addIngredient(
+      userId: UserId,
+      recipeId: RecipeId,
+      ingredientCreation: IngredientCreation
+  ): Future[ServerError.Or[Ingredient]]
+
+  def updateIngredient(
+      userId: UserId,
+      recipeId: RecipeId,
+      ingredientId: IngredientId,
+      ingredientUpdate: IngredientUpdate
+  ): Future[ServerError.Or[Ingredient]]
+
   def removeIngredient(userId: UserId, recipeId: RecipeId, ingredientId: IngredientId): Future[Boolean]
 }
 
@@ -77,6 +89,7 @@ object RecipeService {
 
     def addIngredient(
         userId: UserId,
+        recipeId: RecipeId,
         id: IngredientId,
         ingredientCreation: IngredientCreation
     )(implicit
@@ -85,6 +98,8 @@ object RecipeService {
 
     def updateIngredient(
         userId: UserId,
+        recipeId: RecipeId,
+        ingredientId: IngredientId,
         ingredientUpdate: IngredientUpdate
     )(implicit
         ec: ExecutionContext
