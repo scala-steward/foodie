@@ -25,7 +25,7 @@ updateLogic =
         , choiceIdOfElement = .complexFoodId
         , choiceIdOfCreation = .complexFoodId
         , toUpdate = ComplexIngredientClientInput.from
-        , toCreation = \food _ -> ComplexIngredientClientInput.fromFood food
+        , toCreation = ComplexIngredientClientInput.fromFood
         , createElement =
             \authorizedAccess recipeId ->
                 ComplexIngredientClientInput.to

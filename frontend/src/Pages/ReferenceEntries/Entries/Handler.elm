@@ -29,7 +29,7 @@ updateLogic =
         , choiceIdOfElement = .nutrientCode
         , choiceIdOfCreation = .nutrientCode
         , toUpdate = ReferenceEntryUpdateClientInput.from
-        , toCreation = \nutrient _ -> ReferenceEntryCreationClientInput.default nutrient.code
+        , toCreation = \nutrient -> ReferenceEntryCreationClientInput.default nutrient.code
         , createElement = \authorizedAccess referenceMapId -> ReferenceEntryCreationClientInput.toCreation referenceMapId >> Requests.createReferenceEntry authorizedAccess
         , saveElement =
             \authorizedAccess referenceMapId update ->

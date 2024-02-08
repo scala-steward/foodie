@@ -1,6 +1,5 @@
 module Pages.Util.Choice.Handler exposing (updateLogic)
 
-import Basics.Extra exposing (flip)
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
@@ -21,7 +20,7 @@ updateLogic :
     , choiceIdOfElement : element -> choiceId
     , choiceIdOfCreation : creation -> choiceId
     , toUpdate : element -> update
-    , toCreation : choice -> parentId -> creation
+    , toCreation : choice -> creation
     , createElement : AuthorizedAccess -> parentId -> creation -> Cmd (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
     , saveElement : AuthorizedAccess -> parentId -> update -> Cmd (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
     , deleteElement : AuthorizedAccess -> parentId -> elementId -> Cmd (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
@@ -164,7 +163,7 @@ updateLogic ps msg model =
                         main
                             |> LensUtil.updateById (choice |> ps.idOfChoice)
                                 Pages.Util.Choice.Page.lenses.main.choices
-                                (Editing.toUpdate (flip ps.toCreation main.parentId))
+                                (Editing.toUpdate ps.toCreation)
                     )
             , Cmd.none
             )
