@@ -141,6 +141,8 @@ object Bridge {
     mkAndWrite[LogoutRequest]
     mkAndWrite[RecoveryRequest]
     mkAndWrite[ComplexIngredient]
+    mkAndWrite[ComplexIngredientCreation]
+    mkAndWrite[ComplexIngredientUpdate]
     mkAndWrite[ComplexFood]
     mkAndWrite[ComplexFoodIncoming]
     mkAndWrite[Values]
