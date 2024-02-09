@@ -4,7 +4,6 @@ import Api.Types.Recipe exposing (Recipe)
 import Api.Types.RecipeUpdate exposing (RecipeUpdate)
 import Monocle.Lens exposing (Lens)
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
-import Uuid exposing (Uuid)
 
 
 type alias RecipeUpdateClientInput =
