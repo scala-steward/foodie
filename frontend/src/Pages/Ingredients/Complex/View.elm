@@ -12,7 +12,8 @@ import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
 import Monocle.Lens
 import Pages.Ingredients.Complex.Page as Page
-import Pages.Ingredients.ComplexIngredientClientInput as ComplexIngredientClientInput
+import Pages.Ingredients.ComplexIngredientCreationClientInput as ComplexIngredientCreationClientInput
+import Pages.Ingredients.ComplexIngredientUpdateClientInput as ComplexIngredientUpdateClientInput
 import Pages.Util.Choice.Page
 import Pages.Util.Choice.View
 import Pages.Util.DictListUtil as DictListUtil
@@ -81,10 +82,10 @@ viewComplexIngredients configuration main =
                             , onInput
                                 (flip
                                     (ValidatedInput.lift
-                                        ComplexIngredientClientInput.lenses.factor
+                                        ComplexIngredientUpdateClientInput.lenses.factor
                                     ).set
                                     complexIngredientUpdateClientInput
-                                    >> Pages.Util.Choice.Page.Edit
+                                    >> Pages.Util.Choice.Page.Edit complexIngredient.complexFoodId
                                 )
                             , Style.classes.numberLabel
                             ]
@@ -99,8 +100,8 @@ viewComplexIngredients configuration main =
                             , onChange =
                                 \unit ->
                                     complexIngredientUpdateClientInput
-                                        |> (unit |> Maybe.andThen ScalingMode.fromString |> Maybe.Extra.unwrap identity ComplexIngredientClientInput.lenses.scalingMode.set)
-                                        |> Pages.Util.Choice.Page.Edit
+                                        |> (unit |> Maybe.andThen ScalingMode.fromString |> Maybe.Extra.unwrap identity ComplexIngredientUpdateClientInput.lenses.scalingMode.set)
+                                        |> Pages.Util.Choice.Page.Edit complexIngredient.complexFoodId
                             }
                             []
                             (complexIngredient |> .scalingMode |> ScalingMode.toString |> Just)
@@ -154,7 +155,7 @@ viewFoods configuration main =
                                     onInput
                                         (flip
                                             (ValidatedInput.lift
-                                                ComplexIngredientClientInput.lenses.factor
+                                                ComplexIngredientCreationClientInput.lenses.factor
                                             ).set
                                             creation
                                             >> Pages.Util.Choice.Page.UpdateCreation
@@ -176,7 +177,7 @@ viewFoods configuration main =
                                 , onChange =
                                     \u ->
                                         creation
-                                            |> (u |> Maybe.andThen ScalingMode.fromString |> Maybe.Extra.unwrap identity ComplexIngredientClientInput.lenses.scalingMode.set)
+                                            |> (u |> Maybe.andThen ScalingMode.fromString |> Maybe.Extra.unwrap identity ComplexIngredientCreationClientInput.lenses.scalingMode.set)
                                             |> Pages.Util.Choice.Page.UpdateCreation
                                 }
                                 []

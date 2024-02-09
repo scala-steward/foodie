@@ -15,7 +15,6 @@ import Util.LensUtil as LensUtil
 
 updateLogic :
     { idOfElement : element -> elementId
-    , idOfUpdate : update -> elementId
     , idOfChoice : choice -> choiceId
     , choiceIdOfElement : element -> choiceId
     , choiceIdOfCreation : creation -> choiceId
@@ -31,9 +30,9 @@ updateLogic :
     -> ( Pages.Util.Choice.Page.Model parentId elementId element update choiceId choice creation, Cmd (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation) )
 updateLogic ps msg model =
     let
-        edit update =
+        edit elementId update =
             ( model
-                |> mapElementStateById (update |> ps.idOfUpdate)
+                |> mapElementStateById elementId
                     (Editing.lenses.update.set update)
             , Cmd.none
             )
@@ -264,8 +263,8 @@ updateLogic ps msg model =
             )
     in
     case msg of
-        Pages.Util.Choice.Page.Edit update ->
-            edit update
+        Pages.Util.Choice.Page.Edit elementId update ->
+            edit elementId update
 
         Pages.Util.Choice.Page.SaveEdit elementId update ->
             saveEdit elementId update

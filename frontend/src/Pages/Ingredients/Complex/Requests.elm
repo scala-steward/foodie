@@ -1,8 +1,10 @@
 module Pages.Ingredients.Complex.Requests exposing (..)
 
 import Addresses.Backend
-import Api.Auxiliary exposing (ComplexIngredientId, FoodId, IngredientId, JWT, MeasureId, RecipeId)
-import Api.Types.ComplexIngredient exposing (ComplexIngredient, decoderComplexIngredient, encoderComplexIngredient)
+import Api.Auxiliary exposing (ComplexFoodId, ComplexIngredientId, FoodId, IngredientId, JWT, MeasureId, RecipeId)
+import Api.Types.ComplexIngredient exposing (ComplexIngredient, decoderComplexIngredient)
+import Api.Types.ComplexIngredientCreation exposing (ComplexIngredientCreation, encoderComplexIngredientCreation)
+import Api.Types.ComplexIngredientUpdate exposing (ComplexIngredientUpdate, encoderComplexIngredientUpdate)
 import Http
 import Json.Decode as Decode
 import Pages.Ingredients.Complex.Page as Page
@@ -30,23 +32,24 @@ fetchComplexFoods =
 createComplexIngredient :
     AuthorizedAccess
     -> RecipeId
-    -> ComplexIngredient
+    -> ComplexFoodId
+    -> ComplexIngredientCreation
     -> Cmd Page.LogicMsg
-createComplexIngredient authorizedAccess recipeId complexIngredient =
+createComplexIngredient authorizedAccess recipeId complexFoodId complexIngredientCreation =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        (Addresses.Backend.recipes.complexIngredients.create recipeId)
-        { body = encoderComplexIngredient complexIngredient |> Http.jsonBody
+        (Addresses.Backend.recipes.complexIngredients.create recipeId complexFoodId)
+        { body = encoderComplexIngredientCreation complexIngredientCreation |> Http.jsonBody
         , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotCreateResponse decoderComplexIngredient
         }
 
 
-saveComplexIngredient : AuthorizedAccess -> RecipeId -> ComplexIngredient -> Cmd Page.LogicMsg
-saveComplexIngredient flags recipeId complexIngredient =
+saveComplexIngredient : AuthorizedAccess -> RecipeId -> ComplexFoodId -> ComplexIngredientUpdate -> Cmd Page.LogicMsg
+saveComplexIngredient flags recipeId complexFoodId complexIngredientUpdate =
     HttpUtil.runPatternWithJwt
         flags
-        (Addresses.Backend.recipes.complexIngredients.update recipeId)
-        { body = encoderComplexIngredient complexIngredient |> Http.jsonBody
+        (Addresses.Backend.recipes.complexIngredients.update recipeId complexFoodId)
+        { body = encoderComplexIngredientUpdate complexIngredientUpdate |> Http.jsonBody
         , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotSaveEditResponse decoderComplexIngredient
         }
 

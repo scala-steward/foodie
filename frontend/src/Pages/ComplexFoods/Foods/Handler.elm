@@ -19,7 +19,6 @@ updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 updateLogic =
     Pages.Util.Choice.Handler.updateLogic
         { idOfElement = .recipeId
-        , idOfUpdate = .recipeId
         , idOfChoice = .id
         , choiceIdOfElement = .recipeId
         , choiceIdOfCreation = .recipeId

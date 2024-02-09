@@ -76,7 +76,7 @@ viewComplexFoods configuration main =
                                         ComplexFoodClientInput.lenses.amountGrams
                                     ).set
                                     complexFoodClientInput
-                                    >> Pages.Util.Choice.Page.Edit
+                                    >> Pages.Util.Choice.Page.Edit complexFood.recipeId
                                 )
                             , Style.classes.numberLabel
                             ]
@@ -93,7 +93,7 @@ viewComplexFoods configuration main =
                                         ComplexFoodClientInput.lenses.amountMilliLitres
                                     ).set
                                     complexFoodClientInput
-                                    >> Pages.Util.Choice.Page.Edit
+                                    >> Pages.Util.Choice.Page.Edit complexFood.recipeId
                             , Style.classes.numberLabel
                             ]
                             []

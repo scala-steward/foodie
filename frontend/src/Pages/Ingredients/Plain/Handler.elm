@@ -26,7 +26,6 @@ updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 updateLogic =
     Pages.Util.Choice.Handler.updateLogic
         { idOfElement = .id
-        , idOfUpdate = .ingredientId
         , idOfChoice = .id
         , choiceIdOfElement = .foodId
         , choiceIdOfCreation = .foodId
