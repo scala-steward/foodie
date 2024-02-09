@@ -105,7 +105,7 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     for {
       userId       <- GenUtils.taggedId[UserTag]
       recipe       <- Gens.recipeGen
-      recipeUpdate <- Gens.recipeUpdateGen(recipe.id)
+      recipeUpdate <- Gens.recipeUpdateGen
     } yield UpdateSetup(
       userId,
       recipe,
@@ -120,7 +120,9 @@ object RecipeServiceProperties extends Properties("Recipe service") {
       ingredientContents = Seq.empty
     )
     val transformer = for {
-      updatedRecipe <- EitherT(recipeService.updateRecipe(updateSetup.userId, updateSetup.recipeUpdate))
+      updatedRecipe <- EitherT(
+        recipeService.updateRecipe(updateSetup.userId, updateSetup.recipe.id, updateSetup.recipeUpdate)
+      )
       fetchedRecipe <- EitherT.fromOptionF(
         recipeService.getRecipe(updateSetup.userId, updateSetup.recipe.id),
         ErrorContext.Recipe.NotFound.asServerError
@@ -351,6 +353,7 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     DBTestUtil.awaitProp(transformer)
   }
 
+  // TODO: Add other mismatches as well.
   property("Update (wrong user)") = Prop.forAll(
     updateSetupGen :| "setup",
     GenUtils.taggedId[UserTag] :| "userId2"
@@ -361,7 +364,7 @@ object RecipeServiceProperties extends Properties("Recipe service") {
     )
     val transformer = for {
       updatedRecipe <- EitherT.liftF[Future, ServerError, ServerError.Or[Recipe]](
-        recipeService.updateRecipe(userId2, setup.recipeUpdate)
+        recipeService.updateRecipe(userId2, setup.recipe.id, setup.recipeUpdate)
       )
     } yield Prop(updatedRecipe.isLeft)
 

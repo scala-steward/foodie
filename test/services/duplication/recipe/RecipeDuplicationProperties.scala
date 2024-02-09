@@ -97,9 +97,8 @@ object RecipeDuplicationProperties extends Properties("Recipe duplication") {
     complexFoods <- subsetForComplexFoods.traverse(
       services.complex.food.Gens.complexFood(_, VolumeAmountOption.OptionalVolume)
     )
-    ingredients <- Gen.listOf(services.recipe.Gens.ingredientGen)
-    complexIngredients <- services.complex.ingredient.Gens
-      .complexIngredientsGen(recipe.id, complexFoods)
+    ingredients        <- Gen.listOf(services.recipe.Gens.ingredientGen)
+    complexIngredients <- services.complex.ingredient.Gens.complexIngredientsGen(complexFoods)
   } yield DuplicationSetup(
     userId = userId,
     recipe = recipe,
@@ -145,8 +144,7 @@ object RecipeDuplicationProperties extends Properties("Recipe duplication") {
     } yield {
       Prop.all(
         groupIngredients(ingredients) ?= groupIngredients(setup.ingredients),
-        complexIngredients.sortBy(_.complexFoodId).map(_.copy(recipeId = setup.recipe.id)) ?= setup.complexIngredients
-          .sortBy(_.complexFoodId),
+        complexIngredients.sortBy(_.complexFoodId) ?= setup.complexIngredients.sortBy(_.complexFoodId),
         duplicatedRecipe.name.startsWith(setup.recipe.name),
         duplicatedRecipe.description ?= setup.recipe.description,
         duplicatedRecipe.numberOfServings ?= setup.recipe.numberOfServings,

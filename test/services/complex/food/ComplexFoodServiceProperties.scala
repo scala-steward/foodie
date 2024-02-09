@@ -274,7 +274,6 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
     )
     recipe <- services.recipe.Gens.recipeGen
     complexIngredient <- services.complex.ingredient.Gens.complexIngredientGen(
-      recipe.id,
       complexFoods = Seq(updateSetup.creationSetup.complexFoodIncoming)
     )
   } yield UpdateFailureVolumeDependencySetup(

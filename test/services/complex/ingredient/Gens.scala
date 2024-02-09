@@ -1,7 +1,6 @@
 package services.complex.ingredient
 
 import cats.syntax.traverse._
-import db.RecipeId
 import org.scalacheck.Gen
 import services.GenUtils
 import services.GenUtils.implicits._
@@ -11,7 +10,7 @@ import scala.util.chaining._
 
 object Gens {
 
-  def complexIngredientsGen(recipeId: RecipeId, complexFoods: Seq[ComplexFoodIncoming]): Gen[List[ComplexIngredient]] =
+  def complexIngredientsGen(complexFoods: Seq[ComplexFoodIncoming]): Gen[List[ComplexIngredient]] =
     for {
       subset <- GenUtils.subset(complexFoods)
       scalingModes <- subset.traverse(
@@ -22,21 +21,37 @@ object Gens {
       factors <- Gen.listOfN(subset.size, GenUtils.smallBigDecimalGen)
     } yield subset.zip(factors).zip(scalingModes).map { case ((complexFood, factor), scalingMode) =>
       ComplexIngredient(
-        recipeId = recipeId,
         complexFoodId = complexFood.recipeId,
         factor = factor,
         scalingMode = scalingMode
       )
     }
 
-  def complexIngredientGen(recipeId: RecipeId, complexFoods: Seq[ComplexFoodIncoming]): Gen[ComplexIngredient] =
+  def complexIngredientGen(complexFoods: Seq[ComplexFoodIncoming]): Gen[ComplexIngredient] =
     for {
       complexFood <- Gen.oneOf(complexFoods)
       factor      <- GenUtils.smallBigDecimalGen
       scalingMode <- Gen.oneOf(scalingModesByVolumeAmount(complexFood.amountMilliLitres))
     } yield ComplexIngredient(
-      recipeId = recipeId,
       complexFoodId = complexFood.recipeId,
+      factor = factor,
+      scalingMode = scalingMode
+    )
+
+  def complexIngredientCreationGen(amountMillilitres: Option[BigDecimal]): Gen[ComplexIngredientCreation] =
+    for {
+      factor      <- GenUtils.smallBigDecimalGen
+      scalingMode <- Gen.oneOf(scalingModesByVolumeAmount(amountMillilitres))
+    } yield ComplexIngredientCreation(
+      factor = factor,
+      scalingMode = scalingMode
+    )
+
+  def complexIngredientUpdateGen(amountMillilitres: Option[BigDecimal]): Gen[ComplexIngredientUpdate] =
+    for {
+      factor      <- GenUtils.smallBigDecimalGen
+      scalingMode <- Gen.oneOf(scalingModesByVolumeAmount(amountMillilitres))
+    } yield ComplexIngredientUpdate(
       factor = factor,
       scalingMode = scalingMode
     )

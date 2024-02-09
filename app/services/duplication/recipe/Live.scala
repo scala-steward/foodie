@@ -122,7 +122,7 @@ object Live {
         .insertAll {
           complexIngredients.map(complexIngredient =>
             ComplexIngredient
-              .TransformableToDB(userId, complexIngredient.copy(recipeId = newRecipeId))
+              .TransformableToDB(userId, newRecipeId, complexIngredient)
               .transformInto[Tables.ComplexIngredientRow]
           )
         }

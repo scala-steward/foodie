@@ -131,7 +131,7 @@ object DAOTestInstance {
         contents.map { case (userId, recipeId, complexIngredient) =>
           ComplexIngredientKey(userId, recipeId, complexIngredient.complexFoodId) ->
             services.complex.ingredient.ComplexIngredient
-              .TransformableToDB(userId, complexIngredient)
+              .TransformableToDB(userId, recipeId, complexIngredient)
               .transformInto[Tables.ComplexIngredientRow]
         }
       )

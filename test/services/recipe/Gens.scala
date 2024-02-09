@@ -26,14 +26,13 @@ object Gens {
     recipeCreation <- recipeCreationGen
   } yield RecipeCreation.create(id, recipeCreation)
 
-  def recipeUpdateGen(recipeId: RecipeId): Gen[RecipeUpdate] =
+  val recipeUpdateGen: Gen[RecipeUpdate] =
     for {
       name             <- GenUtils.nonEmptyAsciiString
       description      <- Gen.option(GenUtils.nonEmptyAsciiString)
       numberOfServings <- GenUtils.smallBigDecimalGen
       servingSize      <- Gen.option(GenUtils.nonEmptyAsciiString)
     } yield RecipeUpdate(
-      recipeId,
       name = name,
       description = description,
       numberOfServings = numberOfServings,

@@ -9,7 +9,6 @@ import utils.TransformerUtils.Implicits._
 import java.util.UUID
 
 case class ComplexIngredient(
-    recipeId: RecipeId,
     complexFoodId: ComplexFoodId,
     factor: BigDecimal,
     scalingMode: ScalingMode
@@ -20,7 +19,6 @@ object ComplexIngredient {
   implicit val fromDB: Transformer[Tables.ComplexIngredientRow, ComplexIngredient] =
     row =>
       ComplexIngredient(
-        recipeId = row.recipeId.transformInto[RecipeId],
         complexFoodId = row.complexFoodId.transformInto[ComplexFoodId],
         factor = row.factor,
         scalingMode = row.scalingMode.transformInto[ScalingMode]
@@ -28,12 +26,13 @@ object ComplexIngredient {
 
   case class TransformableToDB(
       userId: UserId,
+      recipeId: RecipeId,
       complexIngredient: ComplexIngredient
   )
 
   implicit val toDB: Transformer[TransformableToDB, Tables.ComplexIngredientRow] = { transformableToDB =>
     Tables.ComplexIngredientRow(
-      recipeId = transformableToDB.complexIngredient.recipeId.transformInto[UUID],
+      recipeId = transformableToDB.recipeId.transformInto[UUID],
       complexFoodId = transformableToDB.complexIngredient.complexFoodId.transformInto[UUID],
       factor = transformableToDB.complexIngredient.factor,
       scalingMode = transformableToDB.complexIngredient.scalingMode.transformInto[String],

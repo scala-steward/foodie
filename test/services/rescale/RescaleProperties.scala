@@ -120,11 +120,10 @@ object RescaleProperties extends Properties("Rescale properties") {
     complexFoods <- subsetForComplexFoods.traverse(
       services.complex.food.Gens.complexFood(_, VolumeAmountOption.OptionalVolume)
     )
-    ingredients <- Gen.listOf(services.recipe.Gens.ingredientGen)
-    complexIngredients <- services.complex.ingredient.Gens
-      .complexIngredientsGen(recipe.id, complexFoods)
-    servingSize <- GenUtils.smallBigDecimalGen
-    spaces      <- Gen.choose(0, 10)
+    ingredients        <- Gen.listOf(services.recipe.Gens.ingredientGen)
+    complexIngredients <- services.complex.ingredient.Gens.complexIngredientsGen(complexFoods)
+    servingSize        <- GenUtils.smallBigDecimalGen
+    spaces             <- Gen.choose(0, 10)
   } yield RescaleSetup(
     userId = userId,
     recipe = recipe.copy(

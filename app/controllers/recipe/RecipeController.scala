@@ -2,10 +2,10 @@ package controllers.recipe
 
 import action.UserAction
 import cats.data.{ EitherT, OptionT }
-import db.{ FoodId, IngredientId, RecipeId }
+import db.{ ComplexFoodId, FoodId, IngredientId, RecipeId }
 import errors.ErrorContext
 import io.circe.syntax._
-import io.scalaland.chimney.dsl.TransformerOps
+import io.scalaland.chimney.syntax._
 import play.api.libs.circe.Circe
 import play.api.mvc._
 import services.DBError
@@ -250,13 +250,14 @@ class RecipeController @Inject() (
         .recover(errorHandler)
     }
 
-  def addComplexIngredient(recipeId: UUID): Action[ComplexIngredient] =
-    userAction.async(circe.tolerantJson[ComplexIngredient]) { request =>
+  def addComplexIngredient(recipeId: UUID, complexFoodId: UUID): Action[ComplexIngredientCreation] =
+    userAction.async(circe.tolerantJson[ComplexIngredientCreation]) { request =>
       EitherT(
         complexIngredientService.create(
           userId = request.user.id,
-          // TODO
-          complexIngredient = (request.body, recipeId).transformInto[services.complex.ingredient.ComplexIngredient]
+          recipeId = recipeId.transformInto[RecipeId],
+          complexFoodId = complexFoodId.transformInto[ComplexFoodId],
+          complexIngredientCreation = request.body.transformInto[services.complex.ingredient.ComplexIngredientCreation]
         )
       )
         .fold(
@@ -279,13 +280,14 @@ class RecipeController @Inject() (
         .recover(errorHandler)
     }
 
-  def updateComplexIngredient(recipeId: UUID): Action[ComplexIngredient] =
-    userAction.async(circe.tolerantJson[ComplexIngredient]) { request =>
+  def updateComplexIngredient(recipeId: UUID, complexFoodId: UUID): Action[ComplexIngredientUpdate] =
+    userAction.async(circe.tolerantJson[ComplexIngredientUpdate]) { request =>
       EitherT(
         complexIngredientService.update(
           userId = request.user.id,
-          // TODO
-          complexIngredient = (request.body, recipeId).transformInto[services.complex.ingredient.ComplexIngredient]
+          recipeId = recipeId.transformInto[RecipeId],
+          complexFoodId = complexFoodId.transformInto[ComplexFoodId],
+          complexIngredientUpdate = request.body.transformInto[services.complex.ingredient.ComplexIngredientUpdate]
         )
       )
         .fold(

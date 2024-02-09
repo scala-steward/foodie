@@ -12,9 +12,9 @@ case class Measure(
 
 object Measure {
 
-  implicit val toInternal: Transformer[Measure, services.recipe.Measure] =
+  implicit val fromInternal: Transformer[services.recipe.Measure, Measure] =
     Transformer
-      .define[Measure, services.recipe.Measure]
+      .define[services.recipe.Measure, Measure]
       .buildTransformer
 
 }
