@@ -7,7 +7,7 @@ GET           /recipes/foods/:foodId                              controllers.re
 GET           /recipes                                            controllers.recipe.RecipeController.getRecipes
 GET           /recipes/:id                                        controllers.recipe.RecipeController.get(id: java.util.UUID)
 POST          /recipes                                            controllers.recipe.RecipeController.create
-PATCH         /recipes                                            controllers.recipe.RecipeController.update
+PATCH         /recipes/:id                                        controllers.recipe.RecipeController.update(id: java.util.UUID)
 DELETE        /recipes/:id                                        controllers.recipe.RecipeController.delete(id: java.util.UUID)
 GET           /recipes/:id/ingredients                            controllers.recipe.RecipeController.getIngredients(id: java.util.UUID)
 POST          /recipes/:id/duplicate                              controllers.recipe.RecipeController.duplicate(id: java.util.UUID)

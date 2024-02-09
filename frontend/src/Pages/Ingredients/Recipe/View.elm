@@ -71,7 +71,7 @@ viewMain configuration main =
                     recipe
         , onUpdate =
             Pages.Recipes.View.editRecipeLineWith
-                { saveMsg = Page.ParentMsg <| Pages.Util.Parent.Page.SaveEdit
+                { saveMsg = Page.ParentMsg <| Pages.Util.Parent.Page.SaveEdit main.parent.original
                 , nameLens = RecipeUpdateClientInput.lenses.name
                 , descriptionLens = RecipeUpdateClientInput.lenses.description
                 , numberOfServingsLens = RecipeUpdateClientInput.lenses.numberOfServings

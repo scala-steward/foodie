@@ -22,7 +22,7 @@ updateLogic =
         { toUpdate = ReferenceMapUpdateClientInput.from
         , idOf = .id
         , save =
-            \authorizedAccess ->
+            \authorizedAccess _ ->
                 ReferenceMapUpdateClientInput.to
                     >> Pages.Util.Requests.saveReferenceMapWith
                         Pages.Util.Parent.Page.GotSaveEditResponse

@@ -15,7 +15,7 @@ import Util.Editing as Editing
 updateLogic :
     { toUpdate : parent -> update
     , idOf : parent -> parentId
-    , save : AuthorizedAccess -> update -> Maybe (Cmd (Page.LogicMsg parent update))
+    , save : AuthorizedAccess -> parentId -> update -> Maybe (Cmd (Page.LogicMsg parent update))
     , delete : AuthorizedAccess -> parentId -> Cmd (Page.LogicMsg parent update)
     , duplicate : AuthorizedAccess -> parentId -> DateUtil.Timestamp -> Cmd (Page.LogicMsg parent update)
     , navigateAfterDeletionAddress : () -> List String
@@ -53,7 +53,7 @@ updateLogic ps msg model =
             , Cmd.none
             )
 
-        saveEdit =
+        saveEdit parent =
             ( model
             , model
                 |> Tristate.lenses.main.getOption
@@ -67,6 +67,7 @@ updateLogic ps msg model =
                                     { configuration = model.configuration
                                     , jwt = main.jwt
                                     }
+                                    (parent |> ps.idOf)
                                 )
                     )
                 |> Maybe.withDefault Cmd.none
@@ -168,8 +169,8 @@ updateLogic ps msg model =
         Page.Edit update ->
             edit update
 
-        Page.SaveEdit ->
-            saveEdit
+        Page.SaveEdit parent ->
+            saveEdit parent
 
         Page.GotSaveEditResponse result ->
             gotSaveEditResponse result

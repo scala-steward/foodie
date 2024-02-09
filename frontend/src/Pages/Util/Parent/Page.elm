@@ -63,7 +63,8 @@ lenses =
 type LogicMsg parent update
     = GotFetchResponse (Result Error parent)
     | Edit update
-    | SaveEdit
+      -- TODO: Really parent? Isn't it only its id?
+    | SaveEdit parent
     | GotSaveEditResponse (Result Error parent)
     | EnterEdit
     | ExitEdit

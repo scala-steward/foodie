@@ -107,11 +107,15 @@ class RecipeController @Inject() (
         .recover(errorHandler)
     }
 
-  def update: Action[RecipeUpdate] =
+  def update(id: UUID): Action[RecipeUpdate] =
     userAction.async(circe.tolerantJson[RecipeUpdate]) { request =>
       EitherT(
         recipeService
-          .updateRecipe(request.user.id, request.body.transformInto[services.recipe.RecipeUpdate])
+          .updateRecipe(
+            request.user.id,
+            id.transformInto[RecipeId],
+            request.body.transformInto[services.recipe.RecipeUpdate]
+          )
       )
         .map(
           _.pipe(_.transformInto[Recipe])

@@ -1,6 +1,7 @@
 module Pages.Recipes.View exposing (editRecipeLineWith, recipeInfoColumns, recipeLineWith, tableHeader, view)
 
 import Addresses.Frontend
+import Api.Auxiliary exposing (RecipeId)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
@@ -45,7 +46,7 @@ viewMain configuration =
         , sort = List.sortBy (.original >> .name)
         , tableHeader = tableHeader
         , viewLine = viewRecipeLine
-        , updateLine = \_ -> updateRecipeLine
+        , updateLine = .id >> updateRecipeLine
         , deleteLine = deleteRecipeLine
         , create =
             { ifCreating = createRecipeLine
@@ -189,20 +190,20 @@ recipeLineWith ps =
         }
 
 
-updateRecipeLine : RecipeUpdateClientInput -> List (Html Page.LogicMsg)
-updateRecipeLine recipeUpdateClientInput =
+updateRecipeLine : RecipeId -> RecipeUpdateClientInput -> List (Html Page.LogicMsg)
+updateRecipeLine recipeId recipeUpdateClientInput =
     editRecipeLineWith
-        { saveMsg = Page.ParentMsg <| Pages.Util.ParentEditor.Page.SaveEdit recipeUpdateClientInput.id
+        { saveMsg = Page.ParentMsg <| Pages.Util.ParentEditor.Page.SaveEdit recipeId
         , nameLens = RecipeUpdateClientInput.lenses.name
         , descriptionLens = RecipeUpdateClientInput.lenses.description
         , numberOfServingsLens = RecipeUpdateClientInput.lenses.numberOfServings
         , servingSizeLens = RecipeUpdateClientInput.lenses.servingSize
-        , updateMsg = Page.ParentMsg << Pages.Util.ParentEditor.Page.Edit
+        , updateMsg = Page.ParentMsg << Pages.Util.ParentEditor.Page.Edit recipeId
         , confirmName = "Save"
-        , cancelMsg = Page.ParentMsg <| Pages.Util.ParentEditor.Page.ExitEdit <| recipeUpdateClientInput.id
+        , cancelMsg = Page.ParentMsg <| Pages.Util.ParentEditor.Page.ExitEdit <| recipeId
         , cancelName = "Cancel"
         , rowStyles = [ Style.classes.editLine ]
-        , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls recipeUpdateClientInput.id |> Page.ParentMsg |> Just
+        , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls recipeId |> Page.ParentMsg |> Just
         }
         recipeUpdateClientInput
 

@@ -1,6 +1,7 @@
 module Pages.Meals.View exposing (editMealLineWith, mealLineWith, tableHeader, view)
 
 import Addresses.Frontend
+import Api.Auxiliary exposing (MealId)
 import Api.Types.Meal exposing (Meal)
 import Api.Types.SimpleDate exposing (SimpleDate)
 import Basics.Extra exposing (flip)
@@ -49,7 +50,7 @@ viewMain =
         , sort = List.sortBy (.original >> .date >> DateUtil.toString) >> List.reverse
         , tableHeader = tableHeader
         , viewLine = viewMealLine
-        , updateLine = \_ -> updateMealLine
+        , updateLine = .id >> updateMealLine
         , deleteLine = deleteMealLine
         , create =
             { ifCreating = createMealLine
@@ -158,13 +159,13 @@ mealLineWith ps =
         }
 
 
-updateMealLine : MealUpdateClientInput -> List (Html Page.LogicMsg)
-updateMealLine mealUpdateClientInput =
+updateMealLine : MealId -> MealUpdateClientInput -> List (Html Page.LogicMsg)
+updateMealLine mealId mealUpdateClientInput =
     editMealLineWith
         { saveMsg = Pages.Util.ParentEditor.Page.SaveEdit mealUpdateClientInput.id
         , dateLens = MealUpdateClientInput.lenses.date
         , nameLens = MealUpdateClientInput.lenses.name
-        , updateMsg = Pages.Util.ParentEditor.Page.Edit
+        , updateMsg = Pages.Util.ParentEditor.Page.Edit mealId
         , confirmName = "Save"
         , cancelMsg = Pages.Util.ParentEditor.Page.ExitEdit mealUpdateClientInput.id
         , cancelName = "Cancel"

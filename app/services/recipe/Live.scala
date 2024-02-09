@@ -59,9 +59,10 @@ class Live @Inject() (
 
   override def updateRecipe(
       userId: UserId,
+      id: RecipeId,
       recipeUpdate: RecipeUpdate
   ): Future[ServerError.Or[Recipe]] =
-    db.runTransactionally(companion.updateRecipe(userId, recipeUpdate))
+    db.runTransactionally(companion.updateRecipe(userId, id, recipeUpdate))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.Recipe.Update(error.getMessage).asServerError)
@@ -175,11 +176,12 @@ object Live {
 
     override def updateRecipe(
         userId: UserId,
+        id: RecipeId,
         recipeUpdate: RecipeUpdate
     )(implicit
         ec: ExecutionContext
     ): DBIO[Recipe] = {
-      val findAction = OptionT(getRecipe(userId, recipeUpdate.id)).getOrElseF(notFound)
+      val findAction = OptionT(getRecipe(userId, id)).getOrElseF(notFound)
       for {
         recipe <- findAction
         _ <- recipeDao.update(

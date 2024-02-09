@@ -8,8 +8,7 @@ import Uuid exposing (Uuid)
 
 
 type alias RecipeUpdateClientInput =
-    { id : Uuid
-    , name : ValidatedInput String
+    { name : ValidatedInput String
     , description : Maybe String
     , numberOfServings : ValidatedInput Float
     , servingSize : Maybe String
@@ -32,8 +31,7 @@ lenses =
 
 from : Recipe -> RecipeUpdateClientInput
 from recipe =
-    { id = recipe.id
-    , name =
+    { name =
         ValidatedInput.nonEmptyString
             |> ValidatedInput.lenses.value.set recipe.name
             |> ValidatedInput.lenses.text.set recipe.name
@@ -48,8 +46,7 @@ from recipe =
 
 to : RecipeUpdateClientInput -> RecipeUpdate
 to input =
-    { id = input.id
-    , name = input.name.value
+    { name = input.name.value
     , description = input.description
     , numberOfServings = input.numberOfServings.value
     , servingSize = input.servingSize

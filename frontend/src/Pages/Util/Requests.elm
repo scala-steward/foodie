@@ -135,12 +135,13 @@ duplicateMealWith mkMsg authorizedAccess mealId timestamp =
 saveRecipeWith :
     (Result Error Recipe -> msg)
     -> AuthorizedAccess
+    -> RecipeId
     -> RecipeUpdate
     -> Cmd msg
-saveRecipeWith mkMsg authorizedAccess recipeUpdate =
+saveRecipeWith mkMsg authorizedAccess recipeId recipeUpdate =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        Addresses.Backend.recipes.update
+        (Addresses.Backend.recipes.update recipeId)
         { body = encoderRecipeUpdate recipeUpdate |> Http.jsonBody
         , expect = HttpUtil.expectJson mkMsg decoderRecipe
         }

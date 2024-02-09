@@ -16,7 +16,7 @@ trait RecipeService {
   def allRecipes(userId: UserId): Future[Seq[Recipe]]
   def getRecipe(userId: UserId, id: RecipeId): Future[Option[Recipe]]
   def createRecipe(userId: UserId, recipeCreation: RecipeCreation): Future[ServerError.Or[Recipe]]
-  def updateRecipe(userId: UserId, recipeUpdate: RecipeUpdate): Future[ServerError.Or[Recipe]]
+  def updateRecipe(userId: UserId, id: RecipeId, recipeUpdate: RecipeUpdate): Future[ServerError.Or[Recipe]]
   def deleteRecipe(userId: UserId, id: RecipeId): Future[Boolean]
 
   def getIngredients(userId: UserId, recipeId: RecipeId): Future[List[Ingredient]]
@@ -67,6 +67,7 @@ object RecipeService {
 
     def updateRecipe(
         userId: UserId,
+        id: RecipeId,
         recipeUpdate: RecipeUpdate
     )(implicit
         ec: ExecutionContext

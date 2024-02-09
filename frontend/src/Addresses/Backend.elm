@@ -15,7 +15,7 @@ recipes :
     , all : ResourcePattern
     , single : RecipeId -> ResourcePattern
     , create : ResourcePattern
-    , update : ResourcePattern
+    , update : RecipeId -> ResourcePattern
     , delete : RecipeId -> ResourcePattern
     , duplicate : RecipeId -> ResourcePattern
     , rescale : RecipeId -> ResourcePattern
@@ -64,7 +64,7 @@ recipes =
     , all = get <| base <| []
     , single = \recipeId -> get <| base <| [ recipeId |> Uuid.toString ]
     , create = post <| base []
-    , update = patch <| base []
+    , update = \recipeId -> patch <| base [ recipeId |> Uuid.toString ]
     , delete = \recipeId -> delete <| base <| [ recipeId |> Uuid.toString ]
     , duplicate = \recipeId -> post <| base <| [ recipeId |> Uuid.toString, duplicateWord ]
     , rescale = \recipeId -> patch <| base <| [ recipeId |> Uuid.toString, rescaleWord ]

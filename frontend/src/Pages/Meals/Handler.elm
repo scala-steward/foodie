@@ -3,7 +3,6 @@ module Pages.Meals.Handler exposing (init, update)
 import Addresses.Frontend
 import Api.Types.Meal exposing (Meal)
 import Maybe.Extra
-import Monocle.Compose as Compose
 import Pages.Meals.MealCreationClientInput as MealCreationClientInput exposing (MealCreationClientInput)
 import Pages.Meals.MealUpdateClientInput as MealUpdateClientInput exposing (MealUpdateClientInput)
 import Pages.Meals.Page as Page
@@ -32,12 +31,11 @@ updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 updateLogic =
     Pages.Util.ParentEditor.Handler.updateLogic
         { idOfParent = .id
-        , idOfUpdate = .id
         , toUpdate = MealUpdateClientInput.from
         , navigateToAddress = Addresses.Frontend.mealEntryEditor.address
         , updateCreationTimestamp = DateUtil.fromPosix >> SimpleDateInput.from >> MealCreationClientInput.lenses.date.set
         , create = \authorizedAccess -> MealCreationClientInput.toCreation >> Maybe.Extra.unwrap Cmd.none (Requests.createMeal authorizedAccess)
-        , save = \authorizedAccess -> MealUpdateClientInput.to >> Maybe.Extra.unwrap Cmd.none (Requests.saveMeal authorizedAccess)
+        , save = \authorizedAccess _ -> MealUpdateClientInput.to >> Maybe.Extra.unwrap Cmd.none (Requests.saveMeal authorizedAccess)
         , delete = Requests.deleteMeal
         , duplicate = Pages.Util.Requests.duplicateMealWith Pages.Util.ParentEditor.Page.GotDuplicateResponse
         }

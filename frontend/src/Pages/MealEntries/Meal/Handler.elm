@@ -21,7 +21,7 @@ updateLogic =
         { toUpdate = MealUpdateClientInput.from
         , idOf = .id
         , save =
-            \authorizedAccess ->
+            \authorizedAccess _ ->
                 MealUpdateClientInput.to
                     >> Maybe.map
                         (Pages.Util.Requests.saveMealWith
