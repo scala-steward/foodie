@@ -18,6 +18,15 @@ object Gens {
 
   def complexFood(recipeId: RecipeId, volumeAmountOption: VolumeAmountOption): Gen[ComplexFoodIncoming] =
     for {
+      update <- complexFoodUpdate(volumeAmountOption)
+    } yield ComplexFoodIncoming(
+      recipeId = recipeId,
+      amountGrams = update.amountGrams,
+      amountMilliLitres = update.amountMilliLitres
+    )
+
+  def complexFoodUpdate(volumeAmountOption: VolumeAmountOption): Gen[ComplexFoodUpdate] =
+    for {
       amountGrams <- GenUtils.smallBigDecimalGen
       amountMilliLitres <-
         volumeAmountOption match {
@@ -25,8 +34,7 @@ object Gens {
           case VolumeAmountOption.OptionalVolume => Gen.option(GenUtils.smallBigDecimalGen)
           case VolumeAmountOption.DefinedVolume  => GenUtils.smallBigDecimalGen.map(Some(_))
         }
-    } yield ComplexFoodIncoming(
-      recipeId = recipeId,
+    } yield ComplexFoodUpdate(
       amountGrams = amountGrams,
       amountMilliLitres = amountMilliLitres
     )

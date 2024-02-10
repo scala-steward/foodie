@@ -5,7 +5,7 @@ import config.TestConfiguration
 import db._
 import db.generated.Tables
 import errors.ErrorContext
-import io.scalaland.chimney.dsl._
+import io.scalaland.chimney.syntax._
 import org.scalacheck.Prop.AnyOperators
 import org.scalacheck.{ Gen, Prop, Properties, Test }
 import services.GenUtils.implicits._
@@ -205,7 +205,7 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
 
   private case class UpdateSetup(
       creationSetup: CreationSetup,
-      update: ComplexFoodIncoming
+      update: ComplexFoodUpdate
   )
 
   private def updateSetupGenWith(
@@ -213,7 +213,7 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
       updateVolumeAmountOption: VolumeAmountOption
   ): Gen[UpdateSetup] = for {
     creationSetup <- creationSetupGenWith(creationVolumeAmountOption)
-    update        <- Gens.complexFood(creationSetup.recipe.id, updateVolumeAmountOption)
+    update        <- Gens.complexFoodUpdate(updateVolumeAmountOption)
   } yield UpdateSetup(
     creationSetup = creationSetup,
     update = update
@@ -232,13 +232,20 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
       complexIngredientContents = Seq.empty
     )
     val transformer = for {
-      updated <- EitherT(complexFoodService.update(setup.creationSetup.userId, setup.update))
+      updated <- EitherT(
+        complexFoodService.update(
+          setup.creationSetup.userId,
+          setup.creationSetup.complexFoodIncoming.recipeId,
+          setup.update
+        )
+      )
       fetched <- EitherT.fromOptionF(
         complexFoodService.get(setup.creationSetup.userId, setup.creationSetup.complexFoodIncoming.recipeId),
         ErrorContext.ComplexFood.NotFound.asServerError
       )
     } yield {
-      val expected = toComplexFood(setup.creationSetup.userId, setup.update, setup.creationSetup.recipe)
+      val complexFoodIncoming = ComplexFoodUpdate.update(setup.creationSetup.complexFoodIncoming, setup.update)
+      val expected = toComplexFood(setup.creationSetup.userId, complexFoodIncoming, setup.creationSetup.recipe)
       Prop.all(
         updated ?= expected,
         fetched ?= expected
@@ -255,7 +262,7 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
       complexIngredientContents = Seq.empty
     )
     val propF = for {
-      result <- complexFoodService.update(setup.creationSetup.userId, setup.update)
+      result <- complexFoodService.update(setup.creationSetup.userId, setup.creationSetup.recipe.id, setup.update)
     } yield result.isLeft
 
     DBTestUtil.await(propF)
@@ -304,7 +311,11 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
     )
 
     val propF = for {
-      result <- complexFoodService.update(setup.updateSetup.creationSetup.userId, setup.updateSetup.update)
+      result <- complexFoodService.update(
+        setup.updateSetup.creationSetup.userId,
+        setup.referencingComplexIngredient.complexFoodId,
+        setup.updateSetup.update
+      )
     } yield result.isLeft
 
     DBTestUtil.await(propF)
@@ -402,7 +413,9 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
       complexIngredientContents = Seq.empty
     )
     val transformer = for {
-      result <- EitherT.liftF(complexFoodService.update(userId2, setup.update))
+      result <- EitherT.liftF(
+        complexFoodService.update(userId2, setup.creationSetup.complexFoodIncoming.recipeId, setup.update)
+      )
       fetched <- EitherT.fromOptionF(
         complexFoodService.get(userId, setup.creationSetup.complexFoodIncoming.recipeId),
         ErrorContext.ComplexFood.NotFound.asServerError

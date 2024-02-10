@@ -1,6 +1,6 @@
 package services.complex.food
 
-import db.{ RecipeId, UserId }
+import db.{ ComplexFoodId, RecipeId, UserId }
 import errors.ServerError
 import slick.dbio.DBIO
 
@@ -19,7 +19,8 @@ trait ComplexFoodService {
 
   def update(
       userId: UserId,
-      complexFood: ComplexFoodIncoming
+      complexFoodId: ComplexFoodId,
+      update: ComplexFoodUpdate
   ): Future[ServerError.Or[ComplexFood]]
 
   def delete(userId: UserId, recipeId: RecipeId): Future[Boolean]
@@ -42,7 +43,8 @@ object ComplexFoodService {
 
     def update(
         userId: UserId,
-        complexFood: ComplexFoodIncoming
+        complexFoodId: ComplexFoodId,
+        update: ComplexFoodUpdate
     )(implicit ec: ExecutionContext): DBIO[ComplexFood]
 
     def delete(userId: UserId, recipeId: RecipeId)(implicit ec: ExecutionContext): DBIO[Boolean]

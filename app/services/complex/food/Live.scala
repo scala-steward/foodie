@@ -3,14 +3,14 @@ package services.complex.food
 import cats.data.OptionT
 import db.daos.complexFood.ComplexFoodKey
 import db.generated.Tables
-import db.{ RecipeId, UserId }
+import db.{ ComplexFoodId, RecipeId, UserId }
 import errors.{ ErrorContext, ServerError }
 import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
 import services.common.Transactionally.syntax._
 import services.complex.ingredient.ScalingMode
-import services.recipe.{ Recipe, RecipeService }
+import services.recipe.RecipeService
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import utils.DBIOUtil.instances._
@@ -45,9 +45,10 @@ class Live @Inject() (
 
   override def update(
       userId: UserId,
-      complexFood: ComplexFoodIncoming
+      complexFoodId: ComplexFoodId,
+      update: ComplexFoodUpdate
   ): Future[ServerError.Or[ComplexFood]] =
-    db.runTransactionally(companion.update(userId, complexFood))
+    db.runTransactionally(companion.update(userId, complexFoodId, update))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.ComplexFood.Update(error.getMessage).asServerError)
@@ -117,20 +118,32 @@ object Live {
       } yield ComplexFood.TransformableFromDB(inserted, recipe).transformInto[ComplexFood]
     }
 
-    override def update(userId: UserId, complexFood: ComplexFoodIncoming)(implicit
+    override def update(
+        userId: UserId,
+        complexFoodId: ComplexFoodId,
+        update: ComplexFoodUpdate
+    )(implicit
         ec: ExecutionContext
     ): DBIO[ComplexFood] = {
       val findAction =
-        OptionT(get(userId, complexFood.recipeId))
+        OptionT(get(userId, complexFoodId))
           .getOrElseF(DBIO.failed(DBError.Complex.Food.NotFound))
       for {
-        _           <- findAction
-        referencing <- complexIngredientDao.findReferencing(complexFood.recipeId)
+        complexFood <- findAction
+        referencing <- complexIngredientDao.findReferencing(complexFoodId)
         _ <-
-          if (breaksVolumeReference(referencing, complexFood.amountMilliLitres))
+          if (breaksVolumeReference(referencing, update.amountMilliLitres))
             DBIO.failed(DBError.Complex.Food.VolumeReferenceExists)
           else DBIO.successful(())
-        _ <- dao.update(ComplexFoodIncoming.TransformableToDB(userId, complexFood).transformInto[Tables.ComplexFoodRow])
+        updated = ComplexFoodUpdate.update(
+          ComplexFoodIncoming(
+            recipeId = complexFood.recipeId,
+            amountGrams = complexFood.amountGrams,
+            amountMilliLitres = complexFood.amountMilliLitres
+          ),
+          update
+        )
+        _ <- dao.update(ComplexFoodIncoming.TransformableToDB(userId, updated).transformInto[Tables.ComplexFoodRow])
         updatedFood <- findAction
       } yield updatedFood
     }

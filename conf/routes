@@ -21,10 +21,10 @@ PATCH         /recipes/:recipeId/complex-ingredients/:complexFoodId        contr
 DELETE        /recipes/:recipeId/complex-ingredients/:complexFoodId        controllers.recipe.RecipeController.removeComplexIngredient(recipeId: java.util.UUID, complexFoodId: java.util.UUID)
 
 GET           /complex-foods                                               controllers.complex.ComplexFoodController.all
-GET           /complex-foods/:recipeId                                     controllers.complex.ComplexFoodController.get(recipeId: java.util.UUID)
+GET           /complex-foods/:complexFoodId                                controllers.complex.ComplexFoodController.get(complexFoodId: java.util.UUID)
 POST          /complex-foods                                               controllers.complex.ComplexFoodController.create
-PATCH         /complex-foods                                               controllers.complex.ComplexFoodController.update
-DELETE        /complex-foods/:recipeId                                     controllers.complex.ComplexFoodController.delete(recipeId: java.util.UUID)
+PATCH         /complex-foods/:complexFoodId                                controllers.complex.ComplexFoodController.update(complexFoodId: java.util.UUID)
+DELETE        /complex-foods/:complexFoodId                                controllers.complex.ComplexFoodController.delete(complexFoodId: java.util.UUID)
 
 GET           /meals                                                       controllers.meal.MealController.all
 GET           /meals/:id                                                   controllers.meal.MealController.get(id: java.util.UUID)
