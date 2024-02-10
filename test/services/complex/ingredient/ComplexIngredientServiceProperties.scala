@@ -96,17 +96,14 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
 
   private case class CreateSetup(
       base: SetupBase,
-      complexFoodId: ComplexFoodId,
       complexIngredientCreation: ComplexIngredientCreation
   )
 
   private val createSetupGen: Gen[CreateSetup] = for {
     base                      <- setupBaseGen(VolumeAmountOption.OptionalVolume)
-    complexFood               <- Gen.oneOf(base.recipesAsComplexFoods.map(_._2))
-    complexIngredientCreation <- Gens.complexIngredientCreationGen(complexFood.amountMilliLitres)
+    complexIngredientCreation <- Gens.complexIngredientCreationGen(base.recipesAsComplexFoods.map(_._2))
   } yield CreateSetup(
     base = base,
-    complexFoodId = complexFood.recipeId,
     complexIngredientCreation = complexIngredientCreation
   )
 
@@ -122,7 +119,6 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
         complexIngredientService.create(
           setup.base.userId,
           setup.base.recipe.id,
-          setup.complexFoodId,
           setup.complexIngredientCreation
         )
       )
@@ -130,8 +126,7 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
         complexIngredientService.all(setup.base.userId, setup.base.recipe.id)
       )
     } yield {
-      val expectedComplexIngredient =
-        ComplexIngredientCreation.create(setup.complexFoodId, setup.complexIngredientCreation)
+      val expectedComplexIngredient = ComplexIngredientCreation.create(setup.complexIngredientCreation)
       Prop.all(
         created ?= expectedComplexIngredient,
         fetched ?= Seq(expectedComplexIngredient)
@@ -142,7 +137,7 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
   }
 
   property("Create (failure, exists)") = Prop.forAll(createSetupGen :| "setup") { setup =>
-    val complexIngredient = ComplexIngredientCreation.create(setup.complexFoodId, setup.complexIngredientCreation)
+    val complexIngredient = ComplexIngredientCreation.create(setup.complexIngredientCreation)
     val complexIngredientService = complexIngredientServiceWith(
       recipeContents = ContentsUtil.Recipe.from(setup.base.userId, Seq(setup.base.recipe)),
       complexFoodContents =
@@ -154,7 +149,6 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
       created <- complexIngredientService.create(
         setup.base.userId,
         setup.base.recipe.id,
-        setup.complexFoodId,
         // Only the factor is flexible, hence a different number is used for distinction.
         setup.complexIngredientCreation.copy(factor = setup.complexIngredientCreation.factor + 1)
       )
@@ -171,11 +165,9 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
 
   private val createSetupUnitMismatchGen: Gen[CreateSetup] = for {
     base                      <- setupBaseGen(VolumeAmountOption.NoVolume)
-    complexFood               <- Gen.oneOf(base.recipesAsComplexFoods.map(_._2))
-    complexIngredientCreation <- Gens.complexIngredientCreationGen(complexFood.amountMilliLitres)
+    complexIngredientCreation <- Gens.complexIngredientCreationGen(base.recipesAsComplexFoods.map(_._2))
   } yield CreateSetup(
     base = base,
-    complexFoodId = complexFood.recipeId,
     complexIngredientCreation = complexIngredientCreation
   )
 
@@ -191,7 +183,6 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
       created <- complexIngredientService.create(
         setup.base.userId,
         setup.base.recipe.id,
-        setup.complexFoodId,
         setup.complexIngredientCreation.copy(scalingMode = ScalingMode.Volume)
       )
       fetched <- complexIngredientService.all(setup.base.userId, setup.base.recipe.id)
@@ -353,7 +344,7 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
   }
 
   property("Delete (existent)") = Prop.forAll(createSetupGen :| "setup") { setup =>
-    val complexIngredient = ComplexIngredientCreation.create(setup.complexFoodId, setup.complexIngredientCreation)
+    val complexIngredient = ComplexIngredientCreation.create(setup.complexIngredientCreation)
     val complexIngredientService = complexIngredientServiceWith(
       recipeContents = ContentsUtil.Recipe.from(setup.base.userId, Seq(setup.base.recipe)),
       complexFoodContents =
@@ -403,7 +394,7 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
 
   private val deleteFailureSetupGen: Gen[DeleteFailureSetup] = for {
     existing <- createSetupGen
-    otherKey <- otherKeyGen(existing.base.recipe.id, existing.complexFoodId)
+    otherKey <- otherKeyGen(existing.base.recipe.id, existing.complexIngredientCreation.complexFoodId)
   } yield DeleteFailureSetup(
     existing = existing,
     otherKey = otherKey
@@ -412,11 +403,8 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
   property("Delete (non-existent)") = Prop.forAll(
     deleteFailureSetupGen :| "setup"
   ) { setup =>
-    val userId = setup.existing.base.userId
-    val complexIngredient = ComplexIngredientCreation.create(
-      setup.existing.complexFoodId,
-      setup.existing.complexIngredientCreation
-    )
+    val userId            = setup.existing.base.userId
+    val complexIngredient = ComplexIngredientCreation.create(setup.existing.complexIngredientCreation)
     val complexIngredientService = complexIngredientServiceWith(
       recipeContents = ContentsUtil.Recipe.from(userId, Seq(setup.existing.base.recipe)),
       complexFoodContents = ContentsUtil.ComplexFood.from(userId, setup.existing.base.recipesAsComplexFoods.map(_._2)),
@@ -470,7 +458,6 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
       created <- complexIngredientService.create(
         userId2,
         setup.base.recipe.id,
-        setup.complexFoodId,
         setup.complexIngredientCreation
       )
       fetched <- complexIngredientService.all(userId2, setup.base.recipe.id)
@@ -516,7 +503,7 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
     createSetupGen :| "setup",
     GenUtils.taggedId[UserTag] :| "userId2"
   ) { (setup, userId2) =>
-    val complexIngredient = ComplexIngredientCreation.create(setup.complexFoodId, setup.complexIngredientCreation)
+    val complexIngredient = ComplexIngredientCreation.create(setup.complexIngredientCreation)
     val complexIngredientService = complexIngredientServiceWith(
       recipeContents = ContentsUtil.Recipe.from(setup.base.userId, Seq(setup.base.recipe)),
       complexFoodContents =
@@ -525,7 +512,11 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
         ContentsUtil.ComplexIngredient.from(setup.base.userId, setup.base.recipe.id, Seq(complexIngredient))
     )
     val propF = for {
-      deleted <- complexIngredientService.delete(userId2, setup.base.recipe.id, setup.complexFoodId)
+      deleted <- complexIngredientService.delete(
+        userId2,
+        setup.base.recipe.id,
+        setup.complexIngredientCreation.complexFoodId
+      )
       fetched <- complexIngredientService.all(setup.base.userId, setup.base.recipe.id)
     } yield Prop.all(
       !deleted,

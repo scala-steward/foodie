@@ -38,11 +38,13 @@ object Gens {
       scalingMode = scalingMode
     )
 
-  def complexIngredientCreationGen(amountMillilitres: Option[BigDecimal]): Gen[ComplexIngredientCreation] =
+  def complexIngredientCreationGen(complexFoods: Seq[ComplexFoodIncoming]): Gen[ComplexIngredientCreation] =
     for {
+      complexFood <- Gen.oneOf(complexFoods)
       factor      <- GenUtils.smallBigDecimalGen
-      scalingMode <- Gen.oneOf(scalingModesByVolumeAmount(amountMillilitres))
+      scalingMode <- Gen.oneOf(scalingModesByVolumeAmount(complexFood.amountMilliLitres))
     } yield ComplexIngredientCreation(
+      complexFoodId = complexFood.recipeId,
       factor = factor,
       scalingMode = scalingMode
     )
