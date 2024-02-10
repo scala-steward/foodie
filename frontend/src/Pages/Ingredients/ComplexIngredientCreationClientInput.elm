@@ -8,12 +8,6 @@ import Monocle.Lens exposing (Lens)
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
 
 
-
--- Todo: The complexFoodId should not be part of the client input, but supplied externally.
--- The case is similar to referenceEntries, but different from ingredients, and meals,
--- because the id of the former is fixed, while the id of the latter is arbitrary.
-
-
 type alias ComplexIngredientCreationClientInput =
     { complexFoodId : ComplexFoodId
     , factor : ValidatedInput Float
@@ -46,6 +40,7 @@ from =
 
 to : ComplexIngredientCreationClientInput -> ComplexIngredientCreation
 to input =
-    { factor = input.factor.value
+    { complexFoodId = input.complexFoodId
+    , factor = input.factor.value
     , scalingMode = input.scalingMode
     }

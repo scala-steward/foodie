@@ -27,9 +27,9 @@ updateLogic =
         , toUpdate = ComplexIngredientUpdateClientInput.from
         , toCreation = ComplexIngredientCreationClientInput.from
         , createElement =
-            \authorizedAccess recipeId creation ->
-                ComplexIngredientCreationClientInput.to creation
-                    |> Requests.createComplexIngredient authorizedAccess recipeId creation.complexFoodId
+            \authorizedAccess recipeId ->
+                ComplexIngredientCreationClientInput.to
+                    >> Requests.createComplexIngredient authorizedAccess recipeId
         , saveElement = \authorizedAccess recipeId complexFoodId updateInput -> ComplexIngredientUpdateClientInput.to updateInput |> Requests.saveComplexIngredient authorizedAccess recipeId complexFoodId
         , deleteElement = Requests.deleteComplexIngredient
         , storeChoices = \_ -> Cmd.none

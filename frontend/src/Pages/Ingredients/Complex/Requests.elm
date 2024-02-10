@@ -32,13 +32,12 @@ fetchComplexFoods =
 createComplexIngredient :
     AuthorizedAccess
     -> RecipeId
-    -> ComplexFoodId
     -> ComplexIngredientCreation
     -> Cmd Page.LogicMsg
-createComplexIngredient authorizedAccess recipeId complexFoodId complexIngredientCreation =
+createComplexIngredient authorizedAccess recipeId complexIngredientCreation =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        (Addresses.Backend.recipes.complexIngredients.create recipeId complexFoodId)
+        (Addresses.Backend.recipes.complexIngredients.create recipeId)
         { body = encoderComplexIngredientCreation complexIngredientCreation |> Http.jsonBody
         , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotCreateResponse decoderComplexIngredient
         }

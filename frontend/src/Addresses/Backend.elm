@@ -27,7 +27,7 @@ recipes :
         }
     , complexIngredients :
         { allOf : RecipeId -> ResourcePattern
-        , create : RecipeId -> ComplexFoodId -> ResourcePattern
+        , create : RecipeId -> ResourcePattern
         , update : RecipeId -> ComplexFoodId -> ResourcePattern
         , delete : RecipeId -> ComplexFoodId -> ResourcePattern
         }
@@ -88,7 +88,7 @@ recipes =
         }
     , complexIngredients =
         { allOf = \recipeId -> get <| complexIngredients recipeId []
-        , create = \recipeId complexIngredientId -> post <| complexIngredients recipeId [ complexIngredientId |> Uuid.toString ]
+        , create = \recipeId -> post <| complexIngredients recipeId []
         , update = \recipeId complexIngredientId -> patch <| complexIngredients recipeId [ complexIngredientId |> Uuid.toString ]
         , delete = \recipeId complexIngredientId -> delete <| complexIngredients recipeId <| [ complexIngredientId |> Uuid.toString ]
         }
