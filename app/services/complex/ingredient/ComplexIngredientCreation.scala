@@ -3,6 +3,7 @@ package services.complex.ingredient
 import db.ComplexFoodId
 
 case class ComplexIngredientCreation(
+    complexFoodId: ComplexFoodId,
     factor: BigDecimal,
     scalingMode: ScalingMode
 )
@@ -10,11 +11,10 @@ case class ComplexIngredientCreation(
 object ComplexIngredientCreation {
 
   def create(
-      complexFoodId: ComplexFoodId,
       complexIngredientCreation: ComplexIngredientCreation
   ): ComplexIngredient =
     ComplexIngredient(
-      complexFoodId = complexFoodId,
+      complexFoodId = complexIngredientCreation.complexFoodId,
       factor = complexIngredientCreation.factor,
       scalingMode = complexIngredientCreation.scalingMode
     )

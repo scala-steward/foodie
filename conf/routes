@@ -16,7 +16,7 @@ POST          /recipes/:recipeId/ingredients                               contr
 PATCH         /recipes/:recipeId/ingredients/:ingredientId                 controllers.recipe.RecipeController.updateIngredient(recipeId: java.util.UUID, ingredientId: java.util.UUID)
 DELETE        /recipes/:recipeId/ingredients/:ingredientId                 controllers.recipe.RecipeController.removeIngredient(recipeId: java.util.UUID, ingredientId: java.util.UUID)
 GET           /recipes/:recipeId/complex-ingredients                       controllers.recipe.RecipeController.getComplexIngredients(recipeId: java.util.UUID)
-POST          /recipes/:recipeId/complex-ingredients/:complexFoodId        controllers.recipe.RecipeController.addComplexIngredient(recipeId: java.util.UUID, complexFoodId: java.util.UUID)
+POST          /recipes/:recipeId/complex-ingredients                       controllers.recipe.RecipeController.addComplexIngredient(recipeId: java.util.UUID)
 PATCH         /recipes/:recipeId/complex-ingredients/:complexFoodId        controllers.recipe.RecipeController.updateComplexIngredient(recipeId: java.util.UUID, complexFoodId: java.util.UUID)
 DELETE        /recipes/:recipeId/complex-ingredients/:complexFoodId        controllers.recipe.RecipeController.removeComplexIngredient(recipeId: java.util.UUID, complexFoodId: java.util.UUID)
 

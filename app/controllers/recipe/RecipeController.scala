@@ -250,13 +250,12 @@ class RecipeController @Inject() (
         .recover(errorHandler)
     }
 
-  def addComplexIngredient(recipeId: UUID, complexFoodId: UUID): Action[ComplexIngredientCreation] =
+  def addComplexIngredient(recipeId: UUID): Action[ComplexIngredientCreation] =
     userAction.async(circe.tolerantJson[ComplexIngredientCreation]) { request =>
       EitherT(
         complexIngredientService.create(
           userId = request.user.id,
           recipeId = recipeId.transformInto[RecipeId],
-          complexFoodId = complexFoodId.transformInto[ComplexFoodId],
           complexIngredientCreation = request.body.transformInto[services.complex.ingredient.ComplexIngredientCreation]
         )
       )

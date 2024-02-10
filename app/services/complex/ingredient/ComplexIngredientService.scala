@@ -13,7 +13,6 @@ trait ComplexIngredientService {
   def create(
       userId: UserId,
       recipeId: RecipeId,
-      complexFoodId: ComplexFoodId,
       complexIngredientCreation: ComplexIngredientCreation
   ): Future[ServerError.Or[ComplexIngredient]]
 
@@ -39,7 +38,6 @@ object ComplexIngredientService {
     def create(
         userId: UserId,
         recipeId: RecipeId,
-        complexFoodId: ComplexFoodId,
         complexIngredientCreation: ComplexIngredientCreation
     )(implicit ec: ExecutionContext): DBIO[ComplexIngredient]
 

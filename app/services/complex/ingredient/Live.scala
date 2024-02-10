@@ -36,10 +36,9 @@ class Live @Inject() (
   override def create(
       userId: UserId,
       recipeId: RecipeId,
-      complexFoodId: ComplexFoodId,
       complexIngredientCreation: ComplexIngredientCreation
   ): Future[ServerError.Or[ComplexIngredient]] =
-    db.runTransactionally(companion.create(userId, recipeId, complexFoodId, complexIngredientCreation))
+    db.runTransactionally(companion.create(userId, recipeId, complexIngredientCreation))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.Recipe.ComplexIngredient.Creation(error.getMessage).asServerError)
@@ -90,22 +89,21 @@ object Live {
     override def create(
         userId: UserId,
         recipeId: RecipeId,
-        complexFoodId: ComplexFoodId,
         complexIngredientCreation: ComplexIngredientCreation
     )(implicit
         ec: ExecutionContext
     ): DBIO[ComplexIngredient] = {
-      val complexIngredient = ComplexIngredientCreation.create(complexFoodId, complexIngredientCreation)
+      val complexIngredient = ComplexIngredientCreation.create(complexIngredientCreation)
       val complexIngredientRow =
         ComplexIngredient
           .TransformableToDB(userId, recipeId, complexIngredient)
           .transformInto[Tables.ComplexIngredientRow]
       withComplexFood(
         userId = userId,
-        complexFoodId = complexFoodId
+        complexFoodId = complexIngredientCreation.complexFoodId
       ) { complexFoodRow =>
         for {
-          createsCycle <- cycleCheck(recipeId, complexFoodId)
+          createsCycle <- cycleCheck(recipeId, complexIngredientCreation.complexFoodId)
           _            <- if (!createsCycle) DBIO.successful(()) else DBIO.failed(DBError.Complex.Ingredient.Cycle)
           _ <-
             if (isValidScalingMode(complexFoodRow.amountMilliLitres, complexIngredientCreation.scalingMode))
