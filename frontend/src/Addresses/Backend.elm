@@ -235,13 +235,13 @@ references :
     , allTrees : ResourcePattern
     , single : ReferenceMapId -> ResourcePattern
     , create : ResourcePattern
-    , update : ResourcePattern
+    , update : ReferenceMapId -> ResourcePattern
     , delete : ReferenceMapId -> ResourcePattern
     , duplicate : ReferenceMapId -> ResourcePattern
     , entries :
         { allOf : ReferenceMapId -> ResourcePattern
-        , create : ResourcePattern
-        , update : ResourcePattern
+        , create : ReferenceMapId -> ResourcePattern
+        , update : ReferenceMapId -> NutrientCode -> ResourcePattern
         , delete : ReferenceMapId -> NutrientCode -> ResourcePattern
         }
     }
@@ -258,21 +258,24 @@ references =
 
         treesWord =
             "trees"
-
-        entries =
-            (::) entriesWord >> base
     in
     { all = get <| base <| []
     , allTrees = get <| base <| (::) treesWord <| []
     , single = \referenceMapId -> get <| base <| [ referenceMapId |> Uuid.toString ]
     , create = post <| base []
-    , update = patch <| base []
+    , update = \referenceMapId -> patch <| base [ referenceMapId |> Uuid.toString ]
     , delete = \referenceMapId -> delete <| base <| [ referenceMapId |> Uuid.toString ]
     , duplicate = \referenceMapId -> post <| base <| [ referenceMapId |> Uuid.toString, duplicateWord ]
     , entries =
         { allOf = \referenceMapId -> get <| base <| [ referenceMapId |> Uuid.toString, entriesWord ]
-        , create = post <| entries []
-        , update = patch <| entries []
+        , create = \referenceMapId -> post <| base [ referenceMapId |> Uuid.toString, entriesWord ]
+        , update =
+            \referenceMapId nutrientCode ->
+                patch <|
+                    base <|
+                        (::) (referenceMapId |> Uuid.toString) <|
+                            (::) entriesWord <|
+                                [ String.fromInt nutrientCode ]
         , delete =
             \referenceMapId nutrientCode ->
                 delete <|

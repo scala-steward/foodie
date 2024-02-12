@@ -194,12 +194,13 @@ rescaleRecipeWith mkMsg authorizedAccess recipeId =
 saveReferenceMapWith :
     (Result Error ReferenceMap -> msg)
     -> AuthorizedAccess
+    -> ReferenceMapId
     -> ReferenceMapUpdate
     -> Cmd msg
-saveReferenceMapWith mkMsg authorizedAccess referenceMapUpdate =
+saveReferenceMapWith mkMsg authorizedAccess referenceMapId referenceMapUpdate =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        Addresses.Backend.references.update
+        (Addresses.Backend.references.update referenceMapId)
         { body = encoderReferenceMapUpdate referenceMapUpdate |> Http.jsonBody
         , expect = HttpUtil.expectJson mkMsg decoderReferenceMap
         }

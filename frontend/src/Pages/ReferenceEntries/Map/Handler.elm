@@ -22,11 +22,12 @@ updateLogic =
         { toUpdate = ReferenceMapUpdateClientInput.from
         , idOf = .id
         , save =
-            \authorizedAccess _ ->
+            \authorizedAccess referenceMapId ->
                 ReferenceMapUpdateClientInput.to
                     >> Pages.Util.Requests.saveReferenceMapWith
                         Pages.Util.Parent.Page.GotSaveEditResponse
                         authorizedAccess
+                        referenceMapId
                     >> Just
         , delete = Pages.Util.Requests.deleteReferenceMapWith Pages.Util.Parent.Page.GotDeleteResponse
         , duplicate = Pages.Util.Requests.duplicateReferenceMapWith Pages.Util.Parent.Page.GotDuplicateResponse

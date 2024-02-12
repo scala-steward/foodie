@@ -32,7 +32,7 @@ updateLogic =
         , navigateToAddress = Addresses.Frontend.referenceEntries.address
         , updateCreationTimestamp = always identity
         , create = \authorizedAccess -> ReferenceMapCreationClientInput.toCreation >> Requests.createReferenceMap authorizedAccess
-        , save = \authorizedAccess _ -> ReferenceMapUpdateClientInput.to >> Requests.saveReferenceMap authorizedAccess
+        , save = \authorizedAccess referenceMapId -> ReferenceMapUpdateClientInput.to >> Requests.saveReferenceMap authorizedAccess referenceMapId
         , delete = Requests.deleteReferenceMap
         , duplicate = Pages.Util.Requests.duplicateReferenceMapWith Pages.Util.ParentEditor.Page.GotDuplicateResponse
         }

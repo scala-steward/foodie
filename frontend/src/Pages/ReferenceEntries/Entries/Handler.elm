@@ -29,11 +29,11 @@ updateLogic =
         , choiceIdOfCreation = .nutrientCode
         , toUpdate = ReferenceEntryUpdateClientInput.from
         , toCreation = \nutrient -> ReferenceEntryCreationClientInput.default nutrient.code
-        , createElement = \authorizedAccess referenceMapId -> ReferenceEntryCreationClientInput.toCreation referenceMapId >> Requests.createReferenceEntry authorizedAccess
+        , createElement = \authorizedAccess referenceMapId creation -> ReferenceEntryCreationClientInput.toCreation creation |> Requests.createReferenceEntry authorizedAccess referenceMapId
         , saveElement =
-            \authorizedAccess referenceMapId _ update ->
-                ReferenceEntryUpdateClientInput.to referenceMapId update
-                    |> Requests.saveReferenceEntry authorizedAccess
+            \authorizedAccess referenceMapId nutrientCode update ->
+                ReferenceEntryUpdateClientInput.to update
+                    |> Requests.saveReferenceEntry authorizedAccess referenceMapId nutrientCode
         , deleteElement = Requests.deleteReferenceEntry
         , storeChoices =
             Encode.list encoderNutrient

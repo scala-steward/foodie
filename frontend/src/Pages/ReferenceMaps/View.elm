@@ -144,18 +144,17 @@ referenceMapLineWith ps =
 
 
 updateReferenceMapLine : ReferenceMapId -> ReferenceMapUpdateClientInput -> List (Html Page.LogicMsg)
-updateReferenceMapLine referenceMapId referenceMapUpdateClientInput =
+updateReferenceMapLine referenceMapId =
     editReferenceMapLineWith
-        { saveMsg = Pages.Util.ParentEditor.Page.SaveEdit referenceMapUpdateClientInput.id
+        { saveMsg = Pages.Util.ParentEditor.Page.SaveEdit referenceMapId
         , nameLens = ReferenceMapUpdateClientInput.lenses.name
         , updateMsg = Pages.Util.ParentEditor.Page.Edit referenceMapId
         , confirmName = "Save"
-        , cancelMsg = Pages.Util.ParentEditor.Page.ExitEdit referenceMapUpdateClientInput.id
+        , cancelMsg = Pages.Util.ParentEditor.Page.ExitEdit referenceMapId
         , cancelName = "Cancel"
         , rowStyles = [ Style.classes.editLine ]
-        , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls referenceMapUpdateClientInput.id |> Just
+        , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls referenceMapId |> Just
         }
-        referenceMapUpdateClientInput
 
 
 createReferenceMapLine : ReferenceMapCreationClientInput -> List (Html Page.LogicMsg)
