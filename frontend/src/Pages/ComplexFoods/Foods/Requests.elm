@@ -4,6 +4,7 @@ import Addresses.Backend
 import Api.Auxiliary exposing (ComplexFoodId)
 import Api.Types.ComplexFood exposing (ComplexFood, decoderComplexFood)
 import Api.Types.ComplexFoodIncoming exposing (ComplexFoodIncoming, encoderComplexFoodIncoming)
+import Api.Types.ComplexFoodUpdate exposing (ComplexFoodUpdate, encoderComplexFoodUpdate)
 import Http
 import Json.Decode as Decode
 import Pages.ComplexFoods.Foods.Page as Page
@@ -38,12 +39,12 @@ createComplexFood authorizedAccess complexFood =
         }
 
 
-updateComplexFood : AuthorizedAccess -> ComplexFoodIncoming -> Cmd Page.LogicMsg
-updateComplexFood authorizedAccess complexFood =
+updateComplexFood : AuthorizedAccess -> ComplexFoodId -> ComplexFoodUpdate -> Cmd Page.LogicMsg
+updateComplexFood authorizedAccess complexFoodId complexFoodUpdate =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        Addresses.Backend.complexFoods.update
-        { body = encoderComplexFoodIncoming complexFood |> Http.jsonBody
+        (Addresses.Backend.complexFoods.update complexFoodId)
+        { body = encoderComplexFoodUpdate complexFoodUpdate |> Http.jsonBody
         , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotSaveEditResponse decoderComplexFood
         }
 

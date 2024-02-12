@@ -9,7 +9,8 @@ import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
 import Maybe.Extra
 import Monocle.Lens exposing (Lens)
-import Pages.ComplexFoods.ComplexFoodClientInput as ComplexFoodClientInput exposing (ComplexFoodClientInput)
+import Pages.ComplexFoods.ComplexFoodCreationClientInput as ComplexFoodCreationClientInput
+import Pages.ComplexFoods.ComplexFoodUpdateClientInput as ComplexFoodUpdateClientInput
 import Pages.ComplexFoods.Foods.Page as Page
 import Pages.Recipes.View
 import Pages.Util.Choice.Page
@@ -56,26 +57,26 @@ viewComplexFoods configuration main =
                     ]
                 }
         , isValidInput =
-            \complexFoodClientInput ->
+            \complexFoodUpdateClientInput ->
                 List.all identity
-                    [ complexFoodClientInput.amountGrams |> ValidatedInput.isValid
-                    , complexFoodClientInput.amountMilliLitres |> ValidatedInput.isValid
+                    [ complexFoodUpdateClientInput.amountGrams |> ValidatedInput.isValid
+                    , complexFoodUpdateClientInput.amountMilliLitres |> ValidatedInput.isValid
                     ]
         , edit =
-            \complexFood complexFoodClientInput ->
+            \complexFood complexFoodUpdateClientInput ->
                 [ { attributes = []
                   , children = [ label [] [ text <| .name <| complexFood ] ]
                   }
                 , { attributes = [ Style.classes.numberCell ]
                   , children =
                         [ input
-                            [ value <| complexFoodClientInput.amountGrams.text
+                            [ value <| complexFoodUpdateClientInput.amountGrams.text
                             , onInput
                                 (flip
                                     (ValidatedInput.lift
-                                        ComplexFoodClientInput.lenses.amountGrams
+                                        ComplexFoodUpdateClientInput.lenses.amountGrams
                                     ).set
-                                    complexFoodClientInput
+                                    complexFoodUpdateClientInput
                                     >> Pages.Util.Choice.Page.Edit complexFood.recipeId
                                 )
                             , Style.classes.numberLabel
@@ -86,13 +87,13 @@ viewComplexFoods configuration main =
                 , { attributes = [ Style.classes.numberCell ]
                   , children =
                         [ input
-                            [ value <| complexFoodClientInput.amountMilliLitres.text
+                            [ value <| complexFoodUpdateClientInput.amountMilliLitres.text
                             , onInput <|
                                 flip
                                     (ValidatedInput.lift
-                                        ComplexFoodClientInput.lenses.amountMilliLitres
+                                        ComplexFoodUpdateClientInput.lenses.amountMilliLitres
                                     ).set
-                                    complexFoodClientInput
+                                    complexFoodUpdateClientInput
                                     >> Pages.Util.Choice.Page.Edit complexFood.recipeId
                             , Style.classes.numberLabel
                             ]
@@ -154,7 +155,7 @@ viewRecipes configuration main =
                                         onInput <|
                                             flip
                                                 (ValidatedInput.lift
-                                                    ComplexFoodClientInput.lenses.amountGrams
+                                                    ComplexFoodCreationClientInput.lenses.amountGrams
                                                 ).set
                                                 complexFoodClientInput
                                                 >> Pages.Util.Choice.Page.UpdateCreation
@@ -175,7 +176,7 @@ viewRecipes configuration main =
                                         onInput <|
                                             flip
                                                 (ValidatedInput.lift
-                                                    ComplexFoodClientInput.lenses.amountMilliLitres
+                                                    ComplexFoodCreationClientInput.lenses.amountMilliLitres
                                                 ).set
                                                 complexFoodClientInput
                                                 >> Pages.Util.Choice.Page.UpdateCreation

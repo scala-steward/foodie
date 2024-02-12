@@ -285,7 +285,7 @@ complexFoods :
     { all : ResourcePattern
     , single : ComplexFoodId -> ResourcePattern
     , create : ResourcePattern
-    , update : ResourcePattern
+    , update : ComplexFoodId -> ResourcePattern
     , delete : ComplexFoodId -> ResourcePattern
     }
 complexFoods =
@@ -296,7 +296,7 @@ complexFoods =
     { all = get <| base <| []
     , single = \complexFoodId -> get <| base <| [ complexFoodId |> Uuid.toString ]
     , create = post <| base []
-    , update = patch <| base []
+    , update = \complexFoodId -> patch <| base [ complexFoodId |> Uuid.toString ]
     , delete = \complexFoodId -> delete <| base <| [ complexFoodId |> Uuid.toString ]
     }
 
