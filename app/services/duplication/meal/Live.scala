@@ -82,7 +82,7 @@ object Live {
         inserted <- OptionT.liftF(
           mealServiceCompanion.createMeal(
             userId = userId,
-            id = newId,
+            mealId = newId,
             mealCreation = MealCreation(
               date = timestamp,
               name =

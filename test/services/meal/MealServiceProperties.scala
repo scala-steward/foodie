@@ -99,7 +99,7 @@ object MealServiceProperties extends Properties("Meal service") {
     for {
       userId     <- GenUtils.taggedId[UserTag]
       meal       <- Gens.mealGen()
-      mealUpdate <- Gens.mealUpdateGen(meal.id)
+      mealUpdate <- Gens.mealUpdateGen()
     } yield UpdateSetup(
       userId,
       meal,
@@ -114,7 +114,7 @@ object MealServiceProperties extends Properties("Meal service") {
       mealEntryContents = Seq.empty
     )
     val transformer = for {
-      updatedMeal <- EitherT(mealService.updateMeal(setup.userId, setup.mealUpdate))
+      updatedMeal <- EitherT(mealService.updateMeal(setup.userId, setup.meal.id, setup.mealUpdate))
       fetchedMeal <- EitherT.fromOptionF(
         mealService.getMeal(setup.userId, setup.meal.id),
         ErrorContext.Meal.NotFound.asServerError
@@ -164,7 +164,6 @@ object MealServiceProperties extends Properties("Meal service") {
     userId = userId,
     fullMeal = fullMeal,
     mealEntryCreation = MealEntryCreation(
-      fullMeal.meal.id,
       mealEntry.recipeId,
       mealEntry.numberOfServings
     )
@@ -178,7 +177,7 @@ object MealServiceProperties extends Properties("Meal service") {
       mealEntryContents = ContentsUtil.MealEntry.from(setup.userId, setup.fullMeal)
     )
     val transformer = for {
-      mealEntry <- EitherT(mealService.addMealEntry(setup.userId, setup.mealEntryCreation))
+      mealEntry <- EitherT(mealService.addMealEntry(setup.userId, setup.fullMeal.meal.id, setup.mealEntryCreation))
       mealEntries <- EitherT.liftF[Future, ServerError, Seq[MealEntry]](
         flattenedMealEntries(mealService)(setup.userId, Seq(setup.fullMeal.meal.id))
       )
@@ -232,7 +231,7 @@ object MealServiceProperties extends Properties("Meal service") {
     recipeIds       <- recipeIdsGen
     fullMeal        <- Gens.fullMealGen(recipeIds)
     mealEntry       <- Gen.oneOf(fullMeal.mealEntries)
-    mealEntryUpdate <- Gens.mealEntryUpdateGen(fullMeal.meal.id, mealEntry.id, recipeIds)
+    mealEntryUpdate <- Gens.mealEntryUpdateGen(recipeIds)
   } yield UpdateMealEntrySetup(
     userId = userId,
     fullMeal = fullMeal,
@@ -248,7 +247,9 @@ object MealServiceProperties extends Properties("Meal service") {
       mealEntryContents = ContentsUtil.MealEntry.from(setup.userId, setup.fullMeal)
     )
     val transformer = for {
-      updatedMealEntry <- EitherT(mealService.updateMealEntry(setup.userId, setup.mealEntryUpdate))
+      updatedMealEntry <- EitherT(
+        mealService.updateMealEntry(setup.userId, setup.fullMeal.meal.id, setup.mealEntry.id, setup.mealEntryUpdate)
+      )
       mealEntries <- EitherT.liftF[Future, ServerError, Seq[MealEntry]](
         flattenedMealEntries(mealService)(setup.userId, Seq(setup.fullMeal.meal.id))
       )
@@ -378,7 +379,7 @@ object MealServiceProperties extends Properties("Meal service") {
       userId1    <- GenUtils.taggedId[UserTag]
       userId2    <- GenUtils.taggedId[UserTag]
       meal       <- Gens.mealGen()
-      mealUpdate <- Gens.mealUpdateGen(meal.id)
+      mealUpdate <- Gens.mealUpdateGen()
     } yield WrongUpdateSetup(
       userId1,
       userId2,
@@ -395,7 +396,7 @@ object MealServiceProperties extends Properties("Meal service") {
     )
     val transformer = for {
       updatedMeal <- EitherT.liftF[Future, ServerError, ServerError.Or[Meal]](
-        mealService.updateMeal(setup.userId2, setup.mealUpdate)
+        mealService.updateMeal(setup.userId2, setup.meal.id, setup.mealUpdate)
       )
     } yield Prop(updatedMeal.isLeft)
 
@@ -418,6 +419,7 @@ object MealServiceProperties extends Properties("Meal service") {
     DBTestUtil.awaitProp(transformer)
   }
 
+  // TODO: Add tests for other mismatches
   property("Add meal entry (wrong userId)") = Prop.forAll(
     addMealEntrySetupGen :| "setup",
     GenUtils.taggedId[UserTag] :| "userId2"
@@ -427,7 +429,7 @@ object MealServiceProperties extends Properties("Meal service") {
       mealEntryContents = ContentsUtil.MealEntry.from(setup.userId, setup.fullMeal)
     )
     val transformer = for {
-      result <- EitherT.liftF(mealService.addMealEntry(userId2, setup.mealEntryCreation))
+      result <- EitherT.liftF(mealService.addMealEntry(userId2, setup.fullMeal.meal.id, setup.mealEntryCreation))
       mealEntries <- EitherT.liftF[Future, ServerError, Seq[MealEntry]](
         flattenedMealEntries(mealService)(setup.userId, Seq(setup.fullMeal.meal.id))
       )
@@ -439,6 +441,7 @@ object MealServiceProperties extends Properties("Meal service") {
     DBTestUtil.awaitProp(transformer)
   }
 
+  // TODO: Add tests for other mismatches
   property("Read meal entries (wrong userId)") = Prop.forAll(
     readMealEntriesSetupGen :| "setup",
     GenUtils.taggedId[UserTag] :| "userId2"
@@ -456,6 +459,7 @@ object MealServiceProperties extends Properties("Meal service") {
     DBTestUtil.awaitProp(transformer)
   }
 
+  // TODO: Add tests for other mismatches
   property("Update meal entry (wrong userId)") = Prop.forAll(
     updateMealEntrySetupGen :| "setup",
     GenUtils.taggedId[UserTag] :| "userId2"
@@ -465,7 +469,9 @@ object MealServiceProperties extends Properties("Meal service") {
       mealEntryContents = ContentsUtil.MealEntry.from(setup.userId, setup.fullMeal)
     )
     val transformer = for {
-      result <- EitherT.liftF(mealService.updateMealEntry(userId2, setup.mealEntryUpdate))
+      result <- EitherT.liftF(
+        mealService.updateMealEntry(userId2, setup.fullMeal.meal.id, setup.mealEntry.id, setup.mealEntryUpdate)
+      )
       mealEntries <- EitherT.liftF[Future, ServerError, Seq[MealEntry]](
         flattenedMealEntries(mealService)(setup.userId, Seq(setup.fullMeal.meal.id))
       )

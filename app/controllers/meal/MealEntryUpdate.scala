@@ -8,19 +8,15 @@ import java.util.UUID
 
 @JsonCodec
 case class MealEntryUpdate(
-    mealId: UUID,
-    mealEntryId: UUID,
     recipeId: UUID,
     numberOfServings: BigDecimal
 )
 
 object MealEntryUpdate {
 
-  implicit val toInternal: Transformer[MealEntryUpdate, services.meal.MealEntryUpdate] = {
+  implicit val toInternal: Transformer[MealEntryUpdate, services.meal.MealEntryUpdate] =
     Transformer
       .define[MealEntryUpdate, services.meal.MealEntryUpdate]
-      .withFieldRenamed(_.mealEntryId, _.id)
       .buildTransformer
-  }
 
 }

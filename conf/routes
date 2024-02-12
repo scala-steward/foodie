@@ -27,15 +27,15 @@ PATCH         /complex-foods/:complexFoodId                                contr
 DELETE        /complex-foods/:complexFoodId                                controllers.complex.ComplexFoodController.delete(complexFoodId: java.util.UUID)
 
 GET           /meals                                                       controllers.meal.MealController.all
-GET           /meals/:id                                                   controllers.meal.MealController.get(id: java.util.UUID)
+GET           /meals/:mealId                                               controllers.meal.MealController.get(mealId: java.util.UUID)
 POST          /meals                                                       controllers.meal.MealController.create
-PATCH         /meals                                                       controllers.meal.MealController.update
-DELETE        /meals/:id                                                   controllers.meal.MealController.delete(id: java.util.UUID)
-GET           /meals/:id/entries                                           controllers.meal.MealController.getMealEntries(id: java.util.UUID)
-POST          /meals/:id/duplicate                                         controllers.meal.MealController.duplicate(id: java.util.UUID)
-POST          /meals/entries                                               controllers.meal.MealController.addMealEntry
-PATCH         /meals/entries                                               controllers.meal.MealController.updateMealEntry
-DELETE        /meals/:mealId/entries/:id                                   controllers.meal.MealController.deleteMealEntry(mealId: java.util.UUID, id: java.util.UUID)
+PATCH         /meals/:mealId                                               controllers.meal.MealController.update(mealId: java.util.UUID)
+DELETE        /meals/:mealId                                               controllers.meal.MealController.delete(mealId: java.util.UUID)
+POST          /meals/:mealId/duplicate                                     controllers.meal.MealController.duplicate(mealId: java.util.UUID)
+GET           /meals/:mealId/entries                                       controllers.meal.MealController.getMealEntries(mealId: java.util.UUID)
+POST          /meals/:mealId/entries                                       controllers.meal.MealController.addMealEntry(mealId: java.util.UUID)
+PATCH         /meals/:mealId/entries/:mealEntryId                          controllers.meal.MealController.updateMealEntry(mealId: java.util.UUID, mealEntryId: java.util.UUID)
+DELETE        /meals/:mealId/entries/:mealEntryId                          controllers.meal.MealController.deleteMealEntry(mealId: java.util.UUID, mealEntryId: java.util.UUID)
 
 GET           /reference-maps                                              controllers.reference.ReferenceController.all
 GET           /reference-maps/trees                                        controllers.reference.ReferenceController.allTrees

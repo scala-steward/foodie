@@ -11,18 +11,24 @@ import scala.concurrent.{ ExecutionContext, Future }
 
 trait MealService {
   def allMeals(userId: UserId, interval: RequestInterval): Future[Seq[Meal]]
-  def getMeal(userId: UserId, id: MealId): Future[Option[Meal]]
+  def getMeal(userId: UserId, mealId: MealId): Future[Option[Meal]]
 
   def createMeal(userId: UserId, mealCreation: MealCreation): Future[ServerError.Or[Meal]]
-  def updateMeal(userId: UserId, mealUpdate: MealUpdate): Future[ServerError.Or[Meal]]
-  def deleteMeal(userId: UserId, id: MealId): Future[Boolean]
+  def updateMeal(userId: UserId, mealId: MealId, mealUpdate: MealUpdate): Future[ServerError.Or[Meal]]
+  def deleteMeal(userId: UserId, mealId: MealId): Future[Boolean]
 
-  def getMealEntries(userId: UserId, ids: Seq[MealId]): Future[Map[MealKey, Seq[MealEntry]]]
+  def getMealEntries(userId: UserId, mealIds: Seq[MealId]): Future[Map[MealKey, Seq[MealEntry]]]
 
-  def addMealEntry(userId: UserId, mealEntryCreation: MealEntryCreation): Future[ServerError.Or[MealEntry]]
+  def addMealEntry(
+      userId: UserId,
+      mealId: MealId,
+      mealEntryCreation: MealEntryCreation
+  ): Future[ServerError.Or[MealEntry]]
 
   def updateMealEntry(
       userId: UserId,
+      mealId: MealId,
+      mealEntryId: MealEntryId,
       mealEntryUpdate: MealEntryUpdate
   ): Future[ServerError.Or[MealEntry]]
 
@@ -33,21 +39,25 @@ object MealService {
 
   trait Companion {
     def allMeals(userId: UserId, interval: RequestInterval)(implicit ec: ExecutionContext): DBIO[Seq[Meal]]
-    def getMeal(userId: UserId, id: MealId)(implicit ec: ExecutionContext): DBIO[Option[Meal]]
+    def getMeal(userId: UserId, mealId: MealId)(implicit ec: ExecutionContext): DBIO[Option[Meal]]
 
-    def getMeals(userId: UserId, ids: Seq[MealId])(implicit ec: ExecutionContext): DBIO[Seq[Meal]]
+    def getMeals(userId: UserId, mealIds: Seq[MealId])(implicit ec: ExecutionContext): DBIO[Seq[Meal]]
 
-    def createMeal(userId: UserId, id: MealId, mealCreation: MealCreation)(implicit ec: ExecutionContext): DBIO[Meal]
-    def updateMeal(userId: UserId, mealUpdate: MealUpdate)(implicit ec: ExecutionContext): DBIO[Meal]
-    def deleteMeal(userId: UserId, id: MealId)(implicit ec: ExecutionContext): DBIO[Boolean]
+    def createMeal(userId: UserId, mealId: MealId, mealCreation: MealCreation)(implicit
+        ec: ExecutionContext
+    ): DBIO[Meal]
 
-    def getMealEntries(userId: UserId, ids: Seq[MealId])(implicit
+    def updateMeal(userId: UserId, mealId: MealId, mealUpdate: MealUpdate)(implicit ec: ExecutionContext): DBIO[Meal]
+    def deleteMeal(userId: UserId, mealId: MealId)(implicit ec: ExecutionContext): DBIO[Boolean]
+
+    def getMealEntries(userId: UserId, mealIds: Seq[MealId])(implicit
         ec: ExecutionContext
     ): DBIO[Map[MealKey, Seq[MealEntry]]]
 
     def addMealEntry(
         userId: UserId,
-        id: MealEntryId,
+        mealId: MealId,
+        mealEntryId: MealEntryId,
         mealEntryCreation: MealEntryCreation
     )(implicit
         ec: ExecutionContext
@@ -55,6 +65,8 @@ object MealService {
 
     def updateMealEntry(
         userId: UserId,
+        mealId: MealId,
+        mealEntryId: MealEntryId,
         mealEntryUpdate: MealEntryUpdate
     )(implicit
         ec: ExecutionContext
@@ -63,7 +75,7 @@ object MealService {
     def removeMealEntry(
         userId: UserId,
         mealId: MealId,
-        id: MealEntryId
+        mealEntryId: MealEntryId
     )(implicit ec: ExecutionContext): DBIO[Boolean]
 
     final def notFound[A]: DBIO[A] = DBIO.failed(DBError.Meal.NotFound)
