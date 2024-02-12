@@ -105,7 +105,7 @@ object ReferenceServiceProperties extends Properties("Reference service properti
     for {
       userId             <- GenUtils.taggedId[UserTag]
       referenceMap       <- Gens.referenceMapGen
-      referenceMapUpdate <- Gens.referenceMapUpdateGen(referenceMap.id)
+      referenceMapUpdate <- Gens.referenceMapUpdateGen
     } yield UpdateSetup(
       userId,
       referenceMap,
@@ -121,7 +121,13 @@ object ReferenceServiceProperties extends Properties("Reference service properti
     )
     val transformer = for {
       updatedReferenceMap <-
-        EitherT(referenceMapService.updateReferenceMap(updateSetup.userId, updateSetup.referenceMapUpdate))
+        EitherT(
+          referenceMapService.updateReferenceMap(
+            updateSetup.userId,
+            updateSetup.referenceMap.id,
+            updateSetup.referenceMapUpdate
+          )
+        )
       fetchedReferenceMap <- EitherT.fromOptionF(
         referenceMapService.getReferenceMap(updateSetup.userId, updateSetup.referenceMap.id),
         ErrorContext.ReferenceMap.NotFound.asServerError
@@ -183,12 +189,13 @@ object ReferenceServiceProperties extends Properties("Reference service properti
     )
     val referenceMapEntryCreation =
       ReferenceEntryCreation(
-        setup.fullReferenceMap.referenceMap.id,
         setup.referenceEntry.nutrientCode,
         setup.referenceEntry.amount
       )
     val transformer = for {
-      referenceMapEntry <- EitherT(referenceMapService.addReferenceEntry(userId, referenceMapEntryCreation))
+      referenceMapEntry <- EitherT(
+        referenceMapService.addReferenceEntry(userId, setup.fullReferenceMap.referenceMap.id, referenceMapEntryCreation)
+      )
       referenceMapEntries <- EitherT.liftF[Future, ServerError, List[ReferenceEntry]](
         referenceMapService.allReferenceEntries(userId, setup.fullReferenceMap.referenceMap.id)
       )
@@ -234,11 +241,10 @@ object ReferenceServiceProperties extends Properties("Reference service properti
 
   private val referenceMapEntryUpdateSetupGen: Gen[ReferenceEntryUpdateSetup] =
     for {
-      userId            <- GenUtils.taggedId[UserTag]
-      fullReferenceMap  <- Gens.fullReferenceMapGen
-      referenceMapEntry <- Gen.oneOf(fullReferenceMap.referenceEntries)
-      referenceMapEntryUpdate <-
-        Gens.referenceEntryUpdateGen(fullReferenceMap.referenceMap.id, referenceMapEntry.nutrientCode)
+      userId                  <- GenUtils.taggedId[UserTag]
+      fullReferenceMap        <- Gens.fullReferenceMapGen
+      referenceMapEntry       <- Gen.oneOf(fullReferenceMap.referenceEntries)
+      referenceMapEntryUpdate <- Gens.referenceEntryUpdateGen
     } yield ReferenceEntryUpdateSetup(
       userId = userId,
       fullReferenceMap = fullReferenceMap,
@@ -256,7 +262,14 @@ object ReferenceServiceProperties extends Properties("Reference service properti
 
     val transformer = for {
       updatedReferenceEntry <-
-        EitherT(referenceMapService.updateReferenceEntry(setup.userId, setup.referenceMapEntryUpdate))
+        EitherT(
+          referenceMapService.updateReferenceEntry(
+            setup.userId,
+            setup.fullReferenceMap.referenceMap.id,
+            setup.referenceMapEntry.nutrientCode,
+            setup.referenceMapEntryUpdate
+          )
+        )
       referenceMapEntries <- EitherT.liftF[Future, ServerError, List[ReferenceEntry]](
         referenceMapService.allReferenceEntries(setup.userId, setup.fullReferenceMap.referenceMap.id)
       )
@@ -386,6 +399,7 @@ object ReferenceServiceProperties extends Properties("Reference service properti
     DBTestUtil.awaitProp(transformer)
   }
 
+  // TODO: Add tests for other mismatches
   property("Update (wrong user)") = Prop.forAll(
     updateSetupGen :| "setup",
     GenUtils.taggedId[UserTag] :| "userId2"
@@ -396,13 +410,14 @@ object ReferenceServiceProperties extends Properties("Reference service properti
     )
     val transformer = for {
       updatedReferenceMap <- EitherT.liftF[Future, ServerError, ServerError.Or[ReferenceMap]](
-        referenceMapService.updateReferenceMap(userId2, setup.referenceMapUpdate)
+        referenceMapService.updateReferenceMap(userId2, setup.referenceMap.id, setup.referenceMapUpdate)
       )
     } yield Prop(updatedReferenceMap.isLeft)
 
     DBTestUtil.awaitProp(transformer)
   }
 
+  // TODO: Add tests for other mismatches
   property("Delete (wrong user)") = Prop.forAll(
     GenUtils.taggedId[UserTag] :| "userId1",
     GenUtils.taggedId[UserTag] :| "userId2",
@@ -419,6 +434,7 @@ object ReferenceServiceProperties extends Properties("Reference service properti
     DBTestUtil.awaitProp(transformer)
   }
 
+  // TODO: Add tests for other mismatches
   property("Add reference entry (wrong user)") = Prop.forAll(
     GenUtils.taggedId[UserTag] :| "userId1",
     GenUtils.taggedId[UserTag] :| "userId2",
@@ -431,12 +447,13 @@ object ReferenceServiceProperties extends Properties("Reference service properti
     )
     val referenceMapEntryCreation =
       ReferenceEntryCreation(
-        fullReferenceMap.referenceMap.id,
         referenceMapEntry.nutrientCode,
         referenceMapEntry.amount
       )
     val transformer = for {
-      result <- EitherT.liftF(referenceMapService.addReferenceEntry(userId2, referenceMapEntryCreation))
+      result <- EitherT.liftF(
+        referenceMapService.addReferenceEntry(userId2, fullReferenceMap.referenceMap.id, referenceMapEntryCreation)
+      )
       referenceMapEntries <- EitherT.liftF[Future, ServerError, List[ReferenceEntry]](
         referenceMapService.allReferenceEntries(userId1, fullReferenceMap.referenceMap.id)
       )
@@ -448,6 +465,7 @@ object ReferenceServiceProperties extends Properties("Reference service properti
     DBTestUtil.awaitProp(transformer)
   }
 
+  // TODO: Add tests for other mismatches
   property("Read reference entries (wrong user)") = Prop.forAll(
     GenUtils.taggedId[UserTag] :| "userId1",
     GenUtils.taggedId[UserTag] :| "userId2",
@@ -466,6 +484,7 @@ object ReferenceServiceProperties extends Properties("Reference service properti
     DBTestUtil.awaitProp(transformer)
   }
 
+  // TODO: Add tests for other mismatches
   property("Update reference entry (wrong user)") = Prop.forAll(
     referenceMapEntryUpdateSetupGen :| "reference entry update setup",
     GenUtils.taggedId[UserTag] :| "userId2"
@@ -476,7 +495,12 @@ object ReferenceServiceProperties extends Properties("Reference service properti
     )
     val transformer = for {
       result <- EitherT.liftF(
-        referenceMapService.updateReferenceEntry(userId2, setup.referenceMapEntryUpdate)
+        referenceMapService.updateReferenceEntry(
+          userId2,
+          setup.fullReferenceMap.referenceMap.id,
+          setup.referenceMapEntry.nutrientCode,
+          setup.referenceMapEntryUpdate
+        )
       )
       referenceMapEntries <- EitherT.liftF[Future, ServerError, List[ReferenceEntry]](
         referenceMapService.allReferenceEntries(setup.userId, setup.fullReferenceMap.referenceMap.id)
@@ -491,6 +515,7 @@ object ReferenceServiceProperties extends Properties("Reference service properti
     DBTestUtil.awaitProp(transformer)
   }
 
+  // TODO: Add tests for other mismatches
   property("Delete reference entry (wrong user)") = Prop.forAll(
     deleteReferenceEntrySetupGen :| "wrong delete reference entry setup",
     GenUtils.taggedId[UserTag] :| "userId2"

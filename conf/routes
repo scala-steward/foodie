@@ -9,9 +9,9 @@ GET           /recipes/:recipeId                                           contr
 POST          /recipes                                                     controllers.recipe.RecipeController.create
 PATCH         /recipes/:recipeId                                           controllers.recipe.RecipeController.update(recipeId: java.util.UUID)
 DELETE        /recipes/:recipeId                                           controllers.recipe.RecipeController.delete(recipeId: java.util.UUID)
-GET           /recipes/:recipeId/ingredients                               controllers.recipe.RecipeController.getIngredients(recipeId: java.util.UUID)
 POST          /recipes/:recipeId/duplicate                                 controllers.recipe.RecipeController.duplicate(recipeId: java.util.UUID)
 PATCH         /recipes/:recipeId/rescale                                   controllers.recipe.RecipeController.rescale(recipeId: java.util.UUID)
+GET           /recipes/:recipeId/ingredients                               controllers.recipe.RecipeController.getIngredients(recipeId: java.util.UUID)
 POST          /recipes/:recipeId/ingredients                               controllers.recipe.RecipeController.addIngredient(recipeId: java.util.UUID)
 PATCH         /recipes/:recipeId/ingredients/:ingredientId                 controllers.recipe.RecipeController.updateIngredient(recipeId: java.util.UUID, ingredientId: java.util.UUID)
 DELETE        /recipes/:recipeId/ingredients/:ingredientId                 controllers.recipe.RecipeController.removeIngredient(recipeId: java.util.UUID, ingredientId: java.util.UUID)
@@ -39,15 +39,15 @@ DELETE        /meals/:mealId/entries/:mealEntryId                          contr
 
 GET           /reference-maps                                              controllers.reference.ReferenceController.all
 GET           /reference-maps/trees                                        controllers.reference.ReferenceController.allTrees
-GET           /reference-maps/:id                                          controllers.reference.ReferenceController.get(id: java.util.UUID)
+GET           /reference-maps/:referenceMapId                              controllers.reference.ReferenceController.get(referenceMapId: java.util.UUID)
 POST          /reference-maps                                              controllers.reference.ReferenceController.create
-PATCH         /reference-maps                                              controllers.reference.ReferenceController.update
-DELETE        /reference-maps/:id                                          controllers.reference.ReferenceController.delete(id: java.util.UUID)
-GET           /reference-maps/:id/entries                                  controllers.reference.ReferenceController.allReferenceEntries(id: java.util.UUID)
-POST          /reference-maps/:id/duplicate                                controllers.reference.ReferenceController.duplicate(id: java.util.UUID)
-POST          /reference-maps/entries                                      controllers.reference.ReferenceController.addReferenceEntry
-PATCH         /reference-maps/entries                                      controllers.reference.ReferenceController.updateReferenceEntry
-DELETE        /reference-maps/:mapId/entries/:nutrientCode                 controllers.reference.ReferenceController.deleteReferenceEntry(mapId: java.util.UUID, nutrientCode: Int)
+PATCH         /reference-maps/:referenceMapId                              controllers.reference.ReferenceController.update(referenceMapId: java.util.UUID)
+DELETE        /reference-maps/:referenceMapId                              controllers.reference.ReferenceController.delete(referenceMapId: java.util.UUID)
+POST          /reference-maps/:referenceMapId/duplicate                    controllers.reference.ReferenceController.duplicate(referenceMapId: java.util.UUID)
+GET           /reference-maps/:referenceMapId/entries                      controllers.reference.ReferenceController.allReferenceEntries(referenceMapId: java.util.UUID)
+POST          /reference-maps/:referenceMapId/entries                      controllers.reference.ReferenceController.addReferenceEntry(referenceMapId: java.util.UUID)
+PATCH         /reference-maps/:referenceMapId/entries/:nutrientCode        controllers.reference.ReferenceController.updateReferenceEntry(referenceMapId: java.util.UUID, nutrientCode: Int)
+DELETE        /reference-maps/:referenceMapId/entries/:nutrientCode        controllers.reference.ReferenceController.deleteReferenceEntry(referenceMapId: java.util.UUID, nutrientCode: Int)
 
 GET           /stats                                                       controllers.stats.StatsController.get(from: Option[String], to: Option[String])
 GET           /stats/food/:foodId                                          controllers.stats.StatsController.ofFood(foodId: Int)

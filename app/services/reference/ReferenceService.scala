@@ -27,6 +27,7 @@ trait ReferenceService {
 
   def updateReferenceMap(
       userId: UserId,
+      referenceMapId: ReferenceMapId,
       referenceMapUpdate: ReferenceMapUpdate
   ): Future[ServerError.Or[ReferenceMap]]
 
@@ -42,11 +43,14 @@ trait ReferenceService {
 
   def addReferenceEntry(
       userId: UserId,
+      referenceMapId: ReferenceMapId,
       referenceEntryCreation: ReferenceEntryCreation
   ): Future[ServerError.Or[ReferenceEntry]]
 
   def updateReferenceEntry(
       userId: UserId,
+      referenceMapId: ReferenceMapId,
+      nutrientCode: NutrientCode,
       referenceEntryUpdate: ReferenceEntryUpdate
   ): Future[ServerError.Or[ReferenceEntry]]
 
@@ -79,12 +83,13 @@ object ReferenceService {
 
     def createReferenceMap(
         userId: UserId,
-        id: ReferenceMapId,
+        referenceMapId: ReferenceMapId,
         referenceMapCreation: ReferenceMapCreation
     )(implicit ec: ExecutionContext): DBIO[ReferenceMap]
 
     def updateReferenceMap(
         userId: UserId,
+        referenceMapId: ReferenceMapId,
         referenceMapUpdate: ReferenceMapUpdate
     )(implicit ec: ExecutionContext): DBIO[ReferenceMap]
 
@@ -100,11 +105,14 @@ object ReferenceService {
 
     def addReferenceEntry(
         userId: UserId,
+        referenceMapId: ReferenceMapId,
         referenceEntryCreation: ReferenceEntryCreation
     )(implicit ec: ExecutionContext): DBIO[ReferenceEntry]
 
     def updateReferenceEntry(
         userId: UserId,
+        referenceMapId: ReferenceMapId,
+        nutrientCode: NutrientCode,
         referenceEntryUpdate: ReferenceEntryUpdate
     )(implicit ec: ExecutionContext): DBIO[ReferenceEntry]
 

@@ -59,9 +59,9 @@ class ReferenceController @Inject() (
         .recover(errorHandler)
     }
 
-  def get(id: UUID): Action[AnyContent] =
+  def get(referenceMapId: UUID): Action[AnyContent] =
     userAction.async { request =>
-      OptionT(referenceService.getReferenceMap(request.user.id, id.transformInto[ReferenceMapId]))
+      OptionT(referenceService.getReferenceMap(request.user.id, referenceMapId.transformInto[ReferenceMapId]))
         .fold(
           NotFound(ErrorContext.ReferenceMap.NotFound.asServerError.asJson): Result
         )(
@@ -87,11 +87,15 @@ class ReferenceController @Inject() (
         .recover(errorHandler)
     }
 
-  def update: Action[ReferenceMapUpdate] =
+  def update(referenceMapId: UUID): Action[ReferenceMapUpdate] =
     userAction.async(circe.tolerantJson[ReferenceMapUpdate]) { request =>
       EitherT(
         referenceService
-          .updateReferenceMap(request.user.id, request.body.transformInto[services.reference.ReferenceMapUpdate])
+          .updateReferenceMap(
+            request.user.id,
+            referenceMapId.transformInto[ReferenceMapId],
+            request.body.transformInto[services.reference.ReferenceMapUpdate]
+          )
       )
         .map(
           _.pipe(_.transformInto[ReferenceMap])
@@ -102,10 +106,10 @@ class ReferenceController @Inject() (
         .recover(errorHandler)
     }
 
-  def delete(id: UUID): Action[AnyContent] =
+  def delete(referenceMapId: UUID): Action[AnyContent] =
     userAction.async { request =>
       referenceService
-        .delete(request.user.id, id.transformInto[ReferenceMapId])
+        .delete(request.user.id, referenceMapId.transformInto[ReferenceMapId])
         .map(
           _.pipe(_.asJson)
             .pipe(Ok(_))
@@ -113,12 +117,12 @@ class ReferenceController @Inject() (
         .recover(errorHandler)
     }
 
-  def allReferenceEntries(id: UUID): Action[AnyContent] =
+  def allReferenceEntries(referenceMapId: UUID): Action[AnyContent] =
     userAction.async { request =>
       referenceService
         .allReferenceEntries(
           request.user.id,
-          id.transformInto[ReferenceMapId]
+          referenceMapId.transformInto[ReferenceMapId]
         )
         .map(
           _.pipe(_.map(_.transformInto[ReferenceEntry]).asJson)
@@ -127,13 +131,13 @@ class ReferenceController @Inject() (
         .recover(errorHandler)
     }
 
-  def duplicate(id: UUID): Action[SimpleDate] =
+  def duplicate(referenceMapId: UUID): Action[SimpleDate] =
     userAction.async(circe.tolerantJson[SimpleDate]) { request =>
       EitherT(
         referenceDuplication
           .duplicate(
             userId = request.user.id,
-            id = id.transformInto[ReferenceMapId],
+            id = referenceMapId.transformInto[ReferenceMapId],
             timeOfDuplication = request.body
           )
       )
@@ -146,11 +150,12 @@ class ReferenceController @Inject() (
         .recover(errorHandler)
     }
 
-  def addReferenceEntry: Action[ReferenceEntryCreation] =
+  def addReferenceEntry(referenceMapId: UUID): Action[ReferenceEntryCreation] =
     userAction.async(circe.tolerantJson[ReferenceEntryCreation]) { request =>
       EitherT(
         referenceService.addReferenceEntry(
           userId = request.user.id,
+          referenceMapId = referenceMapId.transformInto[ReferenceMapId],
           referenceEntryCreation = request.body.transformInto[services.reference.ReferenceEntryCreation]
         )
       )
@@ -163,11 +168,13 @@ class ReferenceController @Inject() (
         .recover(errorHandler)
     }
 
-  def updateReferenceEntry: Action[ReferenceEntryUpdate] =
+  def updateReferenceEntry(referenceMapId: UUID, nutrientCode: Int): Action[ReferenceEntryUpdate] =
     userAction.async(circe.tolerantJson[ReferenceEntryUpdate]) { request =>
       EitherT(
         referenceService.updateReferenceEntry(
           userId = request.user.id,
+          referenceMapId = referenceMapId.transformInto[ReferenceMapId],
+          nutrientCode = nutrientCode.transformInto[NutrientCode],
           referenceEntryUpdate = request.body.transformInto[services.reference.ReferenceEntryUpdate]
         )
       )
@@ -180,12 +187,12 @@ class ReferenceController @Inject() (
         .recover(errorHandler)
     }
 
-  def deleteReferenceEntry(mapId: UUID, nutrientCode: Int): Action[AnyContent] =
+  def deleteReferenceEntry(referenceMapId: UUID, nutrientCode: Int): Action[AnyContent] =
     userAction.async { request =>
       referenceService
         .deleteReferenceEntry(
           request.user.id,
-          mapId.transformInto[ReferenceMapId],
+          referenceMapId.transformInto[ReferenceMapId],
           nutrientCode.transformInto[NutrientCode]
         )
         .map(
