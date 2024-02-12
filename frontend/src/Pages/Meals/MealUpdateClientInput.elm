@@ -6,12 +6,10 @@ import Maybe.Extra
 import Monocle.Lens exposing (Lens)
 import Monocle.Optional exposing (Optional)
 import Pages.Util.SimpleDateInput as SimpleDateInput exposing (SimpleDateInput)
-import Uuid exposing (Uuid)
 
 
 type alias MealUpdateClientInput =
-    { id : Uuid
-    , date : SimpleDateInput
+    { date : SimpleDateInput
     , name : Maybe String
     }
 
@@ -28,8 +26,7 @@ lenses =
 
 from : Meal -> MealUpdateClientInput
 from meal =
-    { id = meal.id
-    , date = meal.date |> SimpleDateInput.from
+    { date = meal.date |> SimpleDateInput.from
     , name = meal.name
     }
 
@@ -40,8 +37,7 @@ to input =
         |> SimpleDateInput.to
         |> Maybe.map
             (\simpleDate ->
-                { id = input.id
-                , date = simpleDate
+                { date = simpleDate
                 , name = input.name
                 }
             )

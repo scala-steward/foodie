@@ -99,13 +99,13 @@ meals :
     { all : ResourcePattern
     , single : MealId -> ResourcePattern
     , create : ResourcePattern
-    , update : ResourcePattern
+    , update : MealId -> ResourcePattern
     , delete : MealId -> ResourcePattern
     , duplicate : MealId -> ResourcePattern
     , entries :
         { allOf : MealId -> ResourcePattern
-        , create : ResourcePattern
-        , update : ResourcePattern
+        , create : MealId -> ResourcePattern
+        , update : MealId -> MealEntryId -> ResourcePattern
         , delete : MealId -> MealEntryId -> ResourcePattern
         }
     }
@@ -119,20 +119,23 @@ meals =
 
         duplicateWord =
             "duplicate"
-
-        entries =
-            (::) entriesWord >> base
     in
     { all = get <| base <| []
     , single = \mealId -> get <| base <| [ mealId |> Uuid.toString ]
     , create = post <| base []
-    , update = patch <| base []
+    , update = \mealId -> patch <| base [ mealId |> Uuid.toString ]
     , delete = \mealId -> delete <| base <| [ mealId |> Uuid.toString ]
     , duplicate = \mealId -> post <| base <| [ mealId |> Uuid.toString, duplicateWord ]
     , entries =
         { allOf = \mealId -> get <| base <| [ mealId |> Uuid.toString, entriesWord ]
-        , create = post <| entries []
-        , update = patch <| entries []
+        , create = \mealId -> post <| base [ mealId |> Uuid.toString, entriesWord ]
+        , update =
+            \mealId mealEntryId ->
+                patch <|
+                    base <|
+                        (::) (mealId |> Uuid.toString) <|
+                            (::) entriesWord <|
+                                [ mealEntryId |> Uuid.toString ]
         , delete =
             \mealId mealEntryId ->
                 delete <|

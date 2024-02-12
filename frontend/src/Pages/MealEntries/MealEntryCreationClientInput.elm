@@ -25,9 +25,8 @@ default recipeId =
     }
 
 
-toCreation : MealId -> MealEntryCreationClientInput -> MealEntryCreation
-toCreation mealId input =
-    { mealId = mealId
-    , recipeId = input.recipeId
+toCreation : MealEntryCreationClientInput -> MealEntryCreation
+toCreation input =
+    { recipeId = input.recipeId
     , numberOfServings = input.numberOfServings.value
     }

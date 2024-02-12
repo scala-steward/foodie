@@ -35,11 +35,11 @@ fetchRecipes =
     Pages.Util.Requests.fetchRecipesWith Pages.Util.Choice.Page.GotFetchChoicesResponse
 
 
-saveMealEntry : AuthorizedAccess -> MealEntryUpdate -> Cmd Page.LogicMsg
-saveMealEntry authorizedAccess mealEntryUpdate =
+saveMealEntry : AuthorizedAccess -> MealId -> MealEntryId -> MealEntryUpdate -> Cmd Page.LogicMsg
+saveMealEntry authorizedAccess mealId mealEntryId mealEntryUpdate =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        Addresses.Backend.meals.entries.update
+        (Addresses.Backend.meals.entries.update mealId mealEntryId)
         { body = encoderMealEntryUpdate mealEntryUpdate |> Http.jsonBody
         , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotSaveEditResponse decoderMealEntry
         }
@@ -55,11 +55,11 @@ deleteMealEntry authorizedAccess mealId mealEntryId =
         }
 
 
-createMealEntry : AuthorizedAccess -> MealEntryCreation -> Cmd Page.LogicMsg
-createMealEntry authorizedAccess mealEntryCreation =
+createMealEntry : AuthorizedAccess -> MealId -> MealEntryCreation -> Cmd Page.LogicMsg
+createMealEntry authorizedAccess mealId mealEntryCreation =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        Addresses.Backend.meals.entries.create
+        (Addresses.Backend.meals.entries.create mealId)
         { body = encoderMealEntryCreation mealEntryCreation |> Http.jsonBody
         , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotCreateResponse decoderMealEntry
         }

@@ -1,7 +1,7 @@
 module Pages.Meals.View exposing (editMealLineWith, mealLineWith, tableHeader, view)
 
 import Addresses.Frontend
-import Api.Auxiliary exposing (MealId)
+import Api.Auxiliary exposing (MealEntryId, MealId)
 import Api.Types.Meal exposing (Meal)
 import Api.Types.SimpleDate exposing (SimpleDate)
 import Basics.Extra exposing (flip)
@@ -160,19 +160,18 @@ mealLineWith ps =
 
 
 updateMealLine : MealId -> MealUpdateClientInput -> List (Html Page.LogicMsg)
-updateMealLine mealId mealUpdateClientInput =
+updateMealLine mealId =
     editMealLineWith
-        { saveMsg = Pages.Util.ParentEditor.Page.SaveEdit mealUpdateClientInput.id
+        { saveMsg = Pages.Util.ParentEditor.Page.SaveEdit mealId
         , dateLens = MealUpdateClientInput.lenses.date
         , nameLens = MealUpdateClientInput.lenses.name
         , updateMsg = Pages.Util.ParentEditor.Page.Edit mealId
         , confirmName = "Save"
-        , cancelMsg = Pages.Util.ParentEditor.Page.ExitEdit mealUpdateClientInput.id
+        , cancelMsg = Pages.Util.ParentEditor.Page.ExitEdit mealId
         , cancelName = "Cancel"
         , rowStyles = [ Style.classes.editLine ]
-        , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls mealUpdateClientInput.id |> Just
+        , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls mealId |> Just
         }
-        mealUpdateClientInput
 
 
 createMealLine : MealCreationClientInput -> List (Html Page.LogicMsg)

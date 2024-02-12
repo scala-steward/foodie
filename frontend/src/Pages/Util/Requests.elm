@@ -92,12 +92,13 @@ fetchMealWith mkMsg authorizedAccess mealId =
 saveMealWith :
     (Result Error Meal -> msg)
     -> AuthorizedAccess
+    -> MealId
     -> MealUpdate
     -> Cmd msg
-saveMealWith mkMsg authorizedAccess mealUpdate =
+saveMealWith mkMsg authorizedAccess mealId mealUpdate =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        Addresses.Backend.meals.update
+        (Addresses.Backend.meals.update mealId)
         { body = encoderMealUpdate mealUpdate |> Http.jsonBody
         , expect = HttpUtil.expectJson mkMsg decoderMeal
         }

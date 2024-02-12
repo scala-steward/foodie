@@ -35,7 +35,7 @@ updateLogic =
         , navigateToAddress = Addresses.Frontend.mealEntryEditor.address
         , updateCreationTimestamp = DateUtil.fromPosix >> SimpleDateInput.from >> MealCreationClientInput.lenses.date.set
         , create = \authorizedAccess -> MealCreationClientInput.toCreation >> Maybe.Extra.unwrap Cmd.none (Requests.createMeal authorizedAccess)
-        , save = \authorizedAccess _ -> MealUpdateClientInput.to >> Maybe.Extra.unwrap Cmd.none (Requests.saveMeal authorizedAccess)
+        , save = \authorizedAccess mealId -> MealUpdateClientInput.to >> Maybe.Extra.unwrap Cmd.none (Requests.saveMeal authorizedAccess mealId)
         , delete = Requests.deleteMeal
         , duplicate = Pages.Util.Requests.duplicateMealWith Pages.Util.ParentEditor.Page.GotDuplicateResponse
         }
