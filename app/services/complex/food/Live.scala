@@ -35,7 +35,7 @@ class Live @Inject() (
 
   override def create(
       userId: UserId,
-      complexFood: ComplexFoodIncoming
+      complexFood: ComplexFoodCreation
   ): Future[ServerError.Or[ComplexFood]] =
     db.runTransactionally(companion.create(userId, complexFood))
       .map(Right(_))
@@ -106,11 +106,11 @@ object Live {
         }
       }
 
-    override def create(userId: UserId, complexFood: ComplexFoodIncoming)(implicit
+    override def create(userId: UserId, complexFood: ComplexFoodCreation)(implicit
         ec: ExecutionContext
     ): DBIO[ComplexFood] = {
       val complexFoodRow =
-        ComplexFoodIncoming.TransformableToDB(userId, complexFood).transformInto[Tables.ComplexFoodRow]
+        ComplexFoodCreation.TransformableToDB(userId, complexFood).transformInto[Tables.ComplexFoodRow]
       for {
         inserted <- dao.insert(complexFoodRow)
         recipe <- OptionT(recipeService.getRecipe(userId, complexFood.recipeId))
@@ -135,15 +135,8 @@ object Live {
           if (breaksVolumeReference(referencing, update.amountMilliLitres))
             DBIO.failed(DBError.Complex.Food.VolumeReferenceExists)
           else DBIO.successful(())
-        updated = ComplexFoodUpdate.update(
-          ComplexFoodIncoming(
-            recipeId = complexFood.recipeId,
-            amountGrams = complexFood.amountGrams,
-            amountMilliLitres = complexFood.amountMilliLitres
-          ),
-          update
-        )
-        _ <- dao.update(ComplexFoodIncoming.TransformableToDB(userId, updated).transformInto[Tables.ComplexFoodRow])
+        updated = ComplexFoodUpdate.update(complexFood, update)
+        _           <- dao.update(ComplexFood.TransformableToDB(userId, updated).transformInto[Tables.ComplexFoodRow])
         updatedFood <- findAction
       } yield updatedFood
     }

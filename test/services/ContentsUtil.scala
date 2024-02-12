@@ -1,7 +1,7 @@
 package services
 
 import db.{ MealId, RecipeId, ReferenceMapId, UserId }
-import services.complex.food.ComplexFoodIncoming
+import services.complex.food.ComplexFood
 import services.complex.ingredient.ComplexIngredient
 import services.meal.{ FullMeal, Meal, MealEntry }
 import services.recipe.{ FullRecipe, Ingredient, Recipe }
@@ -11,7 +11,7 @@ object ContentsUtil {
 
   object ComplexFood {
 
-    def from(userId: UserId, complexFoods: Seq[ComplexFoodIncoming]): Seq[(UserId, RecipeId, ComplexFoodIncoming)] =
+    def from(userId: UserId, complexFoods: Seq[ComplexFood]): Seq[(UserId, RecipeId, ComplexFood)] =
       complexFoods.map(complexFood => (userId, complexFood.recipeId, complexFood))
 
   }

@@ -3,6 +3,7 @@ package services.complex.food
 import db.RecipeId
 import org.scalacheck.Gen
 import services.GenUtils
+import services.recipe.Recipe
 
 object Gens {
 
@@ -16,13 +17,26 @@ object Gens {
     case object DefinedVolume extends VolumeAmountOption
   }
 
-  def complexFood(recipeId: RecipeId, volumeAmountOption: VolumeAmountOption): Gen[ComplexFoodIncoming] =
+  def complexFoodCreation(recipeId: RecipeId, volumeAmountOption: VolumeAmountOption): Gen[ComplexFoodCreation] =
     for {
       update <- complexFoodUpdate(volumeAmountOption)
-    } yield ComplexFoodIncoming(
+    } yield ComplexFoodCreation(
       recipeId = recipeId,
       amountGrams = update.amountGrams,
       amountMilliLitres = update.amountMilliLitres
+    )
+
+  def complexFood(recipe: Recipe, volumeAmountOption: VolumeAmountOption): Gen[ComplexFood] =
+    for {
+      update <- complexFoodUpdate(volumeAmountOption)
+    } yield ComplexFoodCreation.create(
+      recipe.name,
+      recipe.description,
+      ComplexFoodCreation(
+        recipeId = recipe.id,
+        amountGrams = update.amountGrams,
+        amountMilliLitres = update.amountMilliLitres
+      )
     )
 
   def complexFoodUpdate(volumeAmountOption: VolumeAmountOption): Gen[ComplexFoodUpdate] =

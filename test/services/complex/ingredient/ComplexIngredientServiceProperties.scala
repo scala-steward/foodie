@@ -9,7 +9,7 @@ import io.scalaland.chimney.syntax.TransformerOps
 import org.scalacheck.Prop.AnyOperators
 import org.scalacheck.{ Gen, Prop, Properties, Test }
 import services.GenUtils.implicits._
-import services.complex.food.ComplexFoodIncoming
+import services.complex.food.{ ComplexFood, ComplexFoodCreation }
 import services.complex.food.Gens.VolumeAmountOption
 import services.recipe.Recipe
 import services.{ ContentsUtil, DBTestUtil, GenUtils, TestUtil }
@@ -22,7 +22,7 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
 
   def companionWith(
       recipeContents: Seq[(UserId, Recipe)],
-      complexFoodContents: Seq[(UserId, RecipeId, ComplexFoodIncoming)],
+      complexFoodContents: Seq[(UserId, RecipeId, ComplexFood)],
       complexIngredientContents: Seq[(UserId, RecipeId, ComplexIngredient)]
   ): Live.Companion =
     new Live.Companion(
@@ -33,7 +33,7 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
 
   private def complexIngredientServiceWith(
       recipeContents: Seq[(UserId, Recipe)],
-      complexFoodContents: Seq[(UserId, RecipeId, ComplexFoodIncoming)],
+      complexFoodContents: Seq[(UserId, RecipeId, ComplexFood)],
       complexIngredientContents: Seq[(UserId, RecipeId, ComplexIngredient)]
   ): ComplexIngredientService =
     new Live(
@@ -47,13 +47,13 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
 
   private case class SetupBase(
       userId: UserId,
-      recipe: Recipe,                                           // current recipe
-      recipesAsComplexFoods: Seq[(Recipe, ComplexFoodIncoming)] // recipes that are available as complex ingredients
+      recipe: Recipe,                                   // current recipe
+      recipesAsComplexFoods: Seq[(Recipe, ComplexFood)] // recipes that are available as complex ingredients
   )
 
-  private def asComplexFoodGen(volumeAmountOption: VolumeAmountOption): Gen[(Recipe, ComplexFoodIncoming)] = for {
+  private def asComplexFoodGen(volumeAmountOption: VolumeAmountOption): Gen[(Recipe, ComplexFood)] = for {
     recipe      <- services.recipe.Gens.recipeGen
-    complexFood <- services.complex.food.Gens.complexFood(recipe.id, volumeAmountOption)
+    complexFood <- services.complex.food.Gens.complexFood(recipe, volumeAmountOption)
   } yield recipe -> complexFood
 
   private def setupBaseGen(volumeAmountOption: VolumeAmountOption): Gen[SetupBase] = for {

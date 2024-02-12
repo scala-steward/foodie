@@ -7,7 +7,7 @@ case class ComplexFoodUpdate(
 
 object ComplexFoodUpdate {
 
-  def update(complexFood: ComplexFoodIncoming, update: ComplexFoodUpdate): ComplexFoodIncoming =
+  def update(complexFood: ComplexFood, update: ComplexFoodUpdate): ComplexFood =
     complexFood.copy(
       amountGrams = update.amountGrams,
       amountMilliLitres = update.amountMilliLitres

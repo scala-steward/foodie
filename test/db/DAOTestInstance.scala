@@ -14,7 +14,7 @@ import db.daos.session.SessionKey
 import db.generated.Tables
 import io.scalaland.chimney.dsl._
 import services.common.RequestInterval
-import services.complex.food.ComplexFoodIncoming
+import services.complex.food.ComplexFood
 import services.complex.ingredient.ComplexIngredient
 import services.meal.{ Meal, MealEntry }
 import services.recipe.{ Ingredient, Recipe }
@@ -102,12 +102,13 @@ object DAOTestInstance {
 
       }
 
-    def instanceFrom(contents: Seq[(UserId, RecipeId, ComplexFoodIncoming)]): db.daos.complexFood.DAO =
+    def instanceFrom(contents: Seq[(UserId, RecipeId, ComplexFood)]): db.daos.complexFood.DAO =
       instance(
         contents.map { case (userId, recipeId, complexFoodIncoming) =>
-          ComplexFoodKey(userId, recipeId) -> ComplexFoodIncoming
-            .TransformableToDB(userId, complexFoodIncoming)
-            .transformInto[Tables.ComplexFoodRow]
+          ComplexFoodKey(userId, recipeId) ->
+            services.complex.food.ComplexFood
+              .TransformableToDB(userId, complexFoodIncoming)
+              .transformInto[Tables.ComplexFoodRow]
         }
       )
 

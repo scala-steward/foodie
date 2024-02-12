@@ -4,13 +4,13 @@ import cats.syntax.traverse._
 import org.scalacheck.Gen
 import services.GenUtils
 import services.GenUtils.implicits._
-import services.complex.food.ComplexFoodIncoming
+import services.complex.food.{ ComplexFood, ComplexFoodCreation }
 
 import scala.util.chaining._
 
 object Gens {
 
-  def complexIngredientsGen(complexFoods: Seq[ComplexFoodIncoming]): Gen[List[ComplexIngredient]] =
+  def complexIngredientsGen(complexFoods: Seq[ComplexFood]): Gen[List[ComplexIngredient]] =
     for {
       subset <- GenUtils.subset(complexFoods)
       scalingModes <- subset.traverse(
@@ -27,7 +27,7 @@ object Gens {
       )
     }
 
-  def complexIngredientGen(complexFoods: Seq[ComplexFoodIncoming]): Gen[ComplexIngredient] =
+  def complexIngredientGen(complexFoods: Seq[ComplexFood]): Gen[ComplexIngredient] =
     for {
       complexFood <- Gen.oneOf(complexFoods)
       factor      <- GenUtils.smallBigDecimalGen
@@ -38,7 +38,7 @@ object Gens {
       scalingMode = scalingMode
     )
 
-  def complexIngredientCreationGen(complexFoods: Seq[ComplexFoodIncoming]): Gen[ComplexIngredientCreation] =
+  def complexIngredientCreationGen(complexFoods: Seq[ComplexFood]): Gen[ComplexIngredientCreation] =
     for {
       complexFood <- Gen.oneOf(complexFoods)
       factor      <- GenUtils.smallBigDecimalGen

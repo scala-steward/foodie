@@ -9,7 +9,7 @@ import org.scalacheck.Prop.AnyOperators
 import org.scalacheck.{ Arbitrary, Gen, Prop, Properties }
 import services.GenUtils.implicits._
 import services.complex.food.Gens.VolumeAmountOption
-import services.complex.food.{ ComplexFoodIncoming, ComplexFoodServiceProperties }
+import services.complex.food.{ ComplexFood, ComplexFoodServiceProperties }
 import services.complex.ingredient.{ ComplexIngredient, ComplexIngredientService }
 import services.nutrient.NutrientService
 import services.recipe.{ FullRecipe, Ingredient, Recipe, RecipeService }
@@ -32,7 +32,7 @@ object RescaleProperties extends Properties("Rescale properties") {
 
   def servicesWith(
       userId: UserId,
-      complexFoods: List[ComplexFoodIncoming],
+      complexFoods: List[ComplexFood],
       recipe: Recipe,
       referencedRecipes: List[Recipe],
       ingredients: List[Ingredient],
@@ -106,7 +106,7 @@ object RescaleProperties extends Properties("Rescale properties") {
       userId: UserId,
       recipe: Recipe,
       referencedRecipes: List[Recipe],
-      complexFoods: List[ComplexFoodIncoming],
+      complexFoods: List[ComplexFood],
       ingredients: List[Ingredient],
       complexIngredients: List[ComplexIngredient],
       servingSizeInGrams: BigDecimal
@@ -116,7 +116,7 @@ object RescaleProperties extends Properties("Rescale properties") {
     userId                <- GenUtils.taggedId[UserTag]
     recipe                <- services.recipe.Gens.recipeGen
     referencedRecipes     <- Gen.nonEmptyListOf(services.recipe.Gens.recipeGen)
-    subsetForComplexFoods <- GenUtils.subset(referencedRecipes).map(_.map(_.id))
+    subsetForComplexFoods <- GenUtils.subset(referencedRecipes)
     complexFoods <- subsetForComplexFoods.traverse(
       services.complex.food.Gens.complexFood(_, VolumeAmountOption.OptionalVolume)
     )

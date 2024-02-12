@@ -14,7 +14,7 @@ trait ComplexFoodService {
 
   def create(
       userId: UserId,
-      complexFood: ComplexFoodIncoming
+      complexFood: ComplexFoodCreation
   ): Future[ServerError.Or[ComplexFood]]
 
   def update(
@@ -38,7 +38,7 @@ object ComplexFoodService {
 
     def create(
         userId: UserId,
-        complexFood: ComplexFoodIncoming
+        complexFood: ComplexFoodCreation
     )(implicit ec: ExecutionContext): DBIO[ComplexFood]
 
     def update(

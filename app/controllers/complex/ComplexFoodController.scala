@@ -52,11 +52,11 @@ class ComplexFoodController @Inject() (
         .recover(errorHandler)
     }
 
-  def create: Action[ComplexFoodIncoming] =
-    userAction.async(circe.tolerantJson[ComplexFoodIncoming]) { request =>
+  def create: Action[ComplexFoodCreation] =
+    userAction.async(circe.tolerantJson[ComplexFoodCreation]) { request =>
       EitherT(
         complexFoodService
-          .create(request.user.id, request.body.transformInto[services.complex.food.ComplexFoodIncoming])
+          .create(request.user.id, request.body.transformInto[services.complex.food.ComplexFoodCreation])
       )
         .fold(
           controllers.badRequest,
