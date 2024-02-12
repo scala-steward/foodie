@@ -3,7 +3,7 @@ module Pages.ComplexFoods.Foods.Requests exposing (..)
 import Addresses.Backend
 import Api.Auxiliary exposing (ComplexFoodId)
 import Api.Types.ComplexFood exposing (ComplexFood, decoderComplexFood)
-import Api.Types.ComplexFoodIncoming exposing (ComplexFoodIncoming, encoderComplexFoodIncoming)
+import Api.Types.ComplexFoodCreation exposing (ComplexFoodCreation, encoderComplexFoodCreation)
 import Api.Types.ComplexFoodUpdate exposing (ComplexFoodUpdate, encoderComplexFoodUpdate)
 import Http
 import Json.Decode as Decode
@@ -29,12 +29,12 @@ fetchComplexFoods authorizedAccess =
         }
 
 
-createComplexFood : AuthorizedAccess -> ComplexFoodIncoming -> Cmd Page.LogicMsg
-createComplexFood authorizedAccess complexFood =
+createComplexFood : AuthorizedAccess -> ComplexFoodCreation -> Cmd Page.LogicMsg
+createComplexFood authorizedAccess complexFoodCreation =
     HttpUtil.runPatternWithJwt
         authorizedAccess
         Addresses.Backend.complexFoods.create
-        { body = encoderComplexFoodIncoming complexFood |> Http.jsonBody
+        { body = encoderComplexFoodCreation complexFoodCreation |> Http.jsonBody
         , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotCreateResponse decoderComplexFood
         }
 

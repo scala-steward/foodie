@@ -1,7 +1,7 @@
 module Pages.ComplexFoods.ComplexFoodCreationClientInput exposing (..)
 
 import Api.Auxiliary exposing (RecipeId)
-import Api.Types.ComplexFoodIncoming exposing (ComplexFoodIncoming)
+import Api.Types.ComplexFoodCreation exposing (ComplexFoodCreation)
 import Api.Types.Recipe exposing (Recipe)
 import Maybe.Extra
 import Monocle.Lens exposing (Lens)
@@ -36,7 +36,7 @@ withSuggestion recipe =
     }
 
 
-to : ComplexFoodCreationClientInput -> ComplexFoodIncoming
+to : ComplexFoodCreationClientInput -> ComplexFoodCreation
 to input =
     { recipeId = input.recipeId
     , amountGrams = input.amountGrams.value
