@@ -9,7 +9,7 @@ import io.scalaland.chimney.syntax.TransformerOps
 import org.scalacheck.Prop.AnyOperators
 import org.scalacheck.{ Gen, Prop, Properties, Test }
 import services.GenUtils.implicits._
-import services.complex.food.{ ComplexFood, ComplexFoodCreation }
+import services.complex.food.ComplexFood
 import services.complex.food.Gens.VolumeAmountOption
 import services.recipe.Recipe
 import services.{ ContentsUtil, DBTestUtil, GenUtils, TestUtil }
@@ -203,7 +203,7 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
 //  private case class CycleSetup(
 //      base: SetupBase,
 //      recipes: Seq[Recipe],
-//      complexFoods: Seq[ComplexFoodIncoming],
+//      complexFoods: Seq[ComplexFood],
 //      chainEnd: ComplexIngredient,
 //      chain: Seq[ComplexIngredient]
 //  )

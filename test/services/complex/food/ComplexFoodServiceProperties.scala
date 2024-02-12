@@ -152,11 +152,11 @@ object ComplexFoodServiceProperties extends Properties("Complex food service") {
   private def creationSetupGenWith(volumeAmountOption: VolumeAmountOption): Gen[CreationSetup] = for {
     userId              <- GenUtils.taggedId[UserTag]
     recipe              <- services.recipe.Gens.recipeGen
-    complexFoodIncoming <- Gens.complexFoodCreation(recipe.id, volumeAmountOption)
+    complexFoodCreation <- Gens.complexFoodCreation(recipe.id, volumeAmountOption)
   } yield CreationSetup(
     userId = userId,
     recipe = recipe,
-    complexFoodCreation = complexFoodIncoming
+    complexFoodCreation = complexFoodCreation
   )
 
   private val creationSetupGen: Gen[CreationSetup] = creationSetupGenWith(VolumeAmountOption.OptionalVolume)

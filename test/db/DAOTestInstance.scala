@@ -104,10 +104,10 @@ object DAOTestInstance {
 
     def instanceFrom(contents: Seq[(UserId, RecipeId, ComplexFood)]): db.daos.complexFood.DAO =
       instance(
-        contents.map { case (userId, recipeId, complexFoodIncoming) =>
+        contents.map { case (userId, recipeId, complexFood) =>
           ComplexFoodKey(userId, recipeId) ->
             services.complex.food.ComplexFood
-              .TransformableToDB(userId, complexFoodIncoming)
+              .TransformableToDB(userId, complexFood)
               .transformInto[Tables.ComplexFoodRow]
         }
       )
