@@ -7,14 +7,14 @@ import Uuid exposing (Uuid)
 
 
 type alias MealEntryCreation =
-    { mealId : Uuid, recipeId : Uuid, numberOfServings : Float }
+    { recipeId : Uuid, numberOfServings : Float }
 
 
 decoderMealEntryCreation : Decode.Decoder MealEntryCreation
 decoderMealEntryCreation =
-    Decode.succeed MealEntryCreation |> required "mealId" Uuid.decoder |> required "recipeId" Uuid.decoder |> required "numberOfServings" Decode.float
+    Decode.succeed MealEntryCreation |> required "recipeId" Uuid.decoder |> required "numberOfServings" Decode.float
 
 
 encoderMealEntryCreation : MealEntryCreation -> Encode.Value
 encoderMealEntryCreation obj =
-    Encode.object [ ( "mealId", Uuid.encode obj.mealId ), ( "recipeId", Uuid.encode obj.recipeId ), ( "numberOfServings", Encode.float obj.numberOfServings ) ]
+    Encode.object [ ( "recipeId", Uuid.encode obj.recipeId ), ( "numberOfServings", Encode.float obj.numberOfServings ) ]

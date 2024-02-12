@@ -6,7 +6,7 @@ import bridges.core._
 import bridges.core.syntax._
 import bridges.elm._
 import controllers.common.RequestInterval
-import controllers.complex.{ ComplexFood, ComplexFoodIncoming }
+import controllers.complex.{ ComplexFood, ComplexFoodIncoming, ComplexFoodUpdate }
 import controllers.meal._
 import controllers.recipe._
 import controllers.reference._
@@ -144,6 +144,7 @@ object Bridge {
     mkAndWrite[ComplexIngredientCreation]
     mkAndWrite[ComplexIngredientUpdate]
     mkAndWrite[ComplexFood]
+    mkAndWrite[ComplexFoodUpdate]
     mkAndWrite[ComplexFoodIncoming]
     mkAndWrite[Values]
     mkAndWrite[RecipeOccurrence]
