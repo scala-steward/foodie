@@ -231,7 +231,7 @@ object MealServiceProperties extends Properties("Meal service") {
     recipeIds       <- recipeIdsGen
     fullMeal        <- Gens.fullMealGen(recipeIds)
     mealEntry       <- Gen.oneOf(fullMeal.mealEntries)
-    mealEntryUpdate <- Gens.mealEntryUpdateGen(recipeIds)
+    mealEntryUpdate <- Gens.mealEntryUpdateGen
   } yield UpdateMealEntrySetup(
     userId = userId,
     fullMeal = fullMeal,
