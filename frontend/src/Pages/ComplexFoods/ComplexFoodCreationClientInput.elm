@@ -1,7 +1,6 @@
 module Pages.ComplexFoods.ComplexFoodCreationClientInput exposing (..)
 
 import Api.Auxiliary exposing (RecipeId)
-import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.ComplexFoodIncoming exposing (ComplexFoodIncoming)
 import Api.Types.Recipe exposing (Recipe)
 import Maybe.Extra
@@ -34,20 +33,6 @@ withSuggestion recipe =
     { recipeId = recipe.id
     , amountGrams = ValidatedInput.positive |> modifier
     , amountMilliLitres = ValidatedInput.maybePositive
-    }
-
-
-from : ComplexFood -> ComplexFoodCreationClientInput
-from complexFood =
-    { recipeId = complexFood.recipeId
-    , amountGrams =
-        ValidatedInput.positive
-            |> ValidatedInput.lenses.value.set complexFood.amountGrams
-            |> ValidatedInput.lenses.text.set (complexFood.amountGrams |> String.fromFloat)
-    , amountMilliLitres =
-        ValidatedInput.maybePositive
-            |> ValidatedInput.lenses.value.set complexFood.amountMilliLitres
-            |> ValidatedInput.lenses.text.set (complexFood.amountMilliLitres |> Maybe.Extra.unwrap "" String.fromFloat)
     }
 
 
