@@ -35,6 +35,11 @@ abstract class DAOTestInstance[Content, Key](
 
   protected val map: mutable.Map[Key, Content] = mutable.Map.from(contents)
 
+  protected def verifyKeys(key1: Key, key2: Key): Boolean
+
+  private def checkKeyConstraints(key: Key): Boolean =
+    map.keys.isEmpty || map.keys.exists(verifyKeys(_, key))
+
   /* Use IO indirection to ensure that a DBIO action may in fact yield different
      values when it is run at different times.
    */
@@ -48,6 +53,8 @@ abstract class DAOTestInstance[Content, Key](
   override def insert(content: Content): DBIO[Content] =
     if (map.contains(keyOf(content)))
       DBIO.failed(new Throwable("Duplicate entry"))
+    else if (!checkKeyConstraints(keyOf(content)))
+      DBIO.failed(new Throwable("Key constraints are not satisfied"))
     else
       fromIO {
         map.update(keyOf(content), content)
@@ -62,8 +69,10 @@ abstract class DAOTestInstance[Content, Key](
 
   override def update(value: Content)(implicit ec: ExecutionContext): DBIO[Boolean] =
     fromIO {
-      map.update(keyOf(value), value)
-      true
+      if (map.contains(keyOf(value)) && checkKeyConstraints(keyOf(value))) {
+        map.update(keyOf(value), value)
+        true
+      } else false
     }
 
   override def exists(key: Key): DBIO[Boolean] =
@@ -81,6 +90,8 @@ object DAOTestInstance {
       new DAOTestInstance[Tables.ComplexFoodRow, ComplexFoodKey](
         contents
       ) with db.daos.complexFood.DAO {
+
+        override protected def verifyKeys(key1: ComplexFoodKey, key2: ComplexFoodKey): Boolean = key1 == key2
 
         override def allOf(userId: UserId, ids: Seq[RecipeId]): DBIO[Seq[Tables.ComplexFoodRow]] =
           fromIO {
@@ -108,6 +119,9 @@ object DAOTestInstance {
       new DAOTestInstance[Tables.ComplexIngredientRow, ComplexIngredientKey](
         contents
       ) with db.daos.complexIngredient.DAO {
+
+        override protected def verifyKeys(key1: ComplexIngredientKey, key2: ComplexIngredientKey): Boolean =
+          key1.userId == key2.userId && key1.recipeId == key2.recipeId
 
         override def findAllFor(recipeIds: Seq[RecipeId]): DBIO[Seq[Tables.ComplexIngredientRow]] =
           fromIO {
@@ -145,6 +159,9 @@ object DAOTestInstance {
         contents
       ) with db.daos.ingredient.DAO {
 
+        override protected def verifyKeys(key1: IngredientKey, key2: IngredientKey): Boolean =
+          key1.userId == key2.userId && key1.recipeId == key2.recipeId
+
         override def findAllFor(userId: UserId, recipeIds: Seq[RecipeId]): DBIO[Seq[Tables.RecipeIngredientRow]] =
           fromIO {
             map.values.collect {
@@ -172,6 +189,8 @@ object DAOTestInstance {
       new DAOTestInstance[Tables.MealRow, MealKey](
         contents
       ) with db.daos.meal.DAO {
+
+        override protected def verifyKeys(key1: MealKey, key2: MealKey): Boolean = key1.userId == key2.userId
 
         override def allInInterval(userId: UserId, requestInterval: RequestInterval): DBIO[Seq[Tables.MealRow]] =
           fromIO {
@@ -215,6 +234,9 @@ object DAOTestInstance {
         contents
       ) with db.daos.mealEntry.DAO {
 
+        override protected def verifyKeys(key1: MealEntryKey, key2: MealEntryKey): Boolean =
+          key1.userId == key2.userId && key1.mealId == key2.mealId
+
         override def findAllFor(
             userId: UserId,
             mealIds: Seq[MealId]
@@ -248,6 +270,8 @@ object DAOTestInstance {
       new DAOTestInstance[Tables.RecipeRow, RecipeKey](
         contents
       ) with db.daos.recipe.DAO {
+
+        override protected def verifyKeys(key1: RecipeKey, key2: RecipeKey): Boolean = key1.userId == key2.userId
 
         override def findAllFor(userId: UserId): DBIO[Seq[Tables.RecipeRow]] =
           fromIO {
@@ -284,6 +308,9 @@ object DAOTestInstance {
       new DAOTestInstance[Tables.ReferenceMapRow, ReferenceMapKey](
         contents
       ) with db.daos.referenceMap.DAO {
+
+        override protected def verifyKeys(key1: ReferenceMapKey, key2: ReferenceMapKey): Boolean =
+          key1.userId == key2.userId
 
         override def findAllFor(userId: UserId): DBIO[Seq[Tables.ReferenceMapRow]] =
           fromIO {
@@ -322,6 +349,9 @@ object DAOTestInstance {
         contents
       ) with db.daos.referenceMapEntry.DAO {
 
+        override protected def verifyKeys(key1: ReferenceMapEntryKey, key2: ReferenceMapEntryKey): Boolean =
+          key1.userId == key2.userId && key1.referenceMapId == key2.referenceMapId
+
         override def findAllFor(referenceMapIds: Seq[ReferenceMapId]): DBIO[Seq[Tables.ReferenceEntryRow]] =
           fromIO {
             map.view
@@ -351,6 +381,8 @@ object DAOTestInstance {
         contents
       ) with db.daos.session.DAO {
 
+        override protected def verifyKeys(key1: SessionKey, key2: SessionKey): Boolean = key1.userId == key2.userId
+
         override def deleteAllFor(userId: UserId): DBIO[Int] =
           fromIO {
             map.keys
@@ -377,6 +409,8 @@ object DAOTestInstance {
       new DAOTestInstance[Tables.UserRow, UserId](
         contents
       ) with db.daos.user.DAO {
+
+        override protected def verifyKeys(key1: UserId, key2: UserId): Boolean = key1 == key2
 
         override def findByNickname(nickname: String): DBIO[Seq[Tables.UserRow]] =
           fromIO {

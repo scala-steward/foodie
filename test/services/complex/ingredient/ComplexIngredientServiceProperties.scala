@@ -2,16 +2,18 @@ package services.complex.ingredient
 
 import cats.data.EitherT
 import cats.implicits.catsSyntaxTuple2Semigroupal
+import config.TestConfiguration
 import db._
 import errors.ServerError
+import io.scalaland.chimney.syntax.TransformerOps
 import org.scalacheck.Prop.AnyOperators
 import org.scalacheck.{ Gen, Prop, Properties, Test }
+import services.GenUtils.implicits._
 import services.complex.food.ComplexFoodIncoming
+import services.complex.food.Gens.VolumeAmountOption
 import services.recipe.Recipe
 import services.{ ContentsUtil, DBTestUtil, GenUtils, TestUtil }
-import GenUtils.implicits._
-import config.TestConfiguration
-import services.complex.food.Gens.VolumeAmountOption
+import utils.TransformerUtils.Implicits._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -311,14 +313,15 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
     other             <- asComplexFoodGen(VolumeAmountOption.OptionalVolume)
     update            <- Gens.complexIngredientUpdateGen(other._2.amountMilliLitres)
   } yield UpdateSetup(
-    base.copy(
-      recipesAsComplexFoods = base.recipesAsComplexFoods :+ other
-    ),
+    base.copy(recipesAsComplexFoods = base.recipesAsComplexFoods :+ other),
     complexIngredient,
     update
   )
 
-  property("Update (failure)") = Prop.forAll(updateFailureSetupGen :| "setup") { setup =>
+  property("Update (failure)") = Prop.forAll(
+    updateFailureSetupGen :| "setup",
+    Gen.uuid.map(_.transformInto[ComplexFoodId]) :| "otherComplexFoodId"
+  ) { (setup, complexFoodId2) =>
     val complexIngredientService = complexIngredientServiceWith(
       recipeContents = ContentsUtil.Recipe.from(setup.base.userId, Seq(setup.base.recipe)),
       complexFoodContents =
@@ -331,12 +334,12 @@ object ComplexIngredientServiceProperties extends Properties("Complex ingredient
       result <- complexIngredientService.update(
         setup.base.userId,
         setup.base.recipe.id,
-        setup.complexIngredient.complexFoodId,
+        complexFoodId2,
         setup.update
       )
       fetched <- complexIngredientService.all(setup.base.userId, setup.base.recipe.id)
     } yield Prop.all(
-      result.isLeft,
+      (result.isLeft: Prop) :| "is failure",
       fetched ?= Seq(setup.complexIngredient)
     )
 
