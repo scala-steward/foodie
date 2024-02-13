@@ -18,7 +18,7 @@ jobs:
       back-end-paths-changed: ${{ steps.back-end.outputs.back-end-src }}
       front-end-paths-changed: ${{ steps.front-end.outputs.front-end-src }}
     steps:
-      - uses: dorny/paths-filter@v2
+      - uses: dorny/paths-filter@0bc4621a3135347011ad047f9ecf449bf72ce2bd # v3.0.0
         id: back-end
         with:
           filters: |
@@ -30,7 +30,7 @@ jobs:
               - 'build.sbt'
               - 'project/**'
               - '.scalafmt.conf'
-      - uses: dorny/paths-filter@v2
+      - uses: dorny/paths-filter@0bc4621a3135347011ad047f9ecf449bf72ce2bd # v3.0.0
         id: front-end
         with:
           filters: |
