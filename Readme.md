@@ -97,5 +97,6 @@ There needs to be a running Docker service running on the target machine.
 
 ### CI
 
-[![Run tests](https://github.com/nikitaDanilenko/foodie/actions/workflows/tests.yml/badge.svg)](https://github.com/nikitaDanilenko/foodie/actions/workflows/tests.yml)
-[![Build and publish](https://github.com/nikitaDanilenko/foodie/actions/workflows/scala.yml/badge.svg)](https://github.com/nikitaDanilenko/foodie/actions/workflows/scala.yml)
+[![Run tests](https://github.com/nikitaDanilenko/foodie/actions/workflows/verify-pull-request.yml/badge.svg)](https://github.com/nikitaDanilenko/foodie/actions/workflows/verify-pull-request.yml)
+[![Build and publish back end](https://github.com/nikitaDanilenko/foodie/actions/workflows/build-and-publish-back-end.yml/badge.svg)](https://github.com/nikitaDanilenko/foodie/actions/workflows/build-and-publish-back-end.yml)
+[![Build and publish back end](https://github.com/nikitaDanilenko/foodie/actions/workflows/build-and-publish-front-end.yml/badge.svg)](https://github.com/nikitaDanilenko/foodie/actions/workflows/build-and-publish-front-end.yml)
