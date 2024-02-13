@@ -26,12 +26,11 @@ object Gens {
     } yield MealCreation.create(id, mealCreation)
   }
 
-  def mealUpdateGen(mealId: MealId, earliest: Int = -100000, latest: Int = 100000): Gen[MealUpdate] =
+  def mealUpdateGen(earliest: Int = -100000, latest: Int = 100000): Gen[MealUpdate] =
     for {
       name <- Gen.option(GenUtils.nonEmptyAsciiString)
       date <- GenUtils.simpleDateGen(earliest, latest)
     } yield MealUpdate(
-      id = mealId,
       date = date,
       name = name
     )
@@ -47,13 +46,10 @@ object Gens {
       numberOfServings = numberOfServings
     )
 
-  def mealEntryUpdateGen(mealEntryId: MealEntryId, recipeIds: NonEmptyList[RecipeId]): Gen[MealEntryUpdate] =
+  val mealEntryUpdateGen: Gen[MealEntryUpdate] =
     for {
-      recipeId         <- Gen.oneOf(recipeIds.toList)
       numberOfServings <- GenUtils.smallBigDecimalGen
     } yield MealEntryUpdate(
-      id = mealEntryId,
-      recipeId = recipeId,
       numberOfServings = numberOfServings
     )
 

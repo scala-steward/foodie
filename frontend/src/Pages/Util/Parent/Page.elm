@@ -63,7 +63,8 @@ lenses =
 type LogicMsg parent update
     = GotFetchResponse (Result Error parent)
     | Edit update
-    | SaveEdit
+      -- TODO: Technically, parentId is sufficient, but LogicMsg does not have a type parameter for that value.
+    | SaveEdit parent
     | GotSaveEditResponse (Result Error parent)
     | EnterEdit
     | ExitEdit

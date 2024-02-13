@@ -16,13 +16,25 @@ trait RecipeService {
   def allRecipes(userId: UserId): Future[Seq[Recipe]]
   def getRecipe(userId: UserId, id: RecipeId): Future[Option[Recipe]]
   def createRecipe(userId: UserId, recipeCreation: RecipeCreation): Future[ServerError.Or[Recipe]]
-  def updateRecipe(userId: UserId, recipeUpdate: RecipeUpdate): Future[ServerError.Or[Recipe]]
+  def updateRecipe(userId: UserId, id: RecipeId, recipeUpdate: RecipeUpdate): Future[ServerError.Or[Recipe]]
   def deleteRecipe(userId: UserId, id: RecipeId): Future[Boolean]
 
   def getIngredients(userId: UserId, recipeId: RecipeId): Future[List[Ingredient]]
-  def addIngredient(userId: UserId, ingredientCreation: IngredientCreation): Future[ServerError.Or[Ingredient]]
-  def updateIngredient(userId: UserId, ingredientUpdate: IngredientUpdate): Future[ServerError.Or[Ingredient]]
-  def removeIngredient(userId: UserId, ingredientId: IngredientId): Future[Boolean]
+
+  def addIngredient(
+      userId: UserId,
+      recipeId: RecipeId,
+      ingredientCreation: IngredientCreation
+  ): Future[ServerError.Or[Ingredient]]
+
+  def updateIngredient(
+      userId: UserId,
+      recipeId: RecipeId,
+      ingredientId: IngredientId,
+      ingredientUpdate: IngredientUpdate
+  ): Future[ServerError.Or[Ingredient]]
+
+  def removeIngredient(userId: UserId, recipeId: RecipeId, ingredientId: IngredientId): Future[Boolean]
 }
 
 object RecipeService {
@@ -55,6 +67,7 @@ object RecipeService {
 
     def updateRecipe(
         userId: UserId,
+        id: RecipeId,
         recipeUpdate: RecipeUpdate
     )(implicit
         ec: ExecutionContext
@@ -77,6 +90,7 @@ object RecipeService {
 
     def addIngredient(
         userId: UserId,
+        recipeId: RecipeId,
         id: IngredientId,
         ingredientCreation: IngredientCreation
     )(implicit
@@ -85,6 +99,8 @@ object RecipeService {
 
     def updateIngredient(
         userId: UserId,
+        recipeId: RecipeId,
+        ingredientId: IngredientId,
         ingredientUpdate: IngredientUpdate
     )(implicit
         ec: ExecutionContext
@@ -92,6 +108,7 @@ object RecipeService {
 
     def removeIngredient(
         userId: UserId,
+        recipeId: RecipeId,
         id: IngredientId
     )(implicit ec: ExecutionContext): DBIO[Boolean]
 

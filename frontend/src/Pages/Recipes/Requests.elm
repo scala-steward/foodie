@@ -30,6 +30,7 @@ createRecipe authorizedAccess recipeCreation =
 
 saveRecipe :
     AuthorizedAccess
+    -> RecipeId
     -> RecipeUpdate
     -> Cmd Page.ParentMsg
 saveRecipe =

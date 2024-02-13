@@ -1,12 +1,13 @@
 package services.complex.ingredient
 
 import cats.data.OptionT
+import db.daos.complexFood.ComplexFoodKey
 import db.daos.complexIngredient.ComplexIngredientKey
 import db.daos.recipe.RecipeKey
 import db.generated.Tables
 import db.{ ComplexFoodId, RecipeId, UserId }
 import errors.{ ErrorContext, ServerError }
-import io.scalaland.chimney.dsl._
+import io.scalaland.chimney.syntax._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
 import services.common.Transactionally.syntax._
@@ -34,9 +35,10 @@ class Live @Inject() (
 
   override def create(
       userId: UserId,
-      complexIngredient: ComplexIngredient
+      recipeId: RecipeId,
+      complexIngredientCreation: ComplexIngredientCreation
   ): Future[ServerError.Or[ComplexIngredient]] =
-    db.runTransactionally(companion.create(userId, complexIngredient))
+    db.runTransactionally(companion.create(userId, recipeId, complexIngredientCreation))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.Recipe.ComplexIngredient.Creation(error.getMessage).asServerError)
@@ -44,9 +46,11 @@ class Live @Inject() (
 
   override def update(
       userId: UserId,
-      complexIngredient: ComplexIngredient
+      recipeId: RecipeId,
+      complexFoodId: ComplexFoodId,
+      complexIngredientUpdate: ComplexIngredientUpdate
   ): Future[ServerError.Or[ComplexIngredient]] =
-    db.runTransactionally(companion.update(userId, complexIngredient))
+    db.runTransactionally(companion.update(userId, recipeId, complexFoodId, complexIngredientUpdate))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.Recipe.ComplexIngredient.Update(error.getMessage).asServerError)
@@ -82,20 +86,27 @@ object Live {
           .toMap
       }
 
-    override def create(userId: UserId, complexIngredient: ComplexIngredient)(implicit
+    override def create(
+        userId: UserId,
+        recipeId: RecipeId,
+        complexIngredientCreation: ComplexIngredientCreation
+    )(implicit
         ec: ExecutionContext
     ): DBIO[ComplexIngredient] = {
-      val complexIngredientRow = complexIngredient.transformInto[Tables.ComplexIngredientRow]
-      ifRecipeAndComplexFoodExist(
+      val complexIngredient = ComplexIngredientCreation.create(complexIngredientCreation)
+      val complexIngredientRow =
+        ComplexIngredient
+          .TransformableToDB(userId, recipeId, complexIngredient)
+          .transformInto[Tables.ComplexIngredientRow]
+      withComplexFood(
         userId = userId,
-        recipeId = complexIngredient.recipeId,
-        complexFoodId = complexIngredient.complexFoodId
+        complexFoodId = complexIngredientCreation.complexFoodId
       ) { complexFoodRow =>
         for {
-          createsCycle <- cycleCheck(complexIngredient.recipeId, complexIngredient.complexFoodId)
+          createsCycle <- cycleCheck(recipeId, complexIngredientCreation.complexFoodId)
           _            <- if (!createsCycle) DBIO.successful(()) else DBIO.failed(DBError.Complex.Ingredient.Cycle)
           _ <-
-            if (isValidScalingMode(complexFoodRow.amountMilliLitres, complexIngredient.scalingMode))
+            if (isValidScalingMode(complexFoodRow.amountMilliLitres, complexIngredientCreation.scalingMode))
               DBIO.successful(())
             else DBIO.failed(DBError.Complex.Ingredient.ScalingModeMismatch)
           row <- complexIngredientDao.insert(complexIngredientRow)
@@ -103,26 +114,38 @@ object Live {
       }
     }
 
-    override def update(userId: UserId, complexIngredient: ComplexIngredient)(implicit
+    override def update(
+        userId: UserId,
+        recipeId: RecipeId,
+        complexFoodId: ComplexFoodId,
+        complexIngredientUpdate: ComplexIngredientUpdate
+    )(implicit
         ec: ExecutionContext
     ): DBIO[ComplexIngredient] = {
       val findAction = OptionT(
-        complexIngredientDao.find(ComplexIngredientKey(complexIngredient.recipeId, complexIngredient.complexFoodId))
-      ).getOrElseF(DBIO.failed(DBError.Complex.Ingredient.NotFound))
+        complexIngredientDao.find(
+          ComplexIngredientKey(userId, recipeId, complexFoodId)
+        )
+      ).map(_.transformInto[ComplexIngredient])
+        .getOrElseF(DBIO.failed(DBError.Complex.Ingredient.NotFound))
 
       for {
-        _ <- findAction
-        _ <- ifRecipeAndComplexFoodExist(
+        complexIngredient <- findAction
+        _ <- withComplexFood(
           userId = userId,
-          recipeId = complexIngredient.recipeId,
-          complexFoodId = complexIngredient.complexFoodId
+          complexFoodId = complexFoodId
         ) { complexFoodRow =>
-          if (isValidScalingMode(complexFoodRow.amountMilliLitres, complexIngredient.scalingMode))
-            complexIngredientDao.update(complexIngredient.transformInto[Tables.ComplexIngredientRow])
-          else DBIO.failed(DBError.Complex.Ingredient.ScalingModeMismatch)
+          if (isValidScalingMode(complexFoodRow.amountMilliLitres, complexIngredientUpdate.scalingMode)) {
+            val updated = ComplexIngredientUpdate.update(complexIngredient, complexIngredientUpdate)
+            complexIngredientDao.update(
+              ComplexIngredient
+                .TransformableToDB(userId, recipeId, updated)
+                .transformInto[Tables.ComplexIngredientRow]
+            )
+          } else DBIO.failed(DBError.Complex.Ingredient.ScalingModeMismatch)
         }
         updatedIngredient <- findAction
-      } yield updatedIngredient.transformInto[ComplexIngredient]
+      } yield updatedIngredient
     }
 
     override def delete(userId: UserId, recipeId: RecipeId, complexFoodId: ComplexFoodId)(implicit
@@ -133,22 +156,18 @@ object Live {
         result <-
           if (exists)
             complexIngredientDao
-              .delete(ComplexIngredientKey(recipeId, complexFoodId))
+              .delete(ComplexIngredientKey(userId, recipeId, complexFoodId))
               .map(_ > 0)
           else DBIO.successful(false)
       } yield result
 
-    private def ifRecipeAndComplexFoodExist[A](
+    private def withComplexFood[A](
         userId: UserId,
-        recipeId: RecipeId,
         complexFoodId: ComplexFoodId
     )(action: Tables.ComplexFoodRow => DBIO[A])(implicit ec: ExecutionContext): DBIO[A] =
       for {
-        recipeExists         <- recipeDao.exists(RecipeKey(userId, recipeId))
-        complexFoodCandidate <- complexFoodDao.find(complexFoodId)
-        result <-
-          if (!recipeExists) DBIO.failed(DBError.Complex.Ingredient.RecipeNotFound)
-          else complexFoodCandidate.fold(DBIO.failed(DBError.Complex.Ingredient.NotFound): DBIO[A])(action)
+        complexFoodCandidate <- complexFoodDao.find(ComplexFoodKey(userId, complexFoodId))
+        result <- complexFoodCandidate.fold(DBIO.failed(DBError.Complex.Ingredient.NotFound): DBIO[A])(action)
       } yield result
 
     private def cycleCheck(recipeId: RecipeId, newReferenceRecipeId: RecipeId)(implicit

@@ -35,31 +35,31 @@ fetchRecipes =
     Pages.Util.Requests.fetchRecipesWith Pages.Util.Choice.Page.GotFetchChoicesResponse
 
 
-saveMealEntry : AuthorizedAccess -> MealEntryUpdate -> Cmd Page.LogicMsg
-saveMealEntry authorizedAccess mealEntryUpdate =
+saveMealEntry : AuthorizedAccess -> MealId -> MealEntryId -> MealEntryUpdate -> Cmd Page.LogicMsg
+saveMealEntry authorizedAccess mealId mealEntryId mealEntryUpdate =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        Addresses.Backend.meals.entries.update
+        (Addresses.Backend.meals.entries.update mealId mealEntryId)
         { body = encoderMealEntryUpdate mealEntryUpdate |> Http.jsonBody
         , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotSaveEditResponse decoderMealEntry
         }
 
 
-deleteMealEntry : AuthorizedAccess -> MealEntryId -> Cmd Page.LogicMsg
-deleteMealEntry authorizedAccess mealEntryId =
+deleteMealEntry : AuthorizedAccess -> MealId -> MealEntryId -> Cmd Page.LogicMsg
+deleteMealEntry authorizedAccess mealId mealEntryId =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        (Addresses.Backend.meals.entries.delete mealEntryId)
+        (Addresses.Backend.meals.entries.delete mealId mealEntryId)
         { body = Http.emptyBody
         , expect = HttpUtil.expectWhatever (Pages.Util.Choice.Page.GotDeleteResponse mealEntryId)
         }
 
 
-createMealEntry : AuthorizedAccess -> MealEntryCreation -> Cmd Page.LogicMsg
-createMealEntry authorizedAccess mealEntryCreation =
+createMealEntry : AuthorizedAccess -> MealId -> MealEntryCreation -> Cmd Page.LogicMsg
+createMealEntry authorizedAccess mealId mealEntryCreation =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        Addresses.Backend.meals.entries.create
+        (Addresses.Backend.meals.entries.create mealId)
         { body = encoderMealEntryCreation mealEntryCreation |> Http.jsonBody
         , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotCreateResponse decoderMealEntry
         }

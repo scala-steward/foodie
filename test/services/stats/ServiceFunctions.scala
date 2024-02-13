@@ -25,9 +25,9 @@ object ServiceFunctions {
   // TODO #64: Add values for complex food, and complex ingredient services.
   def statsServiceWith(
       mealContents: Seq[(UserId, Meal)],
-      mealEntryContents: Seq[(MealId, MealEntry)],
+      mealEntryContents: Seq[(UserId, MealId, MealEntry)],
       recipeContents: Seq[(UserId, Recipe)],
-      ingredientContents: Seq[(RecipeId, Ingredient)]
+      ingredientContents: Seq[(UserId, RecipeId, Ingredient)]
   ): StatsService = {
     new services.stats.Live(
       dbConfigProvider = TestUtil.databaseConfigProvider,

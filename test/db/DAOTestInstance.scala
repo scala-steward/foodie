@@ -2,8 +2,11 @@ package db
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
+import db.daos.complexFood.ComplexFoodKey
 import db.daos.complexIngredient.ComplexIngredientKey
+import db.daos.ingredient.IngredientKey
 import db.daos.meal.MealKey
+import db.daos.mealEntry.MealEntryKey
 import db.daos.recipe.RecipeKey
 import db.daos.referenceMap.ReferenceMapKey
 import db.daos.referenceMapEntry.ReferenceMapEntryKey
@@ -11,12 +14,11 @@ import db.daos.session.SessionKey
 import db.generated.Tables
 import io.scalaland.chimney.dsl._
 import services.common.RequestInterval
-import services.complex.food.ComplexFoodIncoming
+import services.complex.food.ComplexFood
 import services.complex.ingredient.ComplexIngredient
 import services.meal.{ Meal, MealEntry }
 import services.recipe.{ Ingredient, Recipe }
 import services.reference.{ ReferenceEntry, ReferenceMap }
-import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
 import slickeffect.catsio.implicits._
 import util.DateUtil
@@ -33,6 +35,11 @@ abstract class DAOTestInstance[Content, Key](
 
   protected val map: mutable.Map[Key, Content] = mutable.Map.from(contents)
 
+  protected def verifyKeys(key1: Key, key2: Key): Boolean
+
+  private def checkKeyConstraints(key: Key): Boolean =
+    map.keys.isEmpty || map.keys.exists(verifyKeys(_, key))
+
   /* Use IO indirection to ensure that a DBIO action may in fact yield different
      values when it is run at different times.
    */
@@ -46,6 +53,8 @@ abstract class DAOTestInstance[Content, Key](
   override def insert(content: Content): DBIO[Content] =
     if (map.contains(keyOf(content)))
       DBIO.failed(new Throwable("Duplicate entry"))
+    else if (!checkKeyConstraints(keyOf(content)))
+      DBIO.failed(new Throwable("Key constraints are not satisfied"))
     else
       fromIO {
         map.update(keyOf(content), content)
@@ -60,8 +69,10 @@ abstract class DAOTestInstance[Content, Key](
 
   override def update(value: Content)(implicit ec: ExecutionContext): DBIO[Boolean] =
     fromIO {
-      map.update(keyOf(value), value)
-      true
+      if (map.contains(keyOf(value)) && checkKeyConstraints(keyOf(value))) {
+        map.update(keyOf(value), value)
+        true
+      } else false
     }
 
   override def exists(key: Key): DBIO[Boolean] =
@@ -75,24 +86,29 @@ object DAOTestInstance {
 
   object ComplexFood {
 
-    def instance(contents: Seq[(RecipeId, Tables.ComplexFoodRow)]): db.daos.complexFood.DAO =
-      new DAOTestInstance[Tables.ComplexFoodRow, RecipeId](
+    def instance(contents: Seq[(ComplexFoodKey, Tables.ComplexFoodRow)]): db.daos.complexFood.DAO =
+      new DAOTestInstance[Tables.ComplexFoodRow, ComplexFoodKey](
         contents
       ) with db.daos.complexFood.DAO {
 
-        override def findByKeys(keys: Seq[RecipeId]): DBIO[Seq[Tables.ComplexFoodRow]] =
+        override protected def verifyKeys(key1: ComplexFoodKey, key2: ComplexFoodKey): Boolean = key1 == key2
+
+        override def allOf(userId: UserId, ids: Seq[RecipeId]): DBIO[Seq[Tables.ComplexFoodRow]] =
           fromIO {
             map.collect {
-              case (recipeId, complexFood) if keys.contains(recipeId) => complexFood
+              case (key, complexFood) if key.userId == userId && ids.contains(key.recipeId) => complexFood
             }.toList
           }
 
       }
 
-    def instanceFrom(contents: Seq[(RecipeId, ComplexFoodIncoming)]): db.daos.complexFood.DAO =
+    def instanceFrom(contents: Seq[(UserId, RecipeId, ComplexFood)]): db.daos.complexFood.DAO =
       instance(
-        contents.map { case (recipeId, complexFoodIncoming) =>
-          recipeId -> complexFoodIncoming.transformInto[Tables.ComplexFoodRow]
+        contents.map { case (userId, recipeId, complexFood) =>
+          ComplexFoodKey(userId, recipeId) ->
+            services.complex.food.ComplexFood
+              .TransformableToDB(userId, complexFood)
+              .transformInto[Tables.ComplexFoodRow]
         }
       )
 
@@ -104,6 +120,9 @@ object DAOTestInstance {
       new DAOTestInstance[Tables.ComplexIngredientRow, ComplexIngredientKey](
         contents
       ) with db.daos.complexIngredient.DAO {
+
+        override protected def verifyKeys(key1: ComplexIngredientKey, key2: ComplexIngredientKey): Boolean =
+          key1.userId == key2.userId && key1.recipeId == key2.recipeId
 
         override def findAllFor(recipeIds: Seq[RecipeId]): DBIO[Seq[Tables.ComplexIngredientRow]] =
           fromIO {
@@ -122,11 +141,13 @@ object DAOTestInstance {
 
       }
 
-    def instanceFrom(contents: Seq[(RecipeId, ComplexIngredient)]): db.daos.complexIngredient.DAO =
+    def instanceFrom(contents: Seq[(UserId, RecipeId, ComplexIngredient)]): db.daos.complexIngredient.DAO =
       instance(
-        contents.map { case (recipeId, complexIngredient) =>
-          ComplexIngredientKey(recipeId, complexIngredient.complexFoodId) ->
-            complexIngredient.transformInto[Tables.ComplexIngredientRow]
+        contents.map { case (userId, recipeId, complexIngredient) =>
+          ComplexIngredientKey(userId, recipeId, complexIngredient.complexFoodId) ->
+            services.complex.ingredient.ComplexIngredient
+              .TransformableToDB(userId, recipeId, complexIngredient)
+              .transformInto[Tables.ComplexIngredientRow]
         }
       )
 
@@ -134,12 +155,15 @@ object DAOTestInstance {
 
   object Ingredient {
 
-    def instance(contents: Seq[(IngredientId, Tables.RecipeIngredientRow)]): db.daos.ingredient.DAO =
-      new DAOTestInstance[Tables.RecipeIngredientRow, IngredientId](
+    def instance(contents: Seq[(IngredientKey, Tables.RecipeIngredientRow)]): db.daos.ingredient.DAO =
+      new DAOTestInstance[Tables.RecipeIngredientRow, IngredientKey](
         contents
       ) with db.daos.ingredient.DAO {
 
-        override def findAllFor(recipeIds: Seq[RecipeId]): DBIO[Seq[Tables.RecipeIngredientRow]] =
+        override protected def verifyKeys(key1: IngredientKey, key2: IngredientKey): Boolean =
+          key1.userId == key2.userId && key1.recipeId == key2.recipeId
+
+        override def findAllFor(userId: UserId, recipeIds: Seq[RecipeId]): DBIO[Seq[Tables.RecipeIngredientRow]] =
           fromIO {
             map.values.collect {
               case ingredient if recipeIds.contains(ingredient.recipeId.transformInto[RecipeId]) => ingredient
@@ -148,10 +172,13 @@ object DAOTestInstance {
 
       }
 
-    def instanceFrom(contents: Seq[(RecipeId, Ingredient)]): db.daos.ingredient.DAO =
+    def instanceFrom(contents: Seq[(UserId, RecipeId, Ingredient)]): db.daos.ingredient.DAO =
       instance(
-        contents.map { case (recipeId, ingredient) =>
-          ingredient.id -> (ingredient, recipeId).transformInto[Tables.RecipeIngredientRow]
+        contents.map { case (userId, recipeId, ingredient) =>
+          val row = services.recipe.Ingredient
+            .TransformableToDB(userId, recipeId, ingredient)
+            .transformInto[Tables.RecipeIngredientRow]
+          IngredientKey.of(row) -> row
         }
       )
 
@@ -163,6 +190,8 @@ object DAOTestInstance {
       new DAOTestInstance[Tables.MealRow, MealKey](
         contents
       ) with db.daos.meal.DAO {
+
+        override protected def verifyKeys(key1: MealKey, key2: MealKey): Boolean = key1.userId == key2.userId
 
         override def allInInterval(userId: UserId, requestInterval: RequestInterval): DBIO[Seq[Tables.MealRow]] =
           fromIO {
@@ -192,25 +221,31 @@ object DAOTestInstance {
 
     def instanceFrom(contents: Seq[(UserId, Meal)]): db.daos.meal.DAO =
       instance(
-        contents.map { case (userId, meal) => MealKey(userId, meal.id) -> (meal, userId).transformInto[Tables.MealRow] }
+        contents.map { case (userId, meal) =>
+          MealKey(userId, meal.id) -> services.meal.Meal.TransformableToDB(userId, meal).transformInto[Tables.MealRow]
+        }
       )
 
   }
 
   object MealEntry {
 
-    def instance(contents: Seq[(MealEntryId, Tables.MealEntryRow)]): db.daos.mealEntry.DAO =
-      new DAOTestInstance[Tables.MealEntryRow, MealEntryId](
+    def instance(contents: Seq[(MealEntryKey, Tables.MealEntryRow)]): db.daos.mealEntry.DAO =
+      new DAOTestInstance[Tables.MealEntryRow, MealEntryKey](
         contents
       ) with db.daos.mealEntry.DAO {
 
+        override protected def verifyKeys(key1: MealEntryKey, key2: MealEntryKey): Boolean =
+          key1.userId == key2.userId && key1.mealId == key2.mealId
+
         override def findAllFor(
+            userId: UserId,
             mealIds: Seq[MealId]
-        )(implicit ec: ExecutionContext): DBIO[Map[MealId, Seq[Tables.MealEntryRow]]] =
+        )(implicit ec: ExecutionContext): DBIO[Map[MealKey, Seq[Tables.MealEntryRow]]] =
           fromIO {
             map.values
               .filter(meal => mealIds.contains(meal.mealId.transformInto[MealId]))
-              .groupBy(_.mealId.transformInto[MealId])
+              .groupBy(mealEntry => MealKey(userId, mealEntry.mealId.transformInto[MealId]))
               .view
               .mapValues(_.toSeq)
               .toMap
@@ -218,10 +253,13 @@ object DAOTestInstance {
 
       }
 
-    def instanceFrom(contents: Seq[(MealId, MealEntry)]): db.daos.mealEntry.DAO =
+    def instanceFrom(contents: Seq[(UserId, MealId, MealEntry)]): db.daos.mealEntry.DAO =
       instance(
-        contents.map { case (mealId, mealEntry) =>
-          mealEntry.id -> (mealEntry, mealId).transformInto[Tables.MealEntryRow]
+        contents.map { case (userId, mealId, mealEntry) =>
+          val row = services.meal.MealEntry
+            .TransformableToDB(userId, mealId, mealEntry)
+            .transformInto[Tables.MealEntryRow]
+          MealEntryKey.of(row) -> row
         }
       )
 
@@ -233,6 +271,8 @@ object DAOTestInstance {
       new DAOTestInstance[Tables.RecipeRow, RecipeKey](
         contents
       ) with db.daos.recipe.DAO {
+
+        override protected def verifyKeys(key1: RecipeKey, key2: RecipeKey): Boolean = key1.userId == key2.userId
 
         override def findAllFor(userId: UserId): DBIO[Seq[Tables.RecipeRow]] =
           fromIO {
@@ -255,7 +295,9 @@ object DAOTestInstance {
     def instanceFrom(contents: Seq[(UserId, Recipe)]): db.daos.recipe.DAO =
       instance(
         contents.map { case (userId, recipe) =>
-          RecipeKey(userId, recipe.id) -> (recipe, userId).transformInto[Tables.RecipeRow]
+          RecipeKey(userId, recipe.id) -> services.recipe.Recipe
+            .TransformableToDB(userId, recipe)
+            .transformInto[Tables.RecipeRow]
         }
       )
 
@@ -267,6 +309,9 @@ object DAOTestInstance {
       new DAOTestInstance[Tables.ReferenceMapRow, ReferenceMapKey](
         contents
       ) with db.daos.referenceMap.DAO {
+
+        override protected def verifyKeys(key1: ReferenceMapKey, key2: ReferenceMapKey): Boolean =
+          key1.userId == key2.userId
 
         override def findAllFor(userId: UserId): DBIO[Seq[Tables.ReferenceMapRow]] =
           fromIO {
@@ -289,7 +334,10 @@ object DAOTestInstance {
     def instanceFrom(contents: Seq[(UserId, ReferenceMap)]): db.daos.referenceMap.DAO =
       instance(
         contents.map { case (userId, referenceMap) =>
-          ReferenceMapKey(userId, referenceMap.id) -> (referenceMap, userId).transformInto[Tables.ReferenceMapRow]
+          ReferenceMapKey(userId, referenceMap.id) ->
+            services.reference.ReferenceMap
+              .TransformableToDB(userId, referenceMap)
+              .transformInto[Tables.ReferenceMapRow]
         }
       )
 
@@ -302,6 +350,9 @@ object DAOTestInstance {
         contents
       ) with db.daos.referenceMapEntry.DAO {
 
+        override protected def verifyKeys(key1: ReferenceMapEntryKey, key2: ReferenceMapEntryKey): Boolean =
+          key1.userId == key2.userId && key1.referenceMapId == key2.referenceMapId
+
         override def findAllFor(referenceMapIds: Seq[ReferenceMapId]): DBIO[Seq[Tables.ReferenceEntryRow]] =
           fromIO {
             map.view
@@ -312,11 +363,13 @@ object DAOTestInstance {
 
       }
 
-    def instanceFrom(contents: Seq[(ReferenceMapId, ReferenceEntry)]): db.daos.referenceMapEntry.DAO =
+    def instanceFrom(contents: Seq[(UserId, ReferenceMapId, ReferenceEntry)]): db.daos.referenceMapEntry.DAO =
       instance(
-        contents.map { case (referenceMapId, referenceEntry) =>
-          ReferenceMapEntryKey(referenceMapId, referenceEntry.nutrientCode) -> (referenceEntry, referenceMapId)
+        contents.map { case (userId, referenceMapId, referenceEntry) =>
+          val row = services.reference.ReferenceEntry
+            .TransformableToDB(userId, referenceMapId, referenceEntry)
             .transformInto[Tables.ReferenceEntryRow]
+          ReferenceMapEntryKey.of(row) -> row
         }
       )
 
@@ -328,6 +381,8 @@ object DAOTestInstance {
       new DAOTestInstance[Tables.SessionRow, SessionKey](
         contents
       ) with db.daos.session.DAO {
+
+        override protected def verifyKeys(key1: SessionKey, key2: SessionKey): Boolean = key1.userId == key2.userId
 
         override def deleteAllFor(userId: UserId): DBIO[Int] =
           fromIO {
@@ -355,6 +410,8 @@ object DAOTestInstance {
       new DAOTestInstance[Tables.UserRow, UserId](
         contents
       ) with db.daos.user.DAO {
+
+        override protected def verifyKeys(key1: UserId, key2: UserId): Boolean = key1 == key2
 
         override def findByNickname(nickname: String): DBIO[Seq[Tables.UserRow]] =
           fromIO {

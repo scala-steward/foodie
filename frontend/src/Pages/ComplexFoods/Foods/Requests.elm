@@ -3,7 +3,8 @@ module Pages.ComplexFoods.Foods.Requests exposing (..)
 import Addresses.Backend
 import Api.Auxiliary exposing (ComplexFoodId)
 import Api.Types.ComplexFood exposing (ComplexFood, decoderComplexFood)
-import Api.Types.ComplexFoodIncoming exposing (ComplexFoodIncoming, encoderComplexFoodIncoming)
+import Api.Types.ComplexFoodCreation exposing (ComplexFoodCreation, encoderComplexFoodCreation)
+import Api.Types.ComplexFoodUpdate exposing (ComplexFoodUpdate, encoderComplexFoodUpdate)
 import Http
 import Json.Decode as Decode
 import Pages.ComplexFoods.Foods.Page as Page
@@ -28,22 +29,22 @@ fetchComplexFoods authorizedAccess =
         }
 
 
-createComplexFood : AuthorizedAccess -> ComplexFoodIncoming -> Cmd Page.LogicMsg
-createComplexFood authorizedAccess complexFood =
+createComplexFood : AuthorizedAccess -> ComplexFoodCreation -> Cmd Page.LogicMsg
+createComplexFood authorizedAccess complexFoodCreation =
     HttpUtil.runPatternWithJwt
         authorizedAccess
         Addresses.Backend.complexFoods.create
-        { body = encoderComplexFoodIncoming complexFood |> Http.jsonBody
+        { body = encoderComplexFoodCreation complexFoodCreation |> Http.jsonBody
         , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotCreateResponse decoderComplexFood
         }
 
 
-updateComplexFood : AuthorizedAccess -> ComplexFoodIncoming -> Cmd Page.LogicMsg
-updateComplexFood authorizedAccess complexFood =
+updateComplexFood : AuthorizedAccess -> ComplexFoodId -> ComplexFoodUpdate -> Cmd Page.LogicMsg
+updateComplexFood authorizedAccess complexFoodId complexFoodUpdate =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        Addresses.Backend.complexFoods.update
-        { body = encoderComplexFoodIncoming complexFood |> Http.jsonBody
+        (Addresses.Backend.complexFoods.update complexFoodId)
+        { body = encoderComplexFoodUpdate complexFoodUpdate |> Http.jsonBody
         , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotSaveEditResponse decoderComplexFood
         }
 

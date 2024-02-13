@@ -1,8 +1,7 @@
-module Pages.ComplexFoods.ComplexFoodClientInput exposing (..)
+module Pages.ComplexFoods.ComplexFoodCreationClientInput exposing (..)
 
 import Api.Auxiliary exposing (RecipeId)
-import Api.Types.ComplexFood exposing (ComplexFood)
-import Api.Types.ComplexFoodIncoming exposing (ComplexFoodIncoming)
+import Api.Types.ComplexFoodCreation exposing (ComplexFoodCreation)
 import Api.Types.Recipe exposing (Recipe)
 import Maybe.Extra
 import Monocle.Lens exposing (Lens)
@@ -11,14 +10,14 @@ import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
 import Parser exposing ((|.), (|=))
 
 
-type alias ComplexFoodClientInput =
+type alias ComplexFoodCreationClientInput =
     { recipeId : RecipeId
     , amountGrams : ValidatedInput Float
     , amountMilliLitres : ValidatedInput (Maybe Float)
     }
 
 
-withSuggestion : Recipe -> ComplexFoodClientInput
+withSuggestion : Recipe -> ComplexFoodCreationClientInput
 withSuggestion recipe =
     let
         modifier =
@@ -37,21 +36,7 @@ withSuggestion recipe =
     }
 
 
-from : ComplexFood -> ComplexFoodClientInput
-from complexFood =
-    { recipeId = complexFood.recipeId
-    , amountGrams =
-        ValidatedInput.positive
-            |> ValidatedInput.lenses.value.set complexFood.amountGrams
-            |> ValidatedInput.lenses.text.set (complexFood.amountGrams |> String.fromFloat)
-    , amountMilliLitres =
-        ValidatedInput.maybePositive
-            |> ValidatedInput.lenses.value.set complexFood.amountMilliLitres
-            |> ValidatedInput.lenses.text.set (complexFood.amountMilliLitres |> Maybe.Extra.unwrap "" String.fromFloat)
-    }
-
-
-to : ComplexFoodClientInput -> ComplexFoodIncoming
+to : ComplexFoodCreationClientInput -> ComplexFoodCreation
 to input =
     { recipeId = input.recipeId
     , amountGrams = input.amountGrams.value
@@ -60,8 +45,8 @@ to input =
 
 
 lenses :
-    { amountGrams : Lens ComplexFoodClientInput (ValidatedInput Float)
-    , amountMilliLitres : Lens ComplexFoodClientInput (ValidatedInput (Maybe Float))
+    { amountGrams : Lens ComplexFoodCreationClientInput (ValidatedInput Float)
+    , amountMilliLitres : Lens ComplexFoodCreationClientInput (ValidatedInput (Maybe Float))
     }
 lenses =
     { amountGrams = Lens .amountGrams (\b a -> { a | amountGrams = b })

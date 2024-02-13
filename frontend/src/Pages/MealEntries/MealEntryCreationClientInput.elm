@@ -7,8 +7,7 @@ import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
 
 
 type alias MealEntryCreationClientInput =
-    { mealId : MealId
-    , recipeId : RecipeId
+    { recipeId : RecipeId
     , numberOfServings : ValidatedInput Float
     }
 
@@ -19,17 +18,15 @@ lenses =
     }
 
 
-default : MealId -> RecipeId -> MealEntryCreationClientInput
-default mealId recipeId =
-    { mealId = mealId
-    , recipeId = recipeId
+default : RecipeId -> MealEntryCreationClientInput
+default recipeId =
+    { recipeId = recipeId
     , numberOfServings = ValidatedInput.positive
     }
 
 
 toCreation : MealEntryCreationClientInput -> MealEntryCreation
 toCreation input =
-    { mealId = input.mealId
-    , recipeId = input.recipeId
+    { recipeId = input.recipeId
     , numberOfServings = input.numberOfServings.value
     }

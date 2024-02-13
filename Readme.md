@@ -57,6 +57,9 @@ Depending on the setup the commands below may need to be prefixed with `sudo`.
    Moving the file to `/tmp` handles possible access issues.
    Even better - dump only the relevant tables by listing them with `-t <table_name>` for each
    table (prefixed with `public.`).
+   ```
+   pg_dump -h foodie-postgres -d foodie -t public.user -t public.session -t public.meal_entry -t public.meal -t public.complex_food -t public.recipe -t public.complex_ingredient -t public.recipe_ingredient -t public.reference_entry -t public.reference_map  -U foodie --insert -W > /tmp/<date>.sql
+   ```
 1. Find the id the desired container: `docker ps`
 1. In a third CLI copy the backup file to your local file system:
    `docker cp <container-id>:/tmp/<backup-file-name>.sql <path-on-local-file-system>`
@@ -86,8 +89,14 @@ There needs to be a running Docker service running on the target machine.
 9. If this is the first deployment,
    connect to a bash in the Docker `db` container,
    and perform the database setup steps described above.
+10. If this is the first deployment, restart the service (only the back end is sufficient).
+    There is a tricky optimisation in the code: Some of the CNF tables are kept in memory to avoid queries
+    (particularly in the case of statistics).
+    However, the tables are loaded only once at the start of the service.
+    Since the CNF database is initially empty, so are the memory values.
 
 ### CI
 
-[![Run tests](https://github.com/nikitaDanilenko/foodie/actions/workflows/tests.yml/badge.svg)](https://github.com/nikitaDanilenko/foodie/actions/workflows/tests.yml)
-[![Build and publish](https://github.com/nikitaDanilenko/foodie/actions/workflows/scala.yml/badge.svg)](https://github.com/nikitaDanilenko/foodie/actions/workflows/scala.yml)
+[![Run tests](https://github.com/nikitaDanilenko/foodie/actions/workflows/verify-pull-request.yml/badge.svg)](https://github.com/nikitaDanilenko/foodie/actions/workflows/verify-pull-request.yml)
+[![Build and publish back end](https://github.com/nikitaDanilenko/foodie/actions/workflows/build-and-publish-back-end.yml/badge.svg)](https://github.com/nikitaDanilenko/foodie/actions/workflows/build-and-publish-back-end.yml)
+[![Build and publish back end](https://github.com/nikitaDanilenko/foodie/actions/workflows/build-and-publish-front-end.yml/badge.svg)](https://github.com/nikitaDanilenko/foodie/actions/workflows/build-and-publish-front-end.yml)

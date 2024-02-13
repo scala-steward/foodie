@@ -1,9 +1,6 @@
 package services.recipe
 
-import db.IngredientId
-
 case class IngredientUpdate(
-    id: IngredientId,
     amountUnit: AmountUnit
 )
 

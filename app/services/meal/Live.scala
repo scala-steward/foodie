@@ -2,10 +2,11 @@ package services.meal
 
 import cats.data.OptionT
 import db.daos.meal.MealKey
+import db.daos.mealEntry.MealEntryKey
 import db.generated.Tables
 import db.{ MealEntryId, MealId, UserId }
 import errors.{ ErrorContext, ServerError }
-import io.scalaland.chimney.dsl.TransformerOps
+import io.scalaland.chimney.syntax._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
 import services.common.RequestInterval
@@ -30,8 +31,8 @@ class Live @Inject() (
   override def allMeals(userId: UserId, interval: RequestInterval): Future[Seq[Meal]] =
     db.runTransactionally(companion.allMeals(userId, interval))
 
-  override def getMeal(userId: UserId, id: MealId): Future[Option[Meal]] =
-    db.runTransactionally(companion.getMeal(userId, id))
+  override def getMeal(userId: UserId, mealId: MealId): Future[Option[Meal]] =
+    db.runTransactionally(companion.getMeal(userId, mealId))
 
   override def createMeal(userId: UserId, mealCreation: MealCreation): Future[ServerError.Or[Meal]] =
     db.runTransactionally(companion.createMeal(userId, UUID.randomUUID().transformInto[MealId], mealCreation))
@@ -40,36 +41,45 @@ class Live @Inject() (
         Left(ErrorContext.Meal.Creation(error.getMessage).asServerError)
       }
 
-  override def updateMeal(userId: UserId, mealUpdate: MealUpdate): Future[ServerError.Or[Meal]] =
-    db.runTransactionally(companion.updateMeal(userId, mealUpdate))
+  override def updateMeal(userId: UserId, mealId: MealId, mealUpdate: MealUpdate): Future[ServerError.Or[Meal]] =
+    db.runTransactionally(companion.updateMeal(userId, mealId, mealUpdate))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.Meal.Update(error.getMessage).asServerError)
       }
 
-  override def deleteMeal(userId: UserId, id: MealId): Future[Boolean] =
-    db.runTransactionally(companion.deleteMeal(userId, id))
+  override def deleteMeal(userId: UserId, mealId: MealId): Future[Boolean] =
+    db.runTransactionally(companion.deleteMeal(userId, mealId))
 
-  override def getMealEntries(userId: UserId, ids: Seq[MealId]): Future[Map[MealId, Seq[MealEntry]]] =
-    db.runTransactionally(companion.getMealEntries(userId, ids))
+  override def getMealEntries(userId: UserId, mealIds: Seq[MealId]): Future[Map[MealKey, Seq[MealEntry]]] =
+    db.runTransactionally(companion.getMealEntries(userId, mealIds))
 
-  override def addMealEntry(userId: UserId, mealEntryCreation: MealEntryCreation): Future[ServerError.Or[MealEntry]] =
+  override def addMealEntry(
+      userId: UserId,
+      mealId: MealId,
+      mealEntryCreation: MealEntryCreation
+  ): Future[ServerError.Or[MealEntry]] =
     db.runTransactionally(
-      companion.addMealEntry(userId, UUID.randomUUID().transformInto[MealEntryId], mealEntryCreation)
+      companion.addMealEntry(userId, mealId, UUID.randomUUID().transformInto[MealEntryId], mealEntryCreation)
     ).map(Right(_))
       .recover { case error =>
         Left(ErrorContext.Meal.Entry.Creation(error.getMessage).asServerError)
       }
 
-  override def updateMealEntry(userId: UserId, mealEntryUpdate: MealEntryUpdate): Future[ServerError.Or[MealEntry]] =
-    db.runTransactionally(companion.updateMealEntry(userId, mealEntryUpdate))
+  override def updateMealEntry(
+      userId: UserId,
+      mealId: MealId,
+      mealEntryId: MealEntryId,
+      mealEntryUpdate: MealEntryUpdate
+  ): Future[ServerError.Or[MealEntry]] =
+    db.runTransactionally(companion.updateMealEntry(userId, mealId, mealEntryId, mealEntryUpdate))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.Meal.Entry.Update(error.getMessage).asServerError)
       }
 
-  override def removeMealEntry(userId: UserId, mealEntryId: MealEntryId): Future[Boolean] =
-    db.runTransactionally(companion.removeMealEntry(userId, mealEntryId))
+  override def removeMealEntry(userId: UserId, mealId: MealId, mealEntryId: MealEntryId): Future[Boolean] =
+    db.runTransactionally(companion.removeMealEntry(userId, mealId, mealEntryId))
       .recover { _ => false }
 
 }
@@ -95,27 +105,27 @@ object Live {
 
     override def getMeal(
         userId: UserId,
-        id: MealId
+        mealId: MealId
     )(implicit ec: ExecutionContext): DBIO[Option[Meal]] =
       OptionT(
-        mealDao.find(MealKey(userId, id))
+        mealDao.find(MealKey(userId, mealId))
       ).map(_.transformInto[Meal]).value
 
     override def getMeals(
         userId: UserId,
-        ids: Seq[MealId]
+        mealIds: Seq[MealId]
     )(implicit ec: ExecutionContext): DBIO[Seq[Meal]] =
       mealDao
-        .allOf(userId, ids)
+        .allOf(userId, mealIds)
         .map(_.map(_.transformInto[Meal]))
 
     override def createMeal(
         userId: UserId,
-        id: MealId,
+        mealId: MealId,
         mealCreation: MealCreation
     )(implicit ec: ExecutionContext): DBIO[Meal] = {
-      val meal    = MealCreation.create(id, mealCreation)
-      val mealRow = (meal, userId).transformInto[Tables.MealRow]
+      val meal    = MealCreation.create(mealId, mealCreation)
+      val mealRow = Meal.TransformableToDB(userId, meal).transformInto[Tables.MealRow]
       mealDao
         .insert(mealRow)
         .map(_.transformInto[Meal])
@@ -123,19 +133,20 @@ object Live {
 
     override def updateMeal(
         userId: UserId,
+        mealId: MealId,
         mealUpdate: MealUpdate
     )(implicit ec: ExecutionContext): DBIO[Meal] = {
-      val findAction = OptionT(getMeal(userId, mealUpdate.id))
+      val findAction = OptionT(getMeal(userId, mealId))
         .getOrElseF(notFound)
 
       for {
         meal <- findAction
         _ <- mealDao.update(
-          (
-            MealUpdate
-              .update(meal, mealUpdate),
-            userId
-          )
+          Meal
+            .TransformableToDB(
+              userId,
+              MealUpdate.update(meal, mealUpdate)
+            )
             .transformInto[Tables.MealRow]
         )
         updatedMeal <- findAction
@@ -144,85 +155,78 @@ object Live {
 
     override def deleteMeal(
         userId: UserId,
-        id: MealId
+        mealId: MealId
     )(implicit ec: ExecutionContext): DBIO[Boolean] =
       mealDao
-        .delete(MealKey(userId, id))
+        .delete(MealKey(userId, mealId))
         .map(_ > 0)
 
-    override def getMealEntries(userId: UserId, ids: Seq[MealId])(implicit
+    override def getMealEntries(userId: UserId, mealIds: Seq[MealId])(implicit
         ec: ExecutionContext
-    ): DBIO[Map[MealId, Seq[MealEntry]]] =
+    ): DBIO[Map[MealKey, Seq[MealEntry]]] =
       for {
-        matchingMeals <- mealDao.allOf(userId, ids)
+        matchingMeals <- mealDao.allOf(userId, mealIds)
         mealEntries <-
           mealEntryDao
-            .findAllFor(matchingMeals.map(_.id.transformInto[MealId]))
-            .map { _.view.mapValues(_.map(_.transformInto[MealEntry])).toMap }
+            .findAllFor(userId, matchingMeals.map(_.id.transformInto[MealId]))
+            .map {
+              _.view.mapValues(_.map(_.transformInto[MealEntry])).toMap
+            }
       } yield mealEntries
 
     override def addMealEntry(
         userId: UserId,
-        id: MealEntryId,
+        mealId: MealId,
+        mealEntryId: MealEntryId,
         mealEntryCreation: MealEntryCreation
     )(implicit
         ec: ExecutionContext
     ): DBIO[MealEntry] = {
-      val mealEntry    = MealEntryCreation.create(id, mealEntryCreation)
-      val mealEntryRow = (mealEntry, mealEntryCreation.mealId).transformInto[Tables.MealEntryRow]
-      ifMealExists(userId, mealEntryCreation.mealId) {
-        mealEntryDao.insert(mealEntryRow).map(_.transformInto[MealEntry])
-      }
+      val mealEntry = MealEntryCreation.create(mealEntryId, mealEntryCreation)
+      val mealEntryRow = MealEntry
+        .TransformableToDB(userId, mealId, mealEntry)
+        .transformInto[Tables.MealEntryRow]
+      mealEntryDao
+        .insert(mealEntryRow)
+        .map(_.transformInto[MealEntry])
     }
 
     override def updateMealEntry(
         userId: UserId,
+        mealId: MealId,
+        mealEntryId: MealEntryId,
         mealEntryUpdate: MealEntryUpdate
     )(implicit
         ec: ExecutionContext
     ): DBIO[MealEntry] = {
       val findAction =
-        OptionT(mealEntryDao.find(mealEntryUpdate.id)).getOrElseF(DBIO.failed(DBError.Meal.EntryNotFound))
+        OptionT(mealEntryDao.find(MealEntryKey(userId, mealId, mealEntryId)))
+          .getOrElseF(DBIO.failed(DBError.Meal.EntryNotFound))
       for {
         mealEntryRow <- findAction
-        _ <- ifMealExists(userId, mealEntryRow.mealId.transformInto[MealId]) {
-          mealEntryDao.update(
-            (
-              MealEntryUpdate
-                .update(mealEntryRow.transformInto[MealEntry], mealEntryUpdate),
-              mealEntryRow.mealId.transformInto[MealId]
+        _ <- mealEntryDao.update(
+          MealEntry
+            .TransformableToDB(
+              userId,
+              mealEntryRow.mealId.transformInto[MealId],
+              MealEntryUpdate.update(mealEntryRow.transformInto[MealEntry], mealEntryUpdate)
             )
-              .transformInto[Tables.MealEntryRow]
-          )
-        }
+            .transformInto[Tables.MealEntryRow]
+        )
         updatedMealEntry <- findAction
       } yield updatedMealEntry.transformInto[MealEntry]
     }
 
     override def removeMealEntry(
         userId: UserId,
-        id: MealEntryId
+        mealId: MealId,
+        mealEntryId: MealEntryId
     )(implicit
         ec: ExecutionContext
     ): DBIO[Boolean] =
-      OptionT(
-        mealEntryDao.find(id)
-      )
-        .map(_.mealId)
-        .semiflatMap(mealId =>
-          ifMealExists(userId, mealId.transformInto[MealId]) {
-            mealEntryDao
-              .delete(id)
-              .map(_ > 0)
-          }
-        )
-        .getOrElse(false)
-
-    private def ifMealExists[A](
-        userId: UserId,
-        id: MealId
-    )(action: => DBIO[A])(implicit ec: ExecutionContext): DBIO[A] =
-      mealDao.exists(MealKey(userId, id)).flatMap(exists => if (exists) action else notFound)
+      mealEntryDao
+        .delete(MealEntryKey(userId, mealId, mealEntryId))
+        .map(_ > 0)
 
   }
 

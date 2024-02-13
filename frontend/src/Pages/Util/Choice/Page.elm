@@ -96,8 +96,8 @@ lenses =
 
 
 type LogicMsg elementId element update choiceId choice creation
-    = Edit update
-    | SaveEdit update
+    = Edit elementId update
+    | SaveEdit elementId update
     | GotSaveEditResponse (Result Error element)
     | ToggleControls elementId
     | EnterEdit elementId

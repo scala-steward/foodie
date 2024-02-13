@@ -69,9 +69,10 @@ class Live @Inject() (
 
   override def updateReferenceMap(
       userId: UserId,
+      referenceMapId: ReferenceMapId,
       referenceMapUpdate: ReferenceMapUpdate
   ): Future[ServerError.Or[ReferenceMap]] =
-    db.runTransactionally(companion.updateReferenceMap(userId, referenceMapUpdate))
+    db.runTransactionally(companion.updateReferenceMap(userId, referenceMapId, referenceMapUpdate))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.ReferenceMap.Update(error.getMessage).asServerError)
@@ -86,9 +87,10 @@ class Live @Inject() (
 
   override def addReferenceEntry(
       userId: UserId,
+      referenceMapId: ReferenceMapId,
       referenceEntryCreation: ReferenceEntryCreation
   ): Future[ServerError.Or[ReferenceEntry]] =
-    db.runTransactionally(companion.addReferenceEntry(userId, referenceEntryCreation))
+    db.runTransactionally(companion.addReferenceEntry(userId, referenceMapId, referenceEntryCreation))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.ReferenceMap.Entry.Creation(error.getMessage).asServerError)
@@ -96,9 +98,11 @@ class Live @Inject() (
 
   override def updateReferenceEntry(
       userId: UserId,
+      referenceMapId: ReferenceMapId,
+      nutrientCode: NutrientCode,
       referenceEntryUpdate: ReferenceEntryUpdate
   ): Future[ServerError.Or[ReferenceEntry]] =
-    db.runTransactionally(companion.updateReferenceEntry(userId, referenceEntryUpdate))
+    db.runTransactionally(companion.updateReferenceEntry(userId, referenceMapId, nutrientCode, referenceEntryUpdate))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.ReferenceMap.Entry.Update(error.getMessage).asServerError)
@@ -162,31 +166,35 @@ object Live {
 
     override def createReferenceMap(
         userId: UserId,
-        id: ReferenceMapId,
+        referenceMapId: ReferenceMapId,
         referenceMapCreation: ReferenceMapCreation
     )(implicit
         ec: ExecutionContext
     ): DBIO[ReferenceMap] = {
-      val referenceMap    = ReferenceMapCreation.create(id, referenceMapCreation)
-      val referenceMapRow = (referenceMap, userId).transformInto[Tables.ReferenceMapRow]
+      val referenceMap    = ReferenceMapCreation.create(referenceMapId, referenceMapCreation)
+      val referenceMapRow = ReferenceMap.TransformableToDB(userId, referenceMap).transformInto[Tables.ReferenceMapRow]
       referenceMapDao
         .insert(referenceMapRow)
         .map(_.transformInto[ReferenceMap])
     }
 
-    override def updateReferenceMap(userId: UserId, referenceMapUpdate: ReferenceMapUpdate)(implicit
+    override def updateReferenceMap(
+        userId: UserId,
+        referenceMapId: ReferenceMapId,
+        referenceMapUpdate: ReferenceMapUpdate
+    )(implicit
         ec: ExecutionContext
     ): DBIO[ReferenceMap] = {
       val findAction =
-        OptionT(getReferenceMap(userId, referenceMapUpdate.id)).getOrElseF(notFound)
+        OptionT(getReferenceMap(userId, referenceMapId)).getOrElseF(notFound)
       for {
         referenceMap <- findAction
         _ <- referenceMapDao.update(
-          (
-            ReferenceMapUpdate
-              .update(referenceMap, referenceMapUpdate),
-            userId
-          )
+          ReferenceMap
+            .TransformableToDB(
+              userId,
+              ReferenceMapUpdate.update(referenceMap, referenceMapUpdate)
+            )
             .transformInto[Tables.ReferenceMapRow]
         )
         updatedReferenceMap <- findAction
@@ -223,42 +231,48 @@ object Live {
 
     override def addReferenceEntry(
         userId: UserId,
+        referenceMapId: ReferenceMapId,
         referenceEntryCreation: ReferenceEntryCreation
     )(implicit
         ec: ExecutionContext
     ): DBIO[ReferenceEntry] = {
       val referenceEntry = ReferenceEntryCreation.create(referenceEntryCreation)
       val referenceEntryRow =
-        (referenceEntry, referenceEntryCreation.referenceMapId).transformInto[Tables.ReferenceEntryRow]
-      ifReferenceMapExists(userId, referenceEntryCreation.referenceMapId) {
-        referenceMapEntryDao
-          .insert(referenceEntryRow)
-          .map(_.transformInto[ReferenceEntry])
-      }
+        ReferenceEntry
+          .TransformableToDB(userId, referenceMapId, referenceEntry)
+          .transformInto[Tables.ReferenceEntryRow]
+      referenceMapEntryDao
+        .insert(referenceEntryRow)
+        .map(_.transformInto[ReferenceEntry])
     }
 
-    override def updateReferenceEntry(userId: UserId, referenceEntryUpdate: ReferenceEntryUpdate)(implicit
+    override def updateReferenceEntry(
+        userId: UserId,
+        referenceMapId: ReferenceMapId,
+        nutrientCode: NutrientCode,
+        referenceEntryUpdate: ReferenceEntryUpdate
+    )(implicit
         ec: ExecutionContext
     ): DBIO[ReferenceEntry] = {
       val findAction =
         OptionT(
           referenceMapEntryDao.find(
-            ReferenceMapEntryKey(referenceEntryUpdate.referenceMapId, referenceEntryUpdate.nutrientCode)
+            ReferenceMapEntryKey(userId, referenceMapId, nutrientCode)
           )
         )
           .getOrElseF(DBIO.failed(DBError.Reference.EntryNotFound))
       for {
         referenceEntryRow <- findAction
-        _ <- ifReferenceMapExists(userId, referenceEntryRow.referenceMapId.transformInto[ReferenceMapId]) {
+        _ <-
           referenceMapEntryDao.update(
-            (
-              ReferenceEntryUpdate
-                .update(referenceEntryRow.transformInto[ReferenceEntry], referenceEntryUpdate),
-              referenceEntryRow.referenceMapId.transformInto[ReferenceMapId]
-            )
+            ReferenceEntry
+              .TransformableToDB(
+                userId,
+                referenceEntryRow.referenceMapId.transformInto[ReferenceMapId],
+                ReferenceEntryUpdate.update(referenceEntryRow.transformInto[ReferenceEntry], referenceEntryUpdate)
+              )
               .transformInto[Tables.ReferenceEntryRow]
           )
-        }
         updatedReferenceEntryRow <- findAction
       } yield updatedReferenceEntryRow.transformInto[ReferenceEntry]
     }
@@ -266,25 +280,13 @@ object Live {
     override def deleteReferenceEntry(userId: UserId, referenceMapId: ReferenceMapId, nutrientCode: NutrientCode)(
         implicit ec: ExecutionContext
     ): DBIO[Boolean] =
-      for {
-        exists <- referenceMapDao.exists(ReferenceMapKey(userId, referenceMapId))
-        result <-
-          if (exists)
-            referenceMapEntryDao
-              .delete(ReferenceMapEntryKey(referenceMapId, nutrientCode))
-              .map(_ > 0)
-          else DBIO.successful(false)
-      } yield result
+      referenceMapEntryDao
+        .delete(ReferenceMapEntryKey(userId, referenceMapId, nutrientCode))
+        .map(_ > 0)
 
     private def nutrientNameByCode(nutrientCode: Int): Option[Nutrient] =
       nutrientTableConstants.allNutrients
         .get(nutrientCode.transformInto[NutrientCode])
-
-    private def ifReferenceMapExists[A](
-        userId: UserId,
-        id: ReferenceMapId
-    )(action: => DBIO[A])(implicit ec: ExecutionContext): DBIO[A] =
-      referenceMapDao.exists(ReferenceMapKey(userId, id)).flatMap(exists => if (exists) action else notFound)
 
   }
 

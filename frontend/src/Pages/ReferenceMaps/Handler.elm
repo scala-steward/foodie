@@ -28,12 +28,11 @@ updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 updateLogic =
     Pages.Util.ParentEditor.Handler.updateLogic
         { idOfParent = .id
-        , idOfUpdate = .id
         , toUpdate = ReferenceMapUpdateClientInput.from
         , navigateToAddress = Addresses.Frontend.referenceEntries.address
         , updateCreationTimestamp = always identity
         , create = \authorizedAccess -> ReferenceMapCreationClientInput.toCreation >> Requests.createReferenceMap authorizedAccess
-        , save = \authorizedAccess -> ReferenceMapUpdateClientInput.to >> Requests.saveReferenceMap authorizedAccess
+        , save = \authorizedAccess referenceMapId -> ReferenceMapUpdateClientInput.to >> Requests.saveReferenceMap authorizedAccess referenceMapId
         , delete = Requests.deleteReferenceMap
         , duplicate = Pages.Util.Requests.duplicateReferenceMapWith Pages.Util.ParentEditor.Page.GotDuplicateResponse
         }

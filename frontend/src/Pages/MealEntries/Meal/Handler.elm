@@ -21,12 +21,13 @@ updateLogic =
         { toUpdate = MealUpdateClientInput.from
         , idOf = .id
         , save =
-            \authorizedAccess ->
+            \authorizedAccess mealId ->
                 MealUpdateClientInput.to
                     >> Maybe.map
                         (Pages.Util.Requests.saveMealWith
                             Pages.Util.Parent.Page.GotSaveEditResponse
                             authorizedAccess
+                            mealId
                         )
         , delete = Pages.Util.Requests.deleteMealWith Pages.Util.Parent.Page.GotDeleteResponse
         , duplicate = Pages.Util.Requests.duplicateMealWith Pages.Util.Parent.Page.GotDuplicateResponse

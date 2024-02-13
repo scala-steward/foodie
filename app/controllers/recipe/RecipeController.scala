@@ -2,10 +2,10 @@ package controllers.recipe
 
 import action.UserAction
 import cats.data.{ EitherT, OptionT }
-import db.{ FoodId, IngredientId, RecipeId }
+import db.{ ComplexFoodId, FoodId, IngredientId, RecipeId }
 import errors.ErrorContext
 import io.circe.syntax._
-import io.scalaland.chimney.dsl.TransformerOps
+import io.scalaland.chimney.syntax._
 import play.api.libs.circe.Circe
 import play.api.mvc._
 import services.DBError
@@ -79,9 +79,9 @@ class RecipeController @Inject() (
         .recover(errorHandler)
     }
 
-  def get(id: UUID): Action[AnyContent] =
+  def get(recipeId: UUID): Action[AnyContent] =
     userAction.async { request =>
-      OptionT(recipeService.getRecipe(request.user.id, id.transformInto[RecipeId]))
+      OptionT(recipeService.getRecipe(request.user.id, recipeId.transformInto[RecipeId]))
         .fold(
           NotFound(ErrorContext.Recipe.NotFound.asServerError.asJson): Result
         )(
@@ -107,11 +107,15 @@ class RecipeController @Inject() (
         .recover(errorHandler)
     }
 
-  def update: Action[RecipeUpdate] =
+  def update(recipeId: UUID): Action[RecipeUpdate] =
     userAction.async(circe.tolerantJson[RecipeUpdate]) { request =>
       EitherT(
         recipeService
-          .updateRecipe(request.user.id, request.body.transformInto[services.recipe.RecipeUpdate])
+          .updateRecipe(
+            request.user.id,
+            recipeId.transformInto[RecipeId],
+            request.body.transformInto[services.recipe.RecipeUpdate]
+          )
       )
         .map(
           _.pipe(_.transformInto[Recipe])
@@ -122,10 +126,10 @@ class RecipeController @Inject() (
         .recover(errorHandler)
     }
 
-  def delete(id: UUID): Action[AnyContent] =
+  def delete(recipeId: UUID): Action[AnyContent] =
     userAction.async { request =>
       recipeService
-        .deleteRecipe(request.user.id, id.transformInto[RecipeId])
+        .deleteRecipe(request.user.id, recipeId.transformInto[RecipeId])
         .map(
           _.pipe(_.asJson)
             .pipe(Ok(_))
@@ -133,12 +137,12 @@ class RecipeController @Inject() (
         .recover(errorHandler)
     }
 
-  def getIngredients(id: UUID): Action[AnyContent] =
+  def getIngredients(recipeId: UUID): Action[AnyContent] =
     userAction.async { request =>
       recipeService
         .getIngredients(
           request.user.id,
-          id.transformInto[RecipeId]
+          recipeId.transformInto[RecipeId]
         )
         .map(
           _.pipe(_.map(_.transformInto[Ingredient]).asJson)
@@ -147,13 +151,13 @@ class RecipeController @Inject() (
         .recover(errorHandler)
     }
 
-  def duplicate(id: UUID): Action[SimpleDate] =
+  def duplicate(recipeId: UUID): Action[SimpleDate] =
     userAction.async(circe.tolerantJson[SimpleDate]) { request =>
       EitherT(
         recipeDuplication
           .duplicate(
             userId = request.user.id,
-            id = id.transformInto[RecipeId],
+            id = recipeId.transformInto[RecipeId],
             timeOfDuplication = request.body
           )
       )
@@ -166,13 +170,13 @@ class RecipeController @Inject() (
         .recover(errorHandler)
     }
 
-  def rescale(id: UUID): Action[AnyContent] =
+  def rescale(recipeId: UUID): Action[AnyContent] =
     userAction.async { request =>
       EitherT(
         rescaleService
           .rescale(
             request.user.id,
-            id.transformInto[RecipeId]
+            recipeId.transformInto[RecipeId]
           )
       )
         .map(
@@ -184,11 +188,12 @@ class RecipeController @Inject() (
         .recover(errorHandler)
     }
 
-  def addIngredient: Action[IngredientCreation] =
+  def addIngredient(recipeId: UUID): Action[IngredientCreation] =
     userAction.async(circe.tolerantJson[IngredientCreation]) { request =>
       EitherT(
         recipeService.addIngredient(
           userId = request.user.id,
+          recipeId = recipeId.transformInto[RecipeId],
           ingredientCreation = request.body.transformInto[services.recipe.IngredientCreation]
         )
       )
@@ -201,10 +206,10 @@ class RecipeController @Inject() (
         .recover(errorHandler)
     }
 
-  def removeIngredient(id: UUID): Action[AnyContent] =
+  def removeIngredient(recipeId: UUID, ingredientId: UUID): Action[AnyContent] =
     userAction.async { request =>
       recipeService
-        .removeIngredient(request.user.id, id.transformInto[IngredientId])
+        .removeIngredient(request.user.id, recipeId.transformInto[RecipeId], ingredientId.transformInto[IngredientId])
         .map(
           _.pipe(_.asJson)
             .pipe(Ok(_))
@@ -212,11 +217,13 @@ class RecipeController @Inject() (
         .recover(errorHandler)
     }
 
-  def updateIngredient: Action[IngredientUpdate] =
+  def updateIngredient(recipeId: UUID, ingredientId: UUID): Action[IngredientUpdate] =
     userAction.async(circe.tolerantJson[IngredientUpdate]) { request =>
       EitherT(
         recipeService.updateIngredient(
           userId = request.user.id,
+          recipeId = recipeId.transformInto[RecipeId],
+          ingredientId = ingredientId.transformInto[IngredientId],
           ingredientUpdate = request.body.transformInto[services.recipe.IngredientUpdate]
         )
       )
@@ -229,12 +236,12 @@ class RecipeController @Inject() (
         .recover(errorHandler)
     }
 
-  def getComplexIngredients(id: UUID): Action[AnyContent] =
+  def getComplexIngredients(recipeId: UUID): Action[AnyContent] =
     userAction.async { request =>
       complexIngredientService
         .all(
           request.user.id,
-          id.transformInto[RecipeId]
+          recipeId.transformInto[RecipeId]
         )
         .map(
           _.pipe(_.map(_.transformInto[ComplexIngredient]).asJson)
@@ -243,12 +250,13 @@ class RecipeController @Inject() (
         .recover(errorHandler)
     }
 
-  def addComplexIngredient(recipeId: UUID): Action[ComplexIngredient] =
-    userAction.async(circe.tolerantJson[ComplexIngredient]) { request =>
+  def addComplexIngredient(recipeId: UUID): Action[ComplexIngredientCreation] =
+    userAction.async(circe.tolerantJson[ComplexIngredientCreation]) { request =>
       EitherT(
         complexIngredientService.create(
           userId = request.user.id,
-          complexIngredient = (request.body, recipeId).transformInto[services.complex.ingredient.ComplexIngredient]
+          recipeId = recipeId.transformInto[RecipeId],
+          complexIngredientCreation = request.body.transformInto[services.complex.ingredient.ComplexIngredientCreation]
         )
       )
         .fold(
@@ -260,10 +268,10 @@ class RecipeController @Inject() (
         .recover(errorHandler)
     }
 
-  def removeComplexIngredient(recipeId: UUID, id: UUID): Action[AnyContent] =
+  def removeComplexIngredient(recipeId: UUID, complexIngredientId: UUID): Action[AnyContent] =
     userAction.async { request =>
       complexIngredientService
-        .delete(request.user.id, recipeId.transformInto[RecipeId], id.transformInto[RecipeId])
+        .delete(request.user.id, recipeId.transformInto[RecipeId], complexIngredientId.transformInto[RecipeId])
         .map(
           _.pipe(_.asJson)
             .pipe(Ok(_))
@@ -271,12 +279,14 @@ class RecipeController @Inject() (
         .recover(errorHandler)
     }
 
-  def updateComplexIngredient(recipeId: UUID): Action[ComplexIngredient] =
-    userAction.async(circe.tolerantJson[ComplexIngredient]) { request =>
+  def updateComplexIngredient(recipeId: UUID, complexFoodId: UUID): Action[ComplexIngredientUpdate] =
+    userAction.async(circe.tolerantJson[ComplexIngredientUpdate]) { request =>
       EitherT(
         complexIngredientService.update(
           userId = request.user.id,
-          complexIngredient = (request.body, recipeId).transformInto[services.complex.ingredient.ComplexIngredient]
+          recipeId = recipeId.transformInto[RecipeId],
+          complexFoodId = complexFoodId.transformInto[ComplexFoodId],
+          complexIngredientUpdate = request.body.transformInto[services.complex.ingredient.ComplexIngredientUpdate]
         )
       )
         .fold(

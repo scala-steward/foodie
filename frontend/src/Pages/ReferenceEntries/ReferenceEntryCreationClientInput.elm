@@ -25,9 +25,8 @@ default nutrientCode =
     }
 
 
-toCreation : ReferenceMapId -> ReferenceEntryCreationClientInput -> ReferenceEntryCreation
-toCreation referenceMapId input =
-    { referenceMapId = referenceMapId
-    , nutrientCode = input.nutrientCode
+toCreation : ReferenceEntryCreationClientInput -> ReferenceEntryCreation
+toCreation input =
+    { nutrientCode = input.nutrientCode
     , amount = input.amount.value
     }

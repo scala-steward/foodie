@@ -3,7 +3,8 @@ module Pages.ComplexFoods.Foods.Page exposing (..)
 import Api.Auxiliary exposing (ComplexFoodId, RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.Recipe exposing (Recipe)
-import Pages.ComplexFoods.ComplexFoodClientInput exposing (ComplexFoodClientInput)
+import Pages.ComplexFoods.ComplexFoodCreationClientInput exposing (ComplexFoodCreationClientInput)
+import Pages.ComplexFoods.ComplexFoodUpdateClientInput exposing (ComplexFoodUpdateClientInput)
 import Pages.Util.Choice.Page
 import Pages.View.Tristate as Tristate
 
@@ -17,8 +18,8 @@ type alias Initial =
 
 
 type alias Main =
-    Pages.Util.Choice.Page.Main () ComplexFoodId ComplexFood ComplexFoodClientInput RecipeId Recipe ComplexFoodClientInput
+    Pages.Util.Choice.Page.Main () ComplexFoodId ComplexFood ComplexFoodUpdateClientInput RecipeId Recipe ComplexFoodCreationClientInput
 
 
 type alias LogicMsg =
-    Pages.Util.Choice.Page.LogicMsg ComplexFoodId ComplexFood ComplexFoodClientInput RecipeId Recipe ComplexFoodClientInput
+    Pages.Util.Choice.Page.LogicMsg ComplexFoodId ComplexFood ComplexFoodUpdateClientInput RecipeId Recipe ComplexFoodCreationClientInput

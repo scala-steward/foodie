@@ -1,9 +1,8 @@
 package services.reference
 
-import db.{ NutrientCode, ReferenceMapId }
+import db.NutrientCode
 
 case class ReferenceEntryCreation(
-    referenceMapId: ReferenceMapId,
     nutrientCode: NutrientCode,
     amount: BigDecimal
 )

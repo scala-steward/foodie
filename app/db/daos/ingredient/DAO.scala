@@ -1,33 +1,38 @@
 package db.daos.ingredient
 
 import db.generated.Tables
-import db.{ DAOActions, IngredientId, RecipeId }
-import io.scalaland.chimney.dsl._
+import db.{ DAOActions, RecipeId, UserId }
+import io.scalaland.chimney.syntax._
 import slick.jdbc.PostgresProfile.api._
 import utils.TransformerUtils.Implicits._
 
 import java.util.UUID
 
-trait DAO extends DAOActions[Tables.RecipeIngredientRow, IngredientId] {
+trait DAO extends DAOActions[Tables.RecipeIngredientRow, IngredientKey] {
 
-  override val keyOf: Tables.RecipeIngredientRow => IngredientId = _.id.transformInto[IngredientId]
+  override val keyOf: Tables.RecipeIngredientRow => IngredientKey = IngredientKey.of
 
-  def findAllFor(recipeIds: Seq[RecipeId]): DBIO[Seq[Tables.RecipeIngredientRow]]
+  def findAllFor(userId: UserId, recipeIds: Seq[RecipeId]): DBIO[Seq[Tables.RecipeIngredientRow]]
 
 }
 
 object DAO {
 
   val instance: DAO =
-    new DAOActions.Instance[Tables.RecipeIngredientRow, Tables.RecipeIngredient, IngredientId](
+    new DAOActions.Instance[Tables.RecipeIngredientRow, Tables.RecipeIngredient, IngredientKey](
       Tables.RecipeIngredient,
-      (table, key) => table.id === key.transformInto[UUID]
+      (table, key) =>
+        table.userId === key.userId.transformInto[UUID] &&
+          table.recipeId === key.recipeId.transformInto[UUID] &&
+          table.id === key.ingredientId.transformInto[UUID]
     ) with DAO {
 
-      override def findAllFor(recipeIds: Seq[RecipeId]): DBIO[Seq[Tables.RecipeIngredientRow]] = {
+      override def findAllFor(userId: UserId, recipeIds: Seq[RecipeId]): DBIO[Seq[Tables.RecipeIngredientRow]] = {
         val untypedIds = recipeIds.distinct.map(_.transformInto[UUID])
         Tables.RecipeIngredient
-          .filter(_.recipeId.inSetBind(untypedIds))
+          .filter(ingredient =>
+            ingredient.userId === userId.transformInto[UUID] && ingredient.recipeId.inSetBind(untypedIds)
+          )
           .result
       }
 

@@ -30,6 +30,7 @@ createMeal authorizedAccess mealCreation =
 
 saveMeal :
     AuthorizedAccess
+    -> MealId
     -> MealUpdate
     -> Cmd Page.LogicMsg
 saveMeal =

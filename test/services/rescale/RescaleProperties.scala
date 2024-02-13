@@ -9,7 +9,7 @@ import org.scalacheck.Prop.AnyOperators
 import org.scalacheck.{ Arbitrary, Gen, Prop, Properties }
 import services.GenUtils.implicits._
 import services.complex.food.Gens.VolumeAmountOption
-import services.complex.food.{ ComplexFoodIncoming, ComplexFoodServiceProperties }
+import services.complex.food.{ ComplexFood, ComplexFoodServiceProperties }
 import services.complex.ingredient.{ ComplexIngredient, ComplexIngredientService }
 import services.nutrient.NutrientService
 import services.recipe.{ FullRecipe, Ingredient, Recipe, RecipeService }
@@ -32,16 +32,17 @@ object RescaleProperties extends Properties("Rescale properties") {
 
   def servicesWith(
       userId: UserId,
-      complexFoods: List[ComplexFoodIncoming],
+      complexFoods: List[ComplexFood],
       recipe: Recipe,
       referencedRecipes: List[Recipe],
       ingredients: List[Ingredient],
       complexIngredients: List[ComplexIngredient]
   ): Services = {
     val recipeDao = DAOTestInstance.Recipe.instanceFrom(ContentsUtil.Recipe.from(userId, recipe +: referencedRecipes))
-    val complexFoodDao = DAOTestInstance.ComplexFood.instanceFrom(ContentsUtil.ComplexFood.from(complexFoods))
+    val complexFoodDao = DAOTestInstance.ComplexFood.instanceFrom(ContentsUtil.ComplexFood.from(userId, complexFoods))
     val ingredientDao = DAOTestInstance.Ingredient.instanceFrom(
       ContentsUtil.Ingredient.from(
+        userId,
         FullRecipe(
           recipe = recipe,
           ingredients = ingredients
@@ -49,7 +50,7 @@ object RescaleProperties extends Properties("Rescale properties") {
       )
     )
     val complexIngredientDao = DAOTestInstance.ComplexIngredient.instanceFrom(
-      ContentsUtil.ComplexIngredient.from(recipe.id, complexIngredients)
+      ContentsUtil.ComplexIngredient.from(userId, recipe.id, complexIngredients)
     )
 
     val recipeServiceCompanion = new services.recipe.Live.Companion(
@@ -72,7 +73,7 @@ object RescaleProperties extends Properties("Rescale properties") {
       nutrientService = nutrientServiceCompanion,
       complexFoodService = ComplexFoodServiceProperties.companionWith(
         recipeContents = ContentsUtil.Recipe.from(userId, referencedRecipes),
-        complexFoodContents = ContentsUtil.ComplexFood.from(complexFoods),
+        complexFoodContents = ContentsUtil.ComplexFood.from(userId, complexFoods),
         complexIngredientContents = Seq.empty
       ),
       complexIngredientService = complexIngredientServiceCompanion
@@ -105,7 +106,7 @@ object RescaleProperties extends Properties("Rescale properties") {
       userId: UserId,
       recipe: Recipe,
       referencedRecipes: List[Recipe],
-      complexFoods: List[ComplexFoodIncoming],
+      complexFoods: List[ComplexFood],
       ingredients: List[Ingredient],
       complexIngredients: List[ComplexIngredient],
       servingSizeInGrams: BigDecimal
@@ -115,15 +116,14 @@ object RescaleProperties extends Properties("Rescale properties") {
     userId                <- GenUtils.taggedId[UserTag]
     recipe                <- services.recipe.Gens.recipeGen
     referencedRecipes     <- Gen.nonEmptyListOf(services.recipe.Gens.recipeGen)
-    subsetForComplexFoods <- GenUtils.subset(referencedRecipes).map(_.map(_.id))
+    subsetForComplexFoods <- GenUtils.subset(referencedRecipes)
     complexFoods <- subsetForComplexFoods.traverse(
       services.complex.food.Gens.complexFood(_, VolumeAmountOption.OptionalVolume)
     )
-    ingredients <- Gen.listOf(services.recipe.Gens.ingredientGen)
-    complexIngredients <- services.complex.ingredient.Gens
-      .complexIngredientsGen(recipe.id, complexFoods)
-    servingSize <- GenUtils.smallBigDecimalGen
-    spaces      <- Gen.choose(0, 10)
+    ingredients        <- Gen.listOf(services.recipe.Gens.ingredientGen)
+    complexIngredients <- services.complex.ingredient.Gens.complexIngredientsGen(complexFoods)
+    servingSize        <- GenUtils.smallBigDecimalGen
+    spaces             <- Gen.choose(0, 10)
   } yield RescaleSetup(
     userId = userId,
     recipe = recipe.copy(

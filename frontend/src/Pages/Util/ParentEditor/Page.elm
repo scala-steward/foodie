@@ -79,7 +79,7 @@ type LogicMsg parentId parent creation update
     | FinishUpdateCreation (Maybe creation)
     | Create
     | GotCreateResponse (Result Error parent)
-    | Edit update
+    | Edit parentId update
     | SaveEdit parentId
     | GotSaveEditResponse (Result Error parent)
     | ToggleControls parentId

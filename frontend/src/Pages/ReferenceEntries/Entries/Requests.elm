@@ -24,21 +24,21 @@ fetchReferenceEntries authorizedAccess referenceMapId =
         }
 
 
-createReferenceEntry : AuthorizedAccess -> ReferenceEntryCreation -> Cmd Page.LogicMsg
-createReferenceEntry authorizedAccess referenceNutrientCreation =
+createReferenceEntry : AuthorizedAccess -> ReferenceMapId -> ReferenceEntryCreation -> Cmd Page.LogicMsg
+createReferenceEntry authorizedAccess referenceMapId referenceNutrientCreation =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        Addresses.Backend.references.entries.create
+        (Addresses.Backend.references.entries.create referenceMapId)
         { body = encoderReferenceEntryCreation referenceNutrientCreation |> Http.jsonBody
         , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotCreateResponse decoderReferenceEntry
         }
 
 
-saveReferenceEntry : AuthorizedAccess -> ReferenceEntryUpdate -> Cmd Page.LogicMsg
-saveReferenceEntry authorizedAccess referenceEntryUpdate =
+saveReferenceEntry : AuthorizedAccess -> ReferenceMapId -> NutrientCode -> ReferenceEntryUpdate -> Cmd Page.LogicMsg
+saveReferenceEntry authorizedAccess referenceMapId nutrientCode referenceEntryUpdate =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        Addresses.Backend.references.entries.update
+        (Addresses.Backend.references.entries.update referenceMapId nutrientCode)
         { body = encoderReferenceEntryUpdate referenceEntryUpdate |> Http.jsonBody
         , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotSaveEditResponse decoderReferenceEntry
         }

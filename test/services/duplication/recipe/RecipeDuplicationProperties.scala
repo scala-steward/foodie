@@ -7,7 +7,7 @@ import errors.ServerError
 import org.scalacheck.Prop.AnyOperators
 import org.scalacheck.{ Gen, Prop, Properties }
 import services.GenUtils.implicits._
-import services.complex.food.ComplexFoodIncoming
+import services.complex.food.ComplexFood
 import services.complex.food.Gens.VolumeAmountOption
 import services.complex.ingredient.{ ComplexIngredient, ComplexIngredientService }
 import services.recipe._
@@ -27,15 +27,16 @@ object RecipeDuplicationProperties extends Properties("Recipe duplication") {
 
   def servicesWith(
       userId: UserId,
-      complexFoods: List[ComplexFoodIncoming],
+      complexFoods: List[ComplexFood],
       recipe: Recipe,
       ingredients: List[Ingredient],
       complexIngredients: List[ComplexIngredient]
   ): Services = {
     val recipeDao      = DAOTestInstance.Recipe.instanceFrom(ContentsUtil.Recipe.from(userId, Seq(recipe)))
-    val complexFoodDao = DAOTestInstance.ComplexFood.instanceFrom(ContentsUtil.ComplexFood.from(complexFoods))
+    val complexFoodDao = DAOTestInstance.ComplexFood.instanceFrom(ContentsUtil.ComplexFood.from(userId, complexFoods))
     val ingredientDao = DAOTestInstance.Ingredient.instanceFrom(
       ContentsUtil.Ingredient.from(
+        userId,
         FullRecipe(
           recipe = recipe,
           ingredients = ingredients
@@ -43,7 +44,7 @@ object RecipeDuplicationProperties extends Properties("Recipe duplication") {
       )
     )
     val complexIngredientDao = DAOTestInstance.ComplexIngredient.instanceFrom(
-      ContentsUtil.ComplexIngredient.from(recipe.id, complexIngredients)
+      ContentsUtil.ComplexIngredient.from(userId, recipe.id, complexIngredients)
     )
 
     val recipeServiceCompanion = new services.recipe.Live.Companion(
@@ -83,7 +84,7 @@ object RecipeDuplicationProperties extends Properties("Recipe duplication") {
       userId: UserId,
       recipe: Recipe,
       referencedRecipes: List[Recipe],
-      complexFoods: List[ComplexFoodIncoming],
+      complexFoods: List[ComplexFood],
       ingredients: List[Ingredient],
       complexIngredients: List[ComplexIngredient]
   )
@@ -92,13 +93,12 @@ object RecipeDuplicationProperties extends Properties("Recipe duplication") {
     userId                <- GenUtils.taggedId[UserTag]
     recipe                <- services.recipe.Gens.recipeGen
     referencedRecipes     <- Gen.nonEmptyListOf(services.recipe.Gens.recipeGen)
-    subsetForComplexFoods <- GenUtils.subset(referencedRecipes).map(_.map(_.id))
+    subsetForComplexFoods <- GenUtils.subset(referencedRecipes)
     complexFoods <- subsetForComplexFoods.traverse(
       services.complex.food.Gens.complexFood(_, VolumeAmountOption.OptionalVolume)
     )
-    ingredients <- Gen.listOf(services.recipe.Gens.ingredientGen)
-    complexIngredients <- services.complex.ingredient.Gens
-      .complexIngredientsGen(recipe.id, complexFoods)
+    ingredients        <- Gen.listOf(services.recipe.Gens.ingredientGen)
+    complexIngredients <- services.complex.ingredient.Gens.complexIngredientsGen(complexFoods)
   } yield DuplicationSetup(
     userId = userId,
     recipe = recipe,
@@ -144,8 +144,7 @@ object RecipeDuplicationProperties extends Properties("Recipe duplication") {
     } yield {
       Prop.all(
         groupIngredients(ingredients) ?= groupIngredients(setup.ingredients),
-        complexIngredients.sortBy(_.complexFoodId).map(_.copy(recipeId = setup.recipe.id)) ?= setup.complexIngredients
-          .sortBy(_.complexFoodId),
+        complexIngredients.sortBy(_.complexFoodId) ?= setup.complexIngredients.sortBy(_.complexFoodId),
         duplicatedRecipe.name.startsWith(setup.recipe.name),
         duplicatedRecipe.description ?= setup.recipe.description,
         duplicatedRecipe.numberOfServings ?= setup.recipe.numberOfServings,

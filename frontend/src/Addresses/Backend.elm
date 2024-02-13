@@ -15,21 +15,21 @@ recipes :
     , all : ResourcePattern
     , single : RecipeId -> ResourcePattern
     , create : ResourcePattern
-    , update : ResourcePattern
+    , update : RecipeId -> ResourcePattern
     , delete : RecipeId -> ResourcePattern
     , duplicate : RecipeId -> ResourcePattern
     , rescale : RecipeId -> ResourcePattern
     , ingredients :
         { allOf : RecipeId -> ResourcePattern
-        , create : ResourcePattern
-        , update : ResourcePattern
-        , delete : IngredientId -> ResourcePattern
+        , create : RecipeId -> ResourcePattern
+        , update : RecipeId -> IngredientId -> ResourcePattern
+        , delete : RecipeId -> IngredientId -> ResourcePattern
         }
     , complexIngredients :
         { allOf : RecipeId -> ResourcePattern
         , create : RecipeId -> ResourcePattern
-        , update : RecipeId -> ResourcePattern
-        , delete : RecipeId -> IngredientId -> ResourcePattern
+        , update : RecipeId -> ComplexFoodId -> ResourcePattern
+        , delete : RecipeId -> ComplexFoodId -> ResourcePattern
         }
     }
 recipes =
@@ -49,8 +49,8 @@ recipes =
         foodsWord =
             "foods"
 
-        ingredients =
-            (::) ingredientsWord >> base
+        ingredients recipeId =
+            (::) ingredientsWord >> (::) (recipeId |> Uuid.toString) >> base
 
         complexIngredientsWord =
             "complex-ingredients"
@@ -64,20 +64,32 @@ recipes =
     , all = get <| base <| []
     , single = \recipeId -> get <| base <| [ recipeId |> Uuid.toString ]
     , create = post <| base []
-    , update = patch <| base []
+    , update = \recipeId -> patch <| base [ recipeId |> Uuid.toString ]
     , delete = \recipeId -> delete <| base <| [ recipeId |> Uuid.toString ]
     , duplicate = \recipeId -> post <| base <| [ recipeId |> Uuid.toString, duplicateWord ]
     , rescale = \recipeId -> patch <| base <| [ recipeId |> Uuid.toString, rescaleWord ]
     , ingredients =
         { allOf = \recipeId -> get <| base <| [ recipeId |> Uuid.toString, ingredientsWord ]
-        , create = post <| ingredients []
-        , update = patch <| ingredients []
-        , delete = \ingredientId -> delete <| ingredients <| [ ingredientId |> Uuid.toString ]
+        , create = \recipeId -> post <| ingredients recipeId []
+        , update =
+            \recipeId ingredientId ->
+                patch <|
+                    base <|
+                        (::) (recipeId |> Uuid.toString) <|
+                            (::) ingredientsWord <|
+                                [ ingredientId |> Uuid.toString ]
+        , delete =
+            \recipeId ingredientId ->
+                delete <|
+                    base <|
+                        (::) (recipeId |> Uuid.toString) <|
+                            (::) ingredientsWord <|
+                                [ ingredientId |> Uuid.toString ]
         }
     , complexIngredients =
         { allOf = \recipeId -> get <| complexIngredients recipeId []
         , create = \recipeId -> post <| complexIngredients recipeId []
-        , update = \recipeId -> patch <| complexIngredients recipeId []
+        , update = \recipeId complexIngredientId -> patch <| complexIngredients recipeId [ complexIngredientId |> Uuid.toString ]
         , delete = \recipeId complexIngredientId -> delete <| complexIngredients recipeId <| [ complexIngredientId |> Uuid.toString ]
         }
     }
@@ -87,14 +99,14 @@ meals :
     { all : ResourcePattern
     , single : MealId -> ResourcePattern
     , create : ResourcePattern
-    , update : ResourcePattern
+    , update : MealId -> ResourcePattern
     , delete : MealId -> ResourcePattern
     , duplicate : MealId -> ResourcePattern
     , entries :
         { allOf : MealId -> ResourcePattern
-        , create : ResourcePattern
-        , update : ResourcePattern
-        , delete : MealEntryId -> ResourcePattern
+        , create : MealId -> ResourcePattern
+        , update : MealId -> MealEntryId -> ResourcePattern
+        , delete : MealId -> MealEntryId -> ResourcePattern
         }
     }
 meals =
@@ -107,21 +119,30 @@ meals =
 
         duplicateWord =
             "duplicate"
-
-        entries =
-            (::) entriesWord >> base
     in
     { all = get <| base <| []
     , single = \mealId -> get <| base <| [ mealId |> Uuid.toString ]
     , create = post <| base []
-    , update = patch <| base []
+    , update = \mealId -> patch <| base [ mealId |> Uuid.toString ]
     , delete = \mealId -> delete <| base <| [ mealId |> Uuid.toString ]
     , duplicate = \mealId -> post <| base <| [ mealId |> Uuid.toString, duplicateWord ]
     , entries =
         { allOf = \mealId -> get <| base <| [ mealId |> Uuid.toString, entriesWord ]
-        , create = post <| entries []
-        , update = patch <| entries []
-        , delete = \mealEntryId -> delete <| entries <| [ mealEntryId |> Uuid.toString ]
+        , create = \mealId -> post <| base [ mealId |> Uuid.toString, entriesWord ]
+        , update =
+            \mealId mealEntryId ->
+                patch <|
+                    base <|
+                        (::) (mealId |> Uuid.toString) <|
+                            (::) entriesWord <|
+                                [ mealEntryId |> Uuid.toString ]
+        , delete =
+            \mealId mealEntryId ->
+                delete <|
+                    base <|
+                        (::) (mealId |> Uuid.toString) <|
+                            (::) entriesWord <|
+                                [ mealEntryId |> Uuid.toString ]
         }
     }
 
@@ -214,13 +235,13 @@ references :
     , allTrees : ResourcePattern
     , single : ReferenceMapId -> ResourcePattern
     , create : ResourcePattern
-    , update : ResourcePattern
+    , update : ReferenceMapId -> ResourcePattern
     , delete : ReferenceMapId -> ResourcePattern
     , duplicate : ReferenceMapId -> ResourcePattern
     , entries :
         { allOf : ReferenceMapId -> ResourcePattern
-        , create : ResourcePattern
-        , update : ResourcePattern
+        , create : ReferenceMapId -> ResourcePattern
+        , update : ReferenceMapId -> NutrientCode -> ResourcePattern
         , delete : ReferenceMapId -> NutrientCode -> ResourcePattern
         }
     }
@@ -237,21 +258,24 @@ references =
 
         treesWord =
             "trees"
-
-        entries =
-            (::) entriesWord >> base
     in
     { all = get <| base <| []
     , allTrees = get <| base <| (::) treesWord <| []
     , single = \referenceMapId -> get <| base <| [ referenceMapId |> Uuid.toString ]
     , create = post <| base []
-    , update = patch <| base []
+    , update = \referenceMapId -> patch <| base [ referenceMapId |> Uuid.toString ]
     , delete = \referenceMapId -> delete <| base <| [ referenceMapId |> Uuid.toString ]
     , duplicate = \referenceMapId -> post <| base <| [ referenceMapId |> Uuid.toString, duplicateWord ]
     , entries =
         { allOf = \referenceMapId -> get <| base <| [ referenceMapId |> Uuid.toString, entriesWord ]
-        , create = post <| entries []
-        , update = patch <| entries []
+        , create = \referenceMapId -> post <| base [ referenceMapId |> Uuid.toString, entriesWord ]
+        , update =
+            \referenceMapId nutrientCode ->
+                patch <|
+                    base <|
+                        (::) (referenceMapId |> Uuid.toString) <|
+                            (::) entriesWord <|
+                                [ String.fromInt nutrientCode ]
         , delete =
             \referenceMapId nutrientCode ->
                 delete <|
@@ -267,7 +291,7 @@ complexFoods :
     { all : ResourcePattern
     , single : ComplexFoodId -> ResourcePattern
     , create : ResourcePattern
-    , update : ResourcePattern
+    , update : ComplexFoodId -> ResourcePattern
     , delete : ComplexFoodId -> ResourcePattern
     }
 complexFoods =
@@ -278,7 +302,7 @@ complexFoods =
     { all = get <| base <| []
     , single = \complexFoodId -> get <| base <| [ complexFoodId |> Uuid.toString ]
     , create = post <| base []
-    , update = patch <| base []
+    , update = \complexFoodId -> patch <| base [ complexFoodId |> Uuid.toString ]
     , delete = \complexFoodId -> delete <| base <| [ complexFoodId |> Uuid.toString ]
     }
 

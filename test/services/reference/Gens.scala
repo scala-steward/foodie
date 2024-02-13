@@ -1,6 +1,6 @@
 package services.reference
 
-import db.{ NutrientCode, ReferenceMapId }
+import db.ReferenceMapId
 import io.scalaland.chimney.dsl._
 import org.scalacheck.Gen
 import services.GenUtils
@@ -19,11 +19,10 @@ object Gens {
     referenceMapCreation <- referenceMapCreationGen
   } yield ReferenceMapCreation.create(id, referenceMapCreation)
 
-  def referenceMapUpdateGen(referenceMapId: ReferenceMapId): Gen[ReferenceMapUpdate] =
+  val referenceMapUpdateGen: Gen[ReferenceMapUpdate] =
     for {
       name <- GenUtils.nonEmptyAsciiString
     } yield ReferenceMapUpdate(
-      referenceMapId,
       name = name
     )
 
@@ -45,8 +44,8 @@ object Gens {
       referenceEntries = referenceEntries.distinctBy(_.nutrientCode)
     )
 
-  def referenceEntryUpdateGen(referenceMapId: ReferenceMapId, nutrientCode: NutrientCode): Gen[ReferenceEntryUpdate] = {
-    GenUtils.smallBigDecimalGen.map(ReferenceEntryUpdate(referenceMapId, nutrientCode = nutrientCode, _))
+  val referenceEntryUpdateGen: Gen[ReferenceEntryUpdate] = {
+    GenUtils.smallBigDecimalGen.map(ReferenceEntryUpdate(_))
   }
 
 }

@@ -31,32 +31,33 @@ fetchFoods =
 
 createIngredient :
     AuthorizedAccess
+    -> RecipeId
     -> IngredientCreation
     -> Cmd Page.LogicMsg
-createIngredient authorizedAccess ingredientCreation =
+createIngredient authorizedAccess recipeId ingredientCreation =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        Addresses.Backend.recipes.ingredients.create
+        (Addresses.Backend.recipes.ingredients.create recipeId)
         { body = encoderIngredientCreation ingredientCreation |> Http.jsonBody
         , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotCreateResponse decoderIngredient
         }
 
 
-saveIngredient : AuthorizedAccess -> IngredientUpdate -> Cmd Page.LogicMsg
-saveIngredient flags ingredientUpdate =
+saveIngredient : AuthorizedAccess -> RecipeId -> IngredientId -> IngredientUpdate -> Cmd Page.LogicMsg
+saveIngredient flags recipeId ingredientId ingredientUpdate =
     HttpUtil.runPatternWithJwt
         flags
-        Addresses.Backend.recipes.ingredients.update
+        (Addresses.Backend.recipes.ingredients.update recipeId ingredientId)
         { body = encoderIngredientUpdate ingredientUpdate |> Http.jsonBody
         , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotSaveEditResponse decoderIngredient
         }
 
 
-deleteIngredient : AuthorizedAccess -> IngredientId -> Cmd Page.LogicMsg
-deleteIngredient flags ingredientId =
+deleteIngredient : AuthorizedAccess -> RecipeId -> IngredientId -> Cmd Page.LogicMsg
+deleteIngredient flags recipeId ingredientId =
     HttpUtil.runPatternWithJwt
         flags
-        (Addresses.Backend.recipes.ingredients.delete ingredientId)
+        (Addresses.Backend.recipes.ingredients.delete recipeId ingredientId)
         { body = Http.emptyBody
         , expect = HttpUtil.expectWhatever (Pages.Util.Choice.Page.GotDeleteResponse ingredientId)
         }

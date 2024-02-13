@@ -37,7 +37,7 @@ viewMain main =
                     referenceMap
         , onUpdate =
             Pages.ReferenceMaps.View.editReferenceMapLineWith
-                { saveMsg = Pages.Util.Parent.Page.SaveEdit
+                { saveMsg = Pages.Util.Parent.Page.SaveEdit main.parent.original
                 , nameLens = ReferenceMapUpdateClientInput.lenses.name
                 , updateMsg = Pages.Util.Parent.Page.Edit
                 , confirmName = "Save"

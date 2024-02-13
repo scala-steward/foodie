@@ -1,7 +1,7 @@
 module Pages.Util.Choice.View exposing (viewChoices, viewElements)
 
 import Basics.Extra exposing (flip)
-import Html exposing (Attribute, Html, button, div, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Attribute, Html, button, div, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (colspan, disabled)
 import Html.Events exposing (onClick)
 import Html.Events.Extra exposing (onEnter)
@@ -277,11 +277,11 @@ editElementLine :
     -> List (Html (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation))
 editElementLine ps element elementUpdateClientInput =
     let
-        saveMsg =
-            Pages.Util.Choice.Page.SaveEdit elementUpdateClientInput
-
         elementId =
             element |> ps.idOfElement
+
+        saveMsg =
+            Pages.Util.Choice.Page.SaveEdit elementId elementUpdateClientInput
 
         cancelMsg =
             Pages.Util.Choice.Page.ExitEdit <| elementId

@@ -45,9 +45,9 @@ class MealController @Inject() (
         .recover(errorHandler)
     }
 
-  def get(id: UUID): Action[AnyContent] =
+  def get(mealId: UUID): Action[AnyContent] =
     userAction.async { request =>
-      OptionT(mealService.getMeal(request.user.id, id.transformInto[MealId]))
+      OptionT(mealService.getMeal(request.user.id, mealId.transformInto[MealId]))
         .fold(
           NotFound(ErrorContext.Meal.NotFound.asServerError.asJson): Result
         )(
@@ -73,11 +73,15 @@ class MealController @Inject() (
         .recover(errorHandler)
     }
 
-  def update: Action[MealUpdate] =
+  def update(mealId: UUID): Action[MealUpdate] =
     userAction.async(circe.tolerantJson[MealUpdate]) { request =>
       EitherT(
         mealService
-          .updateMeal(request.user.id, request.body.transformInto[services.meal.MealUpdate])
+          .updateMeal(
+            request.user.id,
+            mealId.transformInto[MealId],
+            request.body.transformInto[services.meal.MealUpdate]
+          )
       )
         .map(
           _.pipe(_.transformInto[Meal])
@@ -88,10 +92,10 @@ class MealController @Inject() (
         .recover(errorHandler)
     }
 
-  def delete(id: UUID): Action[AnyContent] =
+  def delete(mealId: UUID): Action[AnyContent] =
     userAction.async { request =>
       mealService
-        .deleteMeal(request.user.id, id.transformInto[MealId])
+        .deleteMeal(request.user.id, mealId.transformInto[MealId])
         .map(
           _.pipe(_.asJson)
             .pipe(Ok(_))
@@ -99,12 +103,12 @@ class MealController @Inject() (
         .recover(errorHandler)
     }
 
-  def getMealEntries(id: UUID): Action[AnyContent] =
+  def getMealEntries(mealId: UUID): Action[AnyContent] =
     userAction.async { request =>
       mealService
         .getMealEntries(
           request.user.id,
-          Seq(id.transformInto[MealId])
+          Seq(mealId.transformInto[MealId])
         )
         .map(
           _.pipe(_.values)
@@ -115,13 +119,13 @@ class MealController @Inject() (
         .recover(errorHandler)
     }
 
-  def duplicate(id: UUID): Action[SimpleDate] =
+  def duplicate(mealId: UUID): Action[SimpleDate] =
     userAction.async(circe.tolerantJson[SimpleDate]) { request =>
       EitherT(
         mealDuplication
           .duplicate(
             userId = request.user.id,
-            id = id.transformInto[MealId],
+            id = mealId.transformInto[MealId],
             timeOfDuplication = request.body
           )
       )
@@ -134,11 +138,12 @@ class MealController @Inject() (
         .recover(errorHandler)
     }
 
-  def addMealEntry: Action[MealEntryCreation] =
+  def addMealEntry(mealId: UUID): Action[MealEntryCreation] =
     userAction.async(circe.tolerantJson[MealEntryCreation]) { request =>
       EitherT(
         mealService.addMealEntry(
           userId = request.user.id,
+          mealId = mealId.transformInto[MealId],
           mealEntryCreation = request.body.transformInto[services.meal.MealEntryCreation]
         )
       )
@@ -151,11 +156,13 @@ class MealController @Inject() (
         .recover(errorHandler)
     }
 
-  def updateMealEntry: Action[MealEntryUpdate] =
+  def updateMealEntry(mealId: UUID, mealEntryId: UUID): Action[MealEntryUpdate] =
     userAction.async(circe.tolerantJson[MealEntryUpdate]) { request =>
       EitherT(
         mealService.updateMealEntry(
           userId = request.user.id,
+          mealId = mealId.transformInto[MealId],
+          mealEntryId = mealEntryId.transformInto[MealEntryId],
           mealEntryUpdate = request.body.transformInto[services.meal.MealEntryUpdate]
         )
       )
@@ -168,10 +175,10 @@ class MealController @Inject() (
         .recover(errorHandler)
     }
 
-  def deleteMealEntry(id: UUID): Action[AnyContent] =
+  def deleteMealEntry(mealId: UUID, mealEntryId: UUID): Action[AnyContent] =
     userAction.async { request =>
       mealService
-        .removeMealEntry(request.user.id, id.transformInto[MealEntryId])
+        .removeMealEntry(request.user.id, mealId.transformInto[MealId], mealEntryId.transformInto[MealEntryId])
         .map(
           _.pipe(_.asJson)
             .pipe(Ok(_))

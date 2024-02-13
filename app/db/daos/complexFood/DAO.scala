@@ -1,32 +1,35 @@
 package db.daos.complexFood
 
+import db.{ DAOActions, RecipeId, UserId }
 import db.generated.Tables
-import db.{ DAOActions, RecipeId }
 import io.scalaland.chimney.dsl._
 import slick.jdbc.PostgresProfile.api._
 import utils.TransformerUtils.Implicits._
 
 import java.util.UUID
 
-trait DAO extends DAOActions[Tables.ComplexFoodRow, RecipeId] {
+trait DAO extends DAOActions[Tables.ComplexFoodRow, ComplexFoodKey] {
 
-  override val keyOf: Tables.ComplexFoodRow => RecipeId = _.recipeId.transformInto[RecipeId]
+  override val keyOf: Tables.ComplexFoodRow => ComplexFoodKey = ComplexFoodKey.of
 
-  def findByKeys(keys: Seq[RecipeId]): DBIO[Seq[Tables.ComplexFoodRow]]
+  def allOf(userId: UserId, ids: Seq[RecipeId]): DBIO[Seq[Tables.ComplexFoodRow]]
 }
 
 object DAO {
 
   val instance: DAO =
-    new DAOActions.Instance[Tables.ComplexFoodRow, Tables.ComplexFood, RecipeId](
+    new DAOActions.Instance[Tables.ComplexFoodRow, Tables.ComplexFood, ComplexFoodKey](
       Tables.ComplexFood,
-      (table, key) => table.recipeId === key.transformInto[UUID]
+      (table, key) =>
+        table.userId === key.userId.transformInto[UUID] && table.recipeId === key.recipeId.transformInto[UUID]
     ) with DAO {
 
-      override def findByKeys(keys: Seq[RecipeId]): DBIO[Seq[Tables.ComplexFoodRow]] = {
-        val untypedIds = keys.distinct.map(_.transformInto[UUID])
+      override def allOf(userId: UserId, ids: Seq[RecipeId]): DBIO[Seq[Tables.ComplexFoodRow]] = {
+        val untypedIds = ids.distinct.map(_.transformInto[UUID])
         Tables.ComplexFood
-          .filter(_.recipeId.inSetBind(untypedIds))
+          .filter(complexFood =>
+            complexFood.userId === userId.transformInto[UUID] && complexFood.recipeId.inSetBind(untypedIds)
+          )
           .result
       }
 
