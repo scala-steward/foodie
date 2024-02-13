@@ -89,6 +89,11 @@ There needs to be a running Docker service running on the target machine.
 9. If this is the first deployment,
    connect to a bash in the Docker `db` container,
    and perform the database setup steps described above.
+10. If this is the first deployment, restart the service (only the back end is sufficient).
+    There is a tricky optimisation in the code: Some of the CNF tables are kept in memory to avoid queries
+    (particularly in the case of statistics).
+    However, the tables are loaded only once at the start of the service.
+    Since the CNF database is initially empty, so are the memory values.
 
 ### CI
 
