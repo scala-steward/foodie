@@ -57,6 +57,9 @@ Depending on the setup the commands below may need to be prefixed with `sudo`.
    Moving the file to `/tmp` handles possible access issues.
    Even better - dump only the relevant tables by listing them with `-t <table_name>` for each
    table (prefixed with `public.`).
+   ```
+   pg_dump -h foodie-postgres -d foodie -t public.user -t public.session -t public.meal_entry -t public.meal -t public.complex_food -t public.recipe -t public.complex_ingredient -t public.recipe_ingredient -t public.reference_entry -t public.reference_map  -U foodie --insert -W > /tmp/<date>.sql
+   ```
 1. Find the id the desired container: `docker ps`
 1. In a third CLI copy the backup file to your local file system:
    `docker cp <container-id>:/tmp/<backup-file-name>.sql <path-on-local-file-system>`
