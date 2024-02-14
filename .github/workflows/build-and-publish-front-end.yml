@@ -19,7 +19,8 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
-          node-version: '20.x'
+          # Outdated. Updating to 17+ introduces a breaking change with create-elm-app.
+          node-version: '16.x'
       - name: Install create-elm-app
         run: npm install create-elm-app -g
       - name: Build Elm app
