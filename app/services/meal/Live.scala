@@ -137,7 +137,7 @@ object Live {
         mealId: MealId
     )(implicit ec: ExecutionContext): DBIO[Option[Meal]] =
       OptionT(
-        mealDao.find(MealKey(userId, mealId))
+        mealDao.find(MealKey(userId, profileId, mealId))
       ).map(_.transformInto[Meal]).value
 
     override def getMeals(
@@ -192,7 +192,7 @@ object Live {
         mealId: MealId
     )(implicit ec: ExecutionContext): DBIO[Boolean] =
       mealDao
-        .delete(MealKey(userId, mealId))
+        .delete(MealKey(userId, profileId, mealId))
         .map(_ > 0)
 
     override def getMealEntries(userId: UserId, profileId: ProfileId, mealIds: Seq[MealId])(implicit
@@ -202,7 +202,7 @@ object Live {
         matchingMeals <- mealDao.allOf(userId, mealIds)
         mealEntries <-
           mealEntryDao
-            .findAllFor(userId, matchingMeals.map(_.id.transformInto[MealId]))
+            .findAllFor(userId, profileId, matchingMeals.map(_.id.transformInto[MealId]))
             .map {
               _.view.mapValues(_.map(_.transformInto[MealEntry])).toMap
             }
@@ -236,7 +236,7 @@ object Live {
         ec: ExecutionContext
     ): DBIO[MealEntry] = {
       val findAction =
-        OptionT(mealEntryDao.find(MealEntryKey(userId, mealId, mealEntryId)))
+        OptionT(mealEntryDao.find(MealEntryKey(userId, profileId, mealId, mealEntryId)))
           .getOrElseF(DBIO.failed(DBError.Meal.EntryNotFound))
       for {
         mealEntryRow <- findAction
@@ -263,7 +263,7 @@ object Live {
         ec: ExecutionContext
     ): DBIO[Boolean] =
       mealEntryDao
-        .delete(MealEntryKey(userId, mealId, mealEntryId))
+        .delete(MealEntryKey(userId, profileId, mealId, mealEntryId))
         .map(_ > 0)
 
   }

@@ -216,7 +216,7 @@ object Live {
         allMealEntries <- mealService.getMealEntries(userId, profileId, allMeals.map(_.id))
         allRecipes     <- recipeService.allRecipes(userId)
       } yield {
-        val mealMap   = allMeals.map(meal => MealKey(userId, meal.id) -> meal).toMap
+        val mealMap   = allMeals.map(meal => MealKey(userId, profileId, meal.id) -> meal).toMap
         val recipeMap = allRecipes.map(recipe => recipe.id -> recipe).toMap
         val inSomeMeal = allMealEntries.toList
           .flatMap { case (mealId, mealEntries) =>

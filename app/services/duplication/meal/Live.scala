@@ -37,7 +37,7 @@ class Live @Inject() (
     val action = for {
       mealEntries <- mealServiceCompanion
         .getMealEntries(userId, profileId, Seq(id))
-        .map(_.getOrElse(MealKey(userId, id), Seq.empty))
+        .map(_.getOrElse(MealKey(userId, profileId, id), Seq.empty))
       newMealEntries = mealEntries.map { mealEntry =>
         Duplication.DuplicatedMealEntry(
           mealEntry = mealEntry,
