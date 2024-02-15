@@ -51,8 +51,8 @@ class Live @Inject() (
           newId = newRecipeId,
           timestamp = timeOfDuplication
         )
-      _ <- companion.duplicateIngredients(newRecipeId, newIngredients)
-      _ <- companion.duplicateComplexIngredients(newRecipeId, complexIngredients.values.flatten.toSeq)
+      _ <- companion.duplicateIngredients(userId, newRecipeId, newIngredients)
+      _ <- companion.duplicateComplexIngredients(userId, newRecipeId, complexIngredients.values.flatten.toSeq)
     } yield newRecipe
 
     db.runTransactionally(action)
@@ -100,6 +100,7 @@ object Live {
     }
 
     override def duplicateIngredients(
+        userId: UserId,
         newRecipeId: RecipeId,
         ingredients: Seq[Duplication.DuplicatedIngredient]
     )(implicit ec: ExecutionContext): DBIO[Seq[Ingredient]] =
@@ -107,19 +108,21 @@ object Live {
         .insertAll(
           ingredients.map { duplicatedIngredient =>
             val newIngredient = duplicatedIngredient.ingredient.copy(id = duplicatedIngredient.newId)
-            (newIngredient, newRecipeId).transformInto[Tables.RecipeIngredientRow]
+            Ingredient.TransformableToDB(userId, newRecipeId, newIngredient).transformInto[Tables.RecipeIngredientRow]
           }
         )
         .map(_.map(_.transformInto[Ingredient]))
 
     override def duplicateComplexIngredients(
+        userId: UserId,
         newRecipeId: RecipeId,
         complexIngredients: Seq[ComplexIngredient]
     )(implicit ec: ExecutionContext): DBIO[Seq[ComplexIngredient]] =
       complexIngredientDao
         .insertAll {
-          complexIngredients.map(
-            _.copy(recipeId = newRecipeId)
+          complexIngredients.map(complexIngredient =>
+            ComplexIngredient
+              .TransformableToDB(userId, newRecipeId, complexIngredient)
               .transformInto[Tables.ComplexIngredientRow]
           )
         }

@@ -18,12 +18,11 @@ import Util.LensUtil as LensUtil
 
 updateLogic :
     { idOfParent : parent -> parentId
-    , idOfUpdate : update -> parentId
     , toUpdate : parent -> update
     , navigateToAddress : parentId -> List String
     , updateCreationTimestamp : DateUtil.Timestamp -> creation -> creation
     , create : AuthorizedAccess -> creation -> Cmd (Page.LogicMsg parentId parent creation update)
-    , save : AuthorizedAccess -> update -> Cmd (Page.LogicMsg parentId parent creation update)
+    , save : AuthorizedAccess -> parentId -> update -> Cmd (Page.LogicMsg parentId parent creation update)
     , delete : AuthorizedAccess -> parentId -> Cmd (Page.LogicMsg parentId parent creation update)
     , duplicate : AuthorizedAccess -> parentId -> DateUtil.Timestamp -> Cmd (Page.LogicMsg parentId parent creation update)
     }
@@ -119,9 +118,9 @@ updateLogic ps msg model =
         gotCreateResponse =
             gotCreationResponseWith { resetParentCreation = True }
 
-        edit update =
+        edit parentId update =
             ( model
-                |> mapParentStateById (update |> ps.idOfUpdate)
+                |> mapParentStateById parentId
                     (Editing.lenses.update.set update)
             , Cmd.none
             )
@@ -141,6 +140,7 @@ updateLogic ps msg model =
                                     { configuration = model.configuration
                                     , jwt = main.jwt
                                     }
+                                    parentId
                                 )
                     )
             )
@@ -264,8 +264,8 @@ updateLogic ps msg model =
         Page.GotCreateResponse result ->
             gotCreateResponse result
 
-        Page.Edit update ->
-            edit update
+        Page.Edit parentId update ->
+            edit parentId update
 
         Page.SaveEdit parentId ->
             saveEdit parentId

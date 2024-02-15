@@ -1,11 +1,13 @@
 package services.complex.food
 
-import db.RecipeId
+import db.{ RecipeId, UserId }
 import db.generated.Tables
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl._
 import services.recipe.Recipe
 import utils.TransformerUtils.Implicits._
+
+import java.util.UUID
 
 case class ComplexFood(
     recipeId: RecipeId,
@@ -17,13 +19,32 @@ case class ComplexFood(
 
 object ComplexFood {
 
-  implicit val fromDB: Transformer[(Tables.ComplexFoodRow, Recipe), ComplexFood] = { case (food, recipe) =>
+  case class TransformableFromDB(
+      row: Tables.ComplexFoodRow,
+      recipe: Recipe
+  )
+
+  implicit val fromDB: Transformer[TransformableFromDB, ComplexFood] = { transformableFromDB =>
     ComplexFood(
-      recipeId = food.recipeId.transformInto[RecipeId],
-      name = recipe.name,
-      description = recipe.description,
-      amountGrams = food.amountGrams,
-      amountMilliLitres = food.amountMilliLitres
+      recipeId = transformableFromDB.row.recipeId.transformInto[RecipeId],
+      name = transformableFromDB.recipe.name,
+      description = transformableFromDB.recipe.description,
+      amountGrams = transformableFromDB.row.amountGrams,
+      amountMilliLitres = transformableFromDB.row.amountMilliLitres
+    )
+  }
+
+  case class TransformableToDB(
+      userId: UserId,
+      complexFood: ComplexFood
+  )
+
+  implicit val toDB: Transformer[TransformableToDB, Tables.ComplexFoodRow] = { transformable =>
+    Tables.ComplexFoodRow(
+      recipeId = transformable.complexFood.recipeId.transformInto[UUID],
+      amountGrams = transformable.complexFood.amountGrams,
+      amountMilliLitres = transformable.complexFood.amountMilliLitres,
+      userId = transformable.userId.transformInto[UUID]
     )
   }
 

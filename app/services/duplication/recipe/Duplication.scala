@@ -36,11 +36,13 @@ object Duplication {
     )(implicit ec: ExecutionContext): DBIO[Recipe]
 
     def duplicateIngredients(
+        userId: UserId,
         newRecipeId: RecipeId,
         ingredients: Seq[DuplicatedIngredient]
     )(implicit ec: ExecutionContext): DBIO[Seq[Ingredient]]
 
     def duplicateComplexIngredients(
+        userId: UserId,
         newRecipeId: RecipeId,
         complexIngredients: Seq[ComplexIngredient]
     )(implicit ec: ExecutionContext): DBIO[Seq[ComplexIngredient]]

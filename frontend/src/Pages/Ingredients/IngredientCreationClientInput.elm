@@ -7,16 +7,14 @@ import Pages.Ingredients.AmountUnitClientInput as AmountUnitClientInput exposing
 
 
 type alias IngredientCreationClientInput =
-    { recipeId : RecipeId
-    , foodId : FoodId
+    { foodId : FoodId
     , amountUnit : AmountUnitClientInput
     }
 
 
-default : RecipeId -> FoodId -> MeasureId -> IngredientCreationClientInput
-default recipeId foodId measureId =
-    { recipeId = recipeId
-    , foodId = foodId
+default : FoodId -> MeasureId -> IngredientCreationClientInput
+default foodId measureId =
+    { foodId = foodId
     , amountUnit = AmountUnitClientInput.default measureId
     }
 
@@ -28,8 +26,7 @@ amountUnit =
 
 toCreation : IngredientCreationClientInput -> IngredientCreation
 toCreation input =
-    { recipeId = input.recipeId
-    , foodId = input.foodId
+    { foodId = input.foodId
     , amountUnit =
         { factor = input.amountUnit.factor.value
         , measureId = input.amountUnit.measureId

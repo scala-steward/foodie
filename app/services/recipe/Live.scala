@@ -2,6 +2,7 @@ package services.recipe
 
 import cats.Applicative
 import cats.data.OptionT
+import db.daos.ingredient.IngredientKey
 import db.daos.recipe.RecipeKey
 import db.generated.Tables
 import db.{ FoodId, IngredientId, RecipeId, UserId }
@@ -58,9 +59,10 @@ class Live @Inject() (
 
   override def updateRecipe(
       userId: UserId,
+      id: RecipeId,
       recipeUpdate: RecipeUpdate
   ): Future[ServerError.Or[Recipe]] =
-    db.runTransactionally(companion.updateRecipe(userId, recipeUpdate))
+    db.runTransactionally(companion.updateRecipe(userId, id, recipeUpdate))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.Recipe.Update(error.getMessage).asServerError)
@@ -76,10 +78,11 @@ class Live @Inject() (
 
   override def addIngredient(
       userId: UserId,
+      recipeId: RecipeId,
       ingredientCreation: IngredientCreation
   ): Future[ServerError.Or[Ingredient]] =
     db.runTransactionally(
-      companion.addIngredient(userId, UUID.randomUUID().transformInto[IngredientId], ingredientCreation)
+      companion.addIngredient(userId, recipeId, UUID.randomUUID().transformInto[IngredientId], ingredientCreation)
     ).map(Right(_))
       .recover { case error =>
         Left(ErrorContext.Recipe.Ingredient.Creation(error.getMessage).asServerError)
@@ -87,16 +90,18 @@ class Live @Inject() (
 
   override def updateIngredient(
       userId: UserId,
+      recipeId: RecipeId,
+      ingredientId: IngredientId,
       ingredientUpdate: IngredientUpdate
   ): Future[ServerError.Or[Ingredient]] =
-    db.runTransactionally(companion.updateIngredient(userId, ingredientUpdate))
+    db.runTransactionally(companion.updateIngredient(userId, recipeId, ingredientId, ingredientUpdate))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.Recipe.Ingredient.Update(error.getMessage).asServerError)
       }
 
-  override def removeIngredient(userId: UserId, ingredientId: IngredientId): Future[Boolean] =
-    db.runTransactionally(companion.removeIngredient(userId, ingredientId))
+  override def removeIngredient(userId: UserId, recipeId: RecipeId, ingredientId: IngredientId): Future[Boolean] =
+    db.runTransactionally(companion.removeIngredient(userId, recipeId, ingredientId))
       .recover { _ =>
         false
       }
@@ -163,7 +168,7 @@ object Live {
         ec: ExecutionContext
     ): DBIO[Recipe] = {
       val recipe    = RecipeCreation.create(id, recipeCreation)
-      val recipeRow = (recipe, userId).transformInto[Tables.RecipeRow]
+      val recipeRow = Recipe.TransformableToDB(userId, recipe).transformInto[Tables.RecipeRow]
       recipeDao
         .insert(recipeRow)
         .map(_.transformInto[Recipe])
@@ -171,19 +176,20 @@ object Live {
 
     override def updateRecipe(
         userId: UserId,
+        id: RecipeId,
         recipeUpdate: RecipeUpdate
     )(implicit
         ec: ExecutionContext
     ): DBIO[Recipe] = {
-      val findAction = OptionT(getRecipe(userId, recipeUpdate.id)).getOrElseF(notFound)
+      val findAction = OptionT(getRecipe(userId, id)).getOrElseF(notFound)
       for {
         recipe <- findAction
         _ <- recipeDao.update(
-          (
-            RecipeUpdate
-              .update(recipe, recipeUpdate),
-            userId
-          )
+          Recipe
+            .TransformableToDB(
+              userId,
+              RecipeUpdate.update(recipe, recipeUpdate)
+            )
             .transformInto[Tables.RecipeRow]
         )
         updatedRecipe <- findAction
@@ -208,7 +214,7 @@ object Live {
         ingredients <-
           if (exists)
             ingredientDao
-              .findAllFor(Seq(recipeId))
+              .findAllFor(userId, Seq(recipeId))
               .map(_.map(_.transformInto[Ingredient]).toList)
           else Applicative[DBIO].pure(List.empty)
       } yield ingredients
@@ -219,7 +225,7 @@ object Live {
       for {
         matchingRecipes <- recipeDao.allOf(userId, recipeIds)
         typedIds = matchingRecipes.map(_.id.transformInto[RecipeId])
-        allIngredients <- ingredientDao.findAllFor(typedIds)
+        allIngredients <- ingredientDao.findAllFor(userId, typedIds)
       } yield {
         // GroupBy skips recipes with no entries, hence they are added manually afterwards.
         val preMap = allIngredients.groupBy(_.recipeId.transformInto[RecipeId])
@@ -233,67 +239,56 @@ object Live {
 
     override def addIngredient(
         userId: UserId,
+        recipeId: RecipeId,
         id: IngredientId,
         ingredientCreation: IngredientCreation
     )(implicit
         ec: ExecutionContext
     ): DBIO[Ingredient] = {
-      val ingredient    = IngredientCreation.create(id, ingredientCreation)
-      val ingredientRow = (ingredient, ingredientCreation.recipeId).transformInto[Tables.RecipeIngredientRow]
-      ifRecipeExists(userId, ingredientCreation.recipeId) {
-        ingredientDao
-          .insert(ingredientRow)
-          .map(_.transformInto[Ingredient])
-      }
+      val ingredient = IngredientCreation.create(id, ingredientCreation)
+      val ingredientRow = Ingredient
+        .TransformableToDB(userId, recipeId, ingredient)
+        .transformInto[Tables.RecipeIngredientRow]
+      ingredientDao
+        .insert(ingredientRow)
+        .map(_.transformInto[Ingredient])
+
     }
 
     override def updateIngredient(
         userId: UserId,
+        recipeId: RecipeId,
+        ingredientId: IngredientId,
         ingredientUpdate: IngredientUpdate
     )(implicit
         ec: ExecutionContext
     ): DBIO[Ingredient] = {
       val findAction =
-        OptionT(ingredientDao.find(ingredientUpdate.id))
+        OptionT(ingredientDao.find(IngredientKey(userId, recipeId, ingredientId)))
           .getOrElseF(DBIO.failed(DBError.Recipe.IngredientNotFound))
       for {
         ingredientRow <- findAction
-        _ <- ifRecipeExists(userId, ingredientRow.recipeId.transformInto[RecipeId]) {
-          ingredientDao.update(
-            (
-              IngredientUpdate
-                .update(ingredientRow.transformInto[Ingredient], ingredientUpdate),
-              ingredientRow.recipeId.transformInto[RecipeId]
+        _ <- ingredientDao.update(
+          Ingredient
+            .TransformableToDB(
+              userId,
+              ingredientRow.recipeId.transformInto[RecipeId],
+              IngredientUpdate.update(ingredientRow.transformInto[Ingredient], ingredientUpdate)
             )
-              .transformInto[Tables.RecipeIngredientRow]
-          )
-        }
+            .transformInto[Tables.RecipeIngredientRow]
+        )
         updatedIngredientRow <- findAction
       } yield updatedIngredientRow.transformInto[Ingredient]
     }
 
     override def removeIngredient(
         userId: UserId,
+        recipeId: RecipeId,
         id: IngredientId
-    )(implicit ec: ExecutionContext): DBIO[Boolean] = {
-      OptionT(
-        ingredientDao.find(id)
-      ).map(_.recipeId)
-        .semiflatMap(recipeId =>
-          ifRecipeExists(userId, recipeId.transformInto[RecipeId]) {
-            ingredientDao
-              .delete(id)
-              .map(_ > 0)
-          }
-        )
-        .getOrElse(false)
-    }
-
-    private def ifRecipeExists[A](
-        userId: UserId,
-        id: RecipeId
-    )(action: => DBIO[A])(implicit ec: ExecutionContext): DBIO[A] =
-      recipeDao.exists(RecipeKey(userId, id)).flatMap(exists => if (exists) action else notFound)
+    )(implicit ec: ExecutionContext): DBIO[Boolean] =
+      ingredientDao
+        .delete(IngredientKey(userId, recipeId, id))
+        .map(_ > 0)
 
   }
 

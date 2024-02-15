@@ -1,16 +1,12 @@
 package controllers.meal
 
-import java.util.UUID
-
 import io.circe.generic.JsonCodec
 import io.scalaland.chimney.Transformer
-import utils.TransformerUtils.Implicits._
 
 import utils.date.SimpleDate
 
 @JsonCodec
 case class MealUpdate(
-    id: UUID,
     date: SimpleDate,
     name: Option[String]
 )

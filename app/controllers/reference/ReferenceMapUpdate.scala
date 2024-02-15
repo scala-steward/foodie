@@ -3,12 +3,8 @@ package controllers.reference
 import io.circe.generic.JsonCodec
 import io.scalaland.chimney.Transformer
 
-import java.util.UUID
-import utils.TransformerUtils.Implicits._
-
 @JsonCodec
 case class ReferenceMapUpdate(
-    id: UUID,
     name: String
 )
 

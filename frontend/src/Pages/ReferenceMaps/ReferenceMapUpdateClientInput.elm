@@ -4,12 +4,10 @@ import Api.Types.ReferenceMap exposing (ReferenceMap)
 import Api.Types.ReferenceMapUpdate exposing (ReferenceMapUpdate)
 import Monocle.Lens exposing (Lens)
 import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
-import Uuid exposing (Uuid)
 
 
 type alias ReferenceMapUpdateClientInput =
-    { id : Uuid
-    , name : ValidatedInput String
+    { name : ValidatedInput String
     }
 
 
@@ -23,8 +21,7 @@ lenses =
 
 from : ReferenceMap -> ReferenceMapUpdateClientInput
 from referenceMap =
-    { id = referenceMap.id
-    , name =
+    { name =
         ValidatedInput.nonEmptyString
             |> ValidatedInput.lenses.value.set referenceMap.name
             |> ValidatedInput.lenses.text.set referenceMap.name
@@ -33,6 +30,5 @@ from referenceMap =
 
 to : ReferenceMapUpdateClientInput -> ReferenceMapUpdate
 to input =
-    { id = input.id
-    , name = input.name.value
+    { name = input.name.value
     }

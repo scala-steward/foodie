@@ -1,6 +1,7 @@
 package services.duplication.meal
 
 import cats.data.OptionT
+import db.daos.meal.MealKey
 import db.generated.Tables
 import db.{ MealEntryId, MealId, UserId }
 import errors.{ ErrorContext, ServerError }
@@ -35,7 +36,7 @@ class Live @Inject() (
     val action = for {
       mealEntries <- mealServiceCompanion
         .getMealEntries(userId, Seq(id))
-        .map(_.getOrElse(id, Seq.empty))
+        .map(_.getOrElse(MealKey(userId, id), Seq.empty))
       newMealEntries = mealEntries.map { mealEntry =>
         Duplication.DuplicatedMealEntry(
           mealEntry = mealEntry,
@@ -49,7 +50,7 @@ class Live @Inject() (
         newId = newMealId,
         timestamp = timeOfDuplication
       )
-      _ <- companion.duplicateMealEntries(newMealId, newMealEntries)
+      _ <- companion.duplicateMealEntries(userId, newMealId, newMealEntries)
     } yield newMeal
 
     db.runTransactionally(action)
@@ -81,7 +82,7 @@ object Live {
         inserted <- OptionT.liftF(
           mealServiceCompanion.createMeal(
             userId = userId,
-            id = newId,
+            mealId = newId,
             mealCreation = MealCreation(
               date = timestamp,
               name =
@@ -95,6 +96,7 @@ object Live {
     }
 
     override def duplicateMealEntries(
+        userId: UserId,
         newMealId: MealId,
         mealEntries: Seq[Duplication.DuplicatedMealEntry]
     )(implicit
@@ -104,7 +106,7 @@ object Live {
         .insertAll {
           mealEntries.map { duplicatedMealEntry =>
             val newMealEntry = duplicatedMealEntry.mealEntry.copy(id = duplicatedMealEntry.newId)
-            (newMealEntry, newMealId).transformInto[Tables.MealEntryRow]
+            MealEntry.TransformableToDB(userId, newMealId, newMealEntry).transformInto[Tables.MealEntryRow]
           }
         }
         .map(_.map(_.transformInto[MealEntry]))

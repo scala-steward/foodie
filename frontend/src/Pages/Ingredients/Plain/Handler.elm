@@ -26,15 +26,14 @@ updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 updateLogic =
     Pages.Util.Choice.Handler.updateLogic
         { idOfElement = .id
-        , idOfUpdate = .ingredientId
         , idOfChoice = .id
         , choiceIdOfElement = .foodId
         , choiceIdOfCreation = .foodId
         , toUpdate = IngredientUpdateClientInput.from
-        , toCreation = \food recipeId -> IngredientCreationClientInput.default recipeId food.id (food.measures |> List.head |> Maybe.Extra.unwrap 0 .id)
-        , createElement = \authorizedAccess _ -> IngredientCreationClientInput.toCreation >> Requests.createIngredient authorizedAccess
-        , saveElement = \authorizedAccess _ updateInput -> IngredientUpdateClientInput.to updateInput |> Requests.saveIngredient authorizedAccess
-        , deleteElement = \authorizedAccess _ -> Requests.deleteIngredient authorizedAccess
+        , toCreation = \food -> IngredientCreationClientInput.default food.id (food.measures |> List.head |> Maybe.Extra.unwrap 0 .id)
+        , createElement = \authorizedAccess recipeId -> IngredientCreationClientInput.toCreation >> Requests.createIngredient authorizedAccess recipeId
+        , saveElement = \authorizedAccess recipeId ingredientId updateInput -> IngredientUpdateClientInput.to updateInput |> Requests.saveIngredient authorizedAccess recipeId ingredientId
+        , deleteElement = Requests.deleteIngredient
         , storeChoices =
             Encode.list encoderFood
                 >> Encode.encode 0

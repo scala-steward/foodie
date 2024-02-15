@@ -4,7 +4,6 @@ import db.MealId
 import utils.date.SimpleDate
 
 case class MealUpdate(
-    id: MealId,
     date: SimpleDate,
     name: Option[String]
 )

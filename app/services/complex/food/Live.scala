@@ -1,15 +1,16 @@
 package services.complex.food
 
 import cats.data.OptionT
+import db.daos.complexFood.ComplexFoodKey
 import db.generated.Tables
-import db.{ RecipeId, UserId }
+import db.{ ComplexFoodId, RecipeId, UserId }
 import errors.{ ErrorContext, ServerError }
 import io.scalaland.chimney.dsl._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
 import services.common.Transactionally.syntax._
 import services.complex.ingredient.ScalingMode
-import services.recipe.{ Recipe, RecipeService }
+import services.recipe.RecipeService
 import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import utils.DBIOUtil.instances._
@@ -34,7 +35,7 @@ class Live @Inject() (
 
   override def create(
       userId: UserId,
-      complexFood: ComplexFoodIncoming
+      complexFood: ComplexFoodCreation
   ): Future[ServerError.Or[ComplexFood]] =
     db.runTransactionally(companion.create(userId, complexFood))
       .map(Right(_))
@@ -44,9 +45,10 @@ class Live @Inject() (
 
   override def update(
       userId: UserId,
-      complexFood: ComplexFoodIncoming
+      complexFoodId: ComplexFoodId,
+      update: ComplexFoodUpdate
   ): Future[ServerError.Or[ComplexFood]] =
-    db.runTransactionally(companion.update(userId, complexFood))
+    db.runTransactionally(companion.update(userId, complexFoodId, update))
       .map(Right(_))
       .recover { case error =>
         Left(ErrorContext.ComplexFood.Update(error.getMessage).asServerError)
@@ -71,19 +73,19 @@ object Live {
     override def all(userId: UserId)(implicit ec: ExecutionContext): DBIO[Seq[ComplexFood]] =
       for {
         recipes <- recipeService.allRecipes(userId)
-        complex <- dao.findByKeys(recipes.map(_.id))
+        complex <- dao.allOf(userId, recipes.map(_.id))
       } yield {
         val recipeMap = recipes.map(r => r.id.transformInto[UUID] -> r).toMap
         complex.map { complexFood =>
-          (complexFood, recipeMap(complexFood.recipeId)).transformInto[ComplexFood]
+          ComplexFood.TransformableFromDB(complexFood, recipeMap(complexFood.recipeId)).transformInto[ComplexFood]
         }
       }
 
     override def get(userId: UserId, recipeId: RecipeId)(implicit ec: ExecutionContext): DBIO[Option[ComplexFood]] = {
       val transformer = for {
         recipe         <- OptionT(recipeService.getRecipe(userId, recipeId))
-        complexFoodRow <- OptionT(dao.find(recipeId))
-      } yield (complexFoodRow, recipe).transformInto[ComplexFood]
+        complexFoodRow <- OptionT(dao.find(ComplexFoodKey(userId, recipeId)))
+      } yield ComplexFood.TransformableFromDB(complexFoodRow, recipe).transformInto[ComplexFood]
 
       transformer.value
     }
@@ -93,60 +95,56 @@ object Live {
     ): DBIO[Seq[ComplexFood]] =
       for {
         recipes         <- recipeService.getRecipes(userId, recipeIds)
-        complexFoodRows <- dao.findByKeys(recipeIds)
+        complexFoodRows <- dao.allOf(userId, recipeIds)
       } yield {
         val complexFoodMap = complexFoodRows.map(complexFood => complexFood.recipeId -> complexFood).toMap
 
         recipes.flatMap { recipe =>
           complexFoodMap
             .get(recipe.id.transformInto[UUID])
-            .map(complexFoodRow => (complexFoodRow, recipe).transformInto[ComplexFood])
+            .map(complexFoodRow => ComplexFood.TransformableFromDB(complexFoodRow, recipe).transformInto[ComplexFood])
         }
       }
 
-    override def create(userId: UserId, complexFood: ComplexFoodIncoming)(implicit
+    override def create(userId: UserId, complexFood: ComplexFoodCreation)(implicit
         ec: ExecutionContext
     ): DBIO[ComplexFood] = {
-      val complexFoodRow = complexFood.transformInto[Tables.ComplexFoodRow]
-      ifRecipeExists(userId, complexFood.recipeId) { recipe =>
-        dao
-          .insert(complexFoodRow)
-          .map(complexFood => (complexFood, recipe).transformInto[ComplexFood])
-      }
+      val complexFoodRow =
+        ComplexFoodCreation.TransformableToDB(userId, complexFood).transformInto[Tables.ComplexFoodRow]
+      for {
+        inserted <- dao.insert(complexFoodRow)
+        recipe <- OptionT(recipeService.getRecipe(userId, complexFood.recipeId))
+          .getOrElseF(DBIO.failed(DBError.Complex.Food.RecipeNotFound))
+      } yield ComplexFood.TransformableFromDB(inserted, recipe).transformInto[ComplexFood]
     }
 
-    override def update(userId: UserId, complexFood: ComplexFoodIncoming)(implicit
+    override def update(
+        userId: UserId,
+        complexFoodId: ComplexFoodId,
+        update: ComplexFoodUpdate
+    )(implicit
         ec: ExecutionContext
     ): DBIO[ComplexFood] = {
       val findAction =
-        OptionT(get(userId, complexFood.recipeId))
+        OptionT(get(userId, complexFoodId))
           .getOrElseF(DBIO.failed(DBError.Complex.Food.NotFound))
       for {
-        _           <- findAction
-        referencing <- complexIngredientDao.findReferencing(complexFood.recipeId)
+        complexFood <- findAction
+        referencing <- complexIngredientDao.findReferencing(complexFoodId)
         _ <-
-          if (breaksVolumeReference(referencing, complexFood.amountMilliLitres))
+          if (breaksVolumeReference(referencing, update.amountMilliLitres))
             DBIO.failed(DBError.Complex.Food.VolumeReferenceExists)
           else DBIO.successful(())
-        _           <- dao.update(complexFood.transformInto[Tables.ComplexFoodRow])
+        updated = ComplexFoodUpdate.update(complexFood, update)
+        _           <- dao.update(ComplexFood.TransformableToDB(userId, updated).transformInto[Tables.ComplexFoodRow])
         updatedFood <- findAction
       } yield updatedFood
     }
 
     override def delete(userId: UserId, recipeId: RecipeId)(implicit ec: ExecutionContext): DBIO[Boolean] =
-      ifRecipeExists(userId, recipeId) { recipe =>
-        dao
-          .delete(recipe.id)
-          .map(_ > 0)
-      }
-
-    private def ifRecipeExists[A](
-        userId: UserId,
-        recipeId: RecipeId
-    )(action: Recipe => DBIO[A])(implicit ec: ExecutionContext): DBIO[A] =
-      recipeService
-        .getRecipe(userId, recipeId)
-        .flatMap(maybeRecipe => maybeRecipe.fold(DBIO.failed(DBError.Complex.Food.RecipeNotFound): DBIO[A])(action))
+      dao
+        .delete(ComplexFoodKey(userId, recipeId))
+        .map(_ > 0)
 
     private def breaksVolumeReference(
         referencing: Seq[Tables.ComplexIngredientRow],

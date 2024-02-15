@@ -56,12 +56,11 @@ updateLogic msg model =
         Page.ParentMsg parentMsg ->
             Pages.Util.ParentEditor.Handler.updateLogic
                 { idOfParent = .id
-                , idOfUpdate = .id
                 , toUpdate = RecipeUpdateClientInput.from
                 , navigateToAddress = Addresses.Frontend.ingredientEditor.address
                 , updateCreationTimestamp = always identity
                 , create = \authorizedAccess -> RecipeCreationClientInput.toCreation >> Requests.createRecipe authorizedAccess
-                , save = \authorizedAccess -> RecipeUpdateClientInput.to >> Requests.saveRecipe authorizedAccess
+                , save = \authorizedAccess recipeId -> RecipeUpdateClientInput.to >> Requests.saveRecipe authorizedAccess recipeId
                 , delete = Requests.deleteRecipe
                 , duplicate = Pages.Util.Requests.duplicateRecipeWith Pages.Util.ParentEditor.Page.GotDuplicateResponse
                 }

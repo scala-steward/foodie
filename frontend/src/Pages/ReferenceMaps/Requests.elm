@@ -36,6 +36,7 @@ createReferenceMap authorizedAccess referenceMapCreation =
 
 saveReferenceMap :
     AuthorizedAccess
+    -> ReferenceMapId
     -> ReferenceMapUpdate
     -> Cmd Page.LogicMsg
 saveReferenceMap =

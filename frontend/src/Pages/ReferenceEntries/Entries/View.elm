@@ -78,7 +78,7 @@ viewReferenceEntries main =
                                         ReferenceEntryUpdateClientInput.lenses.amount
                                     ).set
                                     referenceEntryUpdateClientInput
-                                    >> Pages.Util.Choice.Page.Edit
+                                    >> Pages.Util.Choice.Page.Edit referenceEntry.nutrientCode
                                 )
                             , Style.classes.numberLabel
                             ]

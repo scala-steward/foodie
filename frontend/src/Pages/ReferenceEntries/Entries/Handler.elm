@@ -24,17 +24,16 @@ updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 updateLogic =
     Pages.Util.Choice.Handler.updateLogic
         { idOfElement = .nutrientCode
-        , idOfUpdate = .nutrientCode
         , idOfChoice = .code
         , choiceIdOfElement = .nutrientCode
         , choiceIdOfCreation = .nutrientCode
         , toUpdate = ReferenceEntryUpdateClientInput.from
-        , toCreation = \nutrient _ -> ReferenceEntryCreationClientInput.default nutrient.code
-        , createElement = \authorizedAccess referenceMapId -> ReferenceEntryCreationClientInput.toCreation referenceMapId >> Requests.createReferenceEntry authorizedAccess
+        , toCreation = \nutrient -> ReferenceEntryCreationClientInput.default nutrient.code
+        , createElement = \authorizedAccess referenceMapId creation -> ReferenceEntryCreationClientInput.toCreation creation |> Requests.createReferenceEntry authorizedAccess referenceMapId
         , saveElement =
-            \authorizedAccess referenceMapId update ->
-                ReferenceEntryUpdateClientInput.to referenceMapId update
-                    |> Requests.saveReferenceEntry authorizedAccess
+            \authorizedAccess referenceMapId nutrientCode update ->
+                ReferenceEntryUpdateClientInput.to update
+                    |> Requests.saveReferenceEntry authorizedAccess referenceMapId nutrientCode
         , deleteElement = Requests.deleteReferenceEntry
         , storeChoices =
             Encode.list encoderNutrient

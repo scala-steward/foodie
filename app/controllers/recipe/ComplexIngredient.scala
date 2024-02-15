@@ -1,6 +1,6 @@
 package controllers.recipe
 
-import db.{ ComplexFoodId, RecipeId }
+import db.ComplexFoodId
 import io.circe.generic.JsonCodec
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl._
@@ -22,10 +22,9 @@ object ComplexIngredient {
       .define[services.complex.ingredient.ComplexIngredient, ComplexIngredient]
       .buildTransformer
 
-  implicit val toInternal: Transformer[(ComplexIngredient, UUID), services.complex.ingredient.ComplexIngredient] = {
-    case (complexIngredient, recipeId) =>
+  implicit val toInternal: Transformer[ComplexIngredient, services.complex.ingredient.ComplexIngredient] = {
+    complexIngredient =>
       services.complex.ingredient.ComplexIngredient(
-        recipeId = recipeId.transformInto[RecipeId],
         complexFoodId = complexIngredient.complexFoodId.transformInto[ComplexFoodId],
         factor = complexIngredient.factor,
         scalingMode = complexIngredient.scalingMode.transformInto[services.complex.ingredient.ScalingMode]

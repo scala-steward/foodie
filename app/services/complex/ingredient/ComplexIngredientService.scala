@@ -12,12 +12,15 @@ trait ComplexIngredientService {
 
   def create(
       userId: UserId,
-      complexIngredient: ComplexIngredient
+      recipeId: RecipeId,
+      complexIngredientCreation: ComplexIngredientCreation
   ): Future[ServerError.Or[ComplexIngredient]]
 
   def update(
       userId: UserId,
-      complexIngredient: ComplexIngredient
+      recipeId: RecipeId,
+      complexFoodId: ComplexFoodId,
+      complexIngredientUpdate: ComplexIngredientUpdate
   ): Future[ServerError.Or[ComplexIngredient]]
 
   def delete(userId: UserId, recipeId: RecipeId, complexFoodId: ComplexFoodId): Future[Boolean]
@@ -34,12 +37,15 @@ object ComplexIngredientService {
 
     def create(
         userId: UserId,
-        complexIngredient: ComplexIngredient
+        recipeId: RecipeId,
+        complexIngredientCreation: ComplexIngredientCreation
     )(implicit ec: ExecutionContext): DBIO[ComplexIngredient]
 
     def update(
         userId: UserId,
-        complexIngredient: ComplexIngredient
+        recipeId: RecipeId,
+        complexFoodId: ComplexFoodId,
+        complexIngredientUpdate: ComplexIngredientUpdate
     )(implicit ec: ExecutionContext): DBIO[ComplexIngredient]
 
     def delete(userId: UserId, recipeId: RecipeId, complexFoodId: ComplexFoodId)(implicit

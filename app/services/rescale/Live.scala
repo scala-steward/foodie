@@ -74,8 +74,8 @@ object Live {
         updated <- EitherT.liftF[DBIO, ServerError, Recipe](
           recipeService.updateRecipe(
             userId,
+            recipeId,
             RecipeUpdate(
-              id = recipeId,
               name = recipe.name,
               description = recipe.description,
               numberOfServings = numberOfServings,

@@ -1,6 +1,5 @@
 module Pages.Util.Choice.Handler exposing (updateLogic)
 
-import Basics.Extra exposing (flip)
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
@@ -16,14 +15,13 @@ import Util.LensUtil as LensUtil
 
 updateLogic :
     { idOfElement : element -> elementId
-    , idOfUpdate : update -> elementId
     , idOfChoice : choice -> choiceId
     , choiceIdOfElement : element -> choiceId
     , choiceIdOfCreation : creation -> choiceId
     , toUpdate : element -> update
-    , toCreation : choice -> parentId -> creation
+    , toCreation : choice -> creation
     , createElement : AuthorizedAccess -> parentId -> creation -> Cmd (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
-    , saveElement : AuthorizedAccess -> parentId -> update -> Cmd (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
+    , saveElement : AuthorizedAccess -> parentId -> elementId -> update -> Cmd (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
     , deleteElement : AuthorizedAccess -> parentId -> elementId -> Cmd (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
     , storeChoices : List choice -> Cmd (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation)
     }
@@ -32,14 +30,14 @@ updateLogic :
     -> ( Pages.Util.Choice.Page.Model parentId elementId element update choiceId choice creation, Cmd (Pages.Util.Choice.Page.LogicMsg elementId element update choiceId choice creation) )
 updateLogic ps msg model =
     let
-        edit update =
+        edit elementId update =
             ( model
-                |> mapElementStateById (update |> ps.idOfUpdate)
+                |> mapElementStateById elementId
                     (Editing.lenses.update.set update)
             , Cmd.none
             )
 
-        saveEdit elementUpdateClientInput =
+        saveEdit elementId elementUpdateClientInput =
             ( model
             , model
                 |> Tristate.foldMain Cmd.none
@@ -50,6 +48,7 @@ updateLogic ps msg model =
                                 , jwt = main.jwt
                                 }
                                 main.parentId
+                                elementId
                     )
             )
 
@@ -164,7 +163,7 @@ updateLogic ps msg model =
                         main
                             |> LensUtil.updateById (choice |> ps.idOfChoice)
                                 Pages.Util.Choice.Page.lenses.main.choices
-                                (Editing.toUpdate (flip ps.toCreation main.parentId))
+                                (Editing.toUpdate ps.toCreation)
                     )
             , Cmd.none
             )
@@ -264,11 +263,11 @@ updateLogic ps msg model =
             )
     in
     case msg of
-        Pages.Util.Choice.Page.Edit update ->
-            edit update
+        Pages.Util.Choice.Page.Edit elementId update ->
+            edit elementId update
 
-        Pages.Util.Choice.Page.SaveEdit update ->
-            saveEdit update
+        Pages.Util.Choice.Page.SaveEdit elementId update ->
+            saveEdit elementId update
 
         Pages.Util.Choice.Page.GotSaveEditResponse result ->
             gotSaveEditResponse result

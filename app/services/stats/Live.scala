@@ -5,6 +5,7 @@ import cats.data.{ EitherT, OptionT }
 import cats.syntax.contravariantSemigroupal._
 import cats.syntax.traverse._
 import db._
+import db.daos.meal.MealKey
 import db.generated.Tables
 import io.scalaland.chimney.dsl.TransformerOps
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
@@ -207,7 +208,7 @@ object Live {
         allMealEntries <- mealService.getMealEntries(userId, allMeals.map(_.id))
         allRecipes     <- recipeService.allRecipes(userId)
       } yield {
-        val mealMap   = allMeals.map(meal => meal.id -> meal).toMap
+        val mealMap   = allMeals.map(meal => MealKey(userId, meal.id) -> meal).toMap
         val recipeMap = allRecipes.map(recipe => recipe.id -> recipe).toMap
         val inSomeMeal = allMealEntries.toList
           .flatMap { case (mealId, mealEntries) =>

@@ -68,7 +68,7 @@ viewMealEntries configuration main =
                                             MealEntryUpdateClientInput.lenses.numberOfServings
                                         ).set
                                         mealEntryUpdateClientInput
-                                        >> Pages.Util.Choice.Page.Edit
+                                        >> Pages.Util.Choice.Page.Edit mealEntry.id
                                     )
                                 , Style.classes.numberLabel
                                 ]

@@ -26,14 +26,13 @@ object Gens {
     recipeCreation <- recipeCreationGen
   } yield RecipeCreation.create(id, recipeCreation)
 
-  def recipeUpdateGen(recipeId: RecipeId): Gen[RecipeUpdate] =
+  val recipeUpdateGen: Gen[RecipeUpdate] =
     for {
       name             <- GenUtils.nonEmptyAsciiString
       description      <- Gen.option(GenUtils.nonEmptyAsciiString)
       numberOfServings <- GenUtils.smallBigDecimalGen
       servingSize      <- Gen.option(GenUtils.nonEmptyAsciiString)
     } yield RecipeUpdate(
-      recipeId,
       name = name,
       description = description,
       numberOfServings = numberOfServings,
@@ -70,9 +69,9 @@ object Gens {
       ingredients = ingredients.toList
     )
 
-  def ingredientUpdateGen(ingredientId: IngredientId, foodId: FoodId): Gen[IngredientUpdate] = {
+  def ingredientUpdateGen(foodId: FoodId): Gen[IngredientUpdate] = {
     val food = GenUtils.allFoods(foodId)
-    amountUnitGen(food).map(IngredientUpdate(ingredientId, _))
+    amountUnitGen(food).map(IngredientUpdate(_))
   }
 
 }

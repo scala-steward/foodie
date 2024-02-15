@@ -92,12 +92,13 @@ fetchMealWith mkMsg authorizedAccess mealId =
 saveMealWith :
     (Result Error Meal -> msg)
     -> AuthorizedAccess
+    -> MealId
     -> MealUpdate
     -> Cmd msg
-saveMealWith mkMsg authorizedAccess mealUpdate =
+saveMealWith mkMsg authorizedAccess mealId mealUpdate =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        Addresses.Backend.meals.update
+        (Addresses.Backend.meals.update mealId)
         { body = encoderMealUpdate mealUpdate |> Http.jsonBody
         , expect = HttpUtil.expectJson mkMsg decoderMeal
         }
@@ -135,12 +136,13 @@ duplicateMealWith mkMsg authorizedAccess mealId timestamp =
 saveRecipeWith :
     (Result Error Recipe -> msg)
     -> AuthorizedAccess
+    -> RecipeId
     -> RecipeUpdate
     -> Cmd msg
-saveRecipeWith mkMsg authorizedAccess recipeUpdate =
+saveRecipeWith mkMsg authorizedAccess recipeId recipeUpdate =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        Addresses.Backend.recipes.update
+        (Addresses.Backend.recipes.update recipeId)
         { body = encoderRecipeUpdate recipeUpdate |> Http.jsonBody
         , expect = HttpUtil.expectJson mkMsg decoderRecipe
         }
@@ -192,12 +194,13 @@ rescaleRecipeWith mkMsg authorizedAccess recipeId =
 saveReferenceMapWith :
     (Result Error ReferenceMap -> msg)
     -> AuthorizedAccess
+    -> ReferenceMapId
     -> ReferenceMapUpdate
     -> Cmd msg
-saveReferenceMapWith mkMsg authorizedAccess referenceMapUpdate =
+saveReferenceMapWith mkMsg authorizedAccess referenceMapId referenceMapUpdate =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        Addresses.Backend.references.update
+        (Addresses.Backend.references.update referenceMapId)
         { body = encoderReferenceMapUpdate referenceMapUpdate |> Http.jsonBody
         , expect = HttpUtil.expectJson mkMsg decoderReferenceMap
         }

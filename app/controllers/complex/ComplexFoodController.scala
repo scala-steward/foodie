@@ -2,7 +2,7 @@ package controllers.complex
 
 import action.UserAction
 import cats.data.EitherT
-import db.RecipeId
+import db.ComplexFoodId
 import errors.ErrorContext
 import errors.ErrorContext._
 import io.circe.syntax._
@@ -38,10 +38,10 @@ class ComplexFoodController @Inject() (
         .recover(errorHandler)
     }
 
-  def get(recipeId: UUID): Action[AnyContent] =
+  def get(complexFoodId: UUID): Action[AnyContent] =
     userAction.async { request =>
       complexFoodService
-        .get(request.user.id, recipeId.transformInto[RecipeId])
+        .get(request.user.id, complexFoodId.transformInto[ComplexFoodId])
         .map(
           _.fold(NotFound(ErrorContext.ComplexFood.NotFound.asServerError.asJson): Result)(
             _.transformInto[ComplexFood]
@@ -52,11 +52,11 @@ class ComplexFoodController @Inject() (
         .recover(errorHandler)
     }
 
-  def create: Action[ComplexFoodIncoming] =
-    userAction.async(circe.tolerantJson[ComplexFoodIncoming]) { request =>
+  def create: Action[ComplexFoodCreation] =
+    userAction.async(circe.tolerantJson[ComplexFoodCreation]) { request =>
       EitherT(
         complexFoodService
-          .create(request.user.id, request.body.transformInto[services.complex.food.ComplexFoodIncoming])
+          .create(request.user.id, request.body.transformInto[services.complex.food.ComplexFoodCreation])
       )
         .fold(
           controllers.badRequest,
@@ -67,11 +67,15 @@ class ComplexFoodController @Inject() (
         .recover(errorHandler)
     }
 
-  def update: Action[ComplexFoodIncoming] =
-    userAction.async(circe.tolerantJson[ComplexFoodIncoming]) { request =>
+  def update(complexFoodId: UUID): Action[ComplexFoodUpdate] =
+    userAction.async(circe.tolerantJson[ComplexFoodUpdate]) { request =>
       EitherT(
         complexFoodService
-          .update(request.user.id, request.body.transformInto[services.complex.food.ComplexFoodIncoming])
+          .update(
+            request.user.id,
+            complexFoodId.transformInto[ComplexFoodId],
+            request.body.transformInto[services.complex.food.ComplexFoodUpdate]
+          )
       )
         .fold(
           controllers.badRequest,
@@ -82,10 +86,10 @@ class ComplexFoodController @Inject() (
         .recover(errorHandler)
     }
 
-  def delete(recipeId: UUID): Action[AnyContent] =
+  def delete(complexFoodId: UUID): Action[AnyContent] =
     userAction.async { request =>
       complexFoodService
-        .delete(request.user.id, recipeId.transformInto[RecipeId])
+        .delete(request.user.id, complexFoodId.transformInto[ComplexFoodId])
         .map(
           _.pipe(_.asJson)
             .pipe(Ok(_))

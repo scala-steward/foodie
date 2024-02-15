@@ -4,7 +4,7 @@ import Api.Auxiliary exposing (ComplexFoodId, JWT, RecipeId)
 import Api.Types.ComplexFood exposing (ComplexFood)
 import Api.Types.Recipe exposing (Recipe)
 import Monocle.Lens exposing (Lens)
-import Pages.ComplexFoods.ComplexFoodClientInput exposing (ComplexFoodClientInput)
+import Pages.ComplexFoods.ComplexFoodCreationClientInput exposing (ComplexFoodCreationClientInput)
 import Pages.ComplexFoods.Foods.Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.Choice.Page
@@ -59,7 +59,7 @@ initialToMain i =
 
 
 type alias ComplexFoodState =
-    Editing ComplexFood ComplexFoodClientInput
+    Editing ComplexFood ComplexFoodCreationClientInput
 
 
 type alias ComplexFoodStateMap =
@@ -67,11 +67,11 @@ type alias ComplexFoodStateMap =
 
 
 type alias CreateComplexFoodsMap =
-    DictList ComplexFoodId ComplexFoodClientInput
+    DictList ComplexFoodId ComplexFoodCreationClientInput
 
 
 type alias RecipeState =
-    Editing Recipe ComplexFoodClientInput
+    Editing Recipe ComplexFoodCreationClientInput
 
 
 type alias RecipeStateMap =

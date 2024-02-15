@@ -21,14 +21,13 @@ updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 updateLogic =
     Pages.Util.Choice.Handler.updateLogic
         { idOfElement = .id
-        , idOfUpdate = .mealEntryId
         , idOfChoice = .id
         , choiceIdOfElement = .recipeId
         , choiceIdOfCreation = .recipeId
         , toUpdate = MealEntryUpdateClientInput.from
-        , toCreation = \recipe mealId -> MealEntryCreationClientInput.default mealId recipe.id
-        , createElement = \authorizedAccess _ -> MealEntryCreationClientInput.toCreation >> Requests.createMealEntry authorizedAccess
-        , saveElement = \authorizedAccess _ updateInput -> MealEntryUpdateClientInput.to updateInput |> Requests.saveMealEntry authorizedAccess
-        , deleteElement = \authorizedAccess _ -> Requests.deleteMealEntry authorizedAccess
+        , toCreation = \recipe -> MealEntryCreationClientInput.default recipe.id
+        , createElement = \authorizedAccess mealId creationInput -> MealEntryCreationClientInput.toCreation creationInput |> Requests.createMealEntry authorizedAccess mealId
+        , saveElement = \authorizedAccess mealId mealEntryId updateInput -> MealEntryUpdateClientInput.to updateInput |> Requests.saveMealEntry authorizedAccess mealId mealEntryId
+        , deleteElement = Requests.deleteMealEntry
         , storeChoices = \_ -> Cmd.none
         }

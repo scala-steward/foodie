@@ -52,11 +52,12 @@ updateLogic msg model =
                 { toUpdate = RecipeUpdateClientInput.from
                 , idOf = .id
                 , save =
-                    \authorizedAccess ->
+                    \authorizedAccess recipeId ->
                         RecipeUpdateClientInput.to
                             >> Pages.Util.Requests.saveRecipeWith
                                 Pages.Util.Parent.Page.GotSaveEditResponse
                                 authorizedAccess
+                                recipeId
                             >> Just
                 , delete = Pages.Util.Requests.deleteRecipeWith Pages.Util.Parent.Page.GotDeleteResponse
                 , duplicate = Pages.Util.Requests.duplicateRecipeWith Pages.Util.Parent.Page.GotDuplicateResponse

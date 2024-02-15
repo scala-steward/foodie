@@ -1,9 +1,6 @@
 package services.reference
 
-import db.ReferenceMapId
-
 case class ReferenceMapUpdate(
-    id: ReferenceMapId,
     name: String
 )
 

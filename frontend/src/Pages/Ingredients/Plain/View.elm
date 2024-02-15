@@ -117,7 +117,7 @@ viewIngredients configuration main =
                                         )
                                     ).set
                                     ingredientUpdateClientInput
-                                    >> Pages.Util.Choice.Page.Edit
+                                    >> Pages.Util.Choice.Page.Edit ingredient.id
                             , Style.classes.numberLabel
                             ]
                             []
@@ -132,7 +132,7 @@ viewIngredients configuration main =
                                 onChangeDropdown
                                     { amountUnitLens = IngredientUpdateClientInput.lenses.amountUnit
                                     , measureIdOf = .amountUnit >> .measureId
-                                    , mkMsg = Pages.Util.Choice.Page.Edit
+                                    , mkMsg = Pages.Util.Choice.Page.Edit ingredient.id
                                     , input = ingredientUpdateClientInput
                                     }
                             }

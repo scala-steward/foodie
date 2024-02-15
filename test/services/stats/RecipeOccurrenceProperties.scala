@@ -46,16 +46,17 @@ object RecipeOccurrenceProperties extends Properties("Recipe occurrence") {
   property("Latest") = Prop.forAll(
     mealsSetupGen :| "setup"
   ) { setup =>
+    val userId    = setup.userAndRecipes.userId
     val recipeMap = setup.userAndRecipes.recipes.map(recipe => recipe.id -> recipe).toList.toMap
     val statsService = ServiceFunctions.statsServiceWith(
-      mealContents = ContentsUtil.Meal.from(setup.userAndRecipes.userId, setup.fullMeals.map(_.meal)),
-      mealEntryContents = setup.fullMeals.flatMap(ContentsUtil.MealEntry.from),
-      recipeContents = ContentsUtil.Recipe.from(setup.userAndRecipes.userId, setup.userAndRecipes.recipes.toList),
+      mealContents = ContentsUtil.Meal.from(userId, setup.fullMeals.map(_.meal)),
+      mealEntryContents = setup.fullMeals.flatMap(ContentsUtil.MealEntry.from(userId, _)),
+      recipeContents = ContentsUtil.Recipe.from(userId, setup.userAndRecipes.recipes.toList),
       ingredientContents = Seq.empty
     )
 
     val propF = for {
-      recipeOccurrencesFromService <- statsService.recipeOccurrences(setup.userAndRecipes.userId)
+      recipeOccurrencesFromService <- statsService.recipeOccurrences(userId)
     } yield {
       val latestProps = recipeOccurrencesFromService.map { recipeOccurrence =>
         val expected =

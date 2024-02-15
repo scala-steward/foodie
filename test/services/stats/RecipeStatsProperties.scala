@@ -22,7 +22,7 @@ object RecipeStatsProperties extends Properties("Recipe stats") {
       mealContents = Seq.empty,
       mealEntryContents = Seq.empty,
       recipeContents = ContentsUtil.Recipe.from(userId, Seq(fullRecipe.recipe)),
-      ingredientContents = ContentsUtil.Ingredient.from(fullRecipe)
+      ingredientContents = ContentsUtil.Ingredient.from(userId, fullRecipe)
     )
 
     val transformer = for {

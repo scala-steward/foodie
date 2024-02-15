@@ -1,6 +1,7 @@
 module Pages.ReferenceMaps.View exposing (editReferenceMapLineWith, referenceMapLineWith, tableHeader, view)
 
 import Addresses.Frontend
+import Api.Auxiliary exposing (ReferenceMapId)
 import Api.Types.ReferenceMap exposing (ReferenceMap)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
@@ -42,7 +43,7 @@ viewMain =
         , sort = List.sortBy (.original >> .name)
         , tableHeader = tableHeader
         , viewLine = viewReferenceMapLine
-        , updateLine = \_ -> updateReferenceMapLine
+        , updateLine = .id >> updateReferenceMapLine
         , deleteLine = deleteReferenceMapLine
         , create =
             { ifCreating = createReferenceMapLine
@@ -142,19 +143,18 @@ referenceMapLineWith ps =
         }
 
 
-updateReferenceMapLine : ReferenceMapUpdateClientInput -> List (Html Page.LogicMsg)
-updateReferenceMapLine referenceMapUpdateClientInput =
+updateReferenceMapLine : ReferenceMapId -> ReferenceMapUpdateClientInput -> List (Html Page.LogicMsg)
+updateReferenceMapLine referenceMapId =
     editReferenceMapLineWith
-        { saveMsg = Pages.Util.ParentEditor.Page.SaveEdit referenceMapUpdateClientInput.id
+        { saveMsg = Pages.Util.ParentEditor.Page.SaveEdit referenceMapId
         , nameLens = ReferenceMapUpdateClientInput.lenses.name
-        , updateMsg = Pages.Util.ParentEditor.Page.Edit
+        , updateMsg = Pages.Util.ParentEditor.Page.Edit referenceMapId
         , confirmName = "Save"
-        , cancelMsg = Pages.Util.ParentEditor.Page.ExitEdit referenceMapUpdateClientInput.id
+        , cancelMsg = Pages.Util.ParentEditor.Page.ExitEdit referenceMapId
         , cancelName = "Cancel"
         , rowStyles = [ Style.classes.editLine ]
-        , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls referenceMapUpdateClientInput.id |> Just
+        , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls referenceMapId |> Just
         }
-        referenceMapUpdateClientInput
 
 
 createReferenceMapLine : ReferenceMapCreationClientInput -> List (Html Page.LogicMsg)
