@@ -47,7 +47,7 @@ jobs:
     # The output is a string, hence the string comparison.
     if: ${{ needs.determine_changes_and_version.outputs.back-end-paths-changed == 'true' }}
     with:
-      version-tag: ${{ needs.compute-next-version.outputs.version-tag }}
+      version-tag: ${{ needs.determine_changes_and_version.outputs.version-tag }}
     secrets: inherit
 
   build_and_publish_front_end:
