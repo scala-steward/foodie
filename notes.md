@@ -77,6 +77,7 @@
     debug = yes
   }
   ```
+  However, a better local solution is to run a Docker container with a mailer service, e.g. `maildev`.
 - There are the following caveats when using a `localhost` mailer
   - The Docker networks need to be allowed explicitly.
     In the case of `postfix` add the corresponding networks to `mynetworks`.
