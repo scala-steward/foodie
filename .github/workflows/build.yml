@@ -40,7 +40,7 @@ jobs:
 
   build_and_publish_back_end:
     needs: determine_changes_and_version
-    uses: ./.github/workflows/build-and-publish-front-end.yml
+    uses: ./.github/workflows/build-and-publish-back-end.yml
     # The output is a string, hence the string comparison.
     if: ${{ needs.determine_changes_and_version.outputs.back-end-paths-changed == 'true' }}
     with:
