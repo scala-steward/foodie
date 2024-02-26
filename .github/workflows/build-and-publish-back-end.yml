@@ -56,3 +56,10 @@ jobs:
           context: target/docker/stage
           push: true
           tags: ${{ steps.metadata.outputs.tags }}
+      - name: Publish new release
+        shell: bash
+        run: |
+          git tag ${{ steps.semantic-version.outputs.version_tag }} ${{ github.sha }}
+          git push origin ${{ steps.semantic-version.outputs.version_tag }}
+          echo ${{ secrets.GITHUB_TOKEN }} | gh auth login --with-token
+          gh release create ${{ steps.semantic-version.outputs.version_tag }} --generate-notes --verify-tag
