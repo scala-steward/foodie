@@ -1,25 +1,28 @@
 name: Build and publish back end
 
 on:
-  push:
-    branches:
-      - "main"
-    paths:
-      - app/**
-      - test/**
-      - conf/**
-      - scripts/**
-      - build.sbt
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      version-tag:
+        type: string
+        required: true
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   package:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - name: Checkout repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - name: Publish new release
+        shell: bash
+        run: |
+          git tag ${{ inputs.version-tag }} ${{ github.sha }}
+          git push origin ${{ inputs.version-tag }}
+          echo ${{ secrets.GITHUB_TOKEN }} | gh auth login --with-token
+          gh release create ${{ inputs.version-tag }} --generate-notes --verify-tag
       - name: Set up JDK 17
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93 # v4.0.0
         with:
@@ -45,6 +48,7 @@ jobs:
           tags: |
             type=sha
             type=raw,value=latest
+            type=semver,pattern={{version}},value=${{ inputs.version-tag }}
       - name: Build and push Docker image
         uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
         with:
