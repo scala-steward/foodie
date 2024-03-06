@@ -42,7 +42,7 @@ lazy val root = (project in file("."))
       "com.github.jwt-scala"  %% "jwt-circe"           % jwtVersion,
       "com.github.pureconfig" %% "pureconfig"          % "0.17.5",
       "org.typelevel"         %% "cats-effect"         % "3.4.9",
-      "org.typelevel"         %% "cats-effect"         % "3.5.3",
+      "org.typelevel"         %% "cats-effect"         % "3.5.4",
       "org.typelevel"         %% "cats-core"           % "2.10.0",
       "com.beachape"          %% "enumeratum-circe"    % "1.7.3",
       "org.playframework"     %% "play-mailer"         % "10.0.0",
