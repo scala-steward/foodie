@@ -1,7 +1,7 @@
 module Addresses.Backend exposing (..)
 
 import Addresses.StatisticsVariant as StatisticsVariant
-import Api.Auxiliary exposing (ComplexFoodId, FoodId, IngredientId, MealEntryId, MealId, NutrientCode, RecipeId, ReferenceMapId)
+import Api.Auxiliary exposing (ComplexFoodId, FoodId, IngredientId, MealEntryId, MealId, NutrientCode, ProfileId, RecipeId, ReferenceMapId)
 import Maybe.Extra
 import Url.Builder exposing (QueryParameter)
 import Util.HttpUtil as HttpUtil exposing (ResourcePattern)
@@ -96,53 +96,55 @@ recipes =
 
 
 meals :
-    { all : ResourcePattern
-    , single : MealId -> ResourcePattern
-    , create : ResourcePattern
-    , update : MealId -> ResourcePattern
-    , delete : MealId -> ResourcePattern
-    , duplicate : MealId -> ResourcePattern
+    { all : ProfileId -> ResourcePattern
+    , single : ProfileId -> MealId -> ResourcePattern
+    , create : ProfileId -> ResourcePattern
+    , update : ProfileId -> MealId -> ResourcePattern
+    , delete : ProfileId -> MealId -> ResourcePattern
+    , duplicate : ProfileId -> MealId -> ResourcePattern
     , entries :
-        { allOf : MealId -> ResourcePattern
-        , create : MealId -> ResourcePattern
-        , update : MealId -> MealEntryId -> ResourcePattern
-        , delete : MealId -> MealEntryId -> ResourcePattern
+        { allOf : ProfileId -> MealId -> ResourcePattern
+        , create : ProfileId -> MealId -> ResourcePattern
+        , update : ProfileId -> MealId -> MealEntryId -> ResourcePattern
+        , delete : ProfileId -> MealId -> MealEntryId -> ResourcePattern
         }
     }
 meals =
     let
-        base =
-            (::) "meals"
+        profilesWord =
+            "profiles"
+
+        mealsWord =
+            "meals"
+
+        base profileId =
+            (::) profilesWord >> (::) (profileId |> Uuid.toString) >> (::) mealsWord
 
         entriesWord =
             "entries"
 
+        entries profileId mealId =
+            (::) entriesWord >> (::) (mealId |> Uuid.toString) >> base profileId
+
         duplicateWord =
             "duplicate"
     in
-    { all = get <| base <| []
-    , single = \mealId -> get <| base <| [ mealId |> Uuid.toString ]
-    , create = post <| base []
-    , update = \mealId -> patch <| base [ mealId |> Uuid.toString ]
-    , delete = \mealId -> delete <| base <| [ mealId |> Uuid.toString ]
-    , duplicate = \mealId -> post <| base <| [ mealId |> Uuid.toString, duplicateWord ]
+    { all = \profileId -> get <| base profileId []
+    , single = \profileId mealId -> get <| base profileId [ mealId |> Uuid.toString ]
+    , create = \profileId -> post <| base profileId []
+    , update = \profileId mealId -> patch <| base profileId [ mealId |> Uuid.toString ]
+    , delete = \profileId mealId -> delete <| base profileId <| [ mealId |> Uuid.toString ]
+    , duplicate = \profileId mealId -> post <| base profileId <| [ mealId |> Uuid.toString, duplicateWord ]
     , entries =
-        { allOf = \mealId -> get <| base <| [ mealId |> Uuid.toString, entriesWord ]
-        , create = \mealId -> post <| base [ mealId |> Uuid.toString, entriesWord ]
+        { allOf = \profileId mealId -> get <| entries profileId mealId []
+        , create = \profileId mealId -> post <| entries profileId mealId []
         , update =
-            \mealId mealEntryId ->
-                patch <|
-                    base <|
-                        (::) (mealId |> Uuid.toString) <|
-                            (::) entriesWord <|
-                                [ mealEntryId |> Uuid.toString ]
+            \profileId mealId mealEntryId ->
+                patch <| entries profileId mealId [ mealEntryId |> Uuid.toString ]
         , delete =
-            \mealId mealEntryId ->
+            \profileId mealId mealEntryId ->
                 delete <|
-                    base <|
-                        (::) (mealId |> Uuid.toString) <|
-                            (::) entriesWord <|
-                                [ mealEntryId |> Uuid.toString ]
+                    entries profileId mealId [ mealEntryId |> Uuid.toString ]
         }
     }
 
@@ -304,6 +306,26 @@ complexFoods =
     , create = post <| base []
     , update = \complexFoodId -> patch <| base [ complexFoodId |> Uuid.toString ]
     , delete = \complexFoodId -> delete <| base <| [ complexFoodId |> Uuid.toString ]
+    }
+
+
+profiles :
+    { all : ResourcePattern
+    , single : ProfileId -> ResourcePattern
+    , create : ResourcePattern
+    , update : ProfileId -> ResourcePattern
+    , delete : ProfileId -> ResourcePattern
+    }
+profiles =
+    let
+        base =
+            (::) "profiles"
+    in
+    { all = get <| base <| []
+    , single = \profileId -> get <| base <| [ profileId |> Uuid.toString ]
+    , create = post <| base []
+    , update = \profileId -> patch <| base [ profileId |> Uuid.toString ]
+    , delete = \profileId -> delete <| base <| [ profileId |> Uuid.toString ]
     }
 
 

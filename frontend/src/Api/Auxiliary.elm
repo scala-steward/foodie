@@ -35,6 +35,10 @@ type alias UserId =
     Uuid
 
 
+type alias ProfileId =
+    Uuid
+
+
 type alias JWT =
     String
 
