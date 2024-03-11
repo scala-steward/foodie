@@ -70,3 +70,10 @@ POST          /users/recovery/request                                        con
 POST          /users/recovery/confirm                                        controllers.user.UserController.confirmRecovery
 POST          /users/deletion/request                                        controllers.user.UserController.requestDeletion
 POST          /users/deletion/confirm                                        controllers.user.UserController.confirmDeletion
+
+
+GET           /profiles                                                      controllers.profile.ProfileController.all
+GET           /profiles/:profileId                                           controllers.profile.ProfileController.get(profileId: java.util.UUID)
+POST          /profiles                                                      controllers.profile.ProfileController.create
+PATCH         /profiles/:profileId                                           controllers.profile.ProfileController.update(profileId: java.util.UUID)
+DELETE        /profiles/:profileId                                           controllers.profile.ProfileController.delete(profileId: java.util.UUID)
