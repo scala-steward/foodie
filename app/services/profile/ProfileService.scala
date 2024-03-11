@@ -1,11 +1,11 @@
 package services.profile
 
-import db.{ProfileId, UserId}
+import db.{ ProfileId, UserId }
 import errors.ServerError
 import services.DBError
 import slick.dbio.DBIO
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 trait ProfileService {
 
@@ -29,7 +29,9 @@ object ProfileService {
 
     def get(userId: UserId, profileId: ProfileId)(implicit ec: ExecutionContext): DBIO[Option[Profile]]
 
-    def create(userId: UserId, profileCreation: ProfileCreation)(implicit ec: ExecutionContext): DBIO[Profile]
+    def create(userId: UserId, profileId: ProfileId, profileCreation: ProfileCreation)(implicit
+        ec: ExecutionContext
+    ): DBIO[Profile]
 
     def update(userId: UserId, profileId: ProfileId, profileUpdate: ProfileUpdate)(implicit
         ec: ExecutionContext
