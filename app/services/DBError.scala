@@ -42,6 +42,10 @@ object DBError {
 
   }
 
+  object Profile {
+    case object NotFound extends DBError("No profile with the given id for the given user found")
+  }
+
   object Recipe {
     case object NotFound extends DBError("No recipe with the given id for the given user found")
 
