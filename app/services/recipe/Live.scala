@@ -7,7 +7,7 @@ import db.daos.recipe.RecipeKey
 import db.generated.Tables
 import db.{ FoodId, IngredientId, RecipeId, UserId }
 import errors.{ ErrorContext, ServerError }
-import io.scalaland.chimney.dsl._
+import io.scalaland.chimney.syntax._
 import play.api.db.slick.{ DatabaseConfigProvider, HasDatabaseConfigProvider }
 import services.DBError
 import services.common.GeneralTableConstants
@@ -16,7 +16,6 @@ import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
 import utils.DBIOUtil.instances._
-import utils.TransformerUtils.Implicits._
 import utils.collection.MapUtil
 
 import java.util.UUID
