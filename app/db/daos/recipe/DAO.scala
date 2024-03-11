@@ -2,7 +2,7 @@ package db.daos.recipe
 
 import db.generated.Tables
 import db.{ DAOActions, RecipeId, UserId }
-import io.scalaland.chimney.dsl._
+import io.scalaland.chimney.syntax._
 import slick.jdbc.PostgresProfile.api._
 import utils.TransformerUtils.Implicits._
 
