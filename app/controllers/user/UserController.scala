@@ -29,14 +29,12 @@ class UserController @Inject() (
     cc: ControllerComponents,
     userService: UserService,
     mailService: MailService,
-    userAction: UserAction
+    userAction: UserAction,
+    jwtConfiguration: JwtConfiguration,
+    userConfiguration: UserConfiguration
 )(implicit executionContext: ExecutionContext)
     extends AbstractController(cc)
     with Circe {
-
-  private val jwtConfiguration = JwtConfiguration.default
-
-  private val userConfiguration = UserConfiguration.default
 
   def login: Action[Credentials] =
     Action.async(circe.tolerantJson[Credentials]) { request =>

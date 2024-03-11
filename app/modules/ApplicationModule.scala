@@ -51,7 +51,10 @@ class ApplicationModule extends play.api.inject.Module {
       bind[services.rescale.RescaleService.Companion].to[services.rescale.Live.Companion],
       bind[services.rescale.RescaleService].to[services.rescale.Live],
       bind[services.profile.ProfileService.Companion].to[services.profile.Live.Companion],
-      bind[services.profile.ProfileService].to[services.profile.Live]
+      bind[services.profile.ProfileService].to[services.profile.Live],
+      bind[controllers.user.UserConfiguration].toInstance(controllers.user.UserConfiguration.default),
+      bind[security.jwt.JwtConfiguration].toInstance(security.jwt.JwtConfiguration.default),
+      bind[services.nutrient.ConstantsConfiguration].toInstance(services.nutrient.ConstantsConfiguration.default)
     )
     settings
   }

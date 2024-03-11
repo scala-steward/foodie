@@ -16,6 +16,7 @@ import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
 import utils.DBIOUtil.instances._
+import utils.TransformerUtils.Implicits._
 import utils.collection.MapUtil
 
 import java.util.UUID
