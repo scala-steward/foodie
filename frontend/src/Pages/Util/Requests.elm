@@ -1,7 +1,7 @@
 module Pages.Util.Requests exposing (..)
 
 import Addresses.Backend
-import Api.Auxiliary exposing (MealId, RecipeId, ReferenceMapId)
+import Api.Auxiliary exposing (MealId, ProfileId, RecipeId, ReferenceMapId)
 import Api.Types.ComplexFood exposing (ComplexFood, decoderComplexFood)
 import Api.Types.Food exposing (Food, decoderFood)
 import Api.Types.Meal exposing (Meal, decoderMeal)
@@ -65,11 +65,12 @@ fetchRecipeWith mkMsg authorizedAccess recipeId =
 fetchMealsWith :
     (Result Error (List Meal) -> msg)
     -> AuthorizedAccess
+    -> ProfileId
     -> Cmd msg
-fetchMealsWith mkMsg authorizedAccess =
+fetchMealsWith mkMsg authorizedAccess profileId =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        Addresses.Backend.meals.all
+        (Addresses.Backend.meals.all profileId)
         { body = Http.emptyBody
         , expect = HttpUtil.expectJson mkMsg (Decode.list decoderMeal)
         }
@@ -78,12 +79,13 @@ fetchMealsWith mkMsg authorizedAccess =
 fetchMealWith :
     (Result Error Meal -> msg)
     -> AuthorizedAccess
+    -> ProfileId
     -> MealId
     -> Cmd msg
-fetchMealWith mkMsg authorizedAccess mealId =
+fetchMealWith mkMsg authorizedAccess profileId mealId =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        (Addresses.Backend.meals.single mealId)
+        (Addresses.Backend.meals.single profileId mealId)
         { body = Http.emptyBody
         , expect = HttpUtil.expectJson mkMsg decoderMeal
         }
@@ -92,13 +94,14 @@ fetchMealWith mkMsg authorizedAccess mealId =
 saveMealWith :
     (Result Error Meal -> msg)
     -> AuthorizedAccess
+    -> ProfileId
     -> MealId
     -> MealUpdate
     -> Cmd msg
-saveMealWith mkMsg authorizedAccess mealId mealUpdate =
+saveMealWith mkMsg authorizedAccess profileId mealId mealUpdate =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        (Addresses.Backend.meals.update mealId)
+        (Addresses.Backend.meals.update profileId mealId)
         { body = encoderMealUpdate mealUpdate |> Http.jsonBody
         , expect = HttpUtil.expectJson mkMsg decoderMeal
         }
@@ -107,12 +110,13 @@ saveMealWith mkMsg authorizedAccess mealId mealUpdate =
 deleteMealWith :
     (Result Error () -> msg)
     -> AuthorizedAccess
+    -> ProfileId
     -> MealId
     -> Cmd msg
-deleteMealWith mkMsg authorizedAccess mealId =
+deleteMealWith mkMsg authorizedAccess profileId mealId =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        (Addresses.Backend.meals.delete mealId)
+        (Addresses.Backend.meals.delete profileId mealId)
         { body = Http.emptyBody
         , expect = HttpUtil.expectWhatever mkMsg
         }
@@ -121,13 +125,14 @@ deleteMealWith mkMsg authorizedAccess mealId =
 duplicateMealWith :
     (Result Error Meal -> msg)
     -> AuthorizedAccess
+    -> ProfileId
     -> MealId
     -> DateUtil.Timestamp
     -> Cmd msg
-duplicateMealWith mkMsg authorizedAccess mealId timestamp =
+duplicateMealWith mkMsg authorizedAccess profileId mealId timestamp =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        (Addresses.Backend.meals.duplicate mealId)
+        (Addresses.Backend.meals.duplicate profileId mealId)
         { body = timestamp |> DateUtil.fromPosix |> encoderSimpleDate |> Http.jsonBody
         , expect = HttpUtil.expectJson mkMsg decoderMeal
         }
