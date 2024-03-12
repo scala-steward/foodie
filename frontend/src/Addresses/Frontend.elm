@@ -27,7 +27,7 @@ module Addresses.Frontend exposing
     )
 
 import Addresses.StatisticsVariant as StatisticsVariant
-import Api.Auxiliary exposing (ComplexFoodId, FoodId, JWT, MealId, RecipeId, ReferenceMapId)
+import Api.Auxiliary exposing (ComplexFoodId, FoodId, JWT, MealId, ProfileId, RecipeId, ReferenceMapId)
 import Api.Types.UserIdentifier exposing (UserIdentifier)
 import Pages.Util.ParserUtil as ParserUtil exposing (AddressWithParser, with1, with1Multiple, with2)
 import Url.Parser as Parser exposing ((</>), (<?>), Parser, s)
@@ -49,12 +49,15 @@ overview =
     plain "overview"
 
 
-mealEntryEditor : AddressWithParser MealId (MealId -> a) a
+mealEntryEditor : AddressWithParser ( ProfileId, MealId ) (ProfileId -> MealId -> a) a
 mealEntryEditor =
-    with1
-        { step1 = "meal-entry-editor"
-        , toString = Uuid.toString >> List.singleton
-        , paramParser = ParserUtil.uuidParser
+    with2
+        { step1 = "profile"
+        , toString1 = Uuid.toString >> List.singleton
+        , paramParser1 = ParserUtil.uuidParser
+        , step2 = "meal"
+        , toString2 = Uuid.toString >> List.singleton
+        , paramParser2 = ParserUtil.uuidParser
         }
 
 
@@ -63,9 +66,18 @@ recipes =
     plain "recipes"
 
 
-meals : AddressWithParser () a a
+meals : AddressWithParser Uuid (ProfileId -> a) a
 meals =
-    plain "meals"
+    let
+        profilesWord =
+            "profiles"
+
+        mealsWord =
+            "meals"
+    in
+    { address = \param -> [ profilesWord, Uuid.toString param, mealsWord ]
+    , parser = s profilesWord </> ParserUtil.uuidParser </> s mealsWord
+    }
 
 
 statisticsTime : AddressWithParser () a a
