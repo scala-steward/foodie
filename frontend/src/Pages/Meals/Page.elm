@@ -1,6 +1,6 @@
 module Pages.Meals.Page exposing (..)
 
-import Api.Auxiliary exposing (JWT, MealId)
+import Api.Auxiliary exposing (JWT, MealId, ProfileId)
 import Api.Types.Meal exposing (Meal)
 import Pages.Meals.MealCreationClientInput exposing (MealCreationClientInput)
 import Pages.Meals.MealUpdateClientInput exposing (MealUpdateClientInput)
@@ -10,7 +10,9 @@ import Pages.View.Tristate as Tristate
 
 
 type alias Model =
-    Tristate.Model Main Initial
+    { parentEditor : Tristate.Model Main Initial
+    , profileId : ProfileId
+    }
 
 
 type alias Main =
@@ -23,6 +25,7 @@ type alias Initial =
 
 type alias Flags =
     { authorizedAccess : AuthorizedAccess
+    , profileId : ProfileId
     }
 
 
