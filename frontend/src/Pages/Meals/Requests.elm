@@ -1,7 +1,7 @@
 module Pages.Meals.Requests exposing (createMeal, deleteMeal, fetchMeals, saveMeal)
 
 import Addresses.Backend
-import Api.Auxiliary exposing (JWT, MealId)
+import Api.Auxiliary exposing (JWT, MealId, ProfileId)
 import Api.Types.Meal exposing (Meal, decoderMeal)
 import Api.Types.MealCreation exposing (MealCreation, encoderMealCreation)
 import Api.Types.MealUpdate exposing (MealUpdate)
@@ -13,16 +13,16 @@ import Pages.Util.Requests
 import Util.HttpUtil as HttpUtil
 
 
-fetchMeals : AuthorizedAccess -> Cmd Page.LogicMsg
+fetchMeals : AuthorizedAccess -> ProfileId -> Cmd Page.LogicMsg
 fetchMeals =
     Pages.Util.Requests.fetchMealsWith Pages.Util.ParentEditor.Page.GotFetchResponse
 
 
-createMeal : AuthorizedAccess -> MealCreation -> Cmd Page.LogicMsg
-createMeal authorizedAccess mealCreation =
+createMeal : AuthorizedAccess -> ProfileId -> MealCreation -> Cmd Page.LogicMsg
+createMeal authorizedAccess profileId mealCreation =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        Addresses.Backend.meals.create
+        (Addresses.Backend.meals.create profileId)
         { body = encoderMealCreation mealCreation |> Http.jsonBody
         , expect = HttpUtil.expectJson Pages.Util.ParentEditor.Page.GotCreateResponse decoderMeal
         }
@@ -30,6 +30,7 @@ createMeal authorizedAccess mealCreation =
 
 saveMeal :
     AuthorizedAccess
+    -> ProfileId
     -> MealId
     -> MealUpdate
     -> Cmd Page.LogicMsg
@@ -39,9 +40,12 @@ saveMeal =
 
 deleteMeal :
     AuthorizedAccess
+    -> ProfileId
     -> MealId
     -> Cmd Page.LogicMsg
-deleteMeal authorizedAccess mealId =
-    Pages.Util.Requests.deleteMealWith (Pages.Util.ParentEditor.Page.GotDeleteResponse mealId)
+deleteMeal authorizedAccess profileId mealId =
+    Pages.Util.Requests.deleteMealWith
+        (Pages.Util.ParentEditor.Page.GotDeleteResponse mealId)
         authorizedAccess
+        profileId
         mealId
