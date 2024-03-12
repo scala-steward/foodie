@@ -1,7 +1,7 @@
 module Pages.Meals.View exposing (editMealLineWith, mealLineWith, tableHeader, view)
 
 import Addresses.Frontend
-import Api.Auxiliary exposing (MealEntryId, MealId)
+import Api.Auxiliary exposing (MealEntryId, MealId, ProfileId)
 import Api.Types.Meal exposing (Meal)
 import Api.Types.SimpleDate exposing (SimpleDate)
 import Basics.Extra exposing (flip)
@@ -32,15 +32,16 @@ import Util.SearchUtil as SearchUtil
 
 
 view : Page.Model -> Html Page.Msg
-view =
+view model =
     Tristate.view
-        { viewMain = viewMain
+        { viewMain = \c -> viewMain c model.profileId
         , showLoginRedirect = True
         }
+        model.parentEditor
 
 
-viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
-viewMain =
+viewMain : Configuration -> ProfileId -> Page.Main -> Html Page.LogicMsg
+viewMain configuration profileId =
     Pages.Util.ParentEditor.View.viewParentsWith
         { currentPage = ViewUtil.Meals
         , matchesSearchText =
@@ -49,7 +50,7 @@ viewMain =
                     || SearchUtil.search string (meal.date |> DateUtil.toString)
         , sort = List.sortBy (.original >> .date >> DateUtil.toString) >> List.reverse
         , tableHeader = tableHeader
-        , viewLine = viewMealLine
+        , viewLine = \c -> viewMealLine c profileId
         , updateLine = .id >> updateMealLine
         , deleteLine = deleteMealLine
         , create =
@@ -62,6 +63,7 @@ viewMain =
         , setPagination = Pages.Util.ParentEditor.Page.SetPagination
         , styling = Style.ids.addMealView
         }
+        configuration
 
 
 tableHeader : Html msg
@@ -76,14 +78,18 @@ tableHeader =
         }
 
 
-viewMealLine : Configuration -> Meal -> Bool -> List (Html Page.LogicMsg)
-viewMealLine configuration meal showControls =
+viewMealLine : Configuration -> ProfileId -> Meal -> Bool -> List (Html Page.LogicMsg)
+viewMealLine configuration profileId meal showControls =
+    let
+        mealKey =
+            ( profileId, meal.id )
+    in
     mealLineWith
         { controls =
             [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick <| Pages.Util.ParentEditor.Page.EnterEdit <| meal.id ] [ text "Edit" ] ]
             , td [ Style.classes.controls ]
                 [ Links.linkButton
-                    { url = Links.frontendPage configuration <| Addresses.Frontend.mealEntryEditor.address <| meal.id
+                    { url = Links.frontendPage configuration <| Addresses.Frontend.mealEntryEditor.address <| mealKey
                     , attributes = [ Style.classes.button.editor ]
                     , children = [ text "Entries" ]
                     }
@@ -92,7 +98,7 @@ viewMealLine configuration meal showControls =
                 [ button [ Style.classes.button.delete, onClick <| Pages.Util.ParentEditor.Page.RequestDelete <| meal.id ] [ text "Delete" ] ]
             , td [ Style.classes.controls ]
                 [ Links.linkButton
-                    { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsMealSelect.address <| meal.id
+                    { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsMealSelect.address <| mealKey
                     , attributes = [ Style.classes.button.nutrients ]
                     , children = [ text "Nutrients" ]
                     }
