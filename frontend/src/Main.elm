@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Addresses.Frontend
-import Api.Auxiliary exposing (ComplexFoodId, FoodId, JWT, MealId, RecipeId, ReferenceMapId)
+import Api.Auxiliary exposing (ComplexFoodId, FoodId, JWT, MealId, ProfileId, RecipeId, ReferenceMapId)
 import Api.Types.LoginContent exposing (decoderLoginContent)
 import Api.Types.UserIdentifier exposing (UserIdentifier)
 import Basics.Extra exposing (flip)
@@ -491,8 +491,8 @@ type Route
     | OverviewRoute
     | RecipesRoute
     | IngredientRoute RecipeId
-    | MealsRoute
-    | MealEntriesRoute MealId
+    | MealsRoute ProfileId
+    | MealEntriesRoute ProfileId MealId
     | StatisticsTimeRoute
     | StatisticsFoodSearchRoute
     | StatisticsFoodSelectRoute FoodId
@@ -501,7 +501,7 @@ type Route
     | StatisticsRecipeSearchRoute
     | StatisticsRecipeSelectRoute RecipeId
     | StatisticsMealSearchRoute
-    | StatisticsMealSelectRoute MealId
+    | StatisticsMealSelectRoute ProfileId MealId
     | StatisticsRecipeOccurrencesRoute
     | ReferenceMapsRoute
     | ReferenceEntriesRoute ReferenceMapId
@@ -585,13 +585,14 @@ followRoute model =
                         }
                         |> stepThrough steps.ingredients model
 
-                ( MealsRoute, Just userJWT ) ->
+                ( MealsRoute profileId, Just userJWT ) ->
                     Pages.Meals.Handler.init
                         { authorizedAccess = authorizedAccessWith userJWT
+                        , profileId = profileId
                         }
                         |> stepThrough steps.meals model
 
-                ( MealEntriesRoute mealId, Just userJWT ) ->
+                ( MealEntriesRoute profileId mealId, Just userJWT ) ->
                     Pages.MealEntries.Handler.init
                         { authorizedAccess = authorizedAccessWith userJWT
                         , mealId = mealId
@@ -649,7 +650,7 @@ followRoute model =
                         }
                         |> stepThrough steps.statisticsMealSearch model
 
-                ( StatisticsMealSelectRoute mealId, Just userJWT ) ->
+                ( StatisticsMealSelectRoute profileId mealId, Just userJWT ) ->
                     Pages.Statistics.Meal.Select.Handler.init
                         { authorizedAccess = authorizedAccessWith userJWT
                         , mealId = mealId
