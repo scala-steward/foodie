@@ -132,13 +132,30 @@ statisticsMealSearch =
     plainMultiple "statistics" [ StatisticsVariant.meal ]
 
 
-statisticsMealSelect : AddressWithParser Uuid (MealId -> b) b
+statisticsMealSelect : AddressWithParser ( ProfileId, MealId ) (ProfileId -> MealId -> b) b
 statisticsMealSelect =
-    with1Multiple
-        { steps = [ "statistics", StatisticsVariant.meal ]
-        , toString = Uuid.toString >> List.singleton
-        , paramParser = ParserUtil.uuidParser
-        }
+    let
+        statisticsWord =
+            "statistics"
+
+        profilesWord =
+            "profiles"
+    in
+    { address =
+        \param ->
+            [ statisticsWord
+            , profilesWord
+            , param |> Tuple.first |> Uuid.toString
+            , StatisticsVariant.meal
+            , param |> Tuple.second |> Uuid.toString
+            ]
+    , parser =
+        s statisticsWord
+            </> s profilesWord
+            </> ParserUtil.uuidParser
+            </> s StatisticsVariant.meal
+            </> ParserUtil.uuidParser
+    }
 
 
 statisticsRecipeOccurrences : AddressWithParser () a a
