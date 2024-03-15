@@ -5,6 +5,7 @@ module Addresses.Frontend exposing
     , deleteAccount
     , ingredientEditor
     , login
+    , mealBranch
     , mealEntryEditor
     , meals
     , overview
@@ -64,6 +65,11 @@ mealEntryEditor =
 recipes : AddressWithParser () a a
 recipes =
     plain "recipes"
+
+
+mealBranch : AddressWithParser () a a
+mealBranch =
+    plain "meals"
 
 
 meals : AddressWithParser Uuid (ProfileId -> a) a

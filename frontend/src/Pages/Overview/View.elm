@@ -38,7 +38,7 @@ viewMain configuration main =
                 ]
             , div []
                 [ Links.linkButton
-                    { url = Links.frontendPage configuration <| Addresses.Frontend.meals.address <| ()
+                    { url = Links.frontendPage configuration <| Addresses.Frontend.mealBranch.address <| ()
                     , attributes = [ Style.classes.button.overview ]
                     , children = [ text "Meals" ]
                     }

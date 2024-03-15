@@ -80,7 +80,7 @@ addressSuffix page =
                     Addresses.Frontend.recipes.address ()
 
                 Meals ->
-                    Addresses.Frontend.meals.address ()
+                    Addresses.Frontend.mealBranch.address ()
 
                 Statistics ->
                     Addresses.Frontend.statisticsTime.address ()
