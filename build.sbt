@@ -19,14 +19,14 @@ lazy val root = (project in file("."))
   .enablePlugins(CodegenPlugin)
   .enablePlugins(JavaServerAppPackaging)
   .settings(
-    scalaVersion := "2.13.12",
+    scalaVersion := "2.13.13",
     libraryDependencies ++= Seq(
       guice,
       "com.typesafe.slick"    %% "slick"               % slickVersion,
       "com.typesafe.slick"    %% "slick-hikaricp"      % slickVersion,
       "com.typesafe.slick"    %% "slick-codegen"       % slickVersion,
       "org.postgresql"         % "postgresql"          % "42.7.1",
-      "ch.qos.logback"         % "logback-classic"     % "1.5.0",
+      "ch.qos.logback"         % "logback-classic"     % "1.5.3",
       "io.circe"              %% "circe-core"          % circeVersion,
       "io.circe"              %% "circe-generic"       % circeVersion,
       "io.circe"              %% "circe-parser"        % circeVersion,
