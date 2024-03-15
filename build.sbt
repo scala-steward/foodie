@@ -19,14 +19,14 @@ lazy val root = (project in file("."))
   .enablePlugins(CodegenPlugin)
   .enablePlugins(JavaServerAppPackaging)
   .settings(
-    scalaVersion := "2.13.12",
+    scalaVersion := "2.13.13",
     libraryDependencies ++= Seq(
       guice,
       "com.typesafe.slick"    %% "slick"               % slickVersion,
       "com.typesafe.slick"    %% "slick-hikaricp"      % slickVersion,
       "com.typesafe.slick"    %% "slick-codegen"       % slickVersion,
-      "org.postgresql"         % "postgresql"          % "42.7.1",
-      "ch.qos.logback"         % "logback-classic"     % "1.5.0",
+      "org.postgresql"         % "postgresql"          % "42.7.2",
+      "ch.qos.logback"         % "logback-classic"     % "1.5.3",
       "io.circe"              %% "circe-core"          % circeVersion,
       "io.circe"              %% "circe-generic"       % circeVersion,
       "io.circe"              %% "circe-parser"        % circeVersion,
@@ -51,7 +51,7 @@ lazy val root = (project in file("."))
       "com.kubukoz"           %% "slick-effect"        % "0.5.0",
       "com.kubukoz"           %% "slick-effect-catsio" % "0.5.0",
       // Transitive dependency. Override added for proper version.
-      "com.fasterxml.jackson.module" %% "jackson-module-scala"      % "2.16.1",
+      "com.fasterxml.jackson.module" %% "jackson-module-scala"      % "2.16.2",
       "org.scalacheck"               %% "scalacheck"                % "1.17.0" % Test,
       "org.typelevel"                %% "cats-laws"                 % "2.10.0" % Test,
       "com.github.alexarchambault"   %% "scalacheck-shapeless_1.15" % "1.3.0"  % Test
