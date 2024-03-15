@@ -1,5 +1,6 @@
 module Pages.Statistics.Meal.Search.Handler exposing (init, update)
 
+import Api.Auxiliary exposing (ProfileId)
 import Api.Types.Meal exposing (Meal)
 import Pages.Statistics.Meal.Search.Page as Page
 import Pages.Statistics.Meal.Search.Pagination exposing (Pagination)
@@ -13,11 +14,11 @@ import Util.HttpUtil exposing (Error)
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
     ( Page.initial flags.authorizedAccess
-    , initialFetch flags.authorizedAccess |> Cmd.map Tristate.Logic
+    , initialFetch flags.authorizedAccess flags.profileId |> Cmd.map Tristate.Logic
     )
 
 
-initialFetch : AuthorizedAccess -> Cmd Page.LogicMsg
+initialFetch : AuthorizedAccess -> ProfileId -> Cmd Page.LogicMsg
 initialFetch =
     Requests.fetchMeals
 

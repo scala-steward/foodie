@@ -1,7 +1,7 @@
 module Pages.Statistics.Meal.Search.Page exposing (..)
 
 import Addresses.StatisticsVariant as StatisticsVariant exposing (Page)
-import Api.Auxiliary exposing (JWT)
+import Api.Auxiliary exposing (JWT, ProfileId)
 import Api.Types.Meal exposing (Meal)
 import Monocle.Lens exposing (Lens)
 import Pages.Statistics.Meal.Search.Pagination as Pagination exposing (Pagination)
@@ -71,6 +71,7 @@ lenses =
 
 type alias Flags =
     { authorizedAccess : AuthorizedAccess
+    , profileId : ProfileId
     }
 
 

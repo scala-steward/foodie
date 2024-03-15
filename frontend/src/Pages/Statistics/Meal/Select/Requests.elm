@@ -1,7 +1,7 @@
 module Pages.Statistics.Meal.Select.Requests exposing (fetchMeal, fetchReferenceTrees, fetchStats)
 
 import Addresses.Backend
-import Api.Auxiliary exposing (MealId)
+import Api.Auxiliary exposing (MealId, ProfileId)
 import Api.Types.TotalOnlyStats exposing (decoderTotalOnlyStats)
 import Http
 import Pages.Statistics.Meal.Select.Page as Page
@@ -16,7 +16,7 @@ fetchReferenceTrees =
     StatisticsRequests.fetchReferenceTreesWith Page.GotFetchReferenceTreesResponse
 
 
-fetchMeal : AuthorizedAccess -> MealId -> Cmd Page.LogicMsg
+fetchMeal : AuthorizedAccess -> ProfileId -> MealId -> Cmd Page.LogicMsg
 fetchMeal =
     Pages.Util.Requests.fetchMealWith Page.GotFetchMealResponse
 

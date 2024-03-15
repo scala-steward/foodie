@@ -1,7 +1,7 @@
 module Pages.Statistics.Meal.Select.Page exposing (..)
 
 import Addresses.StatisticsVariant as StatisticsVariant exposing (Page)
-import Api.Auxiliary exposing (JWT, MealId, ReferenceMapId)
+import Api.Auxiliary exposing (JWT, MealId, ProfileId, ReferenceMapId)
 import Api.Types.Meal exposing (Meal)
 import Api.Types.ReferenceTree exposing (ReferenceTree)
 import Api.Types.TotalOnlyStats exposing (TotalOnlyStats)
@@ -88,6 +88,7 @@ lenses =
 
 type alias Flags =
     { authorizedAccess : AuthorizedAccess
+    , profileId : ProfileId
     , mealId : MealId
     }
 
