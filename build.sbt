@@ -19,14 +19,14 @@ lazy val root = (project in file("."))
   .enablePlugins(CodegenPlugin)
   .enablePlugins(JavaServerAppPackaging)
   .settings(
-    scalaVersion := "2.13.12",
+    scalaVersion := "2.13.13",
     libraryDependencies ++= Seq(
       guice,
       "com.typesafe.slick"    %% "slick"               % slickVersion,
       "com.typesafe.slick"    %% "slick-hikaricp"      % slickVersion,
       "com.typesafe.slick"    %% "slick-codegen"       % slickVersion,
       "org.postgresql"         % "postgresql"          % "42.7.2",
-      "ch.qos.logback"         % "logback-classic"     % "1.5.0",
+      "ch.qos.logback"         % "logback-classic"     % "1.5.3",
       "io.circe"              %% "circe-core"          % circeVersion,
       "io.circe"              %% "circe-generic"       % circeVersion,
       "io.circe"              %% "circe-parser"        % circeVersion,
@@ -40,9 +40,9 @@ lazy val root = (project in file("."))
       "io.scalaland"          %% "chimney"             % "0.8.5",
       "com.github.jwt-scala"  %% "jwt-core"            % jwtVersion,
       "com.github.jwt-scala"  %% "jwt-circe"           % jwtVersion,
-      "com.github.pureconfig" %% "pureconfig"          % "0.17.5",
+      "com.github.pureconfig" %% "pureconfig"          % "0.17.6",
       "org.typelevel"         %% "cats-effect"         % "3.4.9",
-      "org.typelevel"         %% "cats-effect"         % "3.5.3",
+      "org.typelevel"         %% "cats-effect"         % "3.5.4",
       "org.typelevel"         %% "cats-core"           % "2.10.0",
       "com.beachape"          %% "enumeratum-circe"    % "1.7.3",
       "org.playframework"     %% "play-mailer"         % "10.0.0",
