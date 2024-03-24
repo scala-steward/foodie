@@ -1,17 +1,11 @@
 module Pages.ComplexFoods.Page exposing (..)
 
 import Api.Auxiliary exposing (ComplexFoodId, JWT, RecipeId)
-import Api.Types.ComplexFood exposing (ComplexFood)
-import Api.Types.Recipe exposing (Recipe)
 import Monocle.Lens exposing (Lens)
-import Pages.ComplexFoods.ComplexFoodCreationClientInput exposing (ComplexFoodCreationClientInput)
 import Pages.ComplexFoods.Foods.Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.Choice.Page
 import Pages.View.Tristate as Tristate
-import Pages.View.TristateUtil as TristateUtil
-import Util.DictList exposing (DictList)
-import Util.Editing exposing (Editing)
 
 
 type alias Model =
@@ -28,14 +22,6 @@ type alias Initial =
     { jwt : JWT
     , foods : Pages.ComplexFoods.Foods.Page.Initial
     }
-
-
-foodsSubModel : Model -> Pages.ComplexFoods.Foods.Page.Model
-foodsSubModel =
-    TristateUtil.subModelWith
-        { initialLens = lenses.initial.foods
-        , mainLens = lenses.main.foods
-        }
 
 
 initial : AuthorizedAccess -> Model
@@ -56,26 +42,6 @@ initialToMain i =
                 , foods = foods
                 }
             )
-
-
-type alias ComplexFoodState =
-    Editing ComplexFood ComplexFoodCreationClientInput
-
-
-type alias ComplexFoodStateMap =
-    DictList ComplexFoodId ComplexFoodState
-
-
-type alias CreateComplexFoodsMap =
-    DictList ComplexFoodId ComplexFoodCreationClientInput
-
-
-type alias RecipeState =
-    Editing Recipe ComplexFoodCreationClientInput
-
-
-type alias RecipeStateMap =
-    DictList RecipeId RecipeState
 
 
 lenses :

@@ -26,7 +26,6 @@ updateLogic msg model =
             TristateUtil.updateFromSubModel
                 { initialSubModelLens = Page.lenses.initial.foods
                 , mainSubModelLens = Page.lenses.main.foods
-                , subModelOf = Page.foodsSubModel
                 , fromInitToMain = Page.initialToMain
                 , updateSubModel = Pages.ComplexFoods.Foods.Handler.updateLogic
                 , toMsg = Page.FoodsMsg
