@@ -2,12 +2,12 @@ module Pages.View.TristateUtil exposing (..)
 
 import Monocle.Lens exposing (Lens)
 import Pages.View.Tristate as Tristate
+import Pages.View.TristateUtil as TristateUtil
 
 
 updateFromSubModel :
     { initialSubModelLens : Lens initial initialSubModel
     , mainSubModelLens : Lens main mainSubModel
-    , subModelOf : Tristate.Model main initial -> Tristate.Model mainSubModel initialSubModel
     , fromInitToMain : initial -> Maybe main
     , updateSubModel : subModelMsg -> Tristate.Model mainSubModel initialSubModel -> ( Tristate.Model mainSubModel initialSubModel, Cmd subModelMsg )
     , toMsg : subModelMsg -> msg
@@ -17,8 +17,14 @@ updateFromSubModel :
     -> ( Tristate.Model main initial, Cmd msg )
 updateFromSubModel ps msg model =
     let
+        subModelOf =
+            TristateUtil.subModelWith
+                { initialLens = ps.initialSubModelLens
+                , mainLens = ps.mainSubModelLens
+                }
+
         ( recipeModel, recipeCmd ) =
-            ps.updateSubModel msg (model |> ps.subModelOf)
+            ps.updateSubModel msg (model |> subModelOf)
 
         newCmd =
             Cmd.map ps.toMsg recipeCmd
