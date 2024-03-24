@@ -1,6 +1,7 @@
 module Pages.Statistics.Meal.Search.View exposing (view)
 
 import Addresses.StatisticsVariant as StatisticsVariant
+import Api.Auxiliary exposing (ProfileId)
 import Api.Types.Meal exposing (Meal)
 import Configuration exposing (Configuration)
 import Html exposing (Html, div, label, table, tbody, td, text, th, thead, tr)
@@ -82,7 +83,7 @@ viewMain configuration main =
                         , tbody []
                             (viewMeals
                                 |> Paginate.page
-                                |> List.map (viewMealLine configuration)
+                                |> List.map (viewMealLine configuration main.profile.id)
                             )
                         ]
                     , div [ Style.classes.pagination ]
@@ -101,8 +102,8 @@ viewMain configuration main =
                 ]
 
 
-viewMealLine : Configuration -> Meal -> Html Page.LogicMsg
-viewMealLine configuration meal =
+viewMealLine : Configuration -> ProfileId -> Meal -> Html Page.LogicMsg
+viewMealLine configuration profileId meal =
     tr [ Style.classes.editLine ]
         [ td [ Style.classes.editable ]
             [ label [] [ text <| DateUtil.dateToPrettyString <| meal.date.date ] ]
@@ -111,7 +112,7 @@ viewMealLine configuration meal =
         , td [ Style.classes.editable ]
             [ label [] [ text <| Maybe.withDefault "" <| meal.name ] ]
         , td [ Style.classes.controls ]
-            [ NavigationUtil.mealNutrientsLinkButton configuration meal.id ]
+            [ NavigationUtil.mealNutrientsLinkButton configuration profileId meal.id ]
         , td [ Style.classes.controls ]
-            [ NavigationUtil.mealEditorLinkButton configuration meal.id ]
+            [ NavigationUtil.mealEditorLinkButton configuration profileId meal.id ]
         ]

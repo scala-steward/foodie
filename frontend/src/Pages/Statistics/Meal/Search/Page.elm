@@ -3,6 +3,7 @@ module Pages.Statistics.Meal.Search.Page exposing (..)
 import Addresses.StatisticsVariant as StatisticsVariant exposing (Page)
 import Api.Auxiliary exposing (JWT, ProfileId)
 import Api.Types.Meal exposing (Meal)
+import Api.Types.Profile exposing (Profile)
 import Monocle.Lens exposing (Lens)
 import Pages.Statistics.Meal.Search.Pagination as Pagination exposing (Pagination)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
@@ -16,6 +17,7 @@ type alias Model =
 
 type alias Main =
     { jwt : JWT
+    , profile : Profile
     , meals : List Meal
     , mealsSearchString : String
     , pagination : Pagination
@@ -25,6 +27,7 @@ type alias Main =
 
 type alias Initial =
     { jwt : JWT
+    , profile : Maybe Profile
     , meals : Maybe (List Meal)
     }
 
@@ -32,6 +35,7 @@ type alias Initial =
 initial : AuthorizedAccess -> Model
 initial authorizedAccess =
     { jwt = authorizedAccess.jwt
+    , profile = Nothing
     , meals = Nothing
     }
         |> Tristate.createInitial authorizedAccess.configuration
@@ -39,15 +43,17 @@ initial authorizedAccess =
 
 initialToMain : Initial -> Maybe Main
 initialToMain i =
-    Maybe.map
-        (\meals ->
+    Maybe.map2
+        (\profile meals ->
             { jwt = i.jwt
+            , profile = profile
             , meals = meals
             , mealsSearchString = ""
             , pagination = Pagination.initial
             , variant = StatisticsVariant.Meal
             }
         )
+        i.profile
         i.meals
 
 
