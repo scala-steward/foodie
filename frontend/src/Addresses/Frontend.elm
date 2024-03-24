@@ -133,9 +133,28 @@ statisticsRecipeSelect =
         }
 
 
-statisticsMealSearch : AddressWithParser () a a
+statisticsMealSearch : AddressWithParser ProfileId (ProfileId -> a) a
 statisticsMealSearch =
-    plainMultiple "statistics" [ StatisticsVariant.meal ]
+    let
+        statisticsWord =
+            "statistics"
+
+        profilesWord =
+            "profiles"
+    in
+    { address =
+        \param ->
+            [ statisticsWord
+            , profilesWord
+            , param |> Uuid.toString
+            , StatisticsVariant.meal
+            ]
+    , parser =
+        s statisticsWord
+            </> s profilesWord
+            </> ParserUtil.uuidParser
+            </> s StatisticsVariant.meal
+    }
 
 
 statisticsMealSelect : AddressWithParser ( ProfileId, MealId ) (ProfileId -> MealId -> b) b
