@@ -30,7 +30,7 @@ viewMain configuration main =
                             ]
                         , td [ Style.classes.controls ]
                             [ Links.linkButton
-                                { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsMealSelect.address <| main.parent.original.id
+                                { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsMealSelect.address <| ( main.profile.id, main.parent.parent.original.id )
                                 , attributes = [ Style.classes.button.nutrients ]
                                 , children = [ text "Nutrients" ]
                                 }
@@ -47,7 +47,7 @@ viewMain configuration main =
                     meal
         , onUpdate =
             Pages.Meals.View.editMealLineWith
-                { saveMsg = Pages.Util.Parent.Page.SaveEdit main.parent.original
+                { saveMsg = Pages.Util.Parent.Page.SaveEdit main.parent.parent.original
                 , dateLens = MealUpdateClientInput.lenses.date
                 , nameLens = MealUpdateClientInput.lenses.name
                 , updateMsg = Pages.Util.Parent.Page.Edit
@@ -73,4 +73,5 @@ viewMain configuration main =
                 , showControls = True
                 }
         }
-        main
+        main.parent
+        |> Html.map Page.ParentMsg

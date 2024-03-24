@@ -42,7 +42,7 @@ viewMealEntries configuration main =
         , info =
             \mealEntry ->
                 { display =
-                    recipeInfoFromMap main.choices mealEntry.recipeId
+                    recipeInfoFromMap main.choices.choices mealEntry.recipeId
                         ++ [ { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
                              , children = [ label [] [ text <| String.fromFloat <| mealEntry.numberOfServings ] ]
                              }
@@ -56,7 +56,7 @@ viewMealEntries configuration main =
         , isValidInput = .numberOfServings >> ValidatedInput.isValid
         , edit =
             \mealEntry mealEntryUpdateClientInput ->
-                recipeInfoFromMap main.choices mealEntry.recipeId
+                recipeInfoFromMap main.choices.choices mealEntry.recipeId
                     ++ [ { attributes = [ Style.classes.numberCell ]
                          , children =
                             [ input
@@ -77,14 +77,15 @@ viewMealEntries configuration main =
                          }
                        ]
         }
-        main
+        main.choices
+        |> Html.map Page.ChoiceMsg
 
 
 viewRecipes : Configuration -> Page.Main -> Html Page.LogicMsg
 viewRecipes configuration main =
     let
         numberOfServings =
-            if DictListUtil.existsValue Editing.isUpdate main.choices then
+            if DictListUtil.existsValue Editing.isUpdate main.choices.choices then
                 "Servings"
 
             else
@@ -113,7 +114,7 @@ viewRecipes configuration main =
                         Pages.Util.Choice.Page.DeselectChoice recipe.id
 
                     ( confirmName, confirmStyle ) =
-                        if DictListUtil.existsValue (\mealEntry -> mealEntry.original.recipeId == creation.recipeId) main.elements then
+                        if DictListUtil.existsValue (\mealEntry -> mealEntry.original.recipeId == creation.recipeId) main.choices.elements then
                             ( "Add again", Style.classes.button.edit )
 
                         else
@@ -175,7 +176,8 @@ viewRecipes configuration main =
                     ]
                 }
         }
-        main
+        main.choices
+        |> Html.map Page.ChoiceMsg
 
 
 
@@ -193,7 +195,7 @@ recipeInfo =
 -- especially because the non-matching case should never occur.
 
 
-recipeInfoFromMap : DictList RecipeId (Editing Recipe MealEntryCreationClientInput) -> RecipeId -> List (HtmlUtil.Column Page.LogicMsg)
+recipeInfoFromMap : DictList RecipeId (Editing Recipe MealEntryCreationClientInput) -> RecipeId -> List (HtmlUtil.Column msg)
 recipeInfoFromMap recipes recipeId =
     DictList.get recipeId recipes
         |> Maybe.Extra.unwrap (List.repeat 4 { attributes = [ Style.classes.editable ], children = [] }) (.original >> recipeInfo)
