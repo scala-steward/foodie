@@ -13,7 +13,6 @@ import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.Choice.Page
 import Pages.Util.Parent.Page
 import Pages.View.Tristate as Tristate exposing (Status(..))
-import Pages.View.TristateUtil as TristateUtil
 
 
 type alias Model =
@@ -35,30 +34,6 @@ type alias Initial =
     , ingredientsGroup : Pages.Util.Choice.Page.Initial RecipeId IngredientId Ingredient FoodId Food
     , complexIngredientsGroup : Pages.Util.Choice.Page.Initial RecipeId ComplexIngredientId ComplexIngredient ComplexFoodId ComplexFood
     }
-
-
-recipeSubModel : Model -> Pages.Ingredients.Recipe.Page.Model
-recipeSubModel =
-    TristateUtil.subModelWith
-        { initialLens = lenses.initial.recipe
-        , mainLens = lenses.main.recipe
-        }
-
-
-ingredientsGroupSubModel : Model -> Pages.Ingredients.Plain.Page.Model
-ingredientsGroupSubModel =
-    TristateUtil.subModelWith
-        { initialLens = lenses.initial.ingredientsGroup
-        , mainLens = lenses.main.ingredientsGroup
-        }
-
-
-complexIngredientsGroupSubModel : Model -> Pages.Ingredients.Complex.Page.Model
-complexIngredientsGroupSubModel =
-    TristateUtil.subModelWith
-        { initialLens = lenses.initial.complexIngredientsGroup
-        , mainLens = lenses.main.complexIngredientsGroup
-        }
 
 
 initial : AuthorizedAccess -> RecipeId -> Model
