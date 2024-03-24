@@ -15,10 +15,10 @@ import Util.HttpUtil as HttpUtil
 
 fetchMeals : AuthorizedAccess -> ProfileId -> Cmd Page.LogicMsg
 fetchMeals =
-    Pages.Util.Requests.fetchMealsWith Pages.Util.ParentEditor.Page.GotFetchResponse
+    Pages.Util.Requests.fetchMealsWith (Pages.Util.ParentEditor.Page.GotFetchResponse >> Page.ParentEditorMsg)
 
 
-createMeal : AuthorizedAccess -> ProfileId -> MealCreation -> Cmd Page.LogicMsg
+createMeal : AuthorizedAccess -> ProfileId -> MealCreation -> Cmd Page.ParentLogicMsg
 createMeal authorizedAccess profileId mealCreation =
     HttpUtil.runPatternWithJwt
         authorizedAccess
@@ -33,7 +33,7 @@ saveMeal :
     -> ProfileId
     -> MealId
     -> MealUpdate
-    -> Cmd Page.LogicMsg
+    -> Cmd Page.ParentLogicMsg
 saveMeal =
     Pages.Util.Requests.saveMealWith Pages.Util.ParentEditor.Page.GotSaveEditResponse
 
@@ -42,7 +42,7 @@ deleteMeal :
     AuthorizedAccess
     -> ProfileId
     -> MealId
-    -> Cmd Page.LogicMsg
+    -> Cmd Page.ParentLogicMsg
 deleteMeal authorizedAccess profileId mealId =
     Pages.Util.Requests.deleteMealWith
         (Pages.Util.ParentEditor.Page.GotDeleteResponse mealId)
