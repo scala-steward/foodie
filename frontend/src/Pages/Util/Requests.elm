@@ -6,6 +6,7 @@ import Api.Types.ComplexFood exposing (ComplexFood, decoderComplexFood)
 import Api.Types.Food exposing (Food, decoderFood)
 import Api.Types.Meal exposing (Meal, decoderMeal)
 import Api.Types.MealUpdate exposing (MealUpdate, encoderMealUpdate)
+import Api.Types.Profile exposing (Profile, decoderProfile)
 import Api.Types.Recipe exposing (Recipe, decoderRecipe)
 import Api.Types.RecipeUpdate exposing (RecipeUpdate, encoderRecipeUpdate)
 import Api.Types.ReferenceMap exposing (ReferenceMap, decoderReferenceMap)
@@ -237,4 +238,18 @@ duplicateReferenceMapWith mkMsg authorizedAccess referenceMapId timestamp =
         (Addresses.Backend.references.duplicate referenceMapId)
         { body = timestamp |> DateUtil.fromPosix |> encoderSimpleDate |> Http.jsonBody
         , expect = HttpUtil.expectJson mkMsg decoderReferenceMap
+        }
+
+
+fetchProfileWith :
+    (Result Error Profile -> msg)
+    -> AuthorizedAccess
+    -> ProfileId
+    -> Cmd msg
+fetchProfileWith mkMsg authorizedAccess profileId =
+    HttpUtil.runPatternWithJwt
+        authorizedAccess
+        (Addresses.Backend.profiles.single profileId)
+        { body = Http.emptyBody
+        , expect = HttpUtil.expectJson mkMsg decoderProfile
         }
