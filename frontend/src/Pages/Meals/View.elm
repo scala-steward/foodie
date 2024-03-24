@@ -34,14 +34,14 @@ import Util.SearchUtil as SearchUtil
 view : Page.Model -> Html Page.Msg
 view model =
     Tristate.view
-        { viewMain = \c -> viewMain c model.profileId
+        { viewMain = viewMain
         , showLoginRedirect = True
         }
-        model.parentEditor
+        model
 
 
-viewMain : Configuration -> ProfileId -> Page.Main -> Html Page.LogicMsg
-viewMain configuration profileId =
+viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
+viewMain configuration main =
     Pages.Util.ParentEditor.View.viewParentsWith
         { currentPage = ViewUtil.Meals
         , matchesSearchText =
@@ -50,20 +50,21 @@ viewMain configuration profileId =
                     || SearchUtil.search string (meal.date |> DateUtil.toString)
         , sort = List.sortBy (.original >> .date >> DateUtil.toString) >> List.reverse
         , tableHeader = tableHeader
-        , viewLine = \c -> viewMealLine c profileId
+        , viewLine = \c -> viewMealLine c main.profile.id
         , updateLine = .id >> updateMealLine
         , deleteLine = deleteMealLine
         , create =
             { ifCreating = createMealLine
             , default = MealCreationClientInput.default
             , label = "New meal"
-            , update = Pages.Util.ParentEditor.Page.UpdateCreation
+            , update = Pages.Util.ParentEditor.Page.UpdateCreation >> Page.ParentEditorMsg
             }
-        , setSearchString = Pages.Util.ParentEditor.Page.SetSearchString
-        , setPagination = Pages.Util.ParentEditor.Page.SetPagination
+        , setSearchString = Pages.Util.ParentEditor.Page.SetSearchString >> Page.ParentEditorMsg
+        , setPagination = Pages.Util.ParentEditor.Page.SetPagination >> Page.ParentEditorMsg
         , styling = Style.ids.addMealView
         }
         configuration
+        main.parentEditor
 
 
 tableHeader : Html msg
@@ -111,7 +112,8 @@ viewMealLine configuration profileId meal showControls =
                     [ text "Duplicate" ]
                 ]
             ]
-        , toggleMsg = Pages.Util.ParentEditor.Page.ToggleControls meal.id
+                |> List.map (Html.map Page.ParentEditorMsg)
+        , toggleMsg = Pages.Util.ParentEditor.Page.ToggleControls meal.id |> Page.ParentEditorMsg
         , showControls = showControls
         }
         meal
@@ -126,7 +128,8 @@ deleteMealLine meal =
             , td [ Style.classes.controls ]
                 [ button [ Style.classes.button.confirm, onClick <| Pages.Util.ParentEditor.Page.CancelDelete meal.id ] [ text "Cancel" ] ]
             ]
-        , toggleMsg = Pages.Util.ParentEditor.Page.ToggleControls meal.id
+                |> List.map (Html.map Page.ParentEditorMsg)
+        , toggleMsg = Pages.Util.ParentEditor.Page.ToggleControls meal.id |> Page.ParentEditorMsg
         , showControls = True
         }
         meal
@@ -178,6 +181,7 @@ updateMealLine mealId =
         , rowStyles = [ Style.classes.editLine ]
         , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls mealId |> Just
         }
+        >> List.map (Html.map Page.ParentEditorMsg)
 
 
 createMealLine : MealCreationClientInput -> List (Html Page.LogicMsg)
@@ -193,6 +197,7 @@ createMealLine =
         , rowStyles = [ Style.classes.editLine ]
         , toggleCommand = Nothing
         }
+        >> List.map (Html.map Page.ParentEditorMsg)
 
 
 editMealLineWith :
