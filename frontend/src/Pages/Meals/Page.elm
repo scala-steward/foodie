@@ -2,25 +2,52 @@ module Pages.Meals.Page exposing (..)
 
 import Api.Auxiliary exposing (JWT, MealId, ProfileId)
 import Api.Types.Meal exposing (Meal)
+import Api.Types.Profile exposing (Profile)
+import Monocle.Lens exposing (Lens)
 import Pages.Meals.MealCreationClientInput exposing (MealCreationClientInput)
 import Pages.Meals.MealUpdateClientInput exposing (MealUpdateClientInput)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.ParentEditor.Page
 import Pages.View.Tristate as Tristate
+import Util.HttpUtil exposing (Error)
 
 
 type alias Model =
-    { parentEditor : Tristate.Model Main Initial
-    , profileId : ProfileId
-    }
+    Tristate.Model Main Initial
 
 
 type alias Main =
-    Pages.Util.ParentEditor.Page.Main MealId Meal MealCreationClientInput MealUpdateClientInput
+    { parentEditor : Pages.Util.ParentEditor.Page.Main MealId Meal MealCreationClientInput MealUpdateClientInput
+    , profile : Profile
+    }
 
 
 type alias Initial =
-    Pages.Util.ParentEditor.Page.Initial MealId Meal MealUpdateClientInput
+    { parentEditor : Pages.Util.ParentEditor.Page.Initial MealId Meal MealUpdateClientInput
+    , profile : Maybe Profile
+    }
+
+
+lenses :
+    { initial :
+        { parentEditor : Lens Initial (Pages.Util.ParentEditor.Page.Initial MealId Meal MealUpdateClientInput)
+        , profile : Lens Initial (Maybe Profile)
+        }
+    , main :
+        { parentEditor : Lens Main (Pages.Util.ParentEditor.Page.Main MealId Meal MealCreationClientInput MealUpdateClientInput)
+        , profile : Lens Main Profile
+        }
+    }
+lenses =
+    { initial =
+        { parentEditor = Lens .parentEditor (\b a -> { a | parentEditor = b })
+        , profile = Lens .profile (\b a -> { a | profile = b })
+        }
+    , main =
+        { parentEditor = Lens .parentEditor (\b a -> { a | parentEditor = b })
+        , profile = Lens .profile (\b a -> { a | profile = b })
+        }
+    }
 
 
 type alias Flags =
@@ -29,9 +56,35 @@ type alias Flags =
     }
 
 
+initialToMain : Initial -> Maybe Main
+initialToMain initial =
+    Maybe.map2
+        (\parentEditor profile ->
+            { parentEditor = parentEditor
+            , profile = profile
+            }
+        )
+        (initial.parentEditor |> Pages.Util.ParentEditor.Page.initialToMain)
+        initial.profile
+
+
+profileId : Model -> Maybe ProfileId
+profileId =
+    Tristate.fold
+        { onInitial = .profile >> Maybe.map .id
+        , onMain = .profile >> .id >> Just
+        , onError = always Nothing
+        }
+
+
 type alias Msg =
     Tristate.Msg LogicMsg
 
 
-type alias LogicMsg =
+type alias ParentLogicMsg =
     Pages.Util.ParentEditor.Page.LogicMsg MealId Meal MealCreationClientInput MealUpdateClientInput
+
+
+type LogicMsg
+    = ParentEditorMsg ParentLogicMsg
+    | GotFetchProfileResponse (Result Error Profile)
