@@ -16,10 +16,18 @@ type alias Model =
     Tristate.Model Main Initial
 
 
+
+--todo: "choices" is a bad choice, because 'Main' contains a choices, too
+
+
 type alias Initial =
     { choices : Pages.Util.Choice.Page.Initial MealId MealEntryId MealEntry RecipeId Recipe
     , profile : Maybe Profile
     }
+
+
+
+--todo: "choices" is a bad choice, because 'Main' contains a choices, too
 
 
 type alias Main =

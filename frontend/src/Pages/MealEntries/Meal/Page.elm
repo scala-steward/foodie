@@ -14,10 +14,18 @@ type alias Model =
     Tristate.Model Main Initial
 
 
+
+--todo: "parent" is a bad choice, because 'Main' contains a parent, too
+
+
 type alias Main =
     { parent : Pages.Util.Parent.Page.Main Meal MealUpdateClientInput
     , profile : Profile
     }
+
+
+
+--todo: "parent" is a bad choice, because 'Main' contains a parent, too
 
 
 type alias Initial =
