@@ -2,7 +2,6 @@ module Pages.View.TristateUtil exposing (..)
 
 import Monocle.Lens exposing (Lens)
 import Pages.View.Tristate as Tristate
-import Pages.View.TristateUtil as TristateUtil
 
 
 updateFromSubModel :
@@ -18,7 +17,7 @@ updateFromSubModel :
 updateFromSubModel ps msg model =
     let
         subModelOf =
-            TristateUtil.subModelWith
+            subModelWith
                 { initialLens = ps.initialSubModelLens
                 , mainLens = ps.mainSubModelLens
                 }
