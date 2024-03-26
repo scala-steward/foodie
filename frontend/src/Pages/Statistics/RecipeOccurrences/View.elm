@@ -130,7 +130,8 @@ viewRecipeOccurrenceLine configuration recipeOccurrence =
                         ( meal.date |> DateUtil.toPrettyString
                         , meal.name |> Maybe.withDefault ""
                         , [ td [ Style.classes.controls ]
-                                [ NavigationUtil.mealEditorLinkButton configuration meal.id ]
+                                -- todo identity: fix me
+                                [ NavigationUtil.mealEditorLinkButton configuration meal.id meal.id ]
                           ]
                         )
                     )

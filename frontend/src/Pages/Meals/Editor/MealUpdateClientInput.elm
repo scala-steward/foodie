@@ -1,4 +1,4 @@
-module Pages.Meals.MealUpdateClientInput exposing (..)
+module Pages.Meals.Editor.MealUpdateClientInput exposing (..)
 
 import Api.Types.Meal exposing (Meal)
 import Api.Types.MealUpdate exposing (MealUpdate)

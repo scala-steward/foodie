@@ -4,7 +4,7 @@ import Addresses.Frontend
 import Api.Auxiliary exposing (MealId, ProfileId)
 import Maybe.Extra
 import Pages.MealEntries.Meal.Page as Page
-import Pages.Meals.MealUpdateClientInput as MealUpdateClientInput
+import Pages.Meals.Editor.MealUpdateClientInput as MealUpdateClientInput
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.Parent.Handler
 import Pages.Util.Parent.Page

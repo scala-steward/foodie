@@ -1,4 +1,4 @@
-module Pages.Meals.View exposing (editMealLineWith, mealLineWith, tableHeader, view)
+module Pages.Meals.Editor.View exposing (editMealLineWith, mealLineWith, tableHeader, view)
 
 import Addresses.Frontend
 import Api.Auxiliary exposing (MealEntryId, MealId, ProfileId)
@@ -14,9 +14,9 @@ import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
 import Monocle.Optional exposing (Optional)
-import Pages.Meals.MealCreationClientInput as MealCreationClientInput exposing (MealCreationClientInput)
-import Pages.Meals.MealUpdateClientInput as MealUpdateClientInput exposing (MealUpdateClientInput)
-import Pages.Meals.Page as Page
+import Pages.Meals.Editor.MealCreationClientInput as MealCreationClientInput exposing (MealCreationClientInput)
+import Pages.Meals.Editor.MealUpdateClientInput as MealUpdateClientInput exposing (MealUpdateClientInput)
+import Pages.Meals.Editor.Page as Page
 import Pages.Util.DateUtil as DateUtil
 import Pages.Util.HtmlUtil as HtmlUtil
 import Pages.Util.Links as Links

@@ -4,7 +4,7 @@ import Api.Auxiliary exposing (ProfileId)
 import Api.Types.Meal exposing (Meal)
 import Api.Types.Profile exposing (Profile)
 import Monocle.Lens exposing (Lens)
-import Pages.Meals.MealUpdateClientInput exposing (MealUpdateClientInput)
+import Pages.Meals.Editor.MealUpdateClientInput exposing (MealUpdateClientInput)
 import Pages.Util.Parent.Page
 import Pages.View.Tristate as Tristate
 import Util.HttpUtil exposing (Error)

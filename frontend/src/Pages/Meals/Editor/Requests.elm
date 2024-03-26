@@ -1,4 +1,4 @@
-module Pages.Meals.Requests exposing (createMeal, deleteMeal, fetchMeals, saveMeal)
+module Pages.Meals.Editor.Requests exposing (createMeal, deleteMeal, fetchMeals, saveMeal)
 
 import Addresses.Backend
 import Api.Auxiliary exposing (JWT, MealId, ProfileId)
@@ -6,7 +6,7 @@ import Api.Types.Meal exposing (Meal, decoderMeal)
 import Api.Types.MealCreation exposing (MealCreation, encoderMealCreation)
 import Api.Types.MealUpdate exposing (MealUpdate)
 import Http
-import Pages.Meals.Page as Page
+import Pages.Meals.Editor.Page as Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.ParentEditor.Page
 import Pages.Util.Requests

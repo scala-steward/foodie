@@ -1,11 +1,11 @@
-module Pages.Meals.Page exposing (..)
+module Pages.Meals.Editor.Page exposing (..)
 
 import Api.Auxiliary exposing (JWT, MealId, ProfileId)
 import Api.Types.Meal exposing (Meal)
 import Api.Types.Profile exposing (Profile)
 import Monocle.Lens exposing (Lens)
-import Pages.Meals.MealCreationClientInput exposing (MealCreationClientInput)
-import Pages.Meals.MealUpdateClientInput exposing (MealUpdateClientInput)
+import Pages.Meals.Editor.MealCreationClientInput exposing (MealCreationClientInput)
+import Pages.Meals.Editor.MealUpdateClientInput exposing (MealUpdateClientInput)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.ParentEditor.Page
 import Pages.View.Tristate as Tristate

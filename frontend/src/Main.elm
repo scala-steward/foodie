@@ -27,9 +27,9 @@ import Pages.Login.View
 import Pages.MealEntries.Handler
 import Pages.MealEntries.Page
 import Pages.MealEntries.View
-import Pages.Meals.Handler
-import Pages.Meals.Page
-import Pages.Meals.View
+import Pages.Meals.Editor.Handler
+import Pages.Meals.Editor.Page
+import Pages.Meals.Editor.View
 import Pages.Overview.Handler
 import Pages.Overview.Page
 import Pages.Overview.View
@@ -141,7 +141,7 @@ type Page
     | Overview Pages.Overview.Page.Model
     | Recipes Pages.Recipes.Page.Model
     | Ingredients Pages.Ingredients.Page.Model
-    | Meals Pages.Meals.Page.Model
+    | Meals Pages.Meals.Editor.Page.Model
     | MealEntries Pages.MealEntries.Page.Model
     | StatisticsTime Pages.Statistics.Time.Page.Model
     | StatisticsFoodSearch Pages.Statistics.Food.Search.Page.Model
@@ -176,7 +176,7 @@ type Msg
     | OverviewMsg Pages.Overview.Page.Msg
     | RecipesMsg Pages.Recipes.Page.Msg
     | IngredientsMsg Pages.Ingredients.Page.Msg
-    | MealsMsg Pages.Meals.Page.Msg
+    | MealsMsg Pages.Meals.Editor.Page.Msg
     | MealEntriesMsg Pages.MealEntries.Page.Msg
     | StatisticsTimeMsg Pages.Statistics.Time.Page.Msg
     | StatisticsFoodSearchMsg Pages.Statistics.Food.Search.Page.Msg
@@ -241,7 +241,7 @@ view model =
             Html.map IngredientsMsg (Pages.Ingredients.View.view ingredients)
 
         Meals meals ->
-            Html.map MealsMsg (Pages.Meals.View.view meals)
+            Html.map MealsMsg (Pages.Meals.Editor.View.view meals)
 
         MealEntries mealEntries ->
             Html.map MealEntriesMsg (Pages.MealEntries.View.view mealEntries)
@@ -353,7 +353,7 @@ update msg model =
             stepThrough steps.ingredients model (Pages.Ingredients.Handler.update ingredientsMsg ingredients)
 
         ( MealsMsg mealsMsg, Meals meals ) ->
-            stepThrough steps.meals model (Pages.Meals.Handler.update mealsMsg meals)
+            stepThrough steps.meals model (Pages.Meals.Editor.Handler.update mealsMsg meals)
 
         ( MealEntriesMsg mealEntryMsg, MealEntries mealEntry ) ->
             stepThrough steps.mealEntries model (Pages.MealEntries.Handler.update mealEntryMsg mealEntry)
@@ -431,7 +431,7 @@ steps :
     , recipes : StepParameters Pages.Recipes.Page.Model Pages.Recipes.Page.Msg
     , ingredients : StepParameters Pages.Ingredients.Page.Model Pages.Ingredients.Page.Msg
     , mealEntries : StepParameters Pages.MealEntries.Page.Model Pages.MealEntries.Page.Msg
-    , meals : StepParameters Pages.Meals.Page.Model Pages.Meals.Page.Msg
+    , meals : StepParameters Pages.Meals.Editor.Page.Model Pages.Meals.Editor.Page.Msg
     , statisticsTime : StepParameters Pages.Statistics.Time.Page.Model Pages.Statistics.Time.Page.Msg
     , statisticsFoodSearch : StepParameters Pages.Statistics.Food.Search.Page.Model Pages.Statistics.Food.Search.Page.Msg
     , statisticsFoodSelect : StepParameters Pages.Statistics.Food.Select.Page.Model Pages.Statistics.Food.Select.Page.Msg
@@ -500,7 +500,7 @@ type Route
     | StatisticsComplexFoodSelectRoute ComplexFoodId
     | StatisticsRecipeSearchRoute
     | StatisticsRecipeSelectRoute RecipeId
-    | StatisticsMealSearchRoute
+    | StatisticsMealSearchRoute ProfileId
     | StatisticsMealSelectRoute ProfileId MealId
     | StatisticsRecipeOccurrencesRoute
     | ReferenceMapsRoute
@@ -586,7 +586,7 @@ followRoute model =
                         |> stepThrough steps.ingredients model
 
                 ( MealsRoute profileId, Just userJWT ) ->
-                    Pages.Meals.Handler.init
+                    Pages.Meals.Editor.Handler.init
                         { authorizedAccess = authorizedAccessWith userJWT
                         , profileId = profileId
                         }
@@ -596,6 +596,7 @@ followRoute model =
                     Pages.MealEntries.Handler.init
                         { authorizedAccess = authorizedAccessWith userJWT
                         , mealId = mealId
+                        , profileId = profileId
                         }
                         |> stepThrough steps.mealEntries model
 
@@ -644,15 +645,17 @@ followRoute model =
                         }
                         |> stepThrough steps.statisticsRecipeSelect model
 
-                ( StatisticsMealSearchRoute, Just userJWT ) ->
+                ( StatisticsMealSearchRoute profileId, Just userJWT ) ->
                     Pages.Statistics.Meal.Search.Handler.init
                         { authorizedAccess = authorizedAccessWith userJWT
+                        , profileId = profileId
                         }
                         |> stepThrough steps.statisticsMealSearch model
 
                 ( StatisticsMealSelectRoute profileId mealId, Just userJWT ) ->
                     Pages.Statistics.Meal.Select.Handler.init
                         { authorizedAccess = authorizedAccessWith userJWT
+                        , profileId = profileId
                         , mealId = mealId
                         }
                         |> stepThrough steps.statisticsMealSelect model

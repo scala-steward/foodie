@@ -1,13 +1,13 @@
-module Pages.Meals.Handler exposing (init, update)
+module Pages.Meals.Editor.Handler exposing (init, update)
 
 import Addresses.Frontend
 import Api.Types.Meal exposing (Meal)
 import Maybe.Extra
 import Monocle.Lens
-import Pages.Meals.MealCreationClientInput as MealCreationClientInput exposing (MealCreationClientInput)
-import Pages.Meals.MealUpdateClientInput as MealUpdateClientInput exposing (MealUpdateClientInput)
-import Pages.Meals.Page as Page
-import Pages.Meals.Requests as Requests
+import Pages.Meals.Editor.MealCreationClientInput as MealCreationClientInput exposing (MealCreationClientInput)
+import Pages.Meals.Editor.MealUpdateClientInput as MealUpdateClientInput exposing (MealUpdateClientInput)
+import Pages.Meals.Editor.Page as Page
+import Pages.Meals.Editor.Requests as Requests
 import Pages.Util.DateUtil as DateUtil
 import Pages.Util.ParentEditor.Handler
 import Pages.Util.ParentEditor.Page

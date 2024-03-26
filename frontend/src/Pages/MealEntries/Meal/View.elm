@@ -5,8 +5,8 @@ import Configuration exposing (Configuration)
 import Html exposing (Attribute, Html, button, td, text)
 import Html.Events exposing (onClick)
 import Pages.MealEntries.Meal.Page as Page
-import Pages.Meals.MealUpdateClientInput as MealUpdateClientInput
-import Pages.Meals.View
+import Pages.Meals.Editor.MealUpdateClientInput as MealUpdateClientInput
+import Pages.Meals.Editor.View
 import Pages.Util.Links as Links
 import Pages.Util.Parent.Page
 import Pages.Util.Parent.View
@@ -16,10 +16,10 @@ import Pages.Util.Style as Style
 viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     Pages.Util.Parent.View.viewMain
-        { tableHeader = Pages.Meals.View.tableHeader
+        { tableHeader = Pages.Meals.Editor.View.tableHeader
         , onView =
             \meal showControls ->
-                Pages.Meals.View.mealLineWith
+                Pages.Meals.Editor.View.mealLineWith
                     { controls =
                         [ td [ Style.classes.controls ]
                             [ button [ Style.classes.button.edit, Pages.Util.Parent.Page.EnterEdit |> onClick ] [ text "Edit" ] ]
@@ -46,7 +46,7 @@ viewMain configuration main =
                     }
                     meal
         , onUpdate =
-            Pages.Meals.View.editMealLineWith
+            Pages.Meals.Editor.View.editMealLineWith
                 { saveMsg = Pages.Util.Parent.Page.SaveEdit main.parent.parent.original
                 , dateLens = MealUpdateClientInput.lenses.date
                 , nameLens = MealUpdateClientInput.lenses.name
@@ -59,7 +59,7 @@ viewMain configuration main =
                 }
                 |> always
         , onDelete =
-            Pages.Meals.View.mealLineWith
+            Pages.Meals.Editor.View.mealLineWith
                 { controls =
                     [ td [ Style.classes.controls ]
                         [ button [ Style.classes.button.delete, onClick <| Pages.Util.Parent.Page.ConfirmDelete ] [ text "Delete?" ] ]

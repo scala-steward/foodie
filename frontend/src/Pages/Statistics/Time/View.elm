@@ -172,9 +172,11 @@ mealLine configuration meal =
         , td [ Style.classes.editable, Style.classes.time ] [ label [] [ text <| Maybe.Extra.unwrap "" DateUtil.timeToString <| meal.date.time ] ]
         , td [ Style.classes.editable ] [ label [] [ text <| Maybe.withDefault "" <| meal.name ] ]
         , td [ Style.classes.controls ]
-            [ NavigationUtil.mealNutrientsLinkButton configuration meal.id ]
+            -- todo identity: fix me
+            [ NavigationUtil.mealNutrientsLinkButton configuration meal.id meal.id ]
         , td [ Style.classes.controls ]
-            [ NavigationUtil.mealEditorLinkButton configuration meal.id ]
+            -- todo identity: fix me
+            [ NavigationUtil.mealEditorLinkButton configuration meal.id meal.id ]
         ]
 
 
