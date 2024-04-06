@@ -253,3 +253,16 @@ fetchProfileWith mkMsg authorizedAccess profileId =
         { body = Http.emptyBody
         , expect = HttpUtil.expectJson mkMsg decoderProfile
         }
+
+
+fetchProfilesWith :
+    (Result Error (List Profile) -> msg)
+    -> AuthorizedAccess
+    -> Cmd msg
+fetchProfilesWith mkMsg authorizedAccess =
+    HttpUtil.runPatternWithJwt
+        authorizedAccess
+        Addresses.Backend.profiles.all
+        { body = Http.emptyBody
+        , expect = HttpUtil.expectJson mkMsg (Decode.list decoderProfile)
+        }
