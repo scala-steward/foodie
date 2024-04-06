@@ -30,6 +30,9 @@ import Pages.MealEntries.View
 import Pages.Meals.Editor.Handler
 import Pages.Meals.Editor.Page
 import Pages.Meals.Editor.View
+import Pages.Meals.ProfileChoice.Handler
+import Pages.Meals.ProfileChoice.Page
+import Pages.Meals.ProfileChoice.View
 import Pages.Overview.Handler
 import Pages.Overview.Page
 import Pages.Overview.View
@@ -141,6 +144,7 @@ type Page
     | Overview Pages.Overview.Page.Model
     | Recipes Pages.Recipes.Page.Model
     | Ingredients Pages.Ingredients.Page.Model
+    | ProfileChoice Pages.Meals.ProfileChoice.Page.Model
     | Meals Pages.Meals.Editor.Page.Model
     | MealEntries Pages.MealEntries.Page.Model
     | StatisticsTime Pages.Statistics.Time.Page.Model
@@ -176,6 +180,7 @@ type Msg
     | OverviewMsg Pages.Overview.Page.Msg
     | RecipesMsg Pages.Recipes.Page.Msg
     | IngredientsMsg Pages.Ingredients.Page.Msg
+    | ProfileChoiceMsg Pages.Meals.ProfileChoice.Page.Msg
     | MealsMsg Pages.Meals.Editor.Page.Msg
     | MealEntriesMsg Pages.MealEntries.Page.Msg
     | StatisticsTimeMsg Pages.Statistics.Time.Page.Msg
@@ -239,6 +244,9 @@ view model =
 
         Ingredients ingredients ->
             Html.map IngredientsMsg (Pages.Ingredients.View.view ingredients)
+
+        ProfileChoice profileChoice ->
+            Html.map ProfileChoiceMsg (Pages.Meals.ProfileChoice.View.view profileChoice)
 
         Meals meals ->
             Html.map MealsMsg (Pages.Meals.Editor.View.view meals)
@@ -352,6 +360,9 @@ update msg model =
         ( IngredientsMsg ingredientsMsg, Ingredients ingredients ) ->
             stepThrough steps.ingredients model (Pages.Ingredients.Handler.update ingredientsMsg ingredients)
 
+        ( ProfileChoiceMsg profileChoiceMsg, ProfileChoice profileChoice ) ->
+            stepThrough steps.profileChoice model (Pages.Meals.ProfileChoice.Handler.update profileChoiceMsg profileChoice)
+
         ( MealsMsg mealsMsg, Meals meals ) ->
             stepThrough steps.meals model (Pages.Meals.Editor.Handler.update mealsMsg meals)
 
@@ -432,6 +443,7 @@ steps :
     , ingredients : StepParameters Pages.Ingredients.Page.Model Pages.Ingredients.Page.Msg
     , mealEntries : StepParameters Pages.MealEntries.Page.Model Pages.MealEntries.Page.Msg
     , meals : StepParameters Pages.Meals.Editor.Page.Model Pages.Meals.Editor.Page.Msg
+    , profileChoice : StepParameters Pages.Meals.ProfileChoice.Page.Model Pages.Meals.ProfileChoice.Page.Msg
     , statisticsTime : StepParameters Pages.Statistics.Time.Page.Model Pages.Statistics.Time.Page.Msg
     , statisticsFoodSearch : StepParameters Pages.Statistics.Food.Search.Page.Model Pages.Statistics.Food.Search.Page.Msg
     , statisticsFoodSelect : StepParameters Pages.Statistics.Food.Select.Page.Model Pages.Statistics.Food.Select.Page.Msg
@@ -459,6 +471,7 @@ steps =
     , ingredients = StepParameters Ingredients IngredientsMsg
     , mealEntries = StepParameters MealEntries MealEntriesMsg
     , meals = StepParameters Meals MealsMsg
+    , profileChoice = StepParameters ProfileChoice ProfileChoiceMsg
     , statisticsTime = StepParameters StatisticsTime StatisticsTimeMsg
     , statisticsFoodSearch = StepParameters StatisticsFoodSearch StatisticsFoodSearchMsg
     , statisticsFoodSelect = StepParameters StatisticsFoodSelect StatisticsFoodSelectMsg
@@ -491,6 +504,7 @@ type Route
     | OverviewRoute
     | RecipesRoute
     | IngredientRoute RecipeId
+    | MealProfileChoice
     | MealsRoute ProfileId
     | MealEntriesRoute ProfileId MealId
     | StatisticsTimeRoute
@@ -521,6 +535,7 @@ plainRouteParser =
         , route Addresses.Frontend.overview.parser OverviewRoute
         , route Addresses.Frontend.recipes.parser RecipesRoute
         , route Addresses.Frontend.ingredientEditor.parser IngredientRoute
+        , route Addresses.Frontend.mealBranch.parser MealProfileChoice
         , route Addresses.Frontend.meals.parser MealsRoute
         , route Addresses.Frontend.mealEntryEditor.parser MealEntriesRoute
         , route Addresses.Frontend.statisticsTime.parser StatisticsTimeRoute
@@ -584,6 +599,12 @@ followRoute model =
                         , recipeId = recipeId
                         }
                         |> stepThrough steps.ingredients model
+
+                ( MealProfileChoice, Just userJWT ) ->
+                    Pages.Meals.ProfileChoice.Handler.init
+                        { authorizedAccess = authorizedAccessWith userJWT
+                        }
+                        |> stepThrough steps.profileChoice model
 
                 ( MealsRoute profileId, Just userJWT ) ->
                     Pages.Meals.Editor.Handler.init
