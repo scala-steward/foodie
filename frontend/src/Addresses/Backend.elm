@@ -118,7 +118,7 @@ meals =
             "meals"
 
         base profileId =
-            (::) profilesWord >> (::) (profileId |> Uuid.toString) >> (::) mealsWord
+            (::) mealsWord >> (::) (profileId |> Uuid.toString) >> (::) profilesWord
 
         entriesWord =
             "entries"
