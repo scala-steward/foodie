@@ -48,27 +48,18 @@ initial authorizedAccess recipeId =
 
 initialToMain : Initial -> Maybe Main
 initialToMain i =
-    i.recipe
-        |> Pages.Util.Parent.Page.initialToMain
-        |> Maybe.andThen
-            (\recipe ->
-                i.ingredientsGroup
-                    |> Pages.Util.Choice.Page.initialToMain
-                    |> Maybe.andThen
-                        (\ingredientsGroup ->
-                            i.complexIngredientsGroup
-                                |> Pages.Util.Choice.Page.initialToMain
-                                |> Maybe.map
-                                    (\complexIngredientsGroup ->
-                                        { jwt = i.jwt
-                                        , recipe = recipe
-                                        , ingredientsGroup = ingredientsGroup
-                                        , complexIngredientsGroup = complexIngredientsGroup
-                                        , foodsMode = Plain
-                                        }
-                                    )
-                        )
-            )
+    Maybe.map3
+        (\recipe ingredientsGroup complexIngredientsGroup ->
+            { jwt = i.jwt
+            , recipe = recipe
+            , ingredientsGroup = ingredientsGroup
+            , complexIngredientsGroup = complexIngredientsGroup
+            , foodsMode = Plain
+            }
+        )
+        (i.recipe |> Pages.Util.Parent.Page.initialToMain)
+        (i.ingredientsGroup |> Pages.Util.Choice.Page.initialToMain)
+        (i.complexIngredientsGroup |> Pages.Util.Choice.Page.initialToMain)
 
 
 type FoodsMode
