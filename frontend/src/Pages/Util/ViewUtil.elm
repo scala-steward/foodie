@@ -4,7 +4,7 @@ import Addresses.Frontend
 import Api.Auxiliary exposing (JWT)
 import Api.Types.LoginContent exposing (decoderLoginContent)
 import Configuration exposing (Configuration)
-import Html exposing (Html, button, div, table, tbody, td, text, th, thead, tr)
+import Html exposing (Html, button, div, main_, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (disabled)
 import Html.Events exposing (onClick)
 import Jwt
@@ -49,7 +49,7 @@ viewMainWith params model html =
             ]
                 |> List.filter (always params.showNavigation)
     in
-    div []
+    main_ []
         (navigation
             ++ [ html ]
         )
