@@ -1,6 +1,7 @@
 module Pages.MealEntries.Meal.View exposing (..)
 
 import Addresses.Frontend
+import Api.Auxiliary exposing (ProfileId)
 import Configuration exposing (Configuration)
 import Html exposing (Attribute, Html, button, td, text)
 import Html.Events exposing (onClick)
@@ -13,8 +14,8 @@ import Pages.Util.Parent.View
 import Pages.Util.Style as Style
 
 
-viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
-viewMain configuration main =
+viewMain : ProfileId -> Configuration -> Page.Main -> Html Page.LogicMsg
+viewMain profileId configuration main =
     Pages.Util.Parent.View.viewMain
         { tableHeader = Pages.Meals.Editor.View.tableHeader
         , onView =
@@ -30,7 +31,7 @@ viewMain configuration main =
                             ]
                         , td [ Style.classes.controls ]
                             [ Links.linkButton
-                                { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsMealSelect.address <| ( main.profile.id, main.parent.parent.original.id )
+                                { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsMealSelect.address <| ( profileId, main.parent.original.id )
                                 , attributes = [ Style.classes.button.nutrients ]
                                 , children = [ text "Nutrients" ]
                                 }
@@ -47,7 +48,7 @@ viewMain configuration main =
                     meal
         , onUpdate =
             Pages.Meals.Editor.View.editMealLineWith
-                { saveMsg = Pages.Util.Parent.Page.SaveEdit main.parent.parent.original
+                { saveMsg = Pages.Util.Parent.Page.SaveEdit main.parent.original
                 , dateLens = MealUpdateClientInput.lenses.date
                 , nameLens = MealUpdateClientInput.lenses.name
                 , updateMsg = Pages.Util.Parent.Page.Edit
@@ -73,5 +74,4 @@ viewMain configuration main =
                 , showControls = True
                 }
         }
-        main.parent
-        |> Html.map Page.ParentMsg
+        main

@@ -42,7 +42,7 @@ viewMealEntries configuration main =
         , info =
             \mealEntry ->
                 { display =
-                    recipeInfoFromMap main.choices.choices mealEntry.recipeId
+                    recipeInfoFromMap main.choices mealEntry.recipeId
                         ++ [ { attributes = [ Style.classes.editable, Style.classes.numberLabel ]
                              , children = [ label [] [ text <| String.fromFloat <| mealEntry.numberOfServings ] ]
                              }
@@ -56,7 +56,7 @@ viewMealEntries configuration main =
         , isValidInput = .numberOfServings >> ValidatedInput.isValid
         , edit =
             \mealEntry mealEntryUpdateClientInput ->
-                recipeInfoFromMap main.choices.choices mealEntry.recipeId
+                recipeInfoFromMap main.choices mealEntry.recipeId
                     ++ [ { attributes = [ Style.classes.numberCell ]
                          , children =
                             [ input
@@ -77,15 +77,14 @@ viewMealEntries configuration main =
                          }
                        ]
         }
-        main.choices
-        |> Html.map Page.ChoiceMsg
+        main
 
 
 viewRecipes : Configuration -> Page.Main -> Html Page.LogicMsg
 viewRecipes configuration main =
     let
         numberOfServings =
-            if DictListUtil.existsValue Editing.isUpdate main.choices.choices then
+            if DictListUtil.existsValue Editing.isUpdate main.choices then
                 "Servings"
 
             else
@@ -114,7 +113,7 @@ viewRecipes configuration main =
                         Pages.Util.Choice.Page.DeselectChoice recipe.id
 
                     ( confirmName, confirmStyle ) =
-                        if DictListUtil.existsValue (\mealEntry -> mealEntry.original.recipeId == creation.recipeId) main.choices.elements then
+                        if DictListUtil.existsValue (\mealEntry -> mealEntry.original.recipeId == creation.recipeId) main.elements then
                             ( "Add again", Style.classes.button.edit )
 
                         else
@@ -176,8 +175,7 @@ viewRecipes configuration main =
                     ]
                 }
         }
-        main.choices
-        |> Html.map Page.ChoiceMsg
+        main
 
 
 

@@ -1,11 +1,9 @@
 module Pages.MealEntries.Handler exposing (init, update)
 
 import Api.Auxiliary exposing (JWT, MealEntryId, MealId, ProfileId, RecipeId)
-import Monocle.Compose as Compose
+import Maybe.Extra
 import Pages.MealEntries.Entries.Handler
-import Pages.MealEntries.Entries.Page
 import Pages.MealEntries.Meal.Handler
-import Pages.MealEntries.Meal.Page
 import Pages.MealEntries.Page as Page exposing (LogicMsg(..))
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.Requests
@@ -16,7 +14,7 @@ import Result.Extra
 
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
-    ( Page.initial flags.authorizedAccess flags.mealId
+    ( Page.initial flags.authorizedAccess flags.profileId flags.mealId
     , initialFetch
         flags.authorizedAccess
         flags.profileId
@@ -43,26 +41,36 @@ updateLogic : Page.LogicMsg -> Page.Model -> ( Page.Model, Cmd Page.LogicMsg )
 updateLogic msg model =
     case msg of
         Page.EntriesMsg entriesMsg ->
-            TristateUtil.updateFromSubModel
-                { initialSubModelLens = Page.lenses.initial.entries
-                , mainSubModelLens = Page.lenses.main.entries
-                , fromInitToMain = Page.initialToMain
-                , updateSubModel = Pages.MealEntries.Entries.Handler.updateLogic
-                , toMsg = Page.EntriesMsg
-                }
-                entriesMsg
-                model
+            model
+                |> Page.profileId
+                |> Maybe.Extra.unwrap ( model, Cmd.none )
+                    (\profileId ->
+                        TristateUtil.updateFromSubModel
+                            { initialSubModelLens = Page.lenses.initial.entries
+                            , mainSubModelLens = Page.lenses.main.entries
+                            , fromInitToMain = Page.initialToMain
+                            , updateSubModel = Pages.MealEntries.Entries.Handler.updateLogic profileId
+                            , toMsg = Page.EntriesMsg
+                            }
+                            entriesMsg
+                            model
+                    )
 
         Page.MealMsg mealMsg ->
-            TristateUtil.updateFromSubModel
-                { initialSubModelLens = Page.lenses.initial.meal
-                , mainSubModelLens = Page.lenses.main.meal
-                , fromInitToMain = Page.initialToMain
-                , updateSubModel = Pages.MealEntries.Meal.Handler.updateLogic
-                , toMsg = Page.MealMsg
-                }
-                mealMsg
-                model
+            model
+                |> Page.profileId
+                |> Maybe.Extra.unwrap ( model, Cmd.none )
+                    (\profileId ->
+                        TristateUtil.updateFromSubModel
+                            { initialSubModelLens = Page.lenses.initial.meal
+                            , mainSubModelLens = Page.lenses.main.meal
+                            , fromInitToMain = Page.initialToMain
+                            , updateSubModel = Pages.MealEntries.Meal.Handler.updateLogic profileId
+                            , toMsg = Page.MealMsg
+                            }
+                            mealMsg
+                            model
+                    )
 
         Page.GotFetchProfileResponse result ->
             ( result
@@ -70,10 +78,8 @@ updateLogic msg model =
                     (Tristate.toError model)
                     (\profile ->
                         model
-                            |> Tristate.mapInitial
-                                ((Page.lenses.initial.meal |> Compose.lensWithLens Pages.MealEntries.Meal.Page.lenses.initial.profile).set (Just profile)
-                                    >> (Page.lenses.initial.entries |> Compose.lensWithLens Pages.MealEntries.Entries.Page.lenses.initial.profile).set (Just profile)
-                                )
+                            |> Tristate.mapInitial (Page.lenses.initial.profile.set (Just profile))
+                            |> Tristate.fromInitToMain Page.initialToMain
                     )
             , Cmd.none
             )

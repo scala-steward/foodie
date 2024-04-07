@@ -19,44 +19,40 @@ type alias Model =
 type alias Main =
     { meal : Pages.MealEntries.Meal.Page.Main
     , entries : Pages.MealEntries.Entries.Page.Main
+    , profile : Profile
     }
 
 
 type alias Initial =
     { meal : Pages.MealEntries.Meal.Page.Initial
     , entries : Pages.MealEntries.Entries.Page.Initial
+    , profile : Maybe Profile
+    , profileId : ProfileId
     }
 
 
-initial : AuthorizedAccess -> MealId -> Model
-initial authorizedAccess mealId =
-    { meal =
-        { parent = Pages.Util.Parent.Page.initialWith authorizedAccess.jwt
-        , profile = Nothing
-        }
-    , entries =
-        { choices = Pages.Util.Choice.Page.initialWith authorizedAccess.jwt mealId
-        , profile = Nothing
-        }
+
+-- todo: It is strange to have the profile id for the both cases individually.
+-- The same goes for the JWT as well, but this is a different issue.
+
+
+initial : AuthorizedAccess -> ProfileId -> MealId -> Model
+initial authorizedAccess profId mealId =
+    { meal = Pages.Util.Parent.Page.initialWith authorizedAccess.jwt
+    , entries = Pages.Util.Choice.Page.initialWith authorizedAccess.jwt mealId
+    , profile = Nothing
+    , profileId = profId
     }
         |> Tristate.createInitial authorizedAccess.configuration
 
 
 initialToMain : Initial -> Maybe Main
 initialToMain i =
-    i.meal
-        |> Pages.MealEntries.Meal.Page.initialToMain
-        |> Maybe.andThen
-            (\meal ->
-                i.entries
-                    |> Pages.MealEntries.Entries.Page.initialToMain
-                    |> Maybe.map
-                        (\entries ->
-                            { meal = meal
-                            , entries = entries
-                            }
-                        )
-            )
+    Maybe.map3
+        Main
+        (i.meal |> Pages.Util.Parent.Page.initialToMain)
+        (i.entries |> Pages.Util.Choice.Page.initialToMain)
+        i.profile
 
 
 type alias Flags =
@@ -70,6 +66,7 @@ lenses :
     { initial :
         { meal : Lens Initial Pages.MealEntries.Meal.Page.Initial
         , entries : Lens Initial Pages.MealEntries.Entries.Page.Initial
+        , profile : Lens Initial (Maybe Profile)
         }
     , main :
         { meal : Lens Main Pages.MealEntries.Meal.Page.Main
@@ -80,12 +77,22 @@ lenses =
     { initial =
         { meal = Lens .meal (\b a -> { a | meal = b })
         , entries = Lens .entries (\b a -> { a | entries = b })
+        , profile = Lens .profile (\b a -> { a | profile = b })
         }
     , main =
         { meal = Lens .meal (\b a -> { a | meal = b })
         , entries = Lens .entries (\b a -> { a | entries = b })
         }
     }
+
+
+profileId : Model -> Maybe ProfileId
+profileId =
+    Tristate.fold
+        { onInitial = .profileId >> Just
+        , onMain = .profile >> .id >> Just
+        , onError = always Nothing
+        }
 
 
 type alias Msg =
