@@ -22,30 +22,30 @@ updateFromSubModel ps msg model =
                 , mainLens = ps.mainSubModelLens
                 }
 
-        ( recipeModel, recipeCmd ) =
+        ( subModel, subModelCmd ) =
             ps.updateSubModel msg (model |> subModelOf)
 
         newCmd =
-            Cmd.map ps.toMsg recipeCmd
+            Cmd.map ps.toMsg subModelCmd
 
         newModel =
-            case ( model.status, recipeModel.status ) of
-                ( Tristate.Initial i, Tristate.Initial subModel ) ->
+            case ( model.status, subModel.status ) of
+                ( Tristate.Initial i, Tristate.Initial subModelInitial ) ->
                     i
-                        |> ps.initialSubModelLens.set subModel
+                        |> ps.initialSubModelLens.set subModelInitial
                         |> Tristate.createInitial model.configuration
                         |> Tristate.fromInitToMain ps.fromInitToMain
 
-                ( Tristate.Main m, Tristate.Main subModel ) ->
+                ( Tristate.Main m, Tristate.Main subModelMain ) ->
                     m
-                        |> ps.mainSubModelLens.set subModel
+                        |> ps.mainSubModelLens.set subModelMain
                         |> Tristate.createMain model.configuration
 
-                ( _, Tristate.Error subModel ) ->
+                ( _, Tristate.Error subModelError ) ->
                     { configuration = model.configuration
                     , status =
                         Tristate.Error
-                            { errorExplanation = subModel.errorExplanation
+                            { errorExplanation = subModelError.errorExplanation
                             , previousMain = Tristate.lenses.main.getOption model
                             }
                     }
