@@ -1,8 +1,10 @@
 module Pages.Profiles.Handler exposing (..)
 
+import Addresses.Frontend
 import Pages.Profiles.Page as Page
 import Pages.Profiles.ProfileCreationClientInput as ProfileCreationClientInput
 import Pages.Profiles.ProfileUpdateClientInput as ProfileUpdateClientInput
+import Pages.Profiles.Requests as Requests
 import Pages.Util.ParentEditor.Handler
 import Pages.Util.ParentEditor.Page
 import Pages.View.Tristate as Tristate
@@ -25,7 +27,7 @@ updateLogic =
     Pages.Util.ParentEditor.Handler.updateLogic
         { idOfParent = .id
         , toUpdate = ProfileUpdateClientInput.fromProfile
-        , navigateToAddress = always []
+        , navigateToAddress = \_ -> Addresses.Frontend.profiles.address ()
         , updateCreationTimestamp = always identity
         , create = \authorizedAccess -> ProfileCreationClientInput.toCreation >> Requests.createProfile authorizedAccess
         , save = \authorizedAccess referenceMapId -> ProfileUpdateClientInput.toUpdate >> Requests.saveProfile authorizedAccess referenceMapId

@@ -1,10 +1,27 @@
 module Pages.Profiles.View exposing (..)
 
+import Api.Auxiliary exposing (ProfileId)
+import Api.Types.Profile exposing (Profile)
+import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
-import Html exposing (Html)
+import Html exposing (Attribute, Html, button, input, td, text, th, tr)
+import Html.Attributes exposing (value)
+import Html.Events exposing (onClick, onInput)
+import Html.Events.Extra exposing (onEnter)
+import Maybe.Extra
+import Monocle.Lens exposing (Lens)
 import Pages.Profiles.Page as Page
+import Pages.Profiles.ProfileCreationClientInput as ProfileCreationClientInput exposing (ProfileCreationClientInput)
+import Pages.Profiles.ProfileUpdateClientInput as ProfileUpdateClientInput exposing (ProfileUpdateClientInput)
+import Pages.Util.HtmlUtil as HtmlUtil
+import Pages.Util.ParentEditor.Page
 import Pages.Util.ParentEditor.View
+import Pages.Util.Style as Style
+import Pages.Util.ValidatedInput as ValidatedInput exposing (ValidatedInput)
+import Pages.Util.ViewUtil as ViewUtil
 import Pages.View.Tristate as Tristate
+import Util.MaybeUtil as MaybeUtil
+import Util.SearchUtil as SearchUtil
 
 
 view : Page.Model -> Html Page.Msg
@@ -19,16 +36,16 @@ viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain =
     Pages.Util.ParentEditor.View.viewParentsWith
         { currentPage = ViewUtil.Profiles
-        , matchesSearchText = \string referenceMap -> SearchUtil.search string referenceMap.name
+        , matchesSearchText = \string profile -> SearchUtil.search string profile.name
         , sort = List.sortBy (.original >> .name)
         , tableHeader = tableHeader
-        , viewLine = viewProfileLine
+        , viewLine = always viewProfileLine
         , updateLine = .id >> updateProfileLine
         , deleteLine = deleteProfileLine
         , create =
             { ifCreating = createProfileLine
             , default = ProfileCreationClientInput.default
-            , label = "New reference map"
+            , label = "New profile"
             , update = Pages.Util.ParentEditor.Page.UpdateCreation
             }
         , setSearchString = Pages.Util.ParentEditor.Page.SetSearchString
@@ -40,82 +57,70 @@ viewMain =
 tableHeader : Html msg
 tableHeader =
     Pages.Util.ParentEditor.View.tableHeaderWith
-        { columns = [ th [] [ label [] [ text "Name" ] ] ]
-        , style = Style.classes.referenceMapEditTable
+        { columns = [ th [] [ text "Name" ] ]
+        , style = Style.classes.profileEditTable
         }
 
 
-viewProfileLine : Configuration -> Profile -> Bool -> List (Html Page.LogicMsg)
-viewProfileLine configuration referenceMap showControls =
-    referenceMapLineWith
+viewProfileLine : Profile -> Bool -> List (Html Page.LogicMsg)
+viewProfileLine profile showControls =
+    profileLineWith
         { controls =
             [ td [ Style.classes.controls ]
-                [ button [ Style.classes.button.edit, Pages.Util.ParentEditor.Page.EnterEdit referenceMap.id |> onClick ] [ text "Edit" ] ]
-            , td [ Style.classes.controls ]
-                [ Links.linkButton
-                    { url = Links.frontendPage configuration <| Addresses.Frontend.referenceEntries.address <| referenceMap.id
-                    , attributes = [ Style.classes.button.editor ]
-                    , children = [ text "Entries" ]
-                    }
-                ]
+                [ button [ Style.classes.button.edit, Pages.Util.ParentEditor.Page.EnterEdit profile.id |> onClick ] [ text "Edit" ] ]
             , td [ Style.classes.controls ]
                 [ button
-                    [ Style.classes.button.delete, onClick <| Pages.Util.ParentEditor.Page.RequestDelete <| referenceMap.id ]
+                    [ Style.classes.button.delete, onClick <| Pages.Util.ParentEditor.Page.RequestDelete <| profile.id ]
                     [ text "Delete" ]
                 ]
-            , td [ Style.classes.controls ]
-                [ button
-                    [ Style.classes.button.confirm, onClick <| Pages.Util.ParentEditor.Page.Duplicate <| referenceMap.id ]
-                    [ text "Duplicate" ]
-                ]
             ]
-        , toggleMsg = Pages.Util.ParentEditor.Page.ToggleControls referenceMap.id
+        , toggleMsg = Pages.Util.ParentEditor.Page.ToggleControls profile.id
         , showControls = showControls
         }
-        referenceMap
+        profile
 
 
 deleteProfileLine : Profile -> List (Html Page.LogicMsg)
-deleteProfileLine referenceMap =
-    referenceMapLineWith
+deleteProfileLine profile =
+    profileLineWith
         { controls =
             [ td [ Style.classes.controls ]
                 [ button
-                    [ Style.classes.button.delete, onClick <| Pages.Util.ParentEditor.Page.ConfirmDelete <| referenceMap.id ]
+                    [ Style.classes.button.delete, onClick <| Pages.Util.ParentEditor.Page.ConfirmDelete <| profile.id ]
                     [ text "Delete?" ]
                 ]
             , td [ Style.classes.controls ]
                 [ button
-                    [ Style.classes.button.confirm, onClick <| Pages.Util.ParentEditor.Page.CancelDelete <| referenceMap.id ]
+                    [ Style.classes.button.confirm, onClick <| Pages.Util.ParentEditor.Page.CancelDelete <| profile.id ]
                     [ text "Cancel" ]
                 ]
             ]
-        , toggleMsg = Pages.Util.ParentEditor.Page.ToggleControls referenceMap.id
+        , toggleMsg = Pages.Util.ParentEditor.Page.ToggleControls profile.id
         , showControls = True
         }
-        referenceMap
+        profile
 
 
-referenceMapInfoColumns : Profile -> List (HtmlUtil.Column msg)
-referenceMapInfoColumns referenceMap =
+profileInfoColumns : Profile -> List (HtmlUtil.Column msg)
+profileInfoColumns profile =
     [ { attributes = [ Style.classes.editable ]
-      , children = [ label [] [ text referenceMap.name ] ]
+      , children = [ text profile.name ]
       }
     ]
 
 
-referenceMapLineWith :
+profileLineWith :
     { controls : List (Html msg)
     , toggleMsg : msg
     , showControls : Bool
     }
     -> Profile
     -> List (Html msg)
-referenceMapLineWith ps =
+profileLineWith ps =
     Pages.Util.ParentEditor.View.lineWith
         { rowWithControls =
-            \referenceMap ->
-                { display = referenceMapInfoColumns referenceMap
+            \profile ->
+                { display = profileInfoColumns profile
                 , controls = ps.controls
                 }
         , toggleMsg = ps.toggleMsg
@@ -124,21 +129,21 @@ referenceMapLineWith ps =
 
 
 updateProfileLine : ProfileId -> ProfileUpdateClientInput -> List (Html Page.LogicMsg)
-updateProfileLine referenceMapId =
+updateProfileLine profileId =
     editProfileLineWith
-        { saveMsg = Pages.Util.ParentEditor.Page.SaveEdit referenceMapId
+        { saveMsg = Pages.Util.ParentEditor.Page.SaveEdit profileId
         , nameLens = ProfileUpdateClientInput.lenses.name
-        , updateMsg = Pages.Util.ParentEditor.Page.Edit referenceMapId
+        , updateMsg = Pages.Util.ParentEditor.Page.Edit profileId
         , confirmName = "Save"
-        , cancelMsg = Pages.Util.ParentEditor.Page.ExitEdit referenceMapId
+        , cancelMsg = Pages.Util.ParentEditor.Page.ExitEdit profileId
         , cancelName = "Cancel"
         , rowStyles = [ Style.classes.editLine ]
-        , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls referenceMapId |> Just
+        , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls profileId |> Just
         }
 
 
 createProfileLine : ProfileCreationClientInput -> List (Html Page.LogicMsg)
-createProfileLine referenceMapCreationClientInput =
+createProfileLine profileCreationClientInput =
     editProfileLineWith
         { saveMsg = Pages.Util.ParentEditor.Page.Create
         , nameLens = ProfileCreationClientInput.lenses.name
@@ -149,7 +154,7 @@ createProfileLine referenceMapCreationClientInput =
         , rowStyles = [ Style.classes.editLine ]
         , toggleCommand = Nothing
         }
-        referenceMapCreationClientInput
+        profileCreationClientInput
 
 
 editProfileLineWith :
