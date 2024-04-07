@@ -31,6 +31,7 @@ updateLogic msg model =
                     --todo: In case there is precisely one profile, we should directly navigate to the next page
                     (\profiles ->
                         ( Tristate.mapInitial (Page.lenses.initial.profiles.set (Just profiles)) model
+                            |> Tristate.fromInitToMain Page.initialToMain
                         , Cmd.none
                         )
                     )
