@@ -25,11 +25,12 @@ init flags =
             , jwt = flags.authorizedAccess.jwt
             }
       , profile = Nothing
+      , profileId = flags.profileId
       }
         |> Tristate.createInitial flags.authorizedAccess.configuration
     , Cmd.batch
-        [ Requests.fetchMeals flags.authorizedAccess flags.profileId
-        , Pages.Util.Requests.fetchProfileWith Page.GotFetchProfileResponse flags.authorizedAccess flags.profileId
+        [ Pages.Util.Requests.fetchProfileWith Page.GotFetchProfileResponse flags.authorizedAccess flags.profileId
+        , Requests.fetchMeals flags.authorizedAccess flags.profileId
         ]
         |> Cmd.map Tristate.Logic
     )
@@ -52,6 +53,7 @@ updateLogic msg model =
                     \subModelMsg subModel ->
                         model
                             |> Page.profileId
+                            |> Debug.log "profileId"
                             |> Maybe.Extra.unwrap ( subModel, Cmd.none )
                                 (\profileId ->
                                     Pages.Util.ParentEditor.Handler.updateLogic
@@ -63,9 +65,11 @@ updateLogic msg model =
                                         , save = \authorizedAccess mealId -> MealUpdateClientInput.to >> Maybe.Extra.unwrap Cmd.none (Requests.saveMeal authorizedAccess profileId mealId)
                                         , delete = \authorizedAccess -> Requests.deleteMeal authorizedAccess profileId
                                         , duplicate = \authorizedAccess -> Pages.Util.Requests.duplicateMealWith Pages.Util.ParentEditor.Page.GotDuplicateResponse authorizedAccess profileId
+                                        , attemptInitialToMainAfterFetchResponse = False
                                         }
                                         subModelMsg
                                         subModel
+                                        |> Debug.log "updated subModel"
                                 )
                 , toMsg = Page.ParentEditorMsg
                 }
@@ -76,6 +80,11 @@ updateLogic msg model =
             ( result
                 |> Result.Extra.unpack
                     (Tristate.toError model)
-                    (\profile -> Tristate.mapInitial (Page.lenses.initial.profile.set (Just profile)) model)
+                    (\profile ->
+                        Tristate.mapInitial
+                            (Page.lenses.initial.profile.set (Just profile))
+                            model
+                            |> Tristate.fromInitToMain Page.initialToMain
+                    )
             , Cmd.none
             )

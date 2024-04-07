@@ -25,6 +25,7 @@ type alias Main =
 type alias Initial =
     { parentEditor : Pages.Util.ParentEditor.Page.Initial MealId Meal MealUpdateClientInput
     , profile : Maybe Profile
+    , profileId : ProfileId
     }
 
 
@@ -71,7 +72,7 @@ initialToMain initial =
 profileId : Model -> Maybe ProfileId
 profileId =
     Tristate.fold
-        { onInitial = .profile >> Maybe.map .id
+        { onInitial = .profileId >> Just
         , onMain = .profile >> .id >> Just
         , onError = always Nothing
         }
