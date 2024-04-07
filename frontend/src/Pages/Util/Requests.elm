@@ -7,6 +7,7 @@ import Api.Types.Food exposing (Food, decoderFood)
 import Api.Types.Meal exposing (Meal, decoderMeal)
 import Api.Types.MealUpdate exposing (MealUpdate, encoderMealUpdate)
 import Api.Types.Profile exposing (Profile, decoderProfile)
+import Api.Types.ProfileUpdate exposing (ProfileUpdate, encoderProfileUpdate)
 import Api.Types.Recipe exposing (Recipe, decoderRecipe)
 import Api.Types.RecipeUpdate exposing (RecipeUpdate, encoderRecipeUpdate)
 import Api.Types.ReferenceMap exposing (ReferenceMap, decoderReferenceMap)
@@ -265,4 +266,33 @@ fetchProfilesWith mkMsg authorizedAccess =
         Addresses.Backend.profiles.all
         { body = Http.emptyBody
         , expect = HttpUtil.expectJson mkMsg (Decode.list decoderProfile)
+        }
+
+
+saveProfileWith :
+    (Result Error Profile -> msg)
+    -> AuthorizedAccess
+    -> ProfileId
+    -> ProfileUpdate
+    -> Cmd msg
+saveProfileWith mkMsg authorizedAccess profileId profileUpdate =
+    HttpUtil.runPatternWithJwt
+        authorizedAccess
+        (Addresses.Backend.references.update profileId)
+        { body = encoderProfileUpdate profileUpdate |> Http.jsonBody
+        , expect = HttpUtil.expectJson mkMsg decoderProfile
+        }
+
+
+deleteProfileWith :
+    (Result Error () -> msg)
+    -> AuthorizedAccess
+    -> ProfileId
+    -> Cmd msg
+deleteProfileWith mkMsg authorizedAccess profileId =
+    HttpUtil.runPatternWithJwt
+        authorizedAccess
+        (Addresses.Backend.references.delete profileId)
+        { body = Http.emptyBody
+        , expect = HttpUtil.expectWhatever mkMsg
         }

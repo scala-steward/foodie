@@ -64,11 +64,12 @@ type Page
     | Login
     | Overview
     | ComplexFoods
+    | Profiles
 
 
 navigationPages : String -> List Page
 navigationPages nickname =
-    [ Recipes, Meals, ComplexFoods, Statistics, ReferenceMaps, UserSettings nickname ]
+    [ Recipes, Meals, ComplexFoods, Statistics, ReferenceMaps, Profiles, UserSettings nickname ]
 
 
 addressSuffix : Page -> String
@@ -99,6 +100,9 @@ addressSuffix page =
 
                 ComplexFoods ->
                     Addresses.Frontend.complexFoods.address ()
+
+                Profiles ->
+                    Addresses.Frontend.profiles.address ()
     in
     parts |> String.concat
 
@@ -129,6 +133,9 @@ nameOf page =
 
         ComplexFoods ->
             "Complex foods"
+
+        Profiles ->
+            "Profiles"
 
 
 navigationLink : { mainPageURL : String, page : String } -> String

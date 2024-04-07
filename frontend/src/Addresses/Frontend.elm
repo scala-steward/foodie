@@ -9,6 +9,7 @@ module Addresses.Frontend exposing
     , mealEntryEditor
     , meals
     , overview
+    , profiles
     , recipes
     , referenceEntries
     , referenceMaps
@@ -241,6 +242,11 @@ confirmRecovery =
 complexFoods : AddressWithParser () a a
 complexFoods =
     plain "complex-foods"
+
+
+profiles : AddressWithParser () a a
+profiles =
+    plain "profiles"
 
 
 confirm : String -> AddressWithParser ( ( String, String ), JWT ) (UserIdentifier -> JWT -> a) a

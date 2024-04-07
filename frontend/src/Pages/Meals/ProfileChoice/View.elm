@@ -23,6 +23,10 @@ viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
+
+        -- todo: This has the unfortunate side effect of <unknown> on the settings button. Rethink the approach.
+        -- In reality, we only need the JWT for the user name extraction, but this is a hack.
+        -- Instead, we could either drop the name entirely, or use a more consistent approach.
         , jwt = always Nothing
         , currentPage = Just ViewUtil.Meals
         , showNavigation = True
