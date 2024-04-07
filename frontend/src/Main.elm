@@ -36,6 +36,9 @@ import Pages.Meals.ProfileChoice.View
 import Pages.Overview.Handler
 import Pages.Overview.Page
 import Pages.Overview.View
+import Pages.Profiles.Handler
+import Pages.Profiles.Page
+import Pages.Profiles.View
 import Pages.Recipes.Handler
 import Pages.Recipes.Page
 import Pages.Recipes.View
@@ -166,6 +169,7 @@ type Page
     | RequestRecovery Pages.Recovery.Request.Page.Model
     | ConfirmRecovery Pages.Recovery.Confirm.Page.Model
     | ComplexFoods Pages.ComplexFoods.Page.Model
+    | Profiles Pages.Profiles.Page.Model
     | NotFound
 
 
@@ -202,6 +206,7 @@ type Msg
     | RequestRecoveryMsg Pages.Recovery.Request.Page.Msg
     | ConfirmRecoveryMsg Pages.Recovery.Confirm.Page.Msg
     | ComplexFoodsMsg Pages.ComplexFoods.Page.Msg
+    | ProfilesMsg Pages.Profiles.Page.Msg
 
 
 titleFor : Model -> String
@@ -310,6 +315,9 @@ view model =
 
         ComplexFoods complexFoods ->
             Html.map ComplexFoodsMsg (Pages.ComplexFoods.View.view complexFoods)
+
+        Profiles profiles ->
+            Html.map ProfilesMsg (Pages.Profiles.View.view profiles)
 
         NotFound ->
             div [] [ text "Page not found" ]
@@ -426,6 +434,9 @@ update msg model =
         ( ComplexFoodsMsg complexFoodsMsg, ComplexFoods complexFoods ) ->
             stepThrough steps.complexFoods model (Pages.ComplexFoods.Handler.update complexFoodsMsg complexFoods)
 
+        ( ProfilesMsg profilesMsg, Profiles profiles ) ->
+            stepThrough steps.profiles model (Pages.Profiles.Handler.update profilesMsg profiles)
+
         _ ->
             ( model, Cmd.none )
 
@@ -463,6 +474,7 @@ steps :
     , requestRecovery : StepParameters Pages.Recovery.Request.Page.Model Pages.Recovery.Request.Page.Msg
     , confirmRecovery : StepParameters Pages.Recovery.Confirm.Page.Model Pages.Recovery.Confirm.Page.Msg
     , complexFoods : StepParameters Pages.ComplexFoods.Page.Model Pages.ComplexFoods.Page.Msg
+    , profiles : StepParameters Pages.Profiles.Page.Model Pages.Profiles.Page.Msg
     }
 steps =
     { login = StepParameters Login LoginMsg
@@ -491,6 +503,7 @@ steps =
     , requestRecovery = StepParameters RequestRecovery RequestRecoveryMsg
     , confirmRecovery = StepParameters ConfirmRecovery ConfirmRecoveryMsg
     , complexFoods = StepParameters ComplexFoods ComplexFoodsMsg
+    , profiles = StepParameters Profiles ProfilesMsg
     }
 
 
@@ -526,6 +539,7 @@ type Route
     | RequestRecoveryRoute
     | ConfirmRecoveryRoute UserIdentifier JWT
     | ComplexFoodsRoute
+    | ProfilesRoute
 
 
 plainRouteParser : Parser (Route -> a) a
@@ -557,6 +571,7 @@ plainRouteParser =
         , route Addresses.Frontend.requestRecovery.parser RequestRecoveryRoute
         , route Addresses.Frontend.confirmRecovery.parser ConfirmRecoveryRoute
         , route Addresses.Frontend.complexFoods.parser ComplexFoodsRoute
+        , route Addresses.Frontend.profiles.parser ProfilesRoute
         ]
 
 
@@ -742,6 +757,11 @@ followRoute model =
                     Pages.ComplexFoods.Handler.init
                         { authorizedAccess = authorizedAccessWith userJWT }
                         |> stepThrough steps.complexFoods model
+
+                ( ProfilesRoute, Just userJWT ) ->
+                    Pages.Profiles.Handler.init
+                        { authorizedAccess = authorizedAccessWith userJWT }
+                        |> stepThrough steps.profiles model
 
                 _ ->
                     Pages.Login.Handler.init
