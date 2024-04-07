@@ -22,6 +22,14 @@ type alias Main =
     }
 
 
+
+-- todo: It is very questionable that the profile id is stored in parallel with the profile, because the profile
+--       can have a different id from the profile id in theory.
+--       The profile id here is only relevant for the case of updating the initial state, because the automation viw
+--       updateLogic needs a profile id to call the corresponding editing functions.
+--       However, none of these functions is called in the case of the initialization of the page.
+
+
 type alias Initial =
     { parentEditor : Pages.Util.ParentEditor.Page.Initial MealId Meal MealUpdateClientInput
     , profile : Maybe Profile
