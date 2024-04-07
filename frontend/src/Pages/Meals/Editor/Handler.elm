@@ -53,7 +53,6 @@ updateLogic msg model =
                     \subModelMsg subModel ->
                         model
                             |> Page.profileId
-                            |> Debug.log "profileId"
                             |> Maybe.Extra.unwrap ( subModel, Cmd.none )
                                 (\profileId ->
                                     Pages.Util.ParentEditor.Handler.updateLogic
@@ -69,7 +68,6 @@ updateLogic msg model =
                                         }
                                         subModelMsg
                                         subModel
-                                        |> Debug.log "updated subModel"
                                 )
                 , toMsg = Page.ParentEditorMsg
                 }
