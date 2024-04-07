@@ -6,7 +6,6 @@ import Api.Types.Profile exposing (decoderProfile)
 import Api.Types.ProfileCreation exposing (ProfileCreation, encoderProfileCreation)
 import Api.Types.ProfileUpdate exposing (ProfileUpdate)
 import Http
-import Json.Decode as Decode
 import Pages.Profiles.Page as Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.ParentEditor.Page
@@ -23,7 +22,7 @@ createProfile : AuthorizedAccess -> ProfileCreation -> Cmd Page.LogicMsg
 createProfile authorizedAccess referenceMapCreation =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        Addresses.Backend.references.create
+        Addresses.Backend.profiles.create
         { body = encoderProfileCreation referenceMapCreation |> Http.jsonBody
         , expect = HttpUtil.expectJson Pages.Util.ParentEditor.Page.GotCreateResponse decoderProfile
         }
