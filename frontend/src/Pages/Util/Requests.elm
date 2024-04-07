@@ -278,7 +278,7 @@ saveProfileWith :
 saveProfileWith mkMsg authorizedAccess profileId profileUpdate =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        (Addresses.Backend.references.update profileId)
+        (Addresses.Backend.profiles.update profileId)
         { body = encoderProfileUpdate profileUpdate |> Http.jsonBody
         , expect = HttpUtil.expectJson mkMsg decoderProfile
         }
@@ -292,7 +292,7 @@ deleteProfileWith :
 deleteProfileWith mkMsg authorizedAccess profileId =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        (Addresses.Backend.references.delete profileId)
+        (Addresses.Backend.profiles.delete profileId)
         { body = Http.emptyBody
         , expect = HttpUtil.expectWhatever mkMsg
         }
