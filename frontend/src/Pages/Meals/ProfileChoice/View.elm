@@ -23,7 +23,7 @@ viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
-        , currentPage = Just ViewUtil.Meals
+        , currentPage = Just ViewUtil.MealsProfileChoice
         , showNavigation = True
         }
     <|

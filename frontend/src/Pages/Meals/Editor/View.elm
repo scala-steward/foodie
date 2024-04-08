@@ -43,7 +43,7 @@ view model =
 viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     Pages.Util.ParentEditor.View.viewParentsWith
-        { currentPage = ViewUtil.Meals
+        { currentPage = Nothing
         , matchesSearchText =
             \string meal ->
                 SearchUtil.search string (meal.name |> Maybe.withDefault "")

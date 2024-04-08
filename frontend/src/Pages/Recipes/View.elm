@@ -38,7 +38,7 @@ view =
 viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration =
     Pages.Util.ParentEditor.View.viewParentsWith
-        { currentPage = ViewUtil.Recipes
+        { currentPage = Just ViewUtil.Recipes
         , matchesSearchText =
             \string recipe ->
                 SearchUtil.search string recipe.name

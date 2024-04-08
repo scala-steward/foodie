@@ -35,7 +35,7 @@ view =
 viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain =
     Pages.Util.ParentEditor.View.viewParentsWith
-        { currentPage = ViewUtil.Profiles
+        { currentPage = Just ViewUtil.Profiles
         , matchesSearchText = \string profile -> SearchUtil.search string profile.name
         , sort = List.sortBy (.original >> .name)
         , tableHeader = tableHeader
