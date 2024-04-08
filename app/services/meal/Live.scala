@@ -126,7 +126,7 @@ object Live {
         ec: ExecutionContext
     ): DBIO[Seq[Meal]] =
       mealDao
-        .allInInterval(userId, interval)
+        .allInInterval(userId, profileId, interval)
         .map(
           _.map(_.transformInto[Meal])
         )
