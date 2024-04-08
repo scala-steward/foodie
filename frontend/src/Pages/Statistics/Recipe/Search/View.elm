@@ -3,7 +3,7 @@ module Pages.Statistics.Recipe.Search.View exposing (view)
 import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.Recipe exposing (Recipe)
 import Configuration exposing (Configuration)
-import Html exposing (Html, col, colgroup, div, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Html, div, label, table, tbody, td, text, th, thead, tr)
 import Monocle.Compose as Compose
 import Pages.Statistics.Recipe.Search.Page as Page
 import Pages.Statistics.Recipe.Search.Pagination as Pagination
@@ -30,11 +30,9 @@ viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
-        , jwt = .jwt >> Just
         , currentPage = Just Statistics
         , showNavigation = True
         }
-        main
     <|
         StatisticsView.withNavigationBar
             { mainPageURL = configuration.mainPageURL

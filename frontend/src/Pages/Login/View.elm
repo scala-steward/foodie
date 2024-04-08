@@ -25,11 +25,9 @@ viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration model =
     ViewUtil.viewMainWith
         { configuration = configuration
-        , jwt = always Nothing
         , currentPage = Just ViewUtil.Login
         , showNavigation = False
         }
-        model
     <|
         div [ Style.classes.confirm ]
             [ div []

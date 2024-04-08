@@ -21,11 +21,9 @@ viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
-        , jwt = .jwt >> Just
         , currentPage = Just ViewUtil.ComplexFoods
         , showNavigation = True
         }
-        main
     <|
         div [ Style.ids.complexFoodEditor ]
             [ div [ Style.classes.elements ] [ label [] [ text "Complex foods" ] ]

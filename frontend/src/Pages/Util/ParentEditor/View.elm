@@ -42,11 +42,9 @@ viewParentsWith :
 viewParentsWith ps configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
-        , jwt = .jwt >> Just
         , currentPage = Just ps.currentPage
         , showNavigation = True
         }
-        main
     <|
         let
             viewParent =

@@ -1,13 +1,10 @@
 module Pages.Util.ViewUtil exposing (Page(..), navigationBarWith, navigationToPageButton, navigationToPageButtonWith, pagerButtons, paginate, viewMainWith)
 
 import Addresses.Frontend
-import Api.Auxiliary exposing (JWT)
-import Api.Types.LoginContent exposing (decoderLoginContent)
 import Configuration exposing (Configuration)
 import Html exposing (Html, button, div, main_, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (disabled)
 import Html.Events exposing (onClick)
-import Jwt
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
@@ -21,30 +18,17 @@ import Util.MaybeUtil as MaybeUtil
 
 viewMainWith :
     { configuration : Configuration
-    , jwt : main -> Maybe JWT
     , currentPage : Maybe Page
     , showNavigation : Bool
     }
-    -> main
     -> Html msg
     -> Html msg
-viewMainWith params model html =
+viewMainWith params html =
     let
-        unknown =
-            "<unknown>"
-
         navigation =
             [ navigationBar
                 { mainPageURL = params.configuration |> .mainPageURL
                 , currentPage = params.currentPage
-                , nickname =
-                    model
-                        |> params.jwt
-                        |> Maybe.andThen
-                            (Jwt.decodeToken decoderLoginContent
-                                >> Result.toMaybe
-                            )
-                        |> Maybe.Extra.unwrap unknown .nickname
                 }
             ]
                 |> List.filter (always params.showNavigation)
@@ -60,16 +44,16 @@ type Page
     | Meals
     | Statistics
     | ReferenceMaps
-    | UserSettings String
+    | UserSettings
     | Login
     | Overview
     | ComplexFoods
     | Profiles
 
 
-navigationPages : String -> List Page
-navigationPages nickname =
-    [ Recipes, Meals, ComplexFoods, Statistics, ReferenceMaps, Profiles, UserSettings nickname ]
+navigationPages : List Page
+navigationPages =
+    [ Recipes, Meals, ComplexFoods, Statistics, ReferenceMaps, Profiles, UserSettings ]
 
 
 addressSuffix : Page -> String
@@ -89,7 +73,7 @@ addressSuffix page =
                 ReferenceMaps ->
                     Addresses.Frontend.referenceMaps.address ()
 
-                UserSettings _ ->
+                UserSettings ->
                     Addresses.Frontend.userSettings.address ()
 
                 Login ->
@@ -122,8 +106,8 @@ nameOf page =
         ReferenceMaps ->
             "Reference maps"
 
-        UserSettings nickname ->
-            nickname
+        UserSettings ->
+            "Settings"
 
         Login ->
             "Login"
@@ -200,12 +184,11 @@ navigationToPageButtonWith ps =
 navigationBar :
     { mainPageURL : String
     , currentPage : Maybe Page
-    , nickname : String
     }
     -> Html msg
 navigationBar ps =
     navigationBarWith
-        { navigationPages = navigationPages ps.nickname
+        { navigationPages = navigationPages
         , pageToButton =
             \page ->
                 navigationToPageButton

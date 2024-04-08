@@ -30,11 +30,9 @@ viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration model =
     ViewUtil.viewMainWith
         { configuration = configuration
-        , jwt = .jwt >> Just
-        , currentPage = Just (UserSettings model.user.nickname)
+        , currentPage = Just UserSettings
         , showNavigation = True
         }
-        model
     <|
         case model.mode of
             Page.Regular ->

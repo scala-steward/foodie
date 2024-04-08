@@ -19,14 +19,12 @@ view =
 
 
 viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
-viewMain configuration main =
+viewMain configuration _ =
     ViewUtil.viewMainWith
         { configuration = configuration
-        , jwt = always Nothing
         , currentPage = Just ViewUtil.Overview
         , showNavigation = False
         }
-        main
     <|
         div [ Style.ids.overviewMain ]
             [ div []
