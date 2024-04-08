@@ -28,7 +28,7 @@ viewMain configuration main =
     <|
         div [ Style.ids.mealEntryEditor ]
             [ div []
-                [ Pages.MealEntries.Meal.View.viewMain main.profile.id configuration main.meal
+                [ Pages.MealEntries.Meal.View.viewMain main.profile configuration main.meal
                     |> Html.map Page.MealMsg
                 ]
             , div [ Style.classes.elements ] [ label [] [ text "Dishes" ] ]

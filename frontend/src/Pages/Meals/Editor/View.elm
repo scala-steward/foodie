@@ -3,10 +3,11 @@ module Pages.Meals.Editor.View exposing (editMealLineWith, mealLineWith, tableHe
 import Addresses.Frontend
 import Api.Auxiliary exposing (MealEntryId, MealId, ProfileId)
 import Api.Types.Meal exposing (Meal)
+import Api.Types.Profile exposing (Profile)
 import Api.Types.SimpleDate exposing (SimpleDate)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
-import Html exposing (Attribute, Html, button, input, label, td, text, th, tr)
+import Html exposing (Attribute, Html, button, input, td, text, th, tr)
 import Html.Attributes exposing (type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
@@ -49,11 +50,11 @@ viewMain configuration main =
                     || SearchUtil.search string (meal.date |> DateUtil.toString)
         , sort = List.sortBy (.original >> .date >> DateUtil.toString) >> List.reverse
         , tableHeader = tableHeader
-        , viewLine = \c -> viewMealLine c main.profile.id
-        , updateLine = .id >> updateMealLine
-        , deleteLine = deleteMealLine
+        , viewLine = \c -> viewMealLine c main.profile
+        , updateLine = .id >> updateMealLine main.profile.name
+        , deleteLine = deleteMealLine main.profile.name
         , create =
-            { ifCreating = createMealLine
+            { ifCreating = createMealLine main.profile.name
             , default = MealCreationClientInput.default
             , label = "New meal for " ++ main.profile.name
             , update = Pages.Util.ParentEditor.Page.UpdateCreation >> Page.ParentEditorMsg
@@ -70,19 +71,20 @@ tableHeader : Html msg
 tableHeader =
     Pages.Util.ParentEditor.View.tableHeaderWith
         { columns =
-            [ th [] [ label [] [ text "Date" ] ]
-            , th [] [ label [] [ text "Time" ] ]
-            , th [] [ label [] [ text "Name" ] ]
+            [ th [] [ text "Date" ]
+            , th [] [ text "Time" ]
+            , th [] [ text "Profile" ]
+            , th [] [ text "Name" ]
             ]
         , style = Style.classes.mealEditTable
         }
 
 
-viewMealLine : Configuration -> ProfileId -> Meal -> Bool -> List (Html Page.LogicMsg)
-viewMealLine configuration profileId meal showControls =
+viewMealLine : Configuration -> Profile -> Meal -> Bool -> List (Html Page.LogicMsg)
+viewMealLine configuration profile meal showControls =
     let
         mealKey =
-            ( profileId, meal.id )
+            ( profile.id, meal.id )
     in
     mealLineWith
         { controls =
@@ -115,11 +117,12 @@ viewMealLine configuration profileId meal showControls =
         , toggleMsg = Pages.Util.ParentEditor.Page.ToggleControls meal.id |> Page.ParentEditorMsg
         , showControls = showControls
         }
+        profile.name
         meal
 
 
-deleteMealLine : Meal -> List (Html Page.LogicMsg)
-deleteMealLine meal =
+deleteMealLine : String -> Meal -> List (Html Page.LogicMsg)
+deleteMealLine profileName meal =
     mealLineWith
         { controls =
             [ td [ Style.classes.controls ]
@@ -131,19 +134,23 @@ deleteMealLine meal =
         , toggleMsg = Pages.Util.ParentEditor.Page.ToggleControls meal.id |> Page.ParentEditorMsg
         , showControls = True
         }
+        profileName
         meal
 
 
-mealInfoColumns : Meal -> List (HtmlUtil.Column msg)
-mealInfoColumns meal =
+mealInfoColumns : String -> Meal -> List (HtmlUtil.Column msg)
+mealInfoColumns profileName meal =
     [ { attributes = [ Style.classes.editable ]
-      , children = [ label [] [ text <| DateUtil.dateToPrettyString <| meal.date.date ] ]
+      , children = [ text <| DateUtil.dateToPrettyString <| meal.date.date ]
       }
     , { attributes = [ Style.classes.editable ]
-      , children = [ label [] [ text <| Maybe.Extra.unwrap "" DateUtil.timeToString <| meal.date.time ] ]
+      , children = [ text <| Maybe.Extra.unwrap "" DateUtil.timeToString <| meal.date.time ]
       }
     , { attributes = [ Style.classes.editable ]
-      , children = [ label [] [ text <| Maybe.withDefault "" <| meal.name ] ]
+      , children = [ text <| profileName ]
+      }
+    , { attributes = [ Style.classes.editable ]
+      , children = [ text <| Maybe.withDefault "" <| meal.name ]
       }
     ]
 
@@ -153,13 +160,14 @@ mealLineWith :
     , toggleMsg : msg
     , showControls : Bool
     }
+    -> String
     -> Meal
     -> List (Html msg)
-mealLineWith ps =
+mealLineWith ps profileName =
     Pages.Util.ParentEditor.View.lineWith
         { rowWithControls =
             \meal ->
-                { display = mealInfoColumns meal
+                { display = mealInfoColumns profileName meal
                 , controls = ps.controls
                 }
         , toggleMsg = ps.toggleMsg
@@ -167,8 +175,8 @@ mealLineWith ps =
         }
 
 
-updateMealLine : MealId -> MealUpdateClientInput -> List (Html Page.LogicMsg)
-updateMealLine mealId =
+updateMealLine : String -> MealId -> MealUpdateClientInput -> List (Html Page.LogicMsg)
+updateMealLine profileName mealId =
     editMealLineWith
         { saveMsg = Pages.Util.ParentEditor.Page.SaveEdit mealId
         , dateLens = MealUpdateClientInput.lenses.date
@@ -180,11 +188,12 @@ updateMealLine mealId =
         , rowStyles = [ Style.classes.editLine ]
         , toggleCommand = Pages.Util.ParentEditor.Page.ToggleControls mealId |> Just
         }
+        profileName
         >> List.map (Html.map Page.ParentEditorMsg)
 
 
-createMealLine : MealCreationClientInput -> List (Html Page.LogicMsg)
-createMealLine =
+createMealLine : String -> MealCreationClientInput -> List (Html Page.LogicMsg)
+createMealLine profileName =
     editMealLineWith
         { saveMsg = Pages.Util.ParentEditor.Page.Create
         , dateLens = MealCreationClientInput.lenses.date
@@ -196,6 +205,7 @@ createMealLine =
         , rowStyles = [ Style.classes.editLine ]
         , toggleCommand = Nothing
         }
+        profileName
         >> List.map (Html.map Page.ParentEditorMsg)
 
 
@@ -210,9 +220,10 @@ editMealLineWith :
     , rowStyles : List (Attribute msg)
     , toggleCommand : Maybe msg
     }
+    -> String
     -> editedValue
     -> List (Html msg)
-editMealLineWith handling editedValue =
+editMealLineWith handling profileName editedValue =
     let
         date =
             handling.dateLens.get <| editedValue
@@ -285,6 +296,8 @@ editMealLineWith handling editedValue =
                     )
                     []
                 ]
+            , td [ Style.classes.editable ]
+                [ text profileName ]
             , td [ Style.classes.editable ]
                 [ input
                     ([ MaybeUtil.defined <| value <| name

@@ -1,7 +1,7 @@
 module Pages.MealEntries.Meal.View exposing (..)
 
 import Addresses.Frontend
-import Api.Auxiliary exposing (ProfileId)
+import Api.Types.Profile exposing (Profile)
 import Configuration exposing (Configuration)
 import Html exposing (Attribute, Html, button, td, text)
 import Html.Events exposing (onClick)
@@ -14,8 +14,8 @@ import Pages.Util.Parent.View
 import Pages.Util.Style as Style
 
 
-viewMain : ProfileId -> Configuration -> Page.Main -> Html Page.LogicMsg
-viewMain profileId configuration main =
+viewMain : Profile -> Configuration -> Page.Main -> Html Page.LogicMsg
+viewMain profile configuration main =
     Pages.Util.Parent.View.viewMain
         { tableHeader = Pages.Meals.Editor.View.tableHeader
         , onView =
@@ -31,7 +31,7 @@ viewMain profileId configuration main =
                             ]
                         , td [ Style.classes.controls ]
                             [ Links.linkButton
-                                { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsMealSelect.address <| ( profileId, main.parent.original.id )
+                                { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsMealSelect.address <| ( profile.id, main.parent.original.id )
                                 , attributes = [ Style.classes.button.nutrients ]
                                 , children = [ text "Nutrients" ]
                                 }
@@ -45,6 +45,7 @@ viewMain profileId configuration main =
                     , toggleMsg = Pages.Util.Parent.Page.ToggleControls
                     , showControls = showControls
                     }
+                    profile.name
                     meal
         , onUpdate =
             Pages.Meals.Editor.View.editMealLineWith
@@ -58,6 +59,7 @@ viewMain profileId configuration main =
                 , rowStyles = []
                 , toggleCommand = Just Pages.Util.Parent.Page.ToggleControls
                 }
+                profile.name
                 |> always
         , onDelete =
             Pages.Meals.Editor.View.mealLineWith
@@ -73,5 +75,6 @@ viewMain profileId configuration main =
                 , toggleMsg = Pages.Util.Parent.Page.ToggleControls
                 , showControls = True
                 }
+                profile.name
         }
         main

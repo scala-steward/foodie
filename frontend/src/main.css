@@ -225,6 +225,10 @@ th {
     width: 15%;
 }
 
+.meal-edit-table th:nth-child(3) {
+    width: 25%;
+}
+
 #meal-entry-editor .element-edit-table th:first-child,
 #meal-entry-editor .add-view .add-element th:first-child {
     width: 20%
