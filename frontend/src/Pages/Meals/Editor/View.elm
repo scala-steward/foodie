@@ -55,7 +55,7 @@ viewMain configuration main =
         , create =
             { ifCreating = createMealLine
             , default = MealCreationClientInput.default
-            , label = "New meal"
+            , label = "New meal for " ++ main.profile.name
             , update = Pages.Util.ParentEditor.Page.UpdateCreation >> Page.ParentEditorMsg
             }
         , setSearchString = Pages.Util.ParentEditor.Page.SetSearchString >> Page.ParentEditorMsg
