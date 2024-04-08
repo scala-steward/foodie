@@ -64,6 +64,13 @@ viewMain configuration _ =
                 ]
             , div []
                 [ Links.linkButton
+                    { url = Links.frontendPage configuration <| Addresses.Frontend.profiles.address <| ()
+                    , attributes = [ Style.classes.button.overview ]
+                    , children = [ text "Profiles" ]
+                    }
+                ]
+            , div []
+                [ Links.linkButton
                     { url = Links.frontendPage configuration <| Addresses.Frontend.userSettings.address <| ()
                     , attributes = [ Style.classes.button.overview ]
                     , children = [ text "User settings" ]
