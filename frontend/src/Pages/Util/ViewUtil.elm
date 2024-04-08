@@ -41,7 +41,7 @@ viewMainWith params html =
 
 type Page
     = Recipes
-    | Meals
+    | MealsProfileChoice
     | Statistics
     | ReferenceMaps
     | UserSettings
@@ -53,7 +53,7 @@ type Page
 
 navigationPages : List Page
 navigationPages =
-    [ Recipes, Meals, ComplexFoods, Statistics, ReferenceMaps, Profiles, UserSettings ]
+    [ Recipes, MealsProfileChoice, ComplexFoods, Statistics, ReferenceMaps, Profiles, UserSettings ]
 
 
 addressSuffix : Page -> String
@@ -64,7 +64,7 @@ addressSuffix page =
                 Recipes ->
                     Addresses.Frontend.recipes.address ()
 
-                Meals ->
+                MealsProfileChoice ->
                     Addresses.Frontend.mealBranch.address ()
 
                 Statistics ->
@@ -97,7 +97,7 @@ nameOf page =
         Recipes ->
             "Recipes"
 
-        Meals ->
+        MealsProfileChoice ->
             "Meals"
 
         Statistics ->
