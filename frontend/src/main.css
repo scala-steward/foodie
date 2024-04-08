@@ -133,14 +133,15 @@ body, button, input {
 .navigation-button:disabled,
 .pager-button:disabled,
 .alternative-button:disabled,
-.rescale-button:disabled {
+.rescale-button:disabled,
+.add-button:disabled {
     background-color: gray;
     cursor: not-allowed;
 }
 
 /* Buttons: hover */
 
-.add-button:hover {
+.add-button:hover:not(:disabled) {
     background-color: rgb(85 225 60);
 }
 
