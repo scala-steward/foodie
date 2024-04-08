@@ -24,7 +24,6 @@ import Pages.Util.ParentEditor.Page
 import Pages.Util.ParentEditor.View
 import Pages.Util.SimpleDateInput as SimpleDateInput exposing (SimpleDateInput)
 import Pages.Util.Style as Style
-import Pages.Util.ViewUtil as ViewUtil
 import Pages.View.Tristate as Tristate
 import Parser
 import Util.MaybeUtil as MaybeUtil
