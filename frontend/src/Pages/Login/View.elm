@@ -3,7 +3,7 @@ module Pages.Login.View exposing (..)
 import Addresses.Frontend
 import Configuration exposing (Configuration)
 import Html exposing (Html, button, div, input, label, text)
-import Html.Attributes exposing (autocomplete, type_)
+import Html.Attributes exposing (autocomplete, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Html.Events.Extra exposing (onEnter)
 import Pages.Login.Page as Page
@@ -36,6 +36,7 @@ viewMain configuration model =
                     [ autocomplete True
                     , onInput Page.SetNickname
                     , onEnter Page.Login
+                    , value model.credentials.nickname
                     , Style.classes.editable
                     ]
                     []
@@ -47,6 +48,7 @@ viewMain configuration model =
                     , autocomplete True
                     , onInput Page.SetPassword
                     , onEnter Page.Login
+                    , value model.credentials.password
                     , Style.classes.editable
                     ]
                     []
