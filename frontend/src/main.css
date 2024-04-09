@@ -178,7 +178,6 @@ body, button, input {
 }
 
 .select-button:hover:enabled,
-.select-button:hover:not(.disabled),
 .confirm-button:hover:enabled {
     background-color: rgb(70 240 70);
 }
