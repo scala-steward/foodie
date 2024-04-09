@@ -3,6 +3,7 @@ module Pages.Statistics.Time.Handler exposing (init, update)
 import Api.Auxiliary exposing (ReferenceMapId)
 import Api.Lenses.StatsLens as StatsLens
 import Api.Types.Date exposing (Date)
+import Api.Types.Profile exposing (Profile)
 import Api.Types.ReferenceTree exposing (ReferenceTree)
 import Api.Types.Stats exposing (Stats)
 import Monocle.Lens as Lens
@@ -24,8 +25,11 @@ init flags =
 
 
 initialFetch : AuthorizedAccess -> Cmd Page.LogicMsg
-initialFetch =
-    Requests.fetchReferenceTrees
+initialFetch authorizedAccess =
+    Cmd.batch
+        [ Requests.fetchReferenceTrees authorizedAccess
+        , Requests.fetchProfiles authorizedAccess
+        ]
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
@@ -50,6 +54,9 @@ updateLogic msg model =
 
         Page.GotFetchReferenceTreesResponse result ->
             gotFetchReferenceTreesResponse model result
+
+        Page.GotFetchProfilesResponse result ->
+            gotFetchProfilesResponse model result
 
         Page.SetPagination pagination ->
             setPagination model pagination
@@ -119,6 +126,14 @@ gotFetchReferenceTreesResponse : Page.Model -> Result Error (List ReferenceTree)
 gotFetchReferenceTreesResponse =
     StatisticsRequests.gotFetchReferenceTreesResponseWith
         { referenceTreesLens = Page.lenses.initial.referenceTrees
+        , initialToMain = Page.initialToMain
+        }
+
+
+gotFetchProfilesResponse : Page.Model -> Result Error (List Profile) -> ( Page.Model, Cmd Page.LogicMsg )
+gotFetchProfilesResponse =
+    StatisticsRequests.gotFetchProfilesResponseWith
+        { profilesLens = Page.lenses.initial.profiles
         , initialToMain = Page.initialToMain
         }
 

@@ -1,4 +1,4 @@
-module Pages.Statistics.Time.Requests exposing (fetchReferenceTrees, fetchStats)
+module Pages.Statistics.Time.Requests exposing (fetchProfiles, fetchReferenceTrees, fetchStats)
 
 import Addresses.Backend
 import Api.Types.RequestInterval exposing (RequestInterval)
@@ -8,6 +8,7 @@ import Pages.Statistics.StatisticsRequests as StatisticsRequests
 import Pages.Statistics.Time.Page as Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.DateUtil as DateUtil
+import Pages.Util.Requests
 import Url.Builder
 import Util.HttpUtil as HttpUtil
 
@@ -15,6 +16,11 @@ import Util.HttpUtil as HttpUtil
 fetchReferenceTrees : AuthorizedAccess -> Cmd Page.LogicMsg
 fetchReferenceTrees =
     StatisticsRequests.fetchReferenceTreesWith Page.GotFetchReferenceTreesResponse
+
+
+fetchProfiles : AuthorizedAccess -> Cmd Page.LogicMsg
+fetchProfiles =
+    Pages.Util.Requests.fetchProfilesWith Page.GotFetchProfilesResponse
 
 
 fetchStats : AuthorizedAccess -> RequestInterval -> Cmd Page.LogicMsg
