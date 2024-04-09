@@ -77,8 +77,7 @@ gotFetchProfilesResponseWith ps model result =
         |> Result.Extra.unpack (Tristate.toError model)
             (\profiles ->
                 model
-                    |> Tristate.mapInitial
-                        (ps.profilesLens.set (profiles |> Just))
+                    |> Tristate.mapInitial (ps.profilesLens.set (profiles |> Just))
                     |> Tristate.fromInitToMain ps.initialToMain
             )
     , Cmd.none

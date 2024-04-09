@@ -1,11 +1,13 @@
 module Pages.Statistics.Time.Handler exposing (init, update)
 
-import Api.Auxiliary exposing (ReferenceMapId)
+import Api.Auxiliary exposing (ProfileId, ReferenceMapId)
 import Api.Lenses.StatsLens as StatsLens
 import Api.Types.Date exposing (Date)
 import Api.Types.Profile exposing (Profile)
 import Api.Types.ReferenceTree exposing (ReferenceTree)
 import Api.Types.Stats exposing (Stats)
+import Basics.Extra exposing (flip)
+import Maybe.Extra
 import Monocle.Lens as Lens
 import Pages.Statistics.StatisticsRequests as StatisticsRequests
 import Pages.Statistics.Time.Page as Page
@@ -14,6 +16,7 @@ import Pages.Statistics.Time.Requests as Requests
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.View.Tristate as Tristate
 import Result.Extra
+import Util.DictList as DictList
 import Util.HttpUtil exposing (Error)
 
 
@@ -66,6 +69,9 @@ updateLogic msg model =
 
         Page.SetNutrientsSearchString string ->
             setNutrientsSearchString model string
+
+        Page.SelectProfile maybeProfileId ->
+            selectProfile model maybeProfileId
 
 
 setFromDate : Page.Model -> Maybe Date -> ( Page.Model, Cmd Page.LogicMsg )
@@ -157,3 +163,20 @@ setNutrientsSearchString =
     StatisticsRequests.setNutrientsSearchStringWith
         { statisticsEvaluationLens = Page.lenses.main.statisticsEvaluation
         }
+
+
+selectProfile : Page.Model -> Maybe ProfileId -> ( Page.Model, Cmd Page.LogicMsg )
+selectProfile model maybeProfileId =
+    ( model
+        |> Tristate.mapMain
+            (\main ->
+                maybeProfileId
+                    |> Maybe.Extra.unwrap main
+                        (\profileId ->
+                            main.profiles
+                                |> DictList.get profileId
+                                |> flip Page.lenses.main.selectedProfile.set main
+                        )
+            )
+    , Cmd.none
+    )

@@ -1,9 +1,10 @@
 module Pages.Statistics.StatisticsView exposing (..)
 
 import Addresses.StatisticsVariant as StatisticsVariant
-import Api.Auxiliary exposing (NutrientCode, ReferenceMapId)
+import Api.Auxiliary exposing (NutrientCode, ProfileId, ReferenceMapId)
 import Api.Types.NutrientInformationBase exposing (NutrientInformationBase)
 import Api.Types.NutrientUnit as NutrientUnit
+import Api.Types.Profile exposing (Profile)
 import Api.Types.ReferenceMap exposing (ReferenceMap)
 import Basics.Extra exposing (flip)
 import Dict exposing (Dict)
@@ -262,6 +263,34 @@ referenceMapDropdownWith ps model =
         (model |> ps.referenceTree |> Maybe.map (.map >> .id >> Uuid.toString))
 
 
+profileDropdownWith :
+    { profiles : model -> DictList ProfileId Profile
+    , profile : model -> Maybe Profile
+    , onChange : Maybe ProfileId -> msg
+    }
+    -> model
+    -> Html msg
+profileDropdownWith ps model =
+    dropdown
+        { items =
+            model
+                |> ps.profiles
+                |> DictList.values
+                |> List.sortBy .name
+                |> List.map
+                    (\profile ->
+                        { value = profile.id |> Uuid.toString
+                        , text = profile.name
+                        , enabled = True
+                        }
+                    )
+        , emptyItem = Nothing
+        , onChange = Maybe.andThen Uuid.fromString >> ps.onChange
+        }
+        []
+        (model |> ps.profile |> Maybe.map (.id >> Uuid.toString))
+
+
 referenceMapSelection :
     { onReferenceMapSelection : Maybe String -> msg
     , referenceTrees : model -> DictList ReferenceMapId ReferenceNutrientTree
@@ -279,6 +308,23 @@ referenceMapSelection ps model =
             }
             model
         ]
+    ]
+
+
+profileSelection :
+    { onProfileSelection : Maybe ProfileId -> msg
+    , profiles : model -> DictList ProfileId Profile
+    , profile : model -> Maybe Profile
+    }
+    -> model
+    -> List (Html msg)
+profileSelection ps model =
+    [ profileDropdownWith
+        { profiles = ps.profiles
+        , profile = ps.profile
+        , onChange = ps.onProfileSelection
+        }
+        model
     ]
 
 

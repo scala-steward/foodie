@@ -131,8 +131,9 @@ viewMain configuration main =
                     [ table [ Style.classes.intervalSelection, Style.classes.elementsWithControlsTable ]
                         [ thead []
                             [ tr [ Style.classes.tableHeader ]
-                                [ th [] [ label [] [ text "From" ] ]
-                                , th [] [ label [] [ text "To" ] ]
+                                [ th [] [ text "From" ]
+                                , th [] [ text "To" ]
+                                , th [] [ text "Profile" ]
                                 , th [] []
                                 , th [] []
                                 ]
@@ -141,6 +142,14 @@ viewMain configuration main =
                             [ tr []
                                 [ td [ Style.classes.editable, Style.classes.date ] [ dateInput main Page.SetFromDate Page.lenses.main.from ]
                                 , td [ Style.classes.editable, Style.classes.date ] [ dateInput main Page.SetToDate Page.lenses.main.to ]
+                                , td [ Style.classes.editable ]
+                                    (StatisticsView.profileSelection
+                                        { onProfileSelection = Page.SelectProfile
+                                        , profile = .selectedProfile
+                                        , profiles = .profiles
+                                        }
+                                        main
+                                    )
                                 , td [ Style.classes.controls ]
                                     [ button
                                         [ Style.classes.button.select, onClick Page.FetchStats ]

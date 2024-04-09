@@ -1,7 +1,7 @@
 module Pages.Statistics.Time.Page exposing (..)
 
 import Addresses.StatisticsVariant as StatisticsVariant exposing (Page)
-import Api.Auxiliary exposing (FoodId, JWT, MealId, NutrientCode, RecipeId, ReferenceMapId)
+import Api.Auxiliary exposing (FoodId, JWT, MealId, NutrientCode, ProfileId, RecipeId, ReferenceMapId)
 import Api.Lenses.RequestIntervalLens as RequestIntervalLens
 import Api.Types.Date exposing (Date)
 import Api.Types.Profile exposing (Profile)
@@ -14,7 +14,7 @@ import Pages.Statistics.StatisticsUtil as StatisticsUtil exposing (ReferenceNutr
 import Pages.Statistics.Time.Pagination as Pagination exposing (Pagination)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.View.Tristate as Tristate
-import Util.DictList exposing (DictList)
+import Util.DictList as DictList exposing (DictList)
 import Util.HttpUtil exposing (Error)
 
 
@@ -27,7 +27,8 @@ type alias Main =
     , requestInterval : RequestInterval
     , stats : Stats
     , statisticsEvaluation : StatisticsEvaluation
-    , profiles : List Profile
+    , profiles : DictList ProfileId Profile
+    , selectedProfile : Maybe Profile
     , pagination : Pagination
     , status : Status
     , variant : Page
@@ -78,7 +79,8 @@ initialToMain i =
             , requestInterval = RequestIntervalLens.default
             , stats = defaultStats
             , statisticsEvaluation = StatisticsUtil.initialWith referenceTrees
-            , profiles = profiles
+            , profiles = DictList.fromListWithKey .id profiles
+            , selectedProfile = Nothing
             , pagination = Pagination.initial
             , status = Select
             , variant = StatisticsVariant.Time
@@ -99,7 +101,8 @@ lenses :
         , to : Lens Main (Maybe Date)
         , stats : Lens Main Stats
         , statisticsEvaluation : Lens Main StatisticsEvaluation
-        , profiles : Lens Main (List Profile)
+        , profiles : Lens Main (DictList ProfileId Profile)
+        , selectedProfile : Lens Main (Maybe Profile)
         , pagination : Lens Main Pagination
         , status : Lens Main Status
         }
@@ -120,6 +123,7 @@ lenses =
         , stats = Lens .stats (\b a -> { a | stats = b })
         , statisticsEvaluation = Lens .statisticsEvaluation (\b a -> { a | statisticsEvaluation = b })
         , profiles = Lens .profiles (\b a -> { a | profiles = b })
+        , selectedProfile = Lens .selectedProfile (\b a -> { a | selectedProfile = b })
         , pagination = Lens .pagination (\b a -> { a | pagination = b })
         , status = Lens .status (\b a -> { a | status = b })
         }
@@ -138,6 +142,7 @@ type alias Msg =
 type LogicMsg
     = SetFromDate (Maybe Date)
     | SetToDate (Maybe Date)
+    | SelectProfile (Maybe ProfileId)
     | FetchStats
     | GotFetchStatsResponse (Result Error Stats)
     | GotFetchReferenceTreesResponse (Result Error (List ReferenceTree))
