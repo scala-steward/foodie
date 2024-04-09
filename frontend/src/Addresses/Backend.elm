@@ -151,9 +151,11 @@ meals =
 
 stats :
     { all :
-        { from : Maybe QueryParameter
-        , to : Maybe QueryParameter
-        }
+        ProfileId
+        ->
+            { from : Maybe QueryParameter
+            , to : Maybe QueryParameter
+            }
         -> ResourcePattern
     , complexFood : ComplexFoodId -> ResourcePattern
     , food : FoodId -> ResourcePattern
@@ -166,8 +168,11 @@ stats =
     let
         base =
             (::) "stats"
+
+        profilesWord =
+            "profiles"
     in
-    { all = \interval -> getQ (base []) (Maybe.Extra.values [ interval.from, interval.to ])
+    { all = \profileId interval -> getQ (base [ profilesWord, Uuid.toString profileId ]) (Maybe.Extra.values [ interval.from, interval.to ])
     , complexFood = \complexFoodId -> get <| base <| [ StatisticsVariant.complexFood, complexFoodId |> Uuid.toString ]
     , food = \foodId -> get <| base <| [ StatisticsVariant.food, foodId |> String.fromInt ]
     , recipe = \recipeId -> get <| base <| [ StatisticsVariant.recipe, recipeId |> Uuid.toString ]
