@@ -6,7 +6,7 @@ import Api.Types.Meal exposing (Meal)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
 import Html exposing (Html, button, div, input, label, table, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (type_, value)
+import Html.Attributes exposing (disabled, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Maybe.Extra
 import Monocle.Compose as Compose
@@ -23,6 +23,7 @@ import Pages.Util.ViewUtil as ViewUtil
 import Pages.View.Tristate as Tristate
 import Paginate
 import Parser
+import Util.MaybeUtil as MaybeUtil
 import Uuid
 
 
@@ -152,7 +153,12 @@ viewMain configuration main =
                                     )
                                 , td [ Style.classes.controls ]
                                     [ button
-                                        [ Style.classes.button.select, onClick Page.FetchStats ]
+                                        ([ MaybeUtil.defined <| Style.classes.button.select
+                                         , MaybeUtil.optional (Maybe.Extra.isJust main.selectedProfile) <| onClick Page.FetchStats
+                                         , MaybeUtil.defined <| disabled <| Maybe.Extra.isNothing main.selectedProfile
+                                         ]
+                                            |> Maybe.Extra.values
+                                        )
                                         [ text "Compute" ]
                                     ]
                                 , td [ Style.classes.controls ]

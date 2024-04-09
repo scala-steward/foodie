@@ -103,11 +103,16 @@ fetchStats model =
     , model
         |> Tristate.foldMain Cmd.none
             (\main ->
-                Requests.fetchStats
-                    { jwt = main.jwt
-                    , configuration = model.configuration
-                    }
-                    main.requestInterval
+                main.selectedProfile
+                    |> Maybe.Extra.unwrap Cmd.none
+                        (\profile ->
+                            Requests.fetchStats
+                                { jwt = main.jwt
+                                , configuration = model.configuration
+                                }
+                                profile.id
+                                main.requestInterval
+                        )
             )
     )
 
@@ -171,12 +176,8 @@ selectProfile model maybeProfileId =
         |> Tristate.mapMain
             (\main ->
                 maybeProfileId
-                    |> Maybe.Extra.unwrap main
-                        (\profileId ->
-                            main.profiles
-                                |> DictList.get profileId
-                                |> flip Page.lenses.main.selectedProfile.set main
-                        )
+                    |> Maybe.andThen (flip DictList.get main.profiles)
+                    |> flip Page.lenses.main.selectedProfile.set main
             )
     , Cmd.none
     )

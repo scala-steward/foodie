@@ -1,6 +1,7 @@
 module Pages.Statistics.Time.Requests exposing (fetchProfiles, fetchReferenceTrees, fetchStats)
 
 import Addresses.Backend
+import Api.Auxiliary exposing (ProfileId)
 import Api.Types.RequestInterval exposing (RequestInterval)
 import Api.Types.Stats exposing (decoderStats)
 import Http
@@ -23,8 +24,8 @@ fetchProfiles =
     Pages.Util.Requests.fetchProfilesWith Page.GotFetchProfilesResponse
 
 
-fetchStats : AuthorizedAccess -> RequestInterval -> Cmd Page.LogicMsg
-fetchStats authorizedAccess requestInterval =
+fetchStats : AuthorizedAccess -> ProfileId -> RequestInterval -> Cmd Page.LogicMsg
+fetchStats authorizedAccess profileId requestInterval =
     let
         toQuery name =
             Maybe.map (DateUtil.dateToString >> Url.Builder.string name)
@@ -36,7 +37,7 @@ fetchStats authorizedAccess requestInterval =
     in
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        (Addresses.Backend.stats.all interval)
+        (Addresses.Backend.stats.all profileId interval)
         { body = Http.emptyBody
         , expect = HttpUtil.expectJson Page.GotFetchStatsResponse decoderStats
         }

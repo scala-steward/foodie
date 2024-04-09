@@ -284,7 +284,12 @@ profileDropdownWith ps model =
                         , enabled = True
                         }
                     )
-        , emptyItem = Nothing
+        , emptyItem =
+            Just
+                { value = ""
+                , text = ""
+                , enabled = True
+                }
         , onChange = Maybe.andThen Uuid.fromString >> ps.onChange
         }
         []
