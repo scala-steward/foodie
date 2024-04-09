@@ -3,6 +3,7 @@ module Pages.Statistics.Time.View exposing (view)
 import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.Date exposing (Date)
 import Api.Types.Meal exposing (Meal)
+import Api.Types.Profile exposing (Profile)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
 import Html exposing (Html, button, div, input, label, table, tbody, td, text, th, thead, tr)
@@ -61,8 +62,8 @@ viewMain configuration main =
                     []
 
         stats =
-            case main.status of
-                Page.Display ->
+            case ( main.status, main.selectedProfile ) of
+                ( Page.Display, Just profile ) ->
                     StatisticsView.statisticsTable
                         { onSearchStringChange = Page.SetNutrientsSearchString
                         , searchStringOf = .statisticsEvaluation >> .nutrientsSearchString
@@ -87,6 +88,7 @@ viewMain configuration main =
                                         [ tr []
                                             [ th [] [ label [] [ text "Date" ] ]
                                             , th [] [ label [] [ text "Time" ] ]
+                                            , th [] [ label [] [ text "Profile" ] ]
                                             , th [] [ label [] [ text "Name" ] ]
                                             , th [] []
                                             , th [] []
@@ -95,7 +97,7 @@ viewMain configuration main =
                                     , tbody []
                                         (viewMeals
                                             |> Paginate.page
-                                            |> List.map (mealLine configuration)
+                                            |> List.map (mealLine configuration profile)
                                         )
                                     ]
                                 , div [ Style.classes.pagination ]
@@ -178,18 +180,17 @@ viewMain configuration main =
                 )
 
 
-mealLine : Configuration -> Meal -> Html Page.LogicMsg
-mealLine configuration meal =
+mealLine : Configuration -> Profile -> Meal -> Html Page.LogicMsg
+mealLine configuration profile meal =
     tr [ Style.classes.editLine ]
-        [ td [ Style.classes.editable, Style.classes.date ] [ label [] [ text <| DateUtil.dateToPrettyString <| meal.date.date ] ]
-        , td [ Style.classes.editable, Style.classes.time ] [ label [] [ text <| Maybe.Extra.unwrap "" DateUtil.timeToString <| meal.date.time ] ]
-        , td [ Style.classes.editable ] [ label [] [ text <| Maybe.withDefault "" <| meal.name ] ]
+        [ td [ Style.classes.editable, Style.classes.date ] [ text <| DateUtil.dateToPrettyString <| meal.date.date ]
+        , td [ Style.classes.editable, Style.classes.time ] [ text <| Maybe.Extra.unwrap "" DateUtil.timeToString <| meal.date.time ]
+        , td [ Style.classes.editable ] [ text <| profile.name ]
+        , td [ Style.classes.editable ] [ text <| Maybe.withDefault "" <| meal.name ]
         , td [ Style.classes.controls ]
-            -- todo identity: fix me
-            [ NavigationUtil.mealNutrientsLinkButton configuration meal.id meal.id ]
+            [ NavigationUtil.mealNutrientsLinkButton configuration profile.id meal.id ]
         , td [ Style.classes.controls ]
-            -- todo identity: fix me
-            [ NavigationUtil.mealEditorLinkButton configuration meal.id meal.id ]
+            [ NavigationUtil.mealEditorLinkButton configuration profile.id meal.id ]
         ]
 
 
