@@ -174,10 +174,12 @@ selectProfile : Page.Model -> Maybe ProfileId -> ( Page.Model, Cmd Page.LogicMsg
 selectProfile model maybeProfileId =
     ( model
         |> Tristate.mapMain
-            (\main ->
+            ((\main ->
                 maybeProfileId
                     |> Maybe.andThen (flip DictList.get main.profiles)
                     |> flip Page.lenses.main.selectedProfile.set main
+             )
+                >> Page.lenses.main.status.set Page.Select
             )
     , Cmd.none
     )
