@@ -21,11 +21,11 @@ fetchMeal =
     Pages.Util.Requests.fetchMealWith Page.GotFetchMealResponse
 
 
-fetchStats : AuthorizedAccess -> MealId -> Cmd Page.LogicMsg
-fetchStats authorizedAccess mealId =
+fetchStats : AuthorizedAccess -> ProfileId -> MealId -> Cmd Page.LogicMsg
+fetchStats authorizedAccess profileId mealId =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        (Addresses.Backend.stats.meal mealId)
+        (Addresses.Backend.stats.meal profileId mealId)
         { body = Http.emptyBody
         , expect = HttpUtil.expectJson Page.GotFetchStatsResponse decoderTotalOnlyStats
         }

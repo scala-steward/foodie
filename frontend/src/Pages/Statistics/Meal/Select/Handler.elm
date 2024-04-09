@@ -25,7 +25,7 @@ initialFetch : Page.Flags -> Cmd Page.LogicMsg
 initialFetch flags =
     Cmd.batch
         [ Requests.fetchMeal flags.authorizedAccess flags.profileId flags.mealId
-        , Requests.fetchStats flags.authorizedAccess flags.mealId
+        , Requests.fetchStats flags.authorizedAccess flags.profileId flags.mealId
         , Requests.fetchReferenceTrees flags.authorizedAccess
         ]
 

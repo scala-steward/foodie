@@ -160,7 +160,7 @@ stats :
     , complexFood : ComplexFoodId -> ResourcePattern
     , food : FoodId -> ResourcePattern
     , recipe : RecipeId -> ResourcePattern
-    , meal : MealId -> ResourcePattern
+    , meal : ProfileId -> MealId -> ResourcePattern
     , nutrients : ResourcePattern
     , recipeOccurrences : ResourcePattern
     }
@@ -176,7 +176,7 @@ stats =
     , complexFood = \complexFoodId -> get <| base <| [ StatisticsVariant.complexFood, complexFoodId |> Uuid.toString ]
     , food = \foodId -> get <| base <| [ StatisticsVariant.food, foodId |> String.fromInt ]
     , recipe = \recipeId -> get <| base <| [ StatisticsVariant.recipe, recipeId |> Uuid.toString ]
-    , meal = \mealId -> get <| base <| [ StatisticsVariant.meal, mealId |> Uuid.toString ]
+    , meal = \profileId mealId -> get <| base <| [ profilesWord, Uuid.toString profileId, StatisticsVariant.meal, mealId |> Uuid.toString ]
     , nutrients = get <| base <| [ "nutrients" ]
     , recipeOccurrences = get <| base [ "recipe-occurrences" ]
     }
