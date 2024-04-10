@@ -162,7 +162,7 @@ stats :
     , recipe : RecipeId -> ResourcePattern
     , meal : ProfileId -> MealId -> ResourcePattern
     , nutrients : ResourcePattern
-    , recipeOccurrences : ResourcePattern
+    , recipeOccurrences : ProfileId -> ResourcePattern
     }
 stats =
     let
@@ -178,7 +178,7 @@ stats =
     , recipe = \recipeId -> get <| base <| [ StatisticsVariant.recipe, recipeId |> Uuid.toString ]
     , meal = \profileId mealId -> get <| base <| [ profilesWord, Uuid.toString profileId, StatisticsVariant.meal, mealId |> Uuid.toString ]
     , nutrients = get <| base <| [ "nutrients" ]
-    , recipeOccurrences = get <| base [ "recipe-occurrences" ]
+    , recipeOccurrences = \profileId -> get <| base [ "recipe-occurrences", profilesWord, Uuid.toString profileId ]
     }
 
 

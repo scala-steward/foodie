@@ -1,10 +1,13 @@
 module Pages.Statistics.RecipeOccurrences.Search.Handler exposing (init, update)
 
+import Api.Auxiliary exposing (ProfileId)
+import Api.Types.Profile exposing (Profile)
 import Api.Types.RecipeOccurrence exposing (RecipeOccurrence)
 import Pages.Statistics.RecipeOccurrences.Search.Page as Page
 import Pages.Statistics.RecipeOccurrences.Search.Pagination exposing (Pagination)
 import Pages.Statistics.RecipeOccurrences.Search.Requests as Requests
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.Requests
 import Pages.View.Tristate as Tristate
 import Result.Extra
 import Util.HttpUtil exposing (Error)
@@ -13,13 +16,16 @@ import Util.HttpUtil exposing (Error)
 init : Page.Flags -> ( Page.Model, Cmd Page.Msg )
 init flags =
     ( Page.initial flags.authorizedAccess
-    , initialFetch flags.authorizedAccess |> Cmd.map Tristate.Logic
+    , initialFetch flags.authorizedAccess flags.profileId |> Cmd.map Tristate.Logic
     )
 
 
-initialFetch : AuthorizedAccess -> Cmd Page.LogicMsg
-initialFetch =
-    Requests.fetchRecipeOccurrences
+initialFetch : AuthorizedAccess -> ProfileId -> Cmd Page.LogicMsg
+initialFetch authorizedAccess profileId =
+    Cmd.batch
+        [ Requests.fetchRecipeOccurrences authorizedAccess profileId
+        , Pages.Util.Requests.fetchProfileWith Page.GotFetchProfileResponse authorizedAccess profileId
+        ]
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
@@ -38,6 +44,9 @@ updateLogic msg model =
 
         Page.GotFetchRecipeOccurrencesResponse result ->
             gotFetchRecipeOccurrencesResponse model result
+
+        Page.GotFetchProfileResponse result ->
+            gotFetchProfileResponse model result
 
         Page.SortBy sortType ->
             sortBy model sortType
@@ -64,6 +73,19 @@ gotFetchRecipeOccurrencesResponse model result =
             (\recipes ->
                 model
                     |> Tristate.mapInitial (Page.lenses.initial.recipeOccurrences.set (recipes |> Just))
+                    |> Tristate.fromInitToMain Page.initialToMain
+            )
+    , Cmd.none
+    )
+
+
+gotFetchProfileResponse : Page.Model -> Result Error Profile -> ( Page.Model, Cmd Page.LogicMsg )
+gotFetchProfileResponse model result =
+    ( result
+        |> Result.Extra.unpack (Tristate.toError model)
+            (\profile ->
+                model
+                    |> Tristate.mapInitial (Page.lenses.initial.profile.set (profile |> Just))
                     |> Tristate.fromInitToMain Page.initialToMain
             )
     , Cmd.none

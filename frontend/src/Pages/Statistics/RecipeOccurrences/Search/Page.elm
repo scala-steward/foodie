@@ -1,7 +1,8 @@
 module Pages.Statistics.RecipeOccurrences.Search.Page exposing (..)
 
 import Addresses.StatisticsVariant as StatisticsVariant exposing (Page)
-import Api.Auxiliary exposing (JWT)
+import Api.Auxiliary exposing (JWT, ProfileId)
+import Api.Types.Profile exposing (Profile)
 import Api.Types.RecipeOccurrence exposing (RecipeOccurrence)
 import Monocle.Lens exposing (Lens)
 import Pages.Statistics.RecipeOccurrences.Search.Pagination as Pagination exposing (Pagination)
@@ -17,6 +18,7 @@ type alias Model =
 type alias Main =
     { jwt : JWT
     , recipeOccurrences : List RecipeOccurrence
+    , profile : Profile
     , recipesSearchString : String
     , pagination : Pagination
     , sortType : SortType
@@ -27,6 +29,7 @@ type alias Main =
 type alias Initial =
     { jwt : JWT
     , recipeOccurrences : Maybe (List RecipeOccurrence)
+    , profile : Maybe Profile
     }
 
 
@@ -34,16 +37,18 @@ initial : AuthorizedAccess -> Model
 initial authorizedAccess =
     { jwt = authorizedAccess.jwt
     , recipeOccurrences = Nothing
+    , profile = Nothing
     }
         |> Tristate.createInitial authorizedAccess.configuration
 
 
 initialToMain : Initial -> Maybe Main
 initialToMain i =
-    Maybe.map
-        (\recipeOccurrences ->
+    Maybe.map2
+        (\recipeOccurrences profile ->
             { jwt = i.jwt
             , recipeOccurrences = recipeOccurrences
+            , profile = profile
             , recipesSearchString = ""
             , pagination = Pagination.initial
             , sortType = RecipeName
@@ -51,10 +56,14 @@ initialToMain i =
             }
         )
         i.recipeOccurrences
+        i.profile
 
 
 lenses :
-    { initial : { recipeOccurrences : Lens Initial (Maybe (List RecipeOccurrence)) }
+    { initial :
+        { recipeOccurrences : Lens Initial (Maybe (List RecipeOccurrence))
+        , profile : Lens Initial (Maybe Profile)
+        }
     , main :
         { recipeOccurrences : Lens Main (List RecipeOccurrence)
         , recipesSearchString : Lens Main String
@@ -63,7 +72,10 @@ lenses :
         }
     }
 lenses =
-    { initial = { recipeOccurrences = Lens .recipeOccurrences (\b a -> { a | recipeOccurrences = b }) }
+    { initial =
+        { recipeOccurrences = Lens .recipeOccurrences (\b a -> { a | recipeOccurrences = b })
+        , profile = Lens .profile (\b a -> { a | profile = b })
+        }
     , main =
         { recipeOccurrences = Lens .recipeOccurrences (\b a -> { a | recipeOccurrences = b })
         , recipesSearchString = Lens .recipesSearchString (\b a -> { a | recipesSearchString = b })
@@ -75,6 +87,7 @@ lenses =
 
 type alias Flags =
     { authorizedAccess : AuthorizedAccess
+    , profileId : ProfileId
     }
 
 
@@ -91,4 +104,5 @@ type LogicMsg
     = SetSearchString String
     | SetRecipeOccurrencesPagination Pagination
     | GotFetchRecipeOccurrencesResponse (Result Error (List RecipeOccurrence))
+    | GotFetchProfileResponse (Result Error Profile)
     | SortBy SortType

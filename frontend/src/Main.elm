@@ -741,6 +741,7 @@ followRoute model =
                 ( StatisticsRecipeOccurrencesRoute profileId, Just userJWT ) ->
                     Pages.Statistics.RecipeOccurrences.Search.Handler.init
                         { authorizedAccess = authorizedAccessWith userJWT
+                        , profileId = profileId
                         }
                         |> stepThrough steps.statisticsRecipeOccurrences model
 
