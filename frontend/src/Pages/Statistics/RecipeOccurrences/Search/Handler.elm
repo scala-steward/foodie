@@ -1,9 +1,9 @@
-module Pages.Statistics.RecipeOccurrences.Handler exposing (init, update)
+module Pages.Statistics.RecipeOccurrences.Search.Handler exposing (init, update)
 
 import Api.Types.RecipeOccurrence exposing (RecipeOccurrence)
-import Pages.Statistics.RecipeOccurrences.Page as Page
-import Pages.Statistics.RecipeOccurrences.Pagination exposing (Pagination)
-import Pages.Statistics.RecipeOccurrences.Requests as Requests
+import Pages.Statistics.RecipeOccurrences.Search.Page as Page
+import Pages.Statistics.RecipeOccurrences.Search.Pagination exposing (Pagination)
+import Pages.Statistics.RecipeOccurrences.Search.Requests as Requests
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.View.Tristate as Tristate
 import Result.Extra

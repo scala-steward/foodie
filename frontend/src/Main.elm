@@ -87,9 +87,9 @@ import Pages.Statistics.Recipe.Search.View
 import Pages.Statistics.Recipe.Select.Handler
 import Pages.Statistics.Recipe.Select.Page
 import Pages.Statistics.Recipe.Select.View
-import Pages.Statistics.RecipeOccurrences.Handler
-import Pages.Statistics.RecipeOccurrences.Page
-import Pages.Statistics.RecipeOccurrences.View
+import Pages.Statistics.RecipeOccurrences.Search.Handler
+import Pages.Statistics.RecipeOccurrences.Search.Page
+import Pages.Statistics.RecipeOccurrences.Search.View
 import Pages.Statistics.Time.Handler
 import Pages.Statistics.Time.Page
 import Pages.Statistics.Time.View
@@ -163,7 +163,7 @@ type Page
     | StatisticsMealProfileChoice Pages.Statistics.Meal.ProfileChoice.Page.Model
     | StatisticsMealSearch Pages.Statistics.Meal.Search.Page.Model
     | StatisticsMealSelect Pages.Statistics.Meal.Select.Page.Model
-    | StatisticsRecipeOccurrences Pages.Statistics.RecipeOccurrences.Page.Model
+    | StatisticsRecipeOccurrences Pages.Statistics.RecipeOccurrences.Search.Page.Model
     | ReferenceMaps Pages.ReferenceMaps.Page.Model
     | ReferenceEntries Pages.ReferenceEntries.Page.Model
     | RequestRegistration Pages.Registration.Request.Page.Model
@@ -201,7 +201,7 @@ type Msg
     | StatisticsMealProfileChoiceMsg Pages.Statistics.Meal.ProfileChoice.Page.Msg
     | StatisticsMealSearchMsg Pages.Statistics.Meal.Search.Page.Msg
     | StatisticsMealSelectMsg Pages.Statistics.Meal.Select.Page.Msg
-    | StatisticsRecipeOccurrencesMsg Pages.Statistics.RecipeOccurrences.Page.Msg
+    | StatisticsRecipeOccurrencesMsg Pages.Statistics.RecipeOccurrences.Search.Page.Msg
     | ReferenceMapsMsg Pages.ReferenceMaps.Page.Msg
     | ReferenceEntriesMsg Pages.ReferenceEntries.Page.Msg
     | RequestRegistrationMsg Pages.Registration.Request.Page.Msg
@@ -295,7 +295,7 @@ view model =
             Html.map StatisticsMealSelectMsg (Pages.Statistics.Meal.Select.View.view statisticsMealSelect)
 
         StatisticsRecipeOccurrences statisticsRecipeOccurrences ->
-            Html.map StatisticsRecipeOccurrencesMsg (Pages.Statistics.RecipeOccurrences.View.view statisticsRecipeOccurrences)
+            Html.map StatisticsRecipeOccurrencesMsg (Pages.Statistics.RecipeOccurrences.Search.View.view statisticsRecipeOccurrences)
 
         ReferenceMaps referenceMaps ->
             Html.map ReferenceMapsMsg (Pages.ReferenceMaps.View.view referenceMaps)
@@ -416,7 +416,7 @@ update msg model =
             stepThrough steps.statisticsMealSelect model (Pages.Statistics.Meal.Select.Handler.update statisticsMealSelectMsg statisticsMealSelect)
 
         ( StatisticsRecipeOccurrencesMsg statisticsRecipeOccurrencesMsg, StatisticsRecipeOccurrences statisticsRecipeOccurrences ) ->
-            stepThrough steps.statisticsRecipeOccurrences model (Pages.Statistics.RecipeOccurrences.Handler.update statisticsRecipeOccurrencesMsg statisticsRecipeOccurrences)
+            stepThrough steps.statisticsRecipeOccurrences model (Pages.Statistics.RecipeOccurrences.Search.Handler.update statisticsRecipeOccurrencesMsg statisticsRecipeOccurrences)
 
         ( ReferenceMapsMsg referenceMapsMsg, ReferenceMaps referenceMaps ) ->
             stepThrough steps.referenceMaps model (Pages.ReferenceMaps.Handler.update referenceMapsMsg referenceMaps)
@@ -476,7 +476,7 @@ steps :
     , statisticsMealProfileChoice : StepParameters Pages.Statistics.Meal.ProfileChoice.Page.Model Pages.Statistics.Meal.ProfileChoice.Page.Msg
     , statisticsMealSearch : StepParameters Pages.Statistics.Meal.Search.Page.Model Pages.Statistics.Meal.Search.Page.Msg
     , statisticsMealSelect : StepParameters Pages.Statistics.Meal.Select.Page.Model Pages.Statistics.Meal.Select.Page.Msg
-    , statisticsRecipeOccurrences : StepParameters Pages.Statistics.RecipeOccurrences.Page.Model Pages.Statistics.RecipeOccurrences.Page.Msg
+    , statisticsRecipeOccurrences : StepParameters Pages.Statistics.RecipeOccurrences.Search.Page.Model Pages.Statistics.RecipeOccurrences.Search.Page.Msg
     , referenceMaps : StepParameters Pages.ReferenceMaps.Page.Model Pages.ReferenceMaps.Page.Msg
     , referenceEntries : StepParameters Pages.ReferenceEntries.Page.Model Pages.ReferenceEntries.Page.Msg
     , requestRegistration : StepParameters Pages.Registration.Request.Page.Model Pages.Registration.Request.Page.Msg
@@ -718,7 +718,7 @@ followRoute model =
                         |> stepThrough steps.statisticsMealSelect model
 
                 ( StatisticsRecipeOccurrencesRoute, Just userJWT ) ->
-                    Pages.Statistics.RecipeOccurrences.Handler.init
+                    Pages.Statistics.RecipeOccurrences.Search.Handler.init
                         { authorizedAccess = authorizedAccessWith userJWT
                         }
                         |> stepThrough steps.statisticsRecipeOccurrences model

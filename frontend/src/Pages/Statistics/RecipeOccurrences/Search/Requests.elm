@@ -1,10 +1,10 @@
-module Pages.Statistics.RecipeOccurrences.Requests exposing (..)
+module Pages.Statistics.RecipeOccurrences.Search.Requests exposing (..)
 
 import Addresses.Backend
 import Api.Types.RecipeOccurrence exposing (decoderRecipeOccurrence)
 import Http
 import Json.Decode as Decode
-import Pages.Statistics.RecipeOccurrences.Page as Page
+import Pages.Statistics.RecipeOccurrences.Search.Page as Page
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Util.HttpUtil as HttpUtil
 

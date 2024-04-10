@@ -1,4 +1,4 @@
-module Pages.Statistics.RecipeOccurrences.View exposing (view)
+module Pages.Statistics.RecipeOccurrences.Search.View exposing (view)
 
 import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.RecipeOccurrence exposing (RecipeOccurrence)
@@ -8,8 +8,8 @@ import Html.Attributes exposing (disabled)
 import Html.Events exposing (onClick)
 import Maybe.Extra
 import Monocle.Compose as Compose
-import Pages.Statistics.RecipeOccurrences.Page as Page
-import Pages.Statistics.RecipeOccurrences.Pagination as Pagination
+import Pages.Statistics.RecipeOccurrences.Search.Page as Page
+import Pages.Statistics.RecipeOccurrences.Search.Pagination as Pagination
 import Pages.Statistics.StatisticsView as StatisticsView
 import Pages.Util.DateUtil as DateUtil
 import Pages.Util.HtmlUtil as HtmlUtil

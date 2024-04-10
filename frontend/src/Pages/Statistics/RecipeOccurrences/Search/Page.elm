@@ -1,10 +1,10 @@
-module Pages.Statistics.RecipeOccurrences.Page exposing (..)
+module Pages.Statistics.RecipeOccurrences.Search.Page exposing (..)
 
 import Addresses.StatisticsVariant as StatisticsVariant exposing (Page)
 import Api.Auxiliary exposing (JWT)
 import Api.Types.RecipeOccurrence exposing (RecipeOccurrence)
 import Monocle.Lens exposing (Lens)
-import Pages.Statistics.RecipeOccurrences.Pagination as Pagination exposing (Pagination)
+import Pages.Statistics.RecipeOccurrences.Search.Pagination as Pagination exposing (Pagination)
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.View.Tristate as Tristate
 import Util.HttpUtil exposing (Error)
