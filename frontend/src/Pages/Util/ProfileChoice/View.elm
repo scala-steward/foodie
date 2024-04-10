@@ -14,6 +14,7 @@ import Pages.View.Tristate as Tristate
 type alias Directions =
     { address : ProfileId -> List String
     , currentPage : ViewUtil.Page
+    , modifier : Html Page.LogicMsg -> Html Page.LogicMsg
     }
 
 
@@ -33,8 +34,9 @@ viewMainWith ps configuration main =
         , showNavigation = True
         }
     <|
-        menu []
-            (List.map (viewProfileButtonWith ps configuration) main.profiles)
+        ps.modifier <|
+            menu []
+                (List.map (viewProfileButtonWith ps configuration) main.profiles)
 
 
 viewProfileButtonWith : Directions -> Configuration -> Profile -> Html Page.LogicMsg

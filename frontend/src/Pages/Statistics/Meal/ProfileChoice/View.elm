@@ -11,13 +11,13 @@ import Pages.Util.ViewUtil as ViewUtil
 
 view : Page.Model -> Html Page.Msg
 view model =
-    StatisticsView.withNavigationBar
-        { mainPageURL = model.configuration.mainPageURL
-        , currentPage = Just StatisticsVariant.Meal
+    Pages.Util.ProfileChoice.View.viewWith
+        { address = Addresses.Frontend.statisticsMealSearch.address
+        , currentPage = ViewUtil.Statistics
+        , modifier =
+            StatisticsView.withNavigationBar
+                { mainPageURL = model.configuration.mainPageURL
+                , currentPage = Just StatisticsVariant.Meal
+                }
         }
-    <|
-        Pages.Util.ProfileChoice.View.viewWith
-            { address = Addresses.Frontend.statisticsMealSearch.address
-            , currentPage = ViewUtil.Statistics
-            }
-            model
+        model

@@ -12,5 +12,6 @@ view model =
     Pages.Util.ProfileChoice.View.viewWith
         { address = Addresses.Frontend.meals.address
         , currentPage = ViewUtil.MealsProfileChoice
+        , modifier = identity
         }
         model
