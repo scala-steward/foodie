@@ -72,6 +72,9 @@ import Pages.Statistics.Food.Search.View
 import Pages.Statistics.Food.Select.Handler
 import Pages.Statistics.Food.Select.Page
 import Pages.Statistics.Food.Select.View
+import Pages.Statistics.Meal.ProfileChoice.Handler
+import Pages.Statistics.Meal.ProfileChoice.Page
+import Pages.Statistics.Meal.ProfileChoice.View
 import Pages.Statistics.Meal.Search.Handler
 import Pages.Statistics.Meal.Search.Page
 import Pages.Statistics.Meal.Search.View
@@ -157,6 +160,7 @@ type Page
     | StatisticsComplexFoodSelect Pages.Statistics.ComplexFood.Select.Page.Model
     | StatisticsRecipeSearch Pages.Statistics.Recipe.Search.Page.Model
     | StatisticsRecipeSelect Pages.Statistics.Recipe.Select.Page.Model
+    | StatisticsMealProfileChoice Pages.Statistics.Meal.ProfileChoice.Page.Model
     | StatisticsMealSearch Pages.Statistics.Meal.Search.Page.Model
     | StatisticsMealSelect Pages.Statistics.Meal.Select.Page.Model
     | StatisticsRecipeOccurrences Pages.Statistics.RecipeOccurrences.Page.Model
@@ -194,6 +198,7 @@ type Msg
     | StatisticsComplexFoodSelectMsg Pages.Statistics.ComplexFood.Select.Page.Msg
     | StatisticsRecipeSearchMsg Pages.Statistics.Recipe.Search.Page.Msg
     | StatisticsRecipeSelectMsg Pages.Statistics.Recipe.Select.Page.Msg
+    | StatisticsMealProfileChoiceMsg Pages.Statistics.Meal.ProfileChoice.Page.Msg
     | StatisticsMealSearchMsg Pages.Statistics.Meal.Search.Page.Msg
     | StatisticsMealSelectMsg Pages.Statistics.Meal.Select.Page.Msg
     | StatisticsRecipeOccurrencesMsg Pages.Statistics.RecipeOccurrences.Page.Msg
@@ -279,6 +284,9 @@ view model =
 
         StatisticsRecipeSelect statisticsRecipeSelect ->
             Html.map StatisticsRecipeSelectMsg (Pages.Statistics.Recipe.Select.View.view statisticsRecipeSelect)
+
+        StatisticsMealProfileChoice statisticsMealProfileChoice ->
+            Html.map StatisticsMealProfileChoiceMsg (Pages.Statistics.Meal.ProfileChoice.View.view statisticsMealProfileChoice)
 
         StatisticsMealSearch statisticsMealSearch ->
             Html.map StatisticsMealSearchMsg (Pages.Statistics.Meal.Search.View.view statisticsMealSearch)
@@ -398,6 +406,9 @@ update msg model =
         ( StatisticsRecipeSelectMsg statisticsRecipeSelectMsg, StatisticsRecipeSelect statisticsRecipeSelect ) ->
             stepThrough steps.statisticsRecipeSelect model (Pages.Statistics.Recipe.Select.Handler.update statisticsRecipeSelectMsg statisticsRecipeSelect)
 
+        ( StatisticsMealProfileChoiceMsg statisticsProfileChoiceMsg, StatisticsMealProfileChoice statisticsProfileChoice ) ->
+            stepThrough steps.statisticsMealProfileChoice model (Pages.Statistics.Meal.ProfileChoice.Handler.update statisticsProfileChoiceMsg statisticsProfileChoice)
+
         ( StatisticsMealSearchMsg statisticsMealSearchMsg, StatisticsMealSearch statisticsMealSearch ) ->
             stepThrough steps.statisticsMealSearch model (Pages.Statistics.Meal.Search.Handler.update statisticsMealSearchMsg statisticsMealSearch)
 
@@ -462,6 +473,7 @@ steps :
     , statisticsComplexFoodSelect : StepParameters Pages.Statistics.ComplexFood.Select.Page.Model Pages.Statistics.ComplexFood.Select.Page.Msg
     , statisticsRecipeSearch : StepParameters Pages.Statistics.Recipe.Search.Page.Model Pages.Statistics.Recipe.Search.Page.Msg
     , statisticsRecipeSelect : StepParameters Pages.Statistics.Recipe.Select.Page.Model Pages.Statistics.Recipe.Select.Page.Msg
+    , statisticsMealProfileChoice : StepParameters Pages.Statistics.Meal.ProfileChoice.Page.Model Pages.Statistics.Meal.ProfileChoice.Page.Msg
     , statisticsMealSearch : StepParameters Pages.Statistics.Meal.Search.Page.Model Pages.Statistics.Meal.Search.Page.Msg
     , statisticsMealSelect : StepParameters Pages.Statistics.Meal.Select.Page.Model Pages.Statistics.Meal.Select.Page.Msg
     , statisticsRecipeOccurrences : StepParameters Pages.Statistics.RecipeOccurrences.Page.Model Pages.Statistics.RecipeOccurrences.Page.Msg
@@ -491,6 +503,7 @@ steps =
     , statisticsComplexFoodSelect = StepParameters StatisticsComplexFoodSelect StatisticsComplexFoodSelectMsg
     , statisticsRecipeSearch = StepParameters StatisticsRecipeSearch StatisticsRecipeSearchMsg
     , statisticsRecipeSelect = StepParameters StatisticsRecipeSelect StatisticsRecipeSelectMsg
+    , statisticsMealProfileChoice = StepParameters StatisticsMealProfileChoice StatisticsMealProfileChoiceMsg
     , statisticsMealSearch = StepParameters StatisticsMealSearch StatisticsMealSearchMsg
     , statisticsMealSelect = StepParameters StatisticsMealSelect StatisticsMealSelectMsg
     , statisticsRecipeOccurrences = StepParameters StatisticsRecipeOccurrences StatisticsRecipeOccurrencesMsg
@@ -527,6 +540,7 @@ type Route
     | StatisticsComplexFoodSelectRoute ComplexFoodId
     | StatisticsRecipeSearchRoute
     | StatisticsRecipeSelectRoute RecipeId
+    | StatisticsMealProfileChoiceRoute
     | StatisticsMealSearchRoute ProfileId
     | StatisticsMealSelectRoute ProfileId MealId
     | StatisticsRecipeOccurrencesRoute
@@ -559,6 +573,7 @@ plainRouteParser =
         , route Addresses.Frontend.statisticsComplexFoodSelect.parser StatisticsComplexFoodSelectRoute
         , route Addresses.Frontend.statisticsRecipeSearch.parser StatisticsRecipeSearchRoute
         , route Addresses.Frontend.statisticsRecipeSelect.parser StatisticsRecipeSelectRoute
+        , route Addresses.Frontend.statisticsMealProfileChoice.parser StatisticsMealProfileChoiceRoute
         , route Addresses.Frontend.statisticsMealSearch.parser StatisticsMealSearchRoute
         , route Addresses.Frontend.statisticsMealSelect.parser StatisticsMealSelectRoute
         , route Addresses.Frontend.statisticsRecipeOccurrences.parser StatisticsRecipeOccurrencesRoute
@@ -680,6 +695,12 @@ followRoute model =
                         , recipeId = recipeId
                         }
                         |> stepThrough steps.statisticsRecipeSelect model
+
+                ( StatisticsMealProfileChoiceRoute, Just userJWT ) ->
+                    Pages.Statistics.Meal.ProfileChoice.Handler.init
+                        { authorizedAccess = authorizedAccessWith userJWT
+                        }
+                        |> stepThrough steps.statisticsMealProfileChoice model
 
                 ( StatisticsMealSearchRoute profileId, Just userJWT ) ->
                     Pages.Statistics.Meal.Search.Handler.init

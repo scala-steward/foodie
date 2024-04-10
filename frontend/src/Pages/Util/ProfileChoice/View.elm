@@ -12,7 +12,9 @@ import Pages.View.Tristate as Tristate
 
 
 type alias Directions =
-    { address : ProfileId -> List String }
+    { address : ProfileId -> List String
+    , currentPage : ViewUtil.Page
+    }
 
 
 viewWith : Directions -> Page.Model -> Html Page.Msg
@@ -27,7 +29,7 @@ viewMainWith : Directions -> Configuration -> Page.Main -> Html Page.LogicMsg
 viewMainWith ps configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
-        , currentPage = Just ViewUtil.MealsProfileChoice
+        , currentPage = Just ps.currentPage
         , showNavigation = True
         }
     <|
