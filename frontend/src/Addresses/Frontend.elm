@@ -23,6 +23,7 @@ module Addresses.Frontend exposing
     , statisticsMealSearch
     , statisticsMealSelect
     , statisticsRecipeOccurrences
+    , statisticsRecipeOccurrencesProfileChoice
     , statisticsRecipeSearch
     , statisticsRecipeSelect
     , statisticsTime
@@ -190,11 +191,35 @@ statisticsMealSelect =
     }
 
 
-statisticsRecipeOccurrences : AddressWithParser () a a
-statisticsRecipeOccurrences =
+statisticsRecipeOccurrencesProfileChoice : AddressWithParser () a a
+statisticsRecipeOccurrencesProfileChoice =
     plainMultiple
         "statistics"
         [ StatisticsVariant.recipeOccurrences ]
+
+
+statisticsRecipeOccurrences : AddressWithParser ProfileId (ProfileId -> a) a
+statisticsRecipeOccurrences =
+    let
+        statisticsWord =
+            "statistics"
+
+        profilesWord =
+            "profiles"
+    in
+    { address =
+        \param ->
+            [ statisticsWord
+            , profilesWord
+            , param |> Uuid.toString
+            , StatisticsVariant.recipeOccurrences
+            ]
+    , parser =
+        s statisticsWord
+            </> s profilesWord
+            </> ParserUtil.uuidParser
+            </> s StatisticsVariant.recipeOccurrences
+    }
 
 
 referenceMaps : AddressWithParser () a a
