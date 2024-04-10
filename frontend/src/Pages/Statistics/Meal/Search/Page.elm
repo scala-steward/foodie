@@ -58,7 +58,10 @@ initialToMain i =
 
 
 lenses :
-    { initial : { meals : Lens Initial (Maybe (List Meal)) }
+    { initial :
+        { meals : Lens Initial (Maybe (List Meal))
+        , profile : Lens Initial (Maybe Profile)
+        }
     , main :
         { meals : Lens Main (List Meal)
         , mealsSearchString : Lens Main String
@@ -66,7 +69,10 @@ lenses :
         }
     }
 lenses =
-    { initial = { meals = Lens .meals (\b a -> { a | meals = b }) }
+    { initial =
+        { meals = Lens .meals (\b a -> { a | meals = b })
+        , profile = Lens .profile (\b a -> { a | profile = b })
+        }
     , main =
         { meals = Lens .meals (\b a -> { a | meals = b })
         , mealsSearchString = Lens .mealsSearchString (\b a -> { a | mealsSearchString = b })
@@ -89,3 +95,4 @@ type LogicMsg
     = SetSearchString String
     | SetMealsPagination Pagination
     | GotFetchMealsResponse (Result Error (List Meal))
+    | GotFetchProfileResponse (Result Error Profile)

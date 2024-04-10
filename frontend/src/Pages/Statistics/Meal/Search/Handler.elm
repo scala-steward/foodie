@@ -2,10 +2,12 @@ module Pages.Statistics.Meal.Search.Handler exposing (init, update)
 
 import Api.Auxiliary exposing (ProfileId)
 import Api.Types.Meal exposing (Meal)
+import Api.Types.Profile exposing (Profile)
 import Pages.Statistics.Meal.Search.Page as Page
 import Pages.Statistics.Meal.Search.Pagination exposing (Pagination)
 import Pages.Statistics.Meal.Search.Requests as Requests
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
+import Pages.Util.Requests
 import Pages.View.Tristate as Tristate
 import Result.Extra
 import Util.HttpUtil exposing (Error)
@@ -19,8 +21,11 @@ init flags =
 
 
 initialFetch : AuthorizedAccess -> ProfileId -> Cmd Page.LogicMsg
-initialFetch =
-    Requests.fetchMeals
+initialFetch authorizedAccess profileId =
+    Cmd.batch
+        [ Requests.fetchMeals authorizedAccess profileId
+        , Pages.Util.Requests.fetchProfileWith Page.GotFetchProfileResponse authorizedAccess profileId
+        ]
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
@@ -39,6 +44,9 @@ updateLogic msg model =
 
         Page.GotFetchMealsResponse result ->
             gotFetchMealsResponse model result
+
+        Page.GotFetchProfileResponse result ->
+            gotFetchProfileResponse model result
 
 
 setSearchString : Page.Model -> String -> ( Page.Model, Cmd Page.LogicMsg )
@@ -62,6 +70,19 @@ gotFetchMealsResponse model result =
             (\meals ->
                 model
                     |> Tristate.mapInitial (Page.lenses.initial.meals.set (meals |> Just))
+                    |> Tristate.fromInitToMain Page.initialToMain
+            )
+    , Cmd.none
+    )
+
+
+gotFetchProfileResponse : Page.Model -> Result Error Profile -> ( Page.Model, Cmd Page.LogicMsg )
+gotFetchProfileResponse model result =
+    ( result
+        |> Result.Extra.unpack (Tristate.toError model)
+            (\profile ->
+                model
+                    |> Tristate.mapInitial (Page.lenses.initial.profile.set (profile |> Just))
                     |> Tristate.fromInitToMain Page.initialToMain
             )
     , Cmd.none
