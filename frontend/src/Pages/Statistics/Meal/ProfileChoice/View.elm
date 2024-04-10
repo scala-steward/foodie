@@ -1,4 +1,4 @@
-module Pages.Meals.ProfileChoice.View exposing (..)
+module Pages.Statistics.Meal.ProfileChoice.View exposing (..)
 
 import Addresses.Frontend
 import Html exposing (Html)

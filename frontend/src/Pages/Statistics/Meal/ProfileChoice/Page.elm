@@ -1,4 +1,4 @@
-module Pages.Meals.ProfileChoice.Page exposing (..)
+module Pages.Statistics.Meal.ProfileChoice.Page exposing (..)
 
 import Pages.Util.ProfileChoice.Page
 
