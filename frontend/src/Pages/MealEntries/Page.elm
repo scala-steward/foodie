@@ -31,11 +31,6 @@ type alias Initial =
     }
 
 
-
--- todo: It is strange to have the profile id for the both cases individually.
--- The same goes for the JWT as well, but this is a different issue.
-
-
 initial : AuthorizedAccess -> ProfileId -> MealId -> Model
 initial authorizedAccess profId mealId =
     { meal = Pages.Util.Parent.Page.initialWith authorizedAccess.jwt
