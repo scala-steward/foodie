@@ -2,6 +2,7 @@ module Pages.Statistics.Meal.Select.Handler exposing (init, update)
 
 import Api.Auxiliary exposing (ReferenceMapId)
 import Api.Types.Meal exposing (Meal)
+import Api.Types.Profile exposing (Profile)
 import Api.Types.ReferenceTree exposing (ReferenceTree)
 import Api.Types.TotalOnlyStats exposing (TotalOnlyStats)
 import Monocle.Lens as Lens
@@ -9,6 +10,7 @@ import Pages.Statistics.Meal.Select.Page as Page
 import Pages.Statistics.Meal.Select.Requests as Requests
 import Pages.Statistics.StatisticsLenses as StatisticsLenses
 import Pages.Statistics.StatisticsRequests as StatisticsRequests
+import Pages.Util.Requests
 import Pages.View.Tristate as Tristate
 import Result.Extra
 import Util.HttpUtil exposing (Error)
@@ -27,6 +29,7 @@ initialFetch flags =
         [ Requests.fetchMeal flags.authorizedAccess flags.profileId flags.mealId
         , Requests.fetchStats flags.authorizedAccess flags.profileId flags.mealId
         , Requests.fetchReferenceTrees flags.authorizedAccess
+        , Pages.Util.Requests.fetchProfileWith Page.GotFetchProfileResponse flags.authorizedAccess flags.profileId
         ]
 
 
@@ -46,6 +49,9 @@ updateLogic msg model =
 
         Page.GotFetchMealResponse result ->
             gotFetchMealResponse model result
+
+        Page.GotFetchProfileResponse result ->
+            gotFetchProfileResponse model result
 
         Page.SelectReferenceMap maybeReferenceMapId ->
             selectReferenceMap model maybeReferenceMapId
@@ -88,6 +94,19 @@ gotFetchMealResponse model result =
             (\meal ->
                 model
                     |> Tristate.mapInitial (Page.lenses.initial.meal.set (meal |> Just))
+                    |> Tristate.fromInitToMain Page.initialToMain
+            )
+    , Cmd.none
+    )
+
+
+gotFetchProfileResponse : Page.Model -> Result Error Profile -> ( Page.Model, Cmd Page.LogicMsg )
+gotFetchProfileResponse model result =
+    ( result
+        |> Result.Extra.unpack (Tristate.toError model)
+            (\profile ->
+                model
+                    |> Tristate.mapInitial (Page.lenses.initial.profile.set (profile |> Just))
                     |> Tristate.fromInitToMain Page.initialToMain
             )
     , Cmd.none
