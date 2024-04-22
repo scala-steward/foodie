@@ -15,9 +15,12 @@ import scala.concurrent.{ Await, ExecutionContext, Future }
 
 @Singleton
 class GeneralTableConstants @Inject() (
-    override protected val dbConfigProvider: DatabaseConfigProvider
+    override protected val dbConfigProvider: DatabaseConfigProvider,
+    constantsConfiguration: ConstantsConfiguration
 )(implicit executionContext: ExecutionContext)
     extends HasDatabaseConfigProvider[PostgresProfile] {
+
+  private val timeoutInSeconds: Int = constantsConfiguration.timeoutInSeconds
 
   val allConversionFactors: Map[(FoodId, MeasureId), BigDecimal] = GeneralTableConstants.computeWith {
     Tables.ConversionFactor.result
@@ -26,31 +29,31 @@ class GeneralTableConstants @Inject() (
           (row.foodId.transformInto[FoodId], row.measureId.transformInto[MeasureId]) -> row.conversionFactorValue
         ).toMap
       }
-  }(db.run)
+  }(db.run, timeoutInSeconds)
 
   val allMeasureNames: Seq[Tables.MeasureNameRow] =
     GeneralTableConstants.computeWith {
       Tables.MeasureName.result
-    }(db.run)
+    }(db.run, timeoutInSeconds)
 
   val allNutrientNames: Seq[Tables.NutrientNameRow] =
     GeneralTableConstants.computeWith {
       Tables.NutrientName.result
-    }(db.run)
+    }(db.run, timeoutInSeconds)
 
   val allNutrientAmounts: Seq[Tables.NutrientAmountRow] = GeneralTableConstants.computeWith {
     Tables.NutrientAmount.result
-  }(db.run)
+  }(db.run, timeoutInSeconds)
 
   val allFoodNames: Seq[Tables.FoodNameRow] = GeneralTableConstants.computeWith {
     Tables.FoodName.result
-  }(db.run)
+  }(db.run, timeoutInSeconds)
 
 }
 
 object GeneralTableConstants {
 
-  def computeWith[A](action: DBIO[A])(run: DBIO[A] => Future[A]): A =
-    Await.result(run(action), ConstantsConfiguration.default.timeoutInSeconds.seconds)
+  def computeWith[A](action: DBIO[A])(run: DBIO[A] => Future[A], timeoutInSeconds: Int): A =
+    Await.result(run(action), timeoutInSeconds.seconds)
 
 }

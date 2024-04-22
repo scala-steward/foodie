@@ -1,4 +1,4 @@
-module Pages.Statistics.RecipeOccurrences.Pagination exposing (..)
+module Pages.Statistics.RecipeOccurrences.Search.Pagination exposing (..)
 
 import Monocle.Lens exposing (Lens)
 import Pages.Util.PaginationSettings as PaginationSettings exposing (PaginationSettings)

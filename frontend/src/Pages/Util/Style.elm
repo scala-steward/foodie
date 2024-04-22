@@ -50,6 +50,7 @@ classes :
     , nutrients : Attribute msg
     , pagination : Attribute msg
     , partialStatistics : Attribute msg
+    , profileEditTable : Attribute msg
     , rating :
         { low : Attribute msg
         , exact : Attribute msg
@@ -114,6 +115,7 @@ classes =
     , nutrients = class "nutrients"
     , pagination = class "pagination"
     , partialStatistics = class "partial-statistics"
+    , profileEditTable = class "profile-edit-table"
     , rating =
         { low = class "low"
         , exact = class "exact"
@@ -137,6 +139,7 @@ classes =
 ids :
     { add : Attribute msg
     , addMealView : Attribute msg
+    , addProfileView : Attribute msg
     , addRecipeView : Attribute msg
     , addReferenceMapView : Attribute msg
     , complexFoodEditor : Attribute msg
@@ -158,6 +161,7 @@ ids :
 ids =
     { add = id "add"
     , addMealView = id "add-meal-view"
+    , addProfileView = id "add-profile-view"
     , addRecipeView = id "add-recipe-view"
     , addReferenceMapView = id "add-reference-map-view"
     , complexFoodEditor = id "complex-food-editor"

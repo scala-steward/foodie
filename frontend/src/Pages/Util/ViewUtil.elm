@@ -1,13 +1,10 @@
 module Pages.Util.ViewUtil exposing (Page(..), navigationBarWith, navigationToPageButton, navigationToPageButtonWith, pagerButtons, paginate, viewMainWith)
 
 import Addresses.Frontend
-import Api.Auxiliary exposing (JWT)
-import Api.Types.LoginContent exposing (decoderLoginContent)
 import Configuration exposing (Configuration)
-import Html exposing (Html, button, div, table, tbody, td, text, th, thead, tr)
+import Html exposing (Html, button, div, main_, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (disabled)
 import Html.Events exposing (onClick)
-import Jwt
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Monocle.Lens exposing (Lens)
@@ -21,35 +18,22 @@ import Util.MaybeUtil as MaybeUtil
 
 viewMainWith :
     { configuration : Configuration
-    , jwt : main -> Maybe JWT
     , currentPage : Maybe Page
     , showNavigation : Bool
     }
-    -> main
     -> Html msg
     -> Html msg
-viewMainWith params model html =
+viewMainWith params html =
     let
-        unknown =
-            "<unknown>"
-
         navigation =
             [ navigationBar
                 { mainPageURL = params.configuration |> .mainPageURL
                 , currentPage = params.currentPage
-                , nickname =
-                    model
-                        |> params.jwt
-                        |> Maybe.andThen
-                            (Jwt.decodeToken decoderLoginContent
-                                >> Result.toMaybe
-                            )
-                        |> Maybe.Extra.unwrap unknown .nickname
                 }
             ]
                 |> List.filter (always params.showNavigation)
     in
-    div []
+    main_ []
         (navigation
             ++ [ html ]
         )
@@ -57,18 +41,19 @@ viewMainWith params model html =
 
 type Page
     = Recipes
-    | Meals
+    | MealsProfileChoice
     | Statistics
     | ReferenceMaps
-    | UserSettings String
+    | UserSettings
     | Login
     | Overview
     | ComplexFoods
+    | Profiles
 
 
-navigationPages : String -> List Page
-navigationPages nickname =
-    [ Recipes, Meals, ComplexFoods, Statistics, ReferenceMaps, UserSettings nickname ]
+navigationPages : List Page
+navigationPages =
+    [ Recipes, MealsProfileChoice, ComplexFoods, Statistics, ReferenceMaps, Profiles, UserSettings ]
 
 
 addressSuffix : Page -> String
@@ -79,8 +64,8 @@ addressSuffix page =
                 Recipes ->
                     Addresses.Frontend.recipes.address ()
 
-                Meals ->
-                    Addresses.Frontend.meals.address ()
+                MealsProfileChoice ->
+                    Addresses.Frontend.mealBranch.address ()
 
                 Statistics ->
                     Addresses.Frontend.statisticsTime.address ()
@@ -88,7 +73,7 @@ addressSuffix page =
                 ReferenceMaps ->
                     Addresses.Frontend.referenceMaps.address ()
 
-                UserSettings _ ->
+                UserSettings ->
                     Addresses.Frontend.userSettings.address ()
 
                 Login ->
@@ -99,6 +84,9 @@ addressSuffix page =
 
                 ComplexFoods ->
                     Addresses.Frontend.complexFoods.address ()
+
+                Profiles ->
+                    Addresses.Frontend.profiles.address ()
     in
     parts |> String.concat
 
@@ -109,7 +97,7 @@ nameOf page =
         Recipes ->
             "Recipes"
 
-        Meals ->
+        MealsProfileChoice ->
             "Meals"
 
         Statistics ->
@@ -118,8 +106,8 @@ nameOf page =
         ReferenceMaps ->
             "Reference maps"
 
-        UserSettings nickname ->
-            nickname
+        UserSettings ->
+            "Settings"
 
         Login ->
             "Login"
@@ -129,6 +117,9 @@ nameOf page =
 
         ComplexFoods ->
             "Complex foods"
+
+        Profiles ->
+            "Profiles"
 
 
 navigationLink : { mainPageURL : String, page : String } -> String
@@ -193,12 +184,11 @@ navigationToPageButtonWith ps =
 navigationBar :
     { mainPageURL : String
     , currentPage : Maybe Page
-    , nickname : String
     }
     -> Html msg
 navigationBar ps =
     navigationBarWith
-        { navigationPages = navigationPages ps.nickname
+        { navigationPages = navigationPages
         , pageToButton =
             \page ->
                 navigationToPageButton

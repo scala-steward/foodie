@@ -58,7 +58,6 @@ updateLogic msg model =
             TristateUtil.updateFromSubModel
                 { initialSubModelLens = Page.lenses.initial.ingredientsGroup
                 , mainSubModelLens = Page.lenses.main.ingredientsGroup
-                , subModelOf = Page.ingredientsGroupSubModel
                 , fromInitToMain = Page.initialToMain
                 , updateSubModel = Pages.Ingredients.Plain.Handler.updateLogic
                 , toMsg = Page.IngredientMsg
@@ -70,7 +69,6 @@ updateLogic msg model =
             TristateUtil.updateFromSubModel
                 { initialSubModelLens = Page.lenses.initial.complexIngredientsGroup
                 , mainSubModelLens = Page.lenses.main.complexIngredientsGroup
-                , subModelOf = Page.complexIngredientsGroupSubModel
                 , fromInitToMain = Page.initialToMain
                 , updateSubModel = Pages.Ingredients.Complex.Handler.updateLogic
                 , toMsg = Page.ComplexIngredientMsg
@@ -82,7 +80,6 @@ updateLogic msg model =
             TristateUtil.updateFromSubModel
                 { initialSubModelLens = Page.lenses.initial.recipe
                 , mainSubModelLens = Page.lenses.main.recipe
-                , subModelOf = Page.recipeSubModel
                 , fromInitToMain = Page.initialToMain
                 , updateSubModel = Pages.Ingredients.Recipe.Handler.updateLogic
                 , toMsg = Page.RecipeMsg

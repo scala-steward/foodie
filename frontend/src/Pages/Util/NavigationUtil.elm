@@ -1,7 +1,7 @@
 module Pages.Util.NavigationUtil exposing (..)
 
 import Addresses.Frontend
-import Api.Auxiliary exposing (MealId, RecipeId)
+import Api.Auxiliary exposing (MealId, ProfileId, RecipeId)
 import Configuration exposing (Configuration)
 import Html exposing (Html, text)
 import Pages.Util.Links as Links
@@ -30,11 +30,11 @@ recipeNutrientsLinkButton configuration recipeId =
         }
 
 
-mealEditorLinkButton : Configuration -> RecipeId -> Html msg
-mealEditorLinkButton configuration mealId =
+mealEditorLinkButton : Configuration -> ProfileId -> MealId -> Html msg
+mealEditorLinkButton configuration profileId mealId =
     Links.linkButton
         { url =
-            mealId
+            ( profileId, mealId )
                 |> Addresses.Frontend.mealEntryEditor.address
                 |> Links.frontendPage configuration
         , attributes = [ Style.classes.button.editor ]
@@ -42,11 +42,11 @@ mealEditorLinkButton configuration mealId =
         }
 
 
-mealNutrientsLinkButton : Configuration -> MealId -> Html msg
-mealNutrientsLinkButton configuration mealId =
+mealNutrientsLinkButton : Configuration -> ProfileId -> MealId -> Html msg
+mealNutrientsLinkButton configuration profileId mealId =
     nutrientButtonWith
         { address =
-            mealId
+            ( profileId, mealId )
                 |> Addresses.Frontend.statisticsMealSelect.address
                 |> Links.frontendPage configuration
         }

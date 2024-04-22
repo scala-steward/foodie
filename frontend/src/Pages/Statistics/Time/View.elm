@@ -3,10 +3,11 @@ module Pages.Statistics.Time.View exposing (view)
 import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.Date exposing (Date)
 import Api.Types.Meal exposing (Meal)
+import Api.Types.Profile exposing (Profile)
 import Basics.Extra exposing (flip)
 import Configuration exposing (Configuration)
 import Html exposing (Html, button, div, input, label, table, tbody, td, text, th, thead, tr)
-import Html.Attributes exposing (type_, value)
+import Html.Attributes exposing (disabled, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Maybe.Extra
 import Monocle.Compose as Compose
@@ -23,6 +24,7 @@ import Pages.Util.ViewUtil as ViewUtil
 import Pages.View.Tristate as Tristate
 import Paginate
 import Parser
+import Util.MaybeUtil as MaybeUtil
 import Uuid
 
 
@@ -60,8 +62,8 @@ viewMain configuration main =
                     []
 
         stats =
-            case main.status of
-                Page.Display ->
+            case ( main.status, main.selectedProfile ) of
+                ( Page.Display, Just profile ) ->
                     StatisticsView.statisticsTable
                         { onSearchStringChange = Page.SetNutrientsSearchString
                         , searchStringOf = .statisticsEvaluation >> .nutrientsSearchString
@@ -86,6 +88,7 @@ viewMain configuration main =
                                         [ tr []
                                             [ th [] [ label [] [ text "Date" ] ]
                                             , th [] [ label [] [ text "Time" ] ]
+                                            , th [] [ label [] [ text "Profile" ] ]
                                             , th [] [ label [] [ text "Name" ] ]
                                             , th [] []
                                             , th [] []
@@ -94,7 +97,7 @@ viewMain configuration main =
                                     , tbody []
                                         (viewMeals
                                             |> Paginate.page
-                                            |> List.map (mealLine configuration)
+                                            |> List.map (mealLine configuration profile)
                                         )
                                     ]
                                 , div [ Style.classes.pagination ]
@@ -117,11 +120,9 @@ viewMain configuration main =
     in
     ViewUtil.viewMainWith
         { configuration = configuration
-        , jwt = .jwt >> Just
         , currentPage = Just ViewUtil.Statistics
         , showNavigation = True
         }
-        main
     <|
         StatisticsView.withNavigationBar
             { mainPageURL = configuration.mainPageURL
@@ -133,8 +134,9 @@ viewMain configuration main =
                     [ table [ Style.classes.intervalSelection, Style.classes.elementsWithControlsTable ]
                         [ thead []
                             [ tr [ Style.classes.tableHeader ]
-                                [ th [] [ label [] [ text "From" ] ]
-                                , th [] [ label [] [ text "To" ] ]
+                                [ th [] [ text "From" ]
+                                , th [] [ text "To" ]
+                                , th [] [ text "Profile" ]
                                 , th [] []
                                 , th [] []
                                 ]
@@ -143,9 +145,22 @@ viewMain configuration main =
                             [ tr []
                                 [ td [ Style.classes.editable, Style.classes.date ] [ dateInput main Page.SetFromDate Page.lenses.main.from ]
                                 , td [ Style.classes.editable, Style.classes.date ] [ dateInput main Page.SetToDate Page.lenses.main.to ]
+                                , td [ Style.classes.editable ]
+                                    (StatisticsView.profileSelection
+                                        { onProfileSelection = Page.SelectProfile
+                                        , profile = .selectedProfile
+                                        , profiles = .profiles
+                                        }
+                                        main
+                                    )
                                 , td [ Style.classes.controls ]
                                     [ button
-                                        [ Style.classes.button.select, onClick Page.FetchStats ]
+                                        ([ MaybeUtil.defined <| Style.classes.button.select
+                                         , MaybeUtil.optional (Maybe.Extra.isJust main.selectedProfile) <| onClick Page.FetchStats
+                                         , MaybeUtil.defined <| disabled <| Maybe.Extra.isNothing main.selectedProfile
+                                         ]
+                                            |> Maybe.Extra.values
+                                        )
                                         [ text "Compute" ]
                                     ]
                                 , td [ Style.classes.controls ]
@@ -165,16 +180,17 @@ viewMain configuration main =
                 )
 
 
-mealLine : Configuration -> Meal -> Html Page.LogicMsg
-mealLine configuration meal =
+mealLine : Configuration -> Profile -> Meal -> Html Page.LogicMsg
+mealLine configuration profile meal =
     tr [ Style.classes.editLine ]
-        [ td [ Style.classes.editable, Style.classes.date ] [ label [] [ text <| DateUtil.dateToPrettyString <| meal.date.date ] ]
-        , td [ Style.classes.editable, Style.classes.time ] [ label [] [ text <| Maybe.Extra.unwrap "" DateUtil.timeToString <| meal.date.time ] ]
-        , td [ Style.classes.editable ] [ label [] [ text <| Maybe.withDefault "" <| meal.name ] ]
+        [ td [ Style.classes.editable, Style.classes.date ] [ text <| DateUtil.dateToPrettyString <| meal.date.date ]
+        , td [ Style.classes.editable, Style.classes.time ] [ text <| Maybe.Extra.unwrap "" DateUtil.timeToString <| meal.date.time ]
+        , td [ Style.classes.editable ] [ text <| profile.name ]
+        , td [ Style.classes.editable ] [ text <| Maybe.withDefault "" <| meal.name ]
         , td [ Style.classes.controls ]
-            [ NavigationUtil.mealNutrientsLinkButton configuration meal.id ]
+            [ NavigationUtil.mealNutrientsLinkButton configuration profile.id meal.id ]
         , td [ Style.classes.controls ]
-            [ NavigationUtil.mealEditorLinkButton configuration meal.id ]
+            [ NavigationUtil.mealEditorLinkButton configuration profile.id meal.id ]
         ]
 
 

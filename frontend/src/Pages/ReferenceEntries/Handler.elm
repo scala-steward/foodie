@@ -43,11 +43,6 @@ updateLogic msg model =
             TristateUtil.updateFromSubModel
                 { initialSubModelLens = Page.lenses.initial.map
                 , mainSubModelLens = Page.lenses.main.map
-                , subModelOf =
-                    TristateUtil.subModelWith
-                        { initialLens = Page.lenses.initial.map
-                        , mainLens = Page.lenses.main.map
-                        }
                 , fromInitToMain = Page.initialToMain
                 , updateSubModel = Pages.ReferenceEntries.Map.Handler.updateLogic
                 , toMsg = Page.MapMsg
@@ -59,11 +54,6 @@ updateLogic msg model =
             TristateUtil.updateFromSubModel
                 { initialSubModelLens = Page.lenses.initial.entries
                 , mainSubModelLens = Page.lenses.main.entries
-                , subModelOf =
-                    TristateUtil.subModelWith
-                        { initialLens = Page.lenses.initial.entries
-                        , mainLens = Page.lenses.main.entries
-                        }
                 , fromInitToMain = Page.initialToMain
                 , updateSubModel = Pages.ReferenceEntries.Entries.Handler.updateLogic
                 , toMsg = Page.EntriesMsg

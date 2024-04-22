@@ -25,12 +25,26 @@ updateLogic :
     , save : AuthorizedAccess -> parentId -> update -> Cmd (Page.LogicMsg parentId parent creation update)
     , delete : AuthorizedAccess -> parentId -> Cmd (Page.LogicMsg parentId parent creation update)
     , duplicate : AuthorizedAccess -> parentId -> DateUtil.Timestamp -> Cmd (Page.LogicMsg parentId parent creation update)
+
+    -- todo: This is a workaround. Technically, one should separate those steps that are needed for the initial fetch
+    -- from everything else. This is evident in the Meals case now, because one seems to require a profile id, which
+    -- should come from the fetched profile, which in turn may be still in the fetching state.
+    -- However, in reality the profileId is only necessary for the actual editing functions, which are irrelevant
+    -- for the initialization.
+    , attemptInitialToMainAfterFetchResponse : Bool
     }
     -> Page.LogicMsg parentId parent creation update
     -> Page.Model parentId parent creation update
     -> ( Page.Model parentId parent creation update, Cmd (Page.LogicMsg parentId parent creation update) )
 updateLogic ps msg model =
     let
+        onFetch =
+            if ps.attemptInitialToMainAfterFetchResponse then
+                Tristate.fromInitToMain Page.initialToMain
+
+            else
+                identity
+
         gotFetchResponse result =
             ( result
                 |> Result.Extra.unpack (Tristate.toError model)
@@ -44,7 +58,7 @@ updateLogic ps msg model =
                                         |> Just
                                     )
                                 )
-                            |> Tristate.fromInitToMain Page.initialToMain
+                            |> onFetch
                     )
             , Cmd.none
             )

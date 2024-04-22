@@ -2,8 +2,9 @@ module Pages.Statistics.Meal.Search.View exposing (view)
 
 import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.Meal exposing (Meal)
+import Api.Types.Profile exposing (Profile)
 import Configuration exposing (Configuration)
-import Html exposing (Html, div, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Html, div, table, tbody, td, text, th, thead, tr)
 import Maybe.Extra
 import Monocle.Compose as Compose
 import Pages.Statistics.Meal.Search.Page as Page
@@ -32,11 +33,9 @@ viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
-        , jwt = .jwt >> Just
         , currentPage = Just Statistics
         , showNavigation = True
         }
-        main
     <|
         StatisticsView.withNavigationBar
             { mainPageURL = configuration.mainPageURL
@@ -72,9 +71,10 @@ viewMain configuration main =
                     , table [ Style.classes.elementsWithControlsTable ]
                         [ thead []
                             [ tr [ Style.classes.tableHeader, Style.classes.mealEditTable ]
-                                [ th [] [ label [] [ text "Date" ] ]
-                                , th [] [ label [] [ text "Time" ] ]
-                                , th [] [ label [] [ text "Name" ] ]
+                                [ th [] [ text "Date" ]
+                                , th [] [ text "Time" ]
+                                , th [] [ text "Profile" ]
+                                , th [] [ text "Name" ]
                                 , th [] []
                                 , th [] []
                                 ]
@@ -82,7 +82,7 @@ viewMain configuration main =
                         , tbody []
                             (viewMeals
                                 |> Paginate.page
-                                |> List.map (viewMealLine configuration)
+                                |> List.map (viewMealLine configuration main.profile)
                             )
                         ]
                     , div [ Style.classes.pagination ]
@@ -101,17 +101,19 @@ viewMain configuration main =
                 ]
 
 
-viewMealLine : Configuration -> Meal -> Html Page.LogicMsg
-viewMealLine configuration meal =
+viewMealLine : Configuration -> Profile -> Meal -> Html Page.LogicMsg
+viewMealLine configuration profile meal =
     tr [ Style.classes.editLine ]
         [ td [ Style.classes.editable ]
-            [ label [] [ text <| DateUtil.dateToPrettyString <| meal.date.date ] ]
+            [ text <| DateUtil.dateToPrettyString <| meal.date.date ]
         , td [ Style.classes.editable ]
-            [ label [] [ text <| Maybe.Extra.unwrap "" DateUtil.timeToString <| meal.date.time ] ]
+            [ text <| Maybe.Extra.unwrap "" DateUtil.timeToString <| meal.date.time ]
         , td [ Style.classes.editable ]
-            [ label [] [ text <| Maybe.withDefault "" <| meal.name ] ]
+            [ text <| profile.name ]
+        , td [ Style.classes.editable ]
+            [ text <| Maybe.withDefault "" <| meal.name ]
         , td [ Style.classes.controls ]
-            [ NavigationUtil.mealNutrientsLinkButton configuration meal.id ]
+            [ NavigationUtil.mealNutrientsLinkButton configuration profile.id meal.id ]
         , td [ Style.classes.controls ]
-            [ NavigationUtil.mealEditorLinkButton configuration meal.id ]
+            [ NavigationUtil.mealEditorLinkButton configuration profile.id meal.id ]
         ]

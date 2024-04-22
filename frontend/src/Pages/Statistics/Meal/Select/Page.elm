@@ -1,8 +1,9 @@
 module Pages.Statistics.Meal.Select.Page exposing (..)
 
 import Addresses.StatisticsVariant as StatisticsVariant exposing (Page)
-import Api.Auxiliary exposing (JWT, MealId, ReferenceMapId)
+import Api.Auxiliary exposing (JWT, MealId, ProfileId, ReferenceMapId)
 import Api.Types.Meal exposing (Meal)
+import Api.Types.Profile exposing (Profile)
 import Api.Types.ReferenceTree exposing (ReferenceTree)
 import Api.Types.TotalOnlyStats exposing (TotalOnlyStats)
 import Monocle.Lens exposing (Lens)
@@ -21,6 +22,7 @@ type alias Main =
     { jwt : JWT
     , meal : Meal
     , mealStats : TotalOnlyStats
+    , profile : Profile
     , statisticsEvaluation : StatisticsEvaluation
     , variant : Page
     }
@@ -31,6 +33,7 @@ type alias Initial =
     , referenceTrees : Maybe (DictList ReferenceMapId ReferenceNutrientTree)
     , meal : Maybe Meal
     , mealStats : Maybe TotalOnlyStats
+    , profile : Maybe Profile
     }
 
 
@@ -40,17 +43,19 @@ initial authorizedAccess =
     , referenceTrees = Nothing
     , meal = Nothing
     , mealStats = Nothing
+    , profile = Nothing
     }
         |> Tristate.createInitial authorizedAccess.configuration
 
 
 initialToMain : Initial -> Maybe Main
 initialToMain i =
-    Maybe.map3
-        (\referenceTrees meal mealStats ->
+    Maybe.map4
+        (\referenceTrees meal mealStats profile ->
             { jwt = i.jwt
             , meal = meal
             , mealStats = mealStats
+            , profile = profile
             , statisticsEvaluation = StatisticsUtil.initialWith referenceTrees
             , variant = StatisticsVariant.Meal
             }
@@ -58,6 +63,7 @@ initialToMain i =
         i.referenceTrees
         i.meal
         i.mealStats
+        i.profile
 
 
 lenses :
@@ -65,6 +71,7 @@ lenses :
         { referenceTrees : Lens Initial (Maybe (DictList ReferenceMapId ReferenceNutrientTree))
         , meal : Lens Initial (Maybe Meal)
         , mealStats : Lens Initial (Maybe TotalOnlyStats)
+        , profile : Lens Initial (Maybe Profile)
         }
     , main :
         { meal : Lens Main Meal
@@ -77,6 +84,7 @@ lenses =
         { referenceTrees = Lens .referenceTrees (\b a -> { a | referenceTrees = b })
         , meal = Lens .meal (\b a -> { a | meal = b })
         , mealStats = Lens .mealStats (\b a -> { a | mealStats = b })
+        , profile = Lens .profile (\b a -> { a | profile = b })
         }
     , main =
         { meal = Lens .meal (\b a -> { a | meal = b })
@@ -88,6 +96,7 @@ lenses =
 
 type alias Flags =
     { authorizedAccess : AuthorizedAccess
+    , profileId : ProfileId
     , mealId : MealId
     }
 
@@ -100,5 +109,6 @@ type LogicMsg
     = GotFetchStatsResponse (Result Error TotalOnlyStats)
     | GotFetchReferenceTreesResponse (Result Error (List ReferenceTree))
     | GotFetchMealResponse (Result Error Meal)
+    | GotFetchProfileResponse (Result Error Profile)
     | SelectReferenceMap (Maybe ReferenceMapId)
     | SetNutrientsSearchString String

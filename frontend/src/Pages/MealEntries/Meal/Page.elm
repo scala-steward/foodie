@@ -1,7 +1,7 @@
 module Pages.MealEntries.Meal.Page exposing (..)
 
 import Api.Types.Meal exposing (Meal)
-import Pages.Meals.MealUpdateClientInput exposing (MealUpdateClientInput)
+import Pages.Meals.Editor.MealUpdateClientInput exposing (MealUpdateClientInput)
 import Pages.Util.Parent.Page
 import Pages.View.Tristate as Tristate
 

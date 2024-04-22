@@ -39,6 +39,21 @@ object ErrorContext {
     case object InvalidCredentials extends ServerErrorInstance("Invalid combination of nickname and password")
   }
 
+  object Profile {
+    case object NotFound extends ServerErrorInstance("No profile with the given id found")
+
+    case class Creation(dbMessage: String)
+        extends ServerErrorInstance(
+          s"Profile creation failed due to: $dbMessage"
+        )
+
+    case class Update(dbMessage: String)
+        extends ServerErrorInstance(
+          s"Profile update failed due to: $dbMessage"
+        )
+
+  }
+
   object Recipe {
     case object NotFound extends ServerErrorInstance("No recipe with the given id found")
 

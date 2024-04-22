@@ -19,7 +19,7 @@ import Util.MaybeUtil as MaybeUtil
 
 
 viewParentsWith :
-    { currentPage : ViewUtil.Page
+    { currentPage : Maybe ViewUtil.Page
     , matchesSearchText : String -> parent -> Bool
     , sort : List (Editing parent update) -> List (Editing parent update)
     , tableHeader : Html msg
@@ -42,11 +42,9 @@ viewParentsWith :
 viewParentsWith ps configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
-        , jwt = .jwt >> Just
-        , currentPage = Just ps.currentPage
+        , currentPage = ps.currentPage
         , showNavigation = True
         }
-        main
     <|
         let
             viewParent =
@@ -69,20 +67,22 @@ viewParentsWith ps configuration main =
                         }
                         main
 
-            ( button, creationLine ) =
+            button =
+                [ div [ Style.ids.add ]
+                    [ creationButton
+                        { defaultCreation = ps.create.default
+                        , label = ps.create.label
+                        , updateCreationMsg = ps.create.update
+                        , enabled = main.parentCreation |> Maybe.Extra.isNothing
+                        }
+                    ]
+                ]
+
+            creationLine =
                 main.parentCreation
                     |> Maybe.Extra.unwrap
-                        ( [ div [ Style.ids.add ]
-                                [ creationButton
-                                    { defaultCreation = ps.create.default
-                                    , label = ps.create.label
-                                    , updateCreationMsg = ps.create.update
-                                    }
-                                ]
-                          ]
-                        , []
-                        )
-                        (ps.create.ifCreating >> Tuple.pair [])
+                        []
+                        ps.create.ifCreating
 
             numberOfParents =
                 Paginate.length viewParents
@@ -177,13 +177,17 @@ creationButton :
     { defaultCreation : creation
     , label : String
     , updateCreationMsg : Maybe creation -> msg
+    , enabled : Bool
     }
     -> Html msg
 creationButton ps =
     button
-        [ Style.classes.button.add
-        , onClick <| ps.updateCreationMsg <| Just <| ps.defaultCreation
-        ]
+        ([ MaybeUtil.defined <| Style.classes.button.add
+         , MaybeUtil.optional ps.enabled <| onClick <| ps.updateCreationMsg <| Just <| ps.defaultCreation
+         , MaybeUtil.defined <| disabled <| not ps.enabled
+         ]
+            |> Maybe.Extra.values
+        )
         [ text <| ps.label ]
 
 

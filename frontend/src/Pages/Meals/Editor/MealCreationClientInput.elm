@@ -1,4 +1,4 @@
-module Pages.Meals.MealCreationClientInput exposing (..)
+module Pages.Meals.Editor.MealCreationClientInput exposing (..)
 
 import Api.Types.MealCreation exposing (MealCreation)
 import Maybe.Extra

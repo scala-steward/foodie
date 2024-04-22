@@ -1,12 +1,15 @@
 module Pages.MealEntries.Entries.Page exposing (..)
 
-import Api.Auxiliary exposing (JWT, MealEntryId, MealId, RecipeId)
+import Api.Auxiliary exposing (JWT, MealEntryId, MealId, ProfileId, RecipeId)
 import Api.Types.MealEntry exposing (MealEntry)
+import Api.Types.Profile exposing (Profile)
 import Api.Types.Recipe exposing (Recipe)
+import Monocle.Lens exposing (Lens)
 import Pages.MealEntries.MealEntryCreationClientInput exposing (MealEntryCreationClientInput)
 import Pages.MealEntries.MealEntryUpdateClientInput exposing (MealEntryUpdateClientInput)
 import Pages.Util.Choice.Page
 import Pages.View.Tristate as Tristate
+import Util.HttpUtil exposing (Error)
 
 
 type alias Model =

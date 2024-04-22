@@ -193,7 +193,7 @@ recipeInfo =
 -- especially because the non-matching case should never occur.
 
 
-recipeInfoFromMap : DictList RecipeId (Editing Recipe MealEntryCreationClientInput) -> RecipeId -> List (HtmlUtil.Column Page.LogicMsg)
+recipeInfoFromMap : DictList RecipeId (Editing Recipe MealEntryCreationClientInput) -> RecipeId -> List (HtmlUtil.Column msg)
 recipeInfoFromMap recipes recipeId =
     DictList.get recipeId recipes
         |> Maybe.Extra.unwrap (List.repeat 4 { attributes = [ Style.classes.editable ], children = [] }) (.original >> recipeInfo)

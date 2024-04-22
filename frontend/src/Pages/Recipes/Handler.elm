@@ -63,6 +63,7 @@ updateLogic msg model =
                 , save = \authorizedAccess recipeId -> RecipeUpdateClientInput.to >> Requests.saveRecipe authorizedAccess recipeId
                 , delete = Requests.deleteRecipe
                 , duplicate = Pages.Util.Requests.duplicateRecipeWith Pages.Util.ParentEditor.Page.GotDuplicateResponse
+                , attemptInitialToMainAfterFetchResponse = True
                 }
                 parentMsg
                 model

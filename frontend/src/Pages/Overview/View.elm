@@ -19,14 +19,12 @@ view =
 
 
 viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
-viewMain configuration main =
+viewMain configuration _ =
     ViewUtil.viewMainWith
         { configuration = configuration
-        , jwt = always Nothing
         , currentPage = Just ViewUtil.Overview
         , showNavigation = False
         }
-        main
     <|
         div [ Style.ids.overviewMain ]
             [ div []
@@ -38,7 +36,7 @@ viewMain configuration main =
                 ]
             , div []
                 [ Links.linkButton
-                    { url = Links.frontendPage configuration <| Addresses.Frontend.meals.address <| ()
+                    { url = Links.frontendPage configuration <| Addresses.Frontend.mealBranch.address <| ()
                     , attributes = [ Style.classes.button.overview ]
                     , children = [ text "Meals" ]
                     }
@@ -62,6 +60,13 @@ viewMain configuration main =
                     { url = Links.frontendPage configuration <| Addresses.Frontend.referenceMaps.address <| ()
                     , attributes = [ Style.classes.button.overview ]
                     , children = [ text "Reference maps" ]
+                    }
+                ]
+            , div []
+                [ Links.linkButton
+                    { url = Links.frontendPage configuration <| Addresses.Frontend.profiles.address <| ()
+                    , attributes = [ Style.classes.button.overview ]
+                    , children = [ text "Profiles" ]
                     }
                 ]
             , div []
