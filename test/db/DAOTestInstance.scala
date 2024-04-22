@@ -193,7 +193,11 @@ object DAOTestInstance {
 
         override protected def verifyKeys(key1: MealKey, key2: MealKey): Boolean = key1.userId == key2.userId
 
-        override def allInInterval(userId: UserId, requestInterval: RequestInterval): DBIO[Seq[Tables.MealRow]] =
+        override def allInInterval(
+            userId: UserId,
+            profileId: ProfileId,
+            requestInterval: RequestInterval
+        ): DBIO[Seq[Tables.MealRow]] =
           fromIO {
             map
               .filter { case (key, meal) =>
@@ -203,6 +207,7 @@ object DAOTestInstance {
                 )
 
                 key.userId == userId &&
+                key.profileId == profileId &&
                 interval.contains(meal.consumedOnDate.toLocalDate.transformInto[Date])
               }
               .values
