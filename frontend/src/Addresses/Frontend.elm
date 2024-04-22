@@ -5,9 +5,11 @@ module Addresses.Frontend exposing
     , deleteAccount
     , ingredientEditor
     , login
+    , mealBranch
     , mealEntryEditor
     , meals
     , overview
+    , profiles
     , recipes
     , referenceEntries
     , referenceMaps
@@ -17,9 +19,11 @@ module Addresses.Frontend exposing
     , statisticsComplexFoodSelect
     , statisticsFoodSearch
     , statisticsFoodSelect
+    , statisticsMealProfileChoice
     , statisticsMealSearch
     , statisticsMealSelect
     , statisticsRecipeOccurrences
+    , statisticsRecipeOccurrencesProfileChoice
     , statisticsRecipeSearch
     , statisticsRecipeSelect
     , statisticsTime
@@ -27,7 +31,7 @@ module Addresses.Frontend exposing
     )
 
 import Addresses.StatisticsVariant as StatisticsVariant
-import Api.Auxiliary exposing (ComplexFoodId, FoodId, JWT, MealId, RecipeId, ReferenceMapId)
+import Api.Auxiliary exposing (ComplexFoodId, FoodId, JWT, MealId, ProfileId, RecipeId, ReferenceMapId)
 import Api.Types.UserIdentifier exposing (UserIdentifier)
 import Pages.Util.ParserUtil as ParserUtil exposing (AddressWithParser, with1, with1Multiple, with2)
 import Url.Parser as Parser exposing ((</>), (<?>), Parser, s)
@@ -49,12 +53,15 @@ overview =
     plain "overview"
 
 
-mealEntryEditor : AddressWithParser MealId (MealId -> a) a
+mealEntryEditor : AddressWithParser ( ProfileId, MealId ) (ProfileId -> MealId -> a) a
 mealEntryEditor =
-    with1
-        { step1 = "meal-entry-editor"
-        , toString = Uuid.toString >> List.singleton
-        , paramParser = ParserUtil.uuidParser
+    with2
+        { step1 = "profile"
+        , toString1 = Uuid.toString >> List.singleton
+        , paramParser1 = ParserUtil.uuidParser
+        , step2 = "meal"
+        , toString2 = Uuid.toString >> List.singleton
+        , paramParser2 = ParserUtil.uuidParser
         }
 
 
@@ -63,9 +70,23 @@ recipes =
     plain "recipes"
 
 
-meals : AddressWithParser () a a
-meals =
+mealBranch : AddressWithParser () a a
+mealBranch =
     plain "meals"
+
+
+meals : AddressWithParser Uuid (ProfileId -> a) a
+meals =
+    let
+        profilesWord =
+            "profiles"
+
+        mealsWord =
+            "meals"
+    in
+    { address = \param -> [ profilesWord, Uuid.toString param, mealsWord ]
+    , parser = s profilesWord </> ParserUtil.uuidParser </> s mealsWord
+    }
 
 
 statisticsTime : AddressWithParser () a a
@@ -115,25 +136,90 @@ statisticsRecipeSelect =
         }
 
 
-statisticsMealSearch : AddressWithParser () a a
+statisticsMealProfileChoice : AddressWithParser () a a
+statisticsMealProfileChoice =
+    plainMultiple "statistics" [ "meal" ]
+
+
+statisticsMealSearch : AddressWithParser ProfileId (ProfileId -> a) a
 statisticsMealSearch =
-    plainMultiple "statistics" [ StatisticsVariant.meal ]
+    let
+        statisticsWord =
+            "statistics"
+
+        profilesWord =
+            "profiles"
+    in
+    { address =
+        \param ->
+            [ statisticsWord
+            , profilesWord
+            , param |> Uuid.toString
+            , StatisticsVariant.meal
+            ]
+    , parser =
+        s statisticsWord
+            </> s profilesWord
+            </> ParserUtil.uuidParser
+            </> s StatisticsVariant.meal
+    }
 
 
-statisticsMealSelect : AddressWithParser Uuid (MealId -> b) b
+statisticsMealSelect : AddressWithParser ( ProfileId, MealId ) (ProfileId -> MealId -> b) b
 statisticsMealSelect =
-    with1Multiple
-        { steps = [ "statistics", StatisticsVariant.meal ]
-        , toString = Uuid.toString >> List.singleton
-        , paramParser = ParserUtil.uuidParser
-        }
+    let
+        statisticsWord =
+            "statistics"
+
+        profilesWord =
+            "profiles"
+    in
+    { address =
+        \param ->
+            [ statisticsWord
+            , profilesWord
+            , param |> Tuple.first |> Uuid.toString
+            , StatisticsVariant.meal
+            , param |> Tuple.second |> Uuid.toString
+            ]
+    , parser =
+        s statisticsWord
+            </> s profilesWord
+            </> ParserUtil.uuidParser
+            </> s StatisticsVariant.meal
+            </> ParserUtil.uuidParser
+    }
 
 
-statisticsRecipeOccurrences : AddressWithParser () a a
-statisticsRecipeOccurrences =
+statisticsRecipeOccurrencesProfileChoice : AddressWithParser () a a
+statisticsRecipeOccurrencesProfileChoice =
     plainMultiple
         "statistics"
         [ StatisticsVariant.recipeOccurrences ]
+
+
+statisticsRecipeOccurrences : AddressWithParser ProfileId (ProfileId -> a) a
+statisticsRecipeOccurrences =
+    let
+        statisticsWord =
+            "statistics"
+
+        profilesWord =
+            "profiles"
+    in
+    { address =
+        \param ->
+            [ statisticsWord
+            , profilesWord
+            , param |> Uuid.toString
+            , StatisticsVariant.recipeOccurrences
+            ]
+    , parser =
+        s statisticsWord
+            </> s profilesWord
+            </> ParserUtil.uuidParser
+            </> s StatisticsVariant.recipeOccurrences
+    }
 
 
 referenceMaps : AddressWithParser () a a
@@ -187,6 +273,11 @@ confirmRecovery =
 complexFoods : AddressWithParser () a a
 complexFoods =
     plain "complex-foods"
+
+
+profiles : AddressWithParser () a a
+profiles =
+    plain "profiles"
 
 
 confirm : String -> AddressWithParser ( ( String, String ), JWT ) (UserIdentifier -> JWT -> a) a

@@ -2,6 +2,7 @@ module Pages.Statistics.StatisticsRequests exposing (..)
 
 import Addresses.Backend
 import Api.Auxiliary exposing (ReferenceMapId)
+import Api.Types.Profile exposing (Profile)
 import Api.Types.ReferenceTree exposing (ReferenceTree, decoderReferenceTree)
 import Basics.Extra exposing (flip)
 import Dict
@@ -58,6 +59,25 @@ gotFetchReferenceTreesResponseWith ps model result =
                 model
                     |> Tristate.mapInitial
                         (ps.referenceTreesLens.set (referenceNutrientTrees |> Just))
+                    |> Tristate.fromInitToMain ps.initialToMain
+            )
+    , Cmd.none
+    )
+
+
+gotFetchProfilesResponseWith :
+    { profilesLens : Lens initial (Maybe (List Profile))
+    , initialToMain : initial -> Maybe main
+    }
+    -> Tristate.Model main initial
+    -> Result Error (List Profile)
+    -> ( Tristate.Model main initial, Cmd msg )
+gotFetchProfilesResponseWith ps model result =
+    ( result
+        |> Result.Extra.unpack (Tristate.toError model)
+            (\profiles ->
+                model
+                    |> Tristate.mapInitial (ps.profilesLens.set (profiles |> Just))
                     |> Tristate.fromInitToMain ps.initialToMain
             )
     , Cmd.none

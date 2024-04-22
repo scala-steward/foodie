@@ -25,6 +25,7 @@ class ApplicationModule extends play.api.inject.Module {
       bind[db.daos.referenceMapEntry.DAO].toInstance(db.daos.referenceMapEntry.DAO.instance),
       bind[db.daos.session.DAO].toInstance(db.daos.session.DAO.instance),
       bind[db.daos.user.DAO].toInstance(db.daos.user.DAO.instance),
+      bind[db.daos.profile.DAO].toInstance(db.daos.profile.DAO.instance),
       bind[UserService.Companion].to[services.user.Live.Companion],
       bind[UserService].to[services.user.Live],
       bind[RecipeService.Companion].to[services.recipe.Live.Companion],
@@ -48,7 +49,12 @@ class ApplicationModule extends play.api.inject.Module {
       bind[services.duplication.reference.Duplication.Companion].to[services.duplication.reference.Live.Companion],
       bind[services.duplication.reference.Duplication].to[services.duplication.reference.Live],
       bind[services.rescale.RescaleService.Companion].to[services.rescale.Live.Companion],
-      bind[services.rescale.RescaleService].to[services.rescale.Live]
+      bind[services.rescale.RescaleService].to[services.rescale.Live],
+      bind[services.profile.ProfileService.Companion].to[services.profile.Live.Companion],
+      bind[services.profile.ProfileService].to[services.profile.Live],
+      bind[controllers.user.UserConfiguration].toInstance(controllers.user.UserConfiguration.default),
+      bind[security.jwt.JwtConfiguration].toInstance(security.jwt.JwtConfiguration.default),
+      bind[services.nutrient.ConstantsConfiguration].toInstance(services.nutrient.ConstantsConfiguration.default)
     )
     settings
   }

@@ -1,10 +1,13 @@
 module Pages.Statistics.Time.Handler exposing (init, update)
 
-import Api.Auxiliary exposing (ReferenceMapId)
+import Api.Auxiliary exposing (ProfileId, ReferenceMapId)
 import Api.Lenses.StatsLens as StatsLens
 import Api.Types.Date exposing (Date)
+import Api.Types.Profile exposing (Profile)
 import Api.Types.ReferenceTree exposing (ReferenceTree)
 import Api.Types.Stats exposing (Stats)
+import Basics.Extra exposing (flip)
+import Maybe.Extra
 import Monocle.Lens as Lens
 import Pages.Statistics.StatisticsRequests as StatisticsRequests
 import Pages.Statistics.Time.Page as Page
@@ -13,6 +16,7 @@ import Pages.Statistics.Time.Requests as Requests
 import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.View.Tristate as Tristate
 import Result.Extra
+import Util.DictList as DictList
 import Util.HttpUtil exposing (Error)
 
 
@@ -24,8 +28,11 @@ init flags =
 
 
 initialFetch : AuthorizedAccess -> Cmd Page.LogicMsg
-initialFetch =
-    Requests.fetchReferenceTrees
+initialFetch authorizedAccess =
+    Cmd.batch
+        [ Requests.fetchReferenceTrees authorizedAccess
+        , Requests.fetchProfiles authorizedAccess
+        ]
 
 
 update : Page.Msg -> Page.Model -> ( Page.Model, Cmd Page.Msg )
@@ -51,6 +58,9 @@ updateLogic msg model =
         Page.GotFetchReferenceTreesResponse result ->
             gotFetchReferenceTreesResponse model result
 
+        Page.GotFetchProfilesResponse result ->
+            gotFetchProfilesResponse model result
+
         Page.SetPagination pagination ->
             setPagination model pagination
 
@@ -59,6 +69,9 @@ updateLogic msg model =
 
         Page.SetNutrientsSearchString string ->
             setNutrientsSearchString model string
+
+        Page.SelectProfile maybeProfileId ->
+            selectProfile model maybeProfileId
 
 
 setFromDate : Page.Model -> Maybe Date -> ( Page.Model, Cmd Page.LogicMsg )
@@ -90,11 +103,16 @@ fetchStats model =
     , model
         |> Tristate.foldMain Cmd.none
             (\main ->
-                Requests.fetchStats
-                    { jwt = main.jwt
-                    , configuration = model.configuration
-                    }
-                    main.requestInterval
+                main.selectedProfile
+                    |> Maybe.Extra.unwrap Cmd.none
+                        (\profile ->
+                            Requests.fetchStats
+                                { jwt = main.jwt
+                                , configuration = model.configuration
+                                }
+                                profile.id
+                                main.requestInterval
+                        )
             )
     )
 
@@ -123,6 +141,14 @@ gotFetchReferenceTreesResponse =
         }
 
 
+gotFetchProfilesResponse : Page.Model -> Result Error (List Profile) -> ( Page.Model, Cmd Page.LogicMsg )
+gotFetchProfilesResponse =
+    StatisticsRequests.gotFetchProfilesResponseWith
+        { profilesLens = Page.lenses.initial.profiles
+        , initialToMain = Page.initialToMain
+        }
+
+
 setPagination : Page.Model -> Pagination -> ( Page.Model, Cmd Page.LogicMsg )
 setPagination model pagination =
     ( model |> Tristate.mapMain (Page.lenses.main.pagination.set pagination)
@@ -142,3 +168,18 @@ setNutrientsSearchString =
     StatisticsRequests.setNutrientsSearchStringWith
         { statisticsEvaluationLens = Page.lenses.main.statisticsEvaluation
         }
+
+
+selectProfile : Page.Model -> Maybe ProfileId -> ( Page.Model, Cmd Page.LogicMsg )
+selectProfile model maybeProfileId =
+    ( model
+        |> Tristate.mapMain
+            ((\main ->
+                maybeProfileId
+                    |> Maybe.andThen (flip DictList.get main.profiles)
+                    |> flip Page.lenses.main.selectedProfile.set main
+             )
+                >> Page.lenses.main.status.set Page.Select
+            )
+    , Cmd.none
+    )

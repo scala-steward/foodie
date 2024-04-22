@@ -25,11 +25,9 @@ viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
-        , jwt = .jwt >> Just
         , currentPage = Nothing
         , showNavigation = True
         }
-        main
     <|
         StatisticsView.withNavigationBar
             { mainPageURL = configuration.mainPageURL
@@ -46,6 +44,10 @@ viewMain configuration main =
                         , tr []
                             [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Time" ] ]
                             , td [] [ label [] [ text <| (Maybe.Extra.unwrap "" DateUtil.timeToString << .time << .date) <| main.meal ] ]
+                            ]
+                        , tr []
+                            [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Profile" ] ]
+                            , td [] [ label [] [ text <| main.profile.name ] ]
                             ]
                         , tr []
                             [ td [ Style.classes.descriptionColumn ] [ label [] [ text "Name" ] ]

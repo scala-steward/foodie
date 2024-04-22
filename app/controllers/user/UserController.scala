@@ -29,14 +29,12 @@ class UserController @Inject() (
     cc: ControllerComponents,
     userService: UserService,
     mailService: MailService,
-    userAction: UserAction
+    userAction: UserAction,
+    jwtConfiguration: JwtConfiguration,
+    userConfiguration: UserConfiguration
 )(implicit executionContext: ExecutionContext)
     extends AbstractController(cc)
     with Circe {
-
-  private val jwtConfiguration = JwtConfiguration.default
-
-  private val userConfiguration = UserConfiguration.default
 
   def login: Action[Credentials] =
     Action.async(circe.tolerantJson[Credentials]) { request =>
@@ -88,7 +86,6 @@ class UserController @Inject() (
   def update: Action[UserUpdate] =
     userAction.async(circe.tolerantJson[UserUpdate]) { request =>
       userService
-        // TODO
         .update(request.user.id, (request.body, request.user).transformInto[services.user.UserUpdate])
         .map(
           _.pipe(_.transformInto[User])

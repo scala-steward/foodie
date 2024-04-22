@@ -22,15 +22,13 @@ viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
-        , jwt = .jwt >> Just
         , currentPage = Nothing
         , showNavigation = True
         }
-        main
     <|
         div [ Style.ids.mealEntryEditor ]
             [ div []
-                [ Pages.MealEntries.Meal.View.viewMain configuration main.meal
+                [ Pages.MealEntries.Meal.View.viewMain main.profile configuration main.meal
                     |> Html.map Page.MealMsg
                 ]
             , div [ Style.classes.elements ] [ label [] [ text "Dishes" ] ]

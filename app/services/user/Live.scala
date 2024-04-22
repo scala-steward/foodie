@@ -74,10 +74,9 @@ object Live {
 
   class Companion @Inject() (
       userDao: db.daos.user.DAO,
-      sessionDao: db.daos.session.DAO
+      sessionDao: db.daos.session.DAO,
+      jwtConfiguration: JwtConfiguration
   ) extends UserService.Companion {
-
-    private val jwtConfiguration: JwtConfiguration = JwtConfiguration.default
 
     private val allowedValidityInDays: Int =
       Math.ceil(jwtConfiguration.restrictedDurationInSeconds.toDouble / 86400).toInt

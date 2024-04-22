@@ -8,6 +8,7 @@ import bridges.elm._
 import controllers.common.RequestInterval
 import controllers.complex.{ ComplexFood, ComplexFoodCreation, ComplexFoodUpdate }
 import controllers.meal._
+import controllers.profile.{ Profile, ProfileCreation, ProfileUpdate }
 import controllers.recipe._
 import controllers.reference._
 import controllers.stats._
@@ -148,6 +149,9 @@ object Bridge {
     mkAndWrite[ComplexFoodCreation]
     mkAndWrite[Values]
     mkAndWrite[RecipeOccurrence]
+    mkAndWrite[ProfileCreation]
+    mkAndWrite[ProfileUpdate]
+    mkAndWrite[Profile]
   }
 
 }

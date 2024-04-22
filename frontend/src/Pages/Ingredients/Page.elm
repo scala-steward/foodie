@@ -13,7 +13,6 @@ import Pages.Util.AuthorizedAccess exposing (AuthorizedAccess)
 import Pages.Util.Choice.Page
 import Pages.Util.Parent.Page
 import Pages.View.Tristate as Tristate exposing (Status(..))
-import Pages.View.TristateUtil as TristateUtil
 
 
 type alias Model =
@@ -37,30 +36,6 @@ type alias Initial =
     }
 
 
-recipeSubModel : Model -> Pages.Ingredients.Recipe.Page.Model
-recipeSubModel =
-    TristateUtil.subModelWith
-        { initialLens = lenses.initial.recipe
-        , mainLens = lenses.main.recipe
-        }
-
-
-ingredientsGroupSubModel : Model -> Pages.Ingredients.Plain.Page.Model
-ingredientsGroupSubModel =
-    TristateUtil.subModelWith
-        { initialLens = lenses.initial.ingredientsGroup
-        , mainLens = lenses.main.ingredientsGroup
-        }
-
-
-complexIngredientsGroupSubModel : Model -> Pages.Ingredients.Complex.Page.Model
-complexIngredientsGroupSubModel =
-    TristateUtil.subModelWith
-        { initialLens = lenses.initial.complexIngredientsGroup
-        , mainLens = lenses.main.complexIngredientsGroup
-        }
-
-
 initial : AuthorizedAccess -> RecipeId -> Model
 initial authorizedAccess recipeId =
     { jwt = authorizedAccess.jwt
@@ -73,27 +48,18 @@ initial authorizedAccess recipeId =
 
 initialToMain : Initial -> Maybe Main
 initialToMain i =
-    i.recipe
-        |> Pages.Util.Parent.Page.initialToMain
-        |> Maybe.andThen
-            (\recipe ->
-                i.ingredientsGroup
-                    |> Pages.Util.Choice.Page.initialToMain
-                    |> Maybe.andThen
-                        (\ingredientsGroup ->
-                            i.complexIngredientsGroup
-                                |> Pages.Util.Choice.Page.initialToMain
-                                |> Maybe.map
-                                    (\complexIngredientsGroup ->
-                                        { jwt = i.jwt
-                                        , recipe = recipe
-                                        , ingredientsGroup = ingredientsGroup
-                                        , complexIngredientsGroup = complexIngredientsGroup
-                                        , foodsMode = Plain
-                                        }
-                                    )
-                        )
-            )
+    Maybe.map3
+        (\recipe ingredientsGroup complexIngredientsGroup ->
+            { jwt = i.jwt
+            , recipe = recipe
+            , ingredientsGroup = ingredientsGroup
+            , complexIngredientsGroup = complexIngredientsGroup
+            , foodsMode = Plain
+            }
+        )
+        (i.recipe |> Pages.Util.Parent.Page.initialToMain)
+        (i.ingredientsGroup |> Pages.Util.Choice.Page.initialToMain)
+        (i.complexIngredientsGroup |> Pages.Util.Choice.Page.initialToMain)
 
 
 type FoodsMode

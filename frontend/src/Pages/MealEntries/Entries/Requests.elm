@@ -7,7 +7,7 @@ module Pages.MealEntries.Entries.Requests exposing
     )
 
 import Addresses.Backend
-import Api.Auxiliary exposing (JWT, MealEntryId, MealId, RecipeId)
+import Api.Auxiliary exposing (JWT, MealEntryId, MealId, ProfileId, RecipeId)
 import Api.Types.MealEntry exposing (MealEntry, decoderMealEntry)
 import Api.Types.MealEntryCreation exposing (MealEntryCreation, encoderMealEntryCreation)
 import Api.Types.MealEntryUpdate exposing (MealEntryUpdate, encoderMealEntryUpdate)
@@ -20,11 +20,11 @@ import Pages.Util.Requests
 import Util.HttpUtil as HttpUtil
 
 
-fetchMealEntries : AuthorizedAccess -> MealId -> Cmd Page.LogicMsg
-fetchMealEntries authorizedAccess mealId =
+fetchMealEntries : AuthorizedAccess -> ProfileId -> MealId -> Cmd Page.LogicMsg
+fetchMealEntries authorizedAccess profileId mealId =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        (Addresses.Backend.meals.entries.allOf mealId)
+        (Addresses.Backend.meals.entries.allOf profileId mealId)
         { body = Http.emptyBody
         , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotFetchElementsResponse (Decode.list decoderMealEntry)
         }
@@ -35,31 +35,31 @@ fetchRecipes =
     Pages.Util.Requests.fetchRecipesWith Pages.Util.Choice.Page.GotFetchChoicesResponse
 
 
-saveMealEntry : AuthorizedAccess -> MealId -> MealEntryId -> MealEntryUpdate -> Cmd Page.LogicMsg
-saveMealEntry authorizedAccess mealId mealEntryId mealEntryUpdate =
+saveMealEntry : AuthorizedAccess -> ProfileId -> MealId -> MealEntryId -> MealEntryUpdate -> Cmd Page.LogicMsg
+saveMealEntry authorizedAccess profileId mealId mealEntryId mealEntryUpdate =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        (Addresses.Backend.meals.entries.update mealId mealEntryId)
+        (Addresses.Backend.meals.entries.update profileId mealId mealEntryId)
         { body = encoderMealEntryUpdate mealEntryUpdate |> Http.jsonBody
         , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotSaveEditResponse decoderMealEntry
         }
 
 
-deleteMealEntry : AuthorizedAccess -> MealId -> MealEntryId -> Cmd Page.LogicMsg
-deleteMealEntry authorizedAccess mealId mealEntryId =
+deleteMealEntry : AuthorizedAccess -> ProfileId -> MealId -> MealEntryId -> Cmd Page.LogicMsg
+deleteMealEntry authorizedAccess profileId mealId mealEntryId =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        (Addresses.Backend.meals.entries.delete mealId mealEntryId)
+        (Addresses.Backend.meals.entries.delete profileId mealId mealEntryId)
         { body = Http.emptyBody
         , expect = HttpUtil.expectWhatever (Pages.Util.Choice.Page.GotDeleteResponse mealEntryId)
         }
 
 
-createMealEntry : AuthorizedAccess -> MealId -> MealEntryCreation -> Cmd Page.LogicMsg
-createMealEntry authorizedAccess mealId mealEntryCreation =
+createMealEntry : AuthorizedAccess -> ProfileId -> MealId -> MealEntryCreation -> Cmd Page.LogicMsg
+createMealEntry authorizedAccess profileId mealId mealEntryCreation =
     HttpUtil.runPatternWithJwt
         authorizedAccess
-        (Addresses.Backend.meals.entries.create mealId)
+        (Addresses.Backend.meals.entries.create profileId mealId)
         { body = encoderMealEntryCreation mealEntryCreation |> Http.jsonBody
         , expect = HttpUtil.expectJson Pages.Util.Choice.Page.GotCreateResponse decoderMealEntry
         }

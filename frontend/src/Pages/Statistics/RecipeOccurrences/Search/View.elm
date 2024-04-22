@@ -1,6 +1,7 @@
-module Pages.Statistics.RecipeOccurrences.View exposing (view)
+module Pages.Statistics.RecipeOccurrences.Search.View exposing (view)
 
 import Addresses.StatisticsVariant as StatisticsVariant
+import Api.Types.Profile exposing (Profile)
 import Api.Types.RecipeOccurrence exposing (RecipeOccurrence)
 import Configuration exposing (Configuration)
 import Html exposing (Html, button, div, label, table, tbody, td, text, th, thead, tr)
@@ -8,8 +9,8 @@ import Html.Attributes exposing (disabled)
 import Html.Events exposing (onClick)
 import Maybe.Extra
 import Monocle.Compose as Compose
-import Pages.Statistics.RecipeOccurrences.Page as Page
-import Pages.Statistics.RecipeOccurrences.Pagination as Pagination
+import Pages.Statistics.RecipeOccurrences.Search.Page as Page
+import Pages.Statistics.RecipeOccurrences.Search.Pagination as Pagination
 import Pages.Statistics.StatisticsView as StatisticsView
 import Pages.Util.DateUtil as DateUtil
 import Pages.Util.HtmlUtil as HtmlUtil
@@ -34,11 +35,9 @@ viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
-        , jwt = .jwt >> Just
         , currentPage = Just Statistics
         , showNavigation = True
         }
-        main
     <|
         StatisticsView.withNavigationBar
             { mainPageURL = configuration.mainPageURL
@@ -73,27 +72,28 @@ viewMain configuration main =
                         , searchString = main.recipesSearchString
                         }
                     , div [ Style.classes.sortControls ]
-                        [ label [] [ text "Sort by" ]
+                        [ text "Sort by"
                         , button
                             [ disabled <| main.sortType == Page.RecipeName
                             , onClick (Page.SortBy Page.RecipeName)
                             , Style.classes.button.alternative
                             ]
-                            [ label [] [ text "Recipe name" ] ]
+                            [ text "Recipe name" ]
                         , button
                             [ disabled <| main.sortType == Page.MealDate
                             , onClick (Page.SortBy Page.MealDate)
                             , Style.classes.button.alternative
                             ]
-                            [ label [] [ text "Meal date" ] ]
+                            [ text "Meal date" ]
                         ]
                     , table [ Style.classes.elementsWithControlsTable ]
                         [ thead []
                             [ tr [ Style.classes.tableHeader ]
-                                [ th [] [ label [] [ text "Recipe" ] ]
-                                , th [] [ label [] [ text "Description" ] ]
-                                , th [] [ label [] [ text "Meal date" ] ]
-                                , th [] [ label [] [ text "Meal name" ] ]
+                                [ th [] [ text "Recipe" ]
+                                , th [] [ text "Description" ]
+                                , th [] [ text "Profile" ]
+                                , th [] [ text "Meal date" ]
+                                , th [] [ text "Meal name" ]
                                 , th [] []
                                 , th [] []
                                 ]
@@ -101,7 +101,7 @@ viewMain configuration main =
                         , tbody []
                             (viewRecipes
                                 |> Paginate.page
-                                |> List.map (viewRecipeOccurrenceLine configuration)
+                                |> List.map (viewRecipeOccurrenceLine configuration main.profile)
                             )
                         ]
                     , div [ Style.classes.pagination ]
@@ -120,8 +120,8 @@ viewMain configuration main =
                 ]
 
 
-viewRecipeOccurrenceLine : Configuration -> RecipeOccurrence -> Html Page.LogicMsg
-viewRecipeOccurrenceLine configuration recipeOccurrence =
+viewRecipeOccurrenceLine : Configuration -> Profile -> RecipeOccurrence -> Html Page.LogicMsg
+viewRecipeOccurrenceLine configuration profile recipeOccurrence =
     let
         ( mealDate, mealName, mealButton ) =
             recipeOccurrence.lastUsedInMeal
@@ -130,20 +130,23 @@ viewRecipeOccurrenceLine configuration recipeOccurrence =
                         ( meal.date |> DateUtil.toPrettyString
                         , meal.name |> Maybe.withDefault ""
                         , [ td [ Style.classes.controls ]
-                                [ NavigationUtil.mealEditorLinkButton configuration meal.id ]
+                                [ NavigationUtil.mealEditorLinkButton configuration profile.id meal.id ]
                           ]
                         )
                     )
     in
     tr [ Style.classes.editLine ]
         ([ td [ Style.classes.editable ]
-            [ label [] [ text recipeOccurrence.recipe.name ] ]
+            [ text recipeOccurrence.recipe.name ]
          , td [ Style.classes.editable ]
-            [ label [] [ text <| Maybe.withDefault "" <| recipeOccurrence.recipe.description ] ]
+            [ text <| Maybe.withDefault "" <| recipeOccurrence.recipe.description ]
+         , td
+            [ Style.classes.editable ]
+            [ text <| profile.name ]
          , td [ Style.classes.editable ]
-            [ label [] [ text mealDate ] ]
+            [ text mealDate ]
          , td [ Style.classes.editable ]
-            [ label [] [ text mealName ] ]
+            [ text mealName ]
          , td [ Style.classes.editable ]
             [ NavigationUtil.recipeEditorLinkButton configuration recipeOccurrence.recipe.id ]
          ]

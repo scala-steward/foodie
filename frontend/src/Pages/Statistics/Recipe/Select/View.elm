@@ -24,11 +24,9 @@ viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
-        , jwt = .jwt >> Just
         , currentPage = Nothing
         , showNavigation = True
         }
-        main
     <|
         StatisticsView.withNavigationBar
             { mainPageURL = configuration.mainPageURL

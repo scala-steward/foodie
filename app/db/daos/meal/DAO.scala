@@ -1,7 +1,7 @@
 package db.daos.meal
 
 import db.generated.Tables
-import db.{ DAOActions, MealId, UserId }
+import db.{ DAOActions, MealId, ProfileId, UserId }
 import io.scalaland.chimney.dsl._
 import services.common.RequestInterval
 import slick.jdbc.PostgresProfile.api._
@@ -14,7 +14,7 @@ trait DAO extends DAOActions[Tables.MealRow, MealKey] {
 
   override val keyOf: Tables.MealRow => MealKey = MealKey.of
 
-  def allInInterval(userId: UserId, requestInterval: RequestInterval): DBIO[Seq[Tables.MealRow]]
+  def allInInterval(userId: UserId, profileId: ProfileId, requestInterval: RequestInterval): DBIO[Seq[Tables.MealRow]]
 
   def allOf(userId: UserId, mealIds: Seq[MealId]): DBIO[Seq[Tables.MealRow]]
 }
@@ -29,6 +29,7 @@ object DAO {
 
       override def allInInterval(
           userId: UserId,
+          profileId: ProfileId,
           requestInterval: RequestInterval
       ): DBIO[Seq[Tables.MealRow]] = {
         val dateFilter: Rep[java.sql.Date] => Rep[Boolean] =
@@ -37,6 +38,7 @@ object DAO {
         Tables.Meal
           .filter(meal =>
             meal.userId === userId.transformInto[UUID] &&
+              meal.profileId === profileId.transformInto[UUID] &&
               dateFilter(meal.consumedOnDate)
           )
           .result

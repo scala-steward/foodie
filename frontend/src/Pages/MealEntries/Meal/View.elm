@@ -1,25 +1,26 @@
 module Pages.MealEntries.Meal.View exposing (..)
 
 import Addresses.Frontend
+import Api.Types.Profile exposing (Profile)
 import Configuration exposing (Configuration)
 import Html exposing (Attribute, Html, button, td, text)
 import Html.Events exposing (onClick)
 import Pages.MealEntries.Meal.Page as Page
-import Pages.Meals.MealUpdateClientInput as MealUpdateClientInput
-import Pages.Meals.View
+import Pages.Meals.Editor.MealUpdateClientInput as MealUpdateClientInput
+import Pages.Meals.Editor.View
 import Pages.Util.Links as Links
 import Pages.Util.Parent.Page
 import Pages.Util.Parent.View
 import Pages.Util.Style as Style
 
 
-viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
-viewMain configuration main =
+viewMain : Profile -> Configuration -> Page.Main -> Html Page.LogicMsg
+viewMain profile configuration main =
     Pages.Util.Parent.View.viewMain
-        { tableHeader = Pages.Meals.View.tableHeader
+        { tableHeader = Pages.Meals.Editor.View.tableHeader
         , onView =
             \meal showControls ->
-                Pages.Meals.View.mealLineWith
+                Pages.Meals.Editor.View.mealLineWith
                     { controls =
                         [ td [ Style.classes.controls ]
                             [ button [ Style.classes.button.edit, Pages.Util.Parent.Page.EnterEdit |> onClick ] [ text "Edit" ] ]
@@ -30,7 +31,7 @@ viewMain configuration main =
                             ]
                         , td [ Style.classes.controls ]
                             [ Links.linkButton
-                                { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsMealSelect.address <| main.parent.original.id
+                                { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsMealSelect.address <| ( profile.id, main.parent.original.id )
                                 , attributes = [ Style.classes.button.nutrients ]
                                 , children = [ text "Nutrients" ]
                                 }
@@ -44,9 +45,10 @@ viewMain configuration main =
                     , toggleMsg = Pages.Util.Parent.Page.ToggleControls
                     , showControls = showControls
                     }
+                    profile.name
                     meal
         , onUpdate =
-            Pages.Meals.View.editMealLineWith
+            Pages.Meals.Editor.View.editMealLineWith
                 { saveMsg = Pages.Util.Parent.Page.SaveEdit main.parent.original
                 , dateLens = MealUpdateClientInput.lenses.date
                 , nameLens = MealUpdateClientInput.lenses.name
@@ -57,9 +59,10 @@ viewMain configuration main =
                 , rowStyles = []
                 , toggleCommand = Just Pages.Util.Parent.Page.ToggleControls
                 }
+                profile.name
                 |> always
         , onDelete =
-            Pages.Meals.View.mealLineWith
+            Pages.Meals.Editor.View.mealLineWith
                 { controls =
                     [ td [ Style.classes.controls ]
                         [ button [ Style.classes.button.delete, onClick <| Pages.Util.Parent.Page.ConfirmDelete ] [ text "Delete?" ] ]
@@ -72,5 +75,6 @@ viewMain configuration main =
                 , toggleMsg = Pages.Util.Parent.Page.ToggleControls
                 , showControls = True
                 }
+                profile.name
         }
         main

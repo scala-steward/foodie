@@ -38,7 +38,7 @@ view =
 viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain =
     Pages.Util.ParentEditor.View.viewParentsWith
-        { currentPage = ViewUtil.ReferenceMaps
+        { currentPage = Just ViewUtil.ReferenceMaps
         , matchesSearchText = \string referenceMap -> SearchUtil.search string referenceMap.name
         , sort = List.sortBy (.original >> .name)
         , tableHeader = tableHeader

@@ -26,11 +26,9 @@ viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
 viewMain configuration main =
     ViewUtil.viewMainWith
         { configuration = configuration
-        , jwt = always Nothing
         , currentPage = Nothing
         , showNavigation = False
         }
-        main
     <|
         case main.mode of
             Page.Initial ->
