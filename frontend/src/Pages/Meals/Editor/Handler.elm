@@ -25,7 +25,7 @@ init flags =
             , jwt = flags.authorizedAccess.jwt
             }
       , profile = Nothing
-      , profileId = flags.profileId |> Debug.log "profileId"
+      , profileId = flags.profileId
       }
         |> Tristate.createInitial flags.authorizedAccess.configuration
     , Cmd.batch
