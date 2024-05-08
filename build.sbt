@@ -6,7 +6,7 @@ maintainer   := "nikita.danilenko.is@gmail.com"
 
 version := "0.1"
 
-val circeVersion = "0.14.6"
+val circeVersion = "0.14.7"
 val slickVersion = "3.5.1"
 val jwtVersion   = "10.0.0"
 
@@ -19,7 +19,7 @@ lazy val root = (project in file("."))
   .enablePlugins(CodegenPlugin)
   .enablePlugins(JavaServerAppPackaging)
   .settings(
-    scalaVersion := "2.13.13",
+    scalaVersion := "2.13.14",
     libraryDependencies ++= Seq(
       guice,
       "com.typesafe.slick"    %% "slick"               % slickVersion,
@@ -51,7 +51,7 @@ lazy val root = (project in file("."))
       "com.kubukoz"           %% "slick-effect"        % "0.6.0",
       "com.kubukoz"           %% "slick-effect-catsio" % "0.6.0",
       // Transitive dependency. Override added for proper version.
-      "com.fasterxml.jackson.module" %% "jackson-module-scala"      % "2.17.0",
+      "com.fasterxml.jackson.module" %% "jackson-module-scala"      % "2.17.1",
       "org.scalacheck"               %% "scalacheck"                % "1.18.0" % Test,
       "org.typelevel"                %% "cats-laws"                 % "2.10.0" % Test,
       "com.github.alexarchambault"   %% "scalacheck-shapeless_1.15" % "1.3.0"  % Test
