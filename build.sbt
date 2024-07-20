@@ -6,7 +6,7 @@ maintainer   := "nikita.danilenko.is@gmail.com"
 
 version := "0.1"
 
-val circeVersion = "0.14.8"
+val circeVersion = "0.14.9"
 val slickVersion = "3.5.1"
 val jwtVersion   = "10.0.1"
 
@@ -37,14 +37,14 @@ lazy val root = (project in file("."))
       "com.davegurnell"       %% "bridges"             % "0.24.0",
       "com.github.pathikrit"  %% "better-files"        % "3.9.2",
       "com.typesafe"           % "config"              % "1.4.3",
-      "io.scalaland"          %% "chimney"             % "1.2.0",
+      "io.scalaland"          %% "chimney"             % "1.3.0",
       "com.github.jwt-scala"  %% "jwt-core"            % jwtVersion,
       "com.github.jwt-scala"  %% "jwt-circe"           % jwtVersion,
       "com.github.pureconfig" %% "pureconfig"          % "0.17.7",
       "org.typelevel"         %% "cats-effect"         % "3.4.9",
       "org.typelevel"         %% "cats-effect"         % "3.5.4",
       "org.typelevel"         %% "cats-core"           % "2.12.0",
-      "com.beachape"          %% "enumeratum-circe"    % "1.7.3",
+      "com.beachape"          %% "enumeratum-circe"    % "1.7.4",
       "org.playframework"     %% "play-mailer"         % "10.0.0",
       "org.playframework"     %% "play-mailer-guice"   % "10.0.0",
       "com.lihaoyi"           %% "pprint"              % "0.9.0",
