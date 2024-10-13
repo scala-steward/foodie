@@ -7,7 +7,7 @@ maintainer   := "nikita.danilenko.is@gmail.com"
 version := "0.1"
 
 val circeVersion = "0.14.10"
-val slickVersion = "3.5.1"
+val slickVersion = "3.5.2"
 val jwtVersion   = "10.0.1"
 
 val config = ConfigFactory
@@ -19,14 +19,14 @@ lazy val root = (project in file("."))
   .enablePlugins(CodegenPlugin)
   .enablePlugins(JavaServerAppPackaging)
   .settings(
-    scalaVersion := "2.13.14",
+    scalaVersion := "2.13.15",
     libraryDependencies ++= Seq(
       guice,
       "com.typesafe.slick"    %% "slick"               % slickVersion,
       "com.typesafe.slick"    %% "slick-hikaricp"      % slickVersion,
       "com.typesafe.slick"    %% "slick-codegen"       % slickVersion,
       "org.postgresql"         % "postgresql"          % "42.7.4",
-      "ch.qos.logback"         % "logback-classic"     % "1.5.6",
+      "ch.qos.logback"         % "logback-classic"     % "1.5.9",
       "io.circe"              %% "circe-core"          % circeVersion,
       "io.circe"              %% "circe-generic"       % circeVersion,
       "io.circe"              %% "circe-parser"        % circeVersion,
@@ -44,14 +44,14 @@ lazy val root = (project in file("."))
       "org.typelevel"         %% "cats-effect"         % "3.4.9",
       "org.typelevel"         %% "cats-effect"         % "3.5.4",
       "org.typelevel"         %% "cats-core"           % "2.12.0",
-      "com.beachape"          %% "enumeratum-circe"    % "1.7.4",
+      "com.beachape"          %% "enumeratum-circe"    % "1.7.5",
       "org.playframework"     %% "play-mailer"         % "10.0.1",
       "org.playframework"     %% "play-mailer-guice"   % "10.0.1",
       "com.lihaoyi"           %% "pprint"              % "0.9.0",
       "com.kubukoz"           %% "slick-effect"        % "0.6.0",
       "com.kubukoz"           %% "slick-effect-catsio" % "0.6.0",
       // Transitive dependency. Override added for proper version.
-      "com.fasterxml.jackson.module" %% "jackson-module-scala"      % "2.17.2",
+      "com.fasterxml.jackson.module" %% "jackson-module-scala"      % "2.18.0",
       "org.scalacheck"               %% "scalacheck"                % "1.18.1" % Test,
       "org.typelevel"                %% "cats-laws"                 % "2.12.0" % Test,
       "com.github.alexarchambault"   %% "scalacheck-shapeless_1.15" % "1.3.0"  % Test
