@@ -43,7 +43,7 @@ lazy val root = (project in file("."))
       "com.github.jwt-scala"  %% "jwt-circe"                % jwtVersion,
       "com.github.pureconfig" %% "pureconfig"               % "0.17.7",
       "org.typelevel"         %% "cats-effect"              % "3.4.9",
-      "org.typelevel"         %% "cats-effect"              % "3.5.4",
+      "org.typelevel"         %% "cats-effect"              % "3.5.5",
       "org.typelevel"         %% "cats-core"                % "2.12.0",
       "com.beachape"          %% "enumeratum-circe"         % "1.7.5",
       "org.playframework"     %% "play-mailer"              % "10.1.0",
@@ -52,7 +52,7 @@ lazy val root = (project in file("."))
       "com.kubukoz"           %% "slick-effect"             % "0.6.0",
       "com.kubukoz"           %% "slick-effect-catsio"      % "0.6.0",
       // Transitive dependency. Override added for proper version.
-      "com.fasterxml.jackson.module" %% "jackson-module-scala"      % "2.18.0",
+      "com.fasterxml.jackson.module" %% "jackson-module-scala"      % "2.18.1",
       "org.scalacheck"               %% "scalacheck"                % "1.18.1" % Test,
       "org.typelevel"                %% "cats-laws"                 % "2.12.0" % Test,
       "com.github.alexarchambault"   %% "scalacheck-shapeless_1.15" % "1.3.0"  % Test
