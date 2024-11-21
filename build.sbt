@@ -41,7 +41,7 @@ lazy val root = (project in file("."))
       "io.scalaland"          %% "chimney"                  % "1.5.0",
       "com.github.jwt-scala"  %% "jwt-core"                 % jwtVersion,
       "com.github.jwt-scala"  %% "jwt-circe"                % jwtVersion,
-      "com.github.pureconfig" %% "pureconfig"               % "0.17.7",
+      "com.github.pureconfig" %% "pureconfig"               % "0.17.8",
       "org.typelevel"         %% "cats-effect"              % "3.4.9",
       "org.typelevel"         %% "cats-effect"              % "3.5.5",
       "org.typelevel"         %% "cats-core"                % "2.12.0",
