@@ -22,6 +22,8 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: 'sbt'
+      - name: Set up SBT
+        uses: sbt/setup-sbt@96cf3f09dc501acdad7807fffe97dba9fa0709be # v1.1.5
       # Technically, we could use 'sbt "Docker / publish"',
       # but one would need to handle the credentials elsewhere.
       - name: Prepare Docker image
