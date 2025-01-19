@@ -19,7 +19,7 @@ lazy val root = (project in file("."))
   .enablePlugins(CodegenPlugin)
   .enablePlugins(JavaServerAppPackaging)
   .settings(
-    scalaVersion := "2.13.15",
+    scalaVersion := "2.13.16",
     libraryDependencies ++= Seq(
       guice,
       "com.typesafe.slick"    %% "slick"                    % slickVersion,
@@ -38,7 +38,7 @@ lazy val root = (project in file("."))
       "com.davegurnell"       %% "bridges"                  % "0.24.0",
       "com.github.pathikrit"  %% "better-files"             % "3.9.2",
       "com.typesafe"           % "config"                   % "1.4.3",
-      "io.scalaland"          %% "chimney"                  % "1.5.0",
+      "io.scalaland"          %% "chimney"                  % "1.6.0",
       "com.github.jwt-scala"  %% "jwt-core"                 % jwtVersion,
       "com.github.jwt-scala"  %% "jwt-circe"                % jwtVersion,
       "com.github.pureconfig" %% "pureconfig"               % "0.17.8",
