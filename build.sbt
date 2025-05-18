@@ -7,7 +7,7 @@ maintainer   := "nikita.danilenko.is@gmail.com"
 version := "0.1"
 
 val circeVersion = "0.14.13"
-val slickVersion = "3.5.2"
+val slickVersion = "3.6.1"
 val jwtVersion   = "10.0.4"
 
 val config = ConfigFactory
@@ -33,7 +33,7 @@ lazy val root = (project in file("."))
       "io.circe"              %% "circe-parser"             % circeVersion,
       "org.typelevel"         %% "spire"                    % "0.18.0",
       "org.flywaydb"          %% "flyway-play"              % "9.1.0",
-      "org.playframework"     %% "play-slick"               % "6.1.1",
+      "org.playframework"     %% "play-slick"               % "6.2.0",
       "com.dripower"          %% "play-circe"               % "3014.1",
       "com.davegurnell"       %% "bridges"                  % "0.24.0",
       "com.github.pathikrit"  %% "better-files"             % "3.9.2",
