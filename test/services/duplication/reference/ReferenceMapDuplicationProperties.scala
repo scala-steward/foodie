@@ -70,7 +70,7 @@ object ReferenceMapDuplicationProperties extends Properties("Reference map dupli
       fullReferenceMap = setup.fullReferenceMap
     )
     val transformer = for {
-      timestamp <- EitherT.liftF(DateUtil.now)
+      timestamp              <- EitherT.liftF(DateUtil.now)
       duplicatedReferenceMap <- EitherT(
         services.duplication.duplicate(setup.userId, setup.fullReferenceMap.referenceMap.id, timestamp)
       )
@@ -97,7 +97,7 @@ object ReferenceMapDuplicationProperties extends Properties("Reference map dupli
       allReferenceMapsBefore <- EitherT.liftF[Future, ServerError, Seq[ReferenceMap]](
         services.referenceService.allReferenceMaps(setup.userId)
       )
-      timestamp <- EitherT.liftF(DateUtil.now)
+      timestamp  <- EitherT.liftF(DateUtil.now)
       duplicated <- EitherT(
         services.duplication.duplicate(setup.userId, setup.fullReferenceMap.referenceMap.id, timestamp)
       )

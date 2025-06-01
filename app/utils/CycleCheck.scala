@@ -30,7 +30,7 @@ object CycleCheck {
           if (successors.contains(target)) State.pure[Set[A], Boolean](true)
           else
             for {
-              visited <- State.get[Set[A]]
+              visited     <- State.get[Set[A]]
               subSearches <-
                 (successors -- visited).toList
                   .traverse(dfs(_, target))

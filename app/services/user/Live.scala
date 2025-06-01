@@ -111,7 +111,7 @@ object Live {
 
       for {
         user <- findAction
-        _ <- userDao.update(
+        _    <- userDao.update(
           UserUpdate
             .update(user, userUpdate)
             .transformInto[Tables.UserRow]

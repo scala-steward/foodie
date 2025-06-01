@@ -189,7 +189,7 @@ object Live {
         OptionT(getReferenceMap(userId, referenceMapId)).getOrElseF(notFound)
       for {
         referenceMap <- findAction
-        _ <- referenceMapDao.update(
+        _            <- referenceMapDao.update(
           ReferenceMap
             .TransformableToDB(
               userId,
@@ -236,7 +236,7 @@ object Live {
     )(implicit
         ec: ExecutionContext
     ): DBIO[ReferenceEntry] = {
-      val referenceEntry = ReferenceEntryCreation.create(referenceEntryCreation)
+      val referenceEntry    = ReferenceEntryCreation.create(referenceEntryCreation)
       val referenceEntryRow =
         ReferenceEntry
           .TransformableToDB(userId, referenceMapId, referenceEntry)
@@ -263,7 +263,7 @@ object Live {
           .getOrElseF(DBIO.failed(DBError.Reference.EntryNotFound))
       for {
         referenceEntryRow <- findAction
-        _ <-
+        _                 <-
           referenceMapEntryDao.update(
             ReferenceEntry
               .TransformableToDB(

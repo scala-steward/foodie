@@ -113,7 +113,7 @@ object Live {
         ComplexFoodCreation.TransformableToDB(userId, complexFood).transformInto[Tables.ComplexFoodRow]
       for {
         inserted <- dao.insert(complexFoodRow)
-        recipe <- OptionT(recipeService.getRecipe(userId, complexFood.recipeId))
+        recipe   <- OptionT(recipeService.getRecipe(userId, complexFood.recipeId))
           .getOrElseF(DBIO.failed(DBError.Complex.Food.RecipeNotFound))
       } yield ComplexFood.TransformableFromDB(inserted, recipe).transformInto[ComplexFood]
     }
@@ -131,7 +131,7 @@ object Live {
       for {
         complexFood <- findAction
         referencing <- complexIngredientDao.findReferencing(complexFoodId)
-        _ <-
+        _           <-
           if (breaksVolumeReference(referencing, update.amountMilliLitres))
             DBIO.failed(DBError.Complex.Food.VolumeReferenceExists)
           else DBIO.successful(())

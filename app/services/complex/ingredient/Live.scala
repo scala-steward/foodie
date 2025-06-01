@@ -93,7 +93,7 @@ object Live {
     )(implicit
         ec: ExecutionContext
     ): DBIO[ComplexIngredient] = {
-      val complexIngredient = ComplexIngredientCreation.create(complexIngredientCreation)
+      val complexIngredient    = ComplexIngredientCreation.create(complexIngredientCreation)
       val complexIngredientRow =
         ComplexIngredient
           .TransformableToDB(userId, recipeId, complexIngredient)
@@ -105,7 +105,7 @@ object Live {
         for {
           createsCycle <- cycleCheck(recipeId, complexIngredientCreation.complexFoodId)
           _            <- if (!createsCycle) DBIO.successful(()) else DBIO.failed(DBError.Complex.Ingredient.Cycle)
-          _ <-
+          _            <-
             if (isValidScalingMode(complexFoodRow.amountMilliLitres, complexIngredientCreation.scalingMode))
               DBIO.successful(())
             else DBIO.failed(DBError.Complex.Ingredient.ScalingModeMismatch)
@@ -131,7 +131,7 @@ object Live {
 
       for {
         complexIngredient <- findAction
-        _ <- withComplexFood(
+        _                 <- withComplexFood(
           userId = userId,
           complexFoodId = complexFoodId
         ) { complexFoodRow =>

@@ -97,7 +97,7 @@ object Live {
     val init = string.dropRight(1).trim
     val last = string.lastOption.map(_.toLower)
 
-    val nonEmpty = Validated.condNel(string.nonEmpty, (), "Expected non-empty serving size")
+    val nonEmpty    = Validated.condNel(string.nonEmpty, (), "Expected non-empty serving size")
     val unitMatches =
       Validated.condNel(last.contains('g'), (), s"Expected unit to be 'g', but got '${last.fold("")(c => s"$c")}'")
     val numberMatches = Validated

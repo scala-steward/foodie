@@ -81,7 +81,7 @@ object Live {
         ec: ExecutionContext
     ): DBIO[Meal] = {
       val transformer = for {
-        meal <- OptionT(mealServiceCompanion.getMeal(userId, profileId, id))
+        meal     <- OptionT(mealServiceCompanion.getMeal(userId, profileId, id))
         inserted <- OptionT.liftF(
           mealServiceCompanion.createMeal(
             userId = userId,

@@ -158,7 +158,7 @@ object Live {
         ec: ExecutionContext
     ): DBIO[Option[NutrientAmountMap]] = {
       val transformer = for {
-        allNutrients <- OptionT.liftF(nutrientService.all)
+        allNutrients      <- OptionT.liftF(nutrientService.all)
         recipeNutrientMap <- OptionT(
           nutrientsOfRecipes(
             userId = userId,
@@ -216,8 +216,8 @@ object Live {
         allMealEntries <- mealService.getMealEntries(userId, profileId, allMeals.map(_.id))
         allRecipes     <- recipeService.allRecipes(userId)
       } yield {
-        val mealMap   = allMeals.map(meal => MealKey(userId, profileId, meal.id) -> meal).toMap
-        val recipeMap = allRecipes.map(recipe => recipe.id -> recipe).toMap
+        val mealMap    = allMeals.map(meal => MealKey(userId, profileId, meal.id) -> meal).toMap
+        val recipeMap  = allRecipes.map(recipe => recipe.id -> recipe).toMap
         val inSomeMeal = allMealEntries.toList
           .flatMap { case (mealId, mealEntries) =>
             mealEntries.map(mealId -> _)
@@ -247,12 +247,12 @@ object Live {
     )(implicit
         ec: ExecutionContext
     ): DBIO[Option[BigDecimal]] = {
-      val recipeIds = mealEntries.map(_.recipeId)
+      val recipeIds   = mealEntries.map(_.recipeId)
       val transformer = for {
         recipes <- OptionT.liftF(recipeService.getRecipes(userId, recipeIds))
         recipeMap = recipes.map(recipe => recipe.id -> recipe).toMap
         recipeWeights <- OptionT(weightsOfRecipes(userId, recipeIds))
-        weights <- OptionT.fromOption {
+        weights       <- OptionT.fromOption {
           // Traverse without asynchronous effect
           mealEntries.toList.traverse { mealEntry =>
             for {
@@ -272,13 +272,13 @@ object Live {
       for {
         ingredientsMap        <- recipeService.getAllIngredients(userId, recipeIds)
         complexIngredientsMap <- complexIngredientService.all(userId, recipeIds)
-        conversionFactorMap <- nutrientService.conversionFactors(
+        conversionFactorMap   <- nutrientService.conversionFactors(
           ingredientsMap.values.flatten.map(ConversionFactorKey.of).toSeq
         )
         complexIngredients = complexIngredientsMap.values.flatten.toSeq
         complexFoods <- complexFoodService.getAll(userId, complexIngredients.map(_.complexFoodId))
       } yield {
-        val complexFoodsMap = complexFoods.map(complexFood => complexFood.recipeId -> complexFood).toMap
+        val complexFoodsMap   = complexFoods.map(complexFood => complexFood.recipeId -> complexFood).toMap
         val ingredientWeights =
           ingredientsMap.toList
             .traverse { case (recipeId, ingredients) =>
@@ -363,9 +363,9 @@ object Live {
 
       def descend(recipeId: RecipeId): DBIO[NutrientsAndFoods] =
         for {
-          ingredients        <- recipeService.getIngredients(userId, recipeId)
-          complexIngredients <- complexIngredientService.all(userId, Seq(recipeId))
-          nutrients          <- nutrientService.nutrientsOfIngredients(ingredients)
+          ingredients                          <- recipeService.getIngredients(userId, recipeId)
+          complexIngredients                   <- complexIngredientService.all(userId, Seq(recipeId))
+          nutrients                            <- nutrientService.nutrientsOfIngredients(ingredients)
           recipeNutrientMapsOfComplexNutrients <- complexIngredients.values.flatten.toList
             .traverse(nutrientsOfComplexIngredient)
         } yield NutrientsAndFoods(
@@ -374,7 +374,7 @@ object Live {
         )
 
       for {
-        recipes <- recipeService.getRecipes(userId, recipeIds)
+        recipes              <- recipeService.getRecipes(userId, recipeIds)
         allNutrientsAndFoods <- recipes.traverse { recipe =>
           descend(recipe.id).map(recipe -> _): DBIO[(Recipe, NutrientsAndFoods)]
         }

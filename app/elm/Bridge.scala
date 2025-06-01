@@ -86,7 +86,7 @@ object Bridge {
 
   def mkAndWrite[A](implicit tpeTag: TypeTag[A], encoder: Lazy[Encoder[A]]): Unit = {
     val (filePath, content) = mkElmBridge[A]
-    val file = (
+    val file                = (
       elmModuleFilePath /
         filePath
     ).createIfNotExists(createParents = true)
