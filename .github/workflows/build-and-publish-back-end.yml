@@ -23,7 +23,7 @@ jobs:
           distribution: 'temurin'
           cache: 'sbt'
       - name: Set up SBT
-        uses: sbt/setup-sbt@26ab4b0fa1c47fa62fc1f6e51823a658fb6c760c # v1.1.7
+        uses: sbt/setup-sbt@69a46ab4acd4316aa16e68d91a9249a98d7e78d5 # v1.1.8
       # Technically, we could use 'sbt "Docker / publish"',
       # but one would need to handle the credentials elsewhere.
       - name: Prepare Docker image
@@ -45,7 +45,7 @@ jobs:
             type=raw,value=latest
             type=semver,pattern={{version}},value=${{ inputs.version-tag }}
       - name: Build and push Docker image
-        uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1 # v6.16.0
+        uses: docker/build-push-action@1dc73863535b631f98b2378be8619f83b136f4a0 # v6.17.0
         with:
           context: target/docker/stage
           push: true
