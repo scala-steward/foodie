@@ -1,0 +1,13 @@
+name: Auto-merge Dependabot Pull Requests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  call_auto_merge:
+    if: github.actor == 'scala-steward[bot]'
+    uses: ./.github/workflows/auto-merge-pull-requests.yml
+    secrets:
+      github-token: ${{ secrets.GITHUB_TOKEN }}
