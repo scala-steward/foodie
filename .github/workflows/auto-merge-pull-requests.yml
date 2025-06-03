@@ -1,20 +1,17 @@
-name: Auto-merge Update Pull Requests
+name: Auto-merge Pull Requests
 
 on:
-  pull_request:
-    branches:
-      - main
-
-permissions:
-  contents: write
-  pull-requests: write
-
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  workflow_call:
+    secrets:
+      github-token:
+        description: 'GitHub token with permissions to approve and merge pull requests'
+        required: true
 
 jobs:
   auto-merge:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     if: ${{ github.actor == 'dependabot[bot]' || github.actor == 'scala-steward[bot]' }}
     steps:
       - name: Approve Pull Request
