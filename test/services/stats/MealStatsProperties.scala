@@ -85,7 +85,7 @@ object MealStatsProperties extends Properties("Meal stats") {
   property("Per meal stats") = Prop.forAll(
     perMealSetupGen :| "Per meal setup"
   ) { setup =>
-    val recipeMap = setup.userAndRecipes.fullRecipes.map(fr => fr.recipe.id -> fr).toList.toMap
+    val recipeMap    = setup.userAndRecipes.fullRecipes.map(fr => fr.recipe.id -> fr).toList.toMap
     val statsService = ServiceFunctions.statsServiceWith(
       mealContents = ContentsUtil.Meal.from(setup.userAndRecipes.userId, setup.profileId, Seq(setup.fullMeal.meal)),
       mealEntryContents = ContentsUtil.MealEntry.from(setup.userAndRecipes.userId, setup.profileId, setup.fullMeal),
@@ -150,7 +150,7 @@ object MealStatsProperties extends Properties("Meal stats") {
       dateInterval       <- dateIntervalGen(earliest, latest)
       userAndRecipeSetup <- setupUserIdAndRecipesGen
       profileId          <- GenUtils.taggedId[ProfileTag]
-      fullMeals <-
+      fullMeals          <-
         Gen.nonEmptyListOf(meal.Gens.fullMealGen(userAndRecipeSetup.fullRecipes.map(_.recipe.id), earliest, latest))
     } yield OverTimeSetup(
       userIdAndRecipes = userAndRecipeSetup,
@@ -163,7 +163,7 @@ object MealStatsProperties extends Properties("Meal stats") {
   property("Over time stats") = Prop.forAll(
     overTimeSetupGen() :| "Over time setup"
   ) { setup =>
-    val userId = setup.userIdAndRecipes.userId
+    val userId       = setup.userIdAndRecipes.userId
     val statsService = ServiceFunctions.statsServiceWith(
       mealContents = ContentsUtil.Meal.from(userId, setup.profileId, setup.fullMeals.map(_.meal)),
       mealEntryContents = setup.fullMeals.flatMap(ContentsUtil.MealEntry.from(userId, setup.profileId, _)),

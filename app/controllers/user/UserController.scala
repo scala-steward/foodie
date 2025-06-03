@@ -42,7 +42,7 @@ class UserController @Inject() (
       val transformer = for {
         user      <- OptionT(userService.getByNickname(credentials.nickname))
         sessionId <- OptionT.liftF(userService.addSession(user.id))
-        jwt <- OptionT.fromOption {
+        jwt       <- OptionT.fromOption {
           if (UserController.validateCredentials(credentials, user)) {
             val jwt = JwtUtil.createJwt(
               content = LoginContent(
@@ -118,7 +118,7 @@ class UserController @Inject() (
   def requestRegistration: Action[UserIdentifier] =
     Action.async(circe.tolerantJson[UserIdentifier]) { request =>
       val userIdentifier = request.body
-      val action = for {
+      val action         = for {
         _ <- EitherT.fromOptionF(
           userService
             .getByNickname(userIdentifier.nickname)

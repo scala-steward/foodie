@@ -70,7 +70,7 @@ object Live {
     )(implicit ec: ExecutionContext): DBIO[ReferenceMap] = {
       val transformer = for {
         referenceMap <- OptionT(referenceServiceCompanion.getReferenceMap(userId, id))
-        inserted <- OptionT.liftF(
+        inserted     <- OptionT.liftF(
           referenceServiceCompanion.createReferenceMap(
             userId,
             newId,

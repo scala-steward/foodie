@@ -167,8 +167,8 @@ object RecipeServiceProperties extends Properties("Recipe service") {
       ingredientContents = ContentsUtil.Ingredient.from(userId, fullRecipe)
     )
     val ingredientCreation = IngredientCreation(ingredient.foodId, ingredient.amountUnit)
-    val transformer = for {
-      ingredient <- EitherT(recipeService.addIngredient(userId, fullRecipe.recipe.id, ingredientCreation))
+    val transformer        = for {
+      ingredient  <- EitherT(recipeService.addIngredient(userId, fullRecipe.recipe.id, ingredientCreation))
       ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
         recipeService.getIngredients(userId, fullRecipe.recipe.id)
       )
@@ -399,8 +399,8 @@ object RecipeServiceProperties extends Properties("Recipe service") {
       ingredientContents = ContentsUtil.Ingredient.from(userId1, fullRecipe)
     )
     val ingredientCreation = IngredientCreation(ingredient.foodId, ingredient.amountUnit)
-    val transformer = for {
-      result <- EitherT.liftF(recipeService.addIngredient(userId2, fullRecipe.recipe.id, ingredientCreation))
+    val transformer        = for {
+      result      <- EitherT.liftF(recipeService.addIngredient(userId2, fullRecipe.recipe.id, ingredientCreation))
       ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
         recipeService.getIngredients(userId1, fullRecipe.recipe.id)
       )

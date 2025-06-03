@@ -152,7 +152,7 @@ object ReferenceServiceProperties extends Properties("Reference service properti
       referenceMapEntryContents = Seq.empty
     )
     val transformer = for {
-      result <- EitherT.liftF[Future, ServerError, Boolean](referenceMapService.delete(userId, referenceMap.id))
+      result  <- EitherT.liftF[Future, ServerError, Boolean](referenceMapService.delete(userId, referenceMap.id))
       fetched <- EitherT.liftF[Future, ServerError, Option[ReferenceMap]](
         referenceMapService.getReferenceMap(userId, referenceMap.id)
       )

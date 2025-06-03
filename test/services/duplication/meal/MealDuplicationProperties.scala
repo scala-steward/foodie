@@ -95,7 +95,7 @@ object MealDuplicationProperties extends Properties("Meal duplication") {
       fullMeal = setup.fullMeal
     )
     val transformer = for {
-      timestamp <- EitherT.liftF[Future, ServerError, SimpleDate](DateUtil.now)
+      timestamp      <- EitherT.liftF[Future, ServerError, SimpleDate](DateUtil.now)
       duplicatedMeal <- EitherT(
         services.duplication.duplicate(setup.userId, setup.profileId, setup.fullMeal.meal.id, timestamp)
       )
@@ -126,7 +126,7 @@ object MealDuplicationProperties extends Properties("Meal duplication") {
       allMealsBefore <- EitherT.liftF[Future, ServerError, Seq[Meal]](
         services.mealService.allMeals(setup.userId, setup.profileId, RequestInterval(None, None))
       )
-      timestamp <- EitherT.liftF[Future, ServerError, SimpleDate](DateUtil.now)
+      timestamp  <- EitherT.liftF[Future, ServerError, SimpleDate](DateUtil.now)
       duplicated <- EitherT(
         services.duplication.duplicate(setup.userId, setup.profileId, setup.fullMeal.meal.id, timestamp)
       )
