@@ -1,4 +1,4 @@
-name: Auto-merge Dependabot Pull Requests
+name: Auto-merge Scala Steward Pull Requests
 
 on:
   pull_request:
