@@ -1,4 +1,4 @@
-name: Auto-merge Dependabot Pull Requests
+name: Auto-merge Scala Steward Pull Requests
 
 on:
   pull_request:
@@ -6,6 +6,18 @@ on:
       - main
 
 jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Debugging Information
+        run: |
+          echo "Actor: ${{ github.actor }}"
+          echo "Event Name: ${{ github.event_name }}"
+          echo "Event Payload: ${{ toJson(github.event) }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Workflow: ${{ github.workflow }}"
+
   call_auto_merge:
     if: github.actor == 'scala-steward[bot]'
     uses: ./.github/workflows/auto-merge-pull-requests.yml
