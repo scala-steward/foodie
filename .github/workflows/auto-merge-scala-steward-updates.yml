@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+permissions:
+  pull-requests: write
+
 jobs:
   call_auto_merge:
     if: github.event.pull_request.user.login == 'scala-steward'
