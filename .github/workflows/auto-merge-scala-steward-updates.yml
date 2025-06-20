@@ -10,4 +10,4 @@ jobs:
     if: github.event.pull_request.user.login == 'scala-steward'
     uses: ./.github/workflows/auto-merge-pull-requests.yml
     secrets:
-      github-token: ${{ secrets.AUTO_MERGE_TOKEN }}
+      merge-token: ${{ secrets.AUTO_MERGE_TOKEN }}
