@@ -6,15 +6,8 @@ on:
       - main
 
 jobs:
-  check_user_name:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check if PR is from Scala Steward
-        run: |
-          echo ${{ github.event.pull_request.user.login }}
-
   call_auto_merge:
-    if: github.event.pull_request.user.login == 'scala-steward[bot]'
+    if: github.event.pull_request.user.login == 'scala-steward'
     uses: ./.github/workflows/auto-merge-pull-requests.yml
     secrets:
       github-token: ${{ secrets.GITHUB_TOKEN }}
