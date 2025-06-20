@@ -5,9 +5,13 @@ on:
     branches:
       - main
 
+permissions:
+  pull-requests: write
+  contents: write
+
 jobs:
   call_auto_merge:
-    if: github.actor == 'scala-steward[bot]'
+    if: github.event.pull_request.user.login == 'scala-steward'
     uses: ./.github/workflows/auto-merge-pull-requests.yml
     secrets:
-      github-token: ${{ secrets.GITHUB_TOKEN }}
+      github-token: ${{ secrets.AUTO_MERGE_TOKEN }}
