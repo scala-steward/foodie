@@ -9,7 +9,7 @@ jobs:
 
   # Dependabot mostly concerns GitHub Actions, so we only auto-merge non-major updates.
   fetch_metadata:
-    if: github.event_name == 'pull_request' && github.actor == 'dependabot' && github.event.action == 'opened'
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
     outputs:
       update-type: ${{ steps.dependabot-metadata.outputs.update-type }}
@@ -24,4 +24,4 @@ jobs:
     if: needs.fetch_metadata.outputs.update-type != 'version-update:semver-major'
     uses: ./.github/workflows/auto-merge-pull-requests.yml
     secrets:
-      github-token: ${{ secrets.AUTO_MERGE_TOKEN }}
+      merge-token: ${{ secrets.AUTO_MERGE_TOKEN }}
