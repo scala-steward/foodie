@@ -41,7 +41,7 @@ object Gens {
 
   def complexFoodUpdate(volumeAmountOption: VolumeAmountOption): Gen[ComplexFoodUpdate] =
     for {
-      amountGrams <- GenUtils.smallBigDecimalGen
+      amountGrams       <- GenUtils.smallBigDecimalGen
       amountMilliLitres <-
         volumeAmountOption match {
           case VolumeAmountOption.NoVolume       => Gen.const(None)

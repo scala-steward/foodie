@@ -34,7 +34,7 @@ class StatsController @Inject() (
   def get(profileId: UUID, from: Option[String], to: Option[String]): Action[AnyContent] =
     userAction.async { request =>
       val typedProfileId = profileId.transformInto[ProfileId]
-      val transformer = for {
+      val transformer    = for {
         stats <-
           OptionT.liftF(
             statsService
@@ -75,7 +75,7 @@ class StatsController @Inject() (
   def ofComplexFood(recipeId: UUID): Action[AnyContent] =
     userAction.async { request =>
       val typedRecipeId = recipeId.transformInto[db.ComplexFoodId]
-      val transformer = for {
+      val transformer   = for {
         nutrients   <- OptionT(statsService.nutrientsOfComplexFood(request.user.id, typedRecipeId))
         complexFood <- OptionT(complexFoodService.get(request.user.id, typedRecipeId))
       } yield (nutrients, complexFood.amountGrams)
@@ -93,7 +93,7 @@ class StatsController @Inject() (
   def ofRecipe(recipeId: UUID): Action[AnyContent] =
     userAction.async { request =>
       val typedRecipeId = recipeId.transformInto[db.RecipeId]
-      val transformer = for {
+      val transformer   = for {
         nutrients     <- OptionT(statsService.nutrientsOfRecipe(request.user.id, typedRecipeId))
         weightInGrams <- OptionT(statsService.weightOfRecipe(request.user.id, typedRecipeId))
       } yield (nutrients, weightInGrams)

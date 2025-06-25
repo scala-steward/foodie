@@ -173,7 +173,7 @@ object Live {
 
       for {
         meal <- findAction
-        _ <- mealDao.update(
+        _    <- mealDao.update(
           Meal
             .TransformableToDB(
               userId,
@@ -200,7 +200,7 @@ object Live {
     ): DBIO[Map[MealKey, Seq[MealEntry]]] =
       for {
         matchingMeals <- mealDao.allOf(userId, mealIds)
-        mealEntries <-
+        mealEntries   <-
           mealEntryDao
             .findAllFor(userId, profileId, matchingMeals.map(_.id.transformInto[MealId]))
             .map {
@@ -217,7 +217,7 @@ object Live {
     )(implicit
         ec: ExecutionContext
     ): DBIO[MealEntry] = {
-      val mealEntry = MealEntryCreation.create(mealEntryId, mealEntryCreation)
+      val mealEntry    = MealEntryCreation.create(mealEntryId, mealEntryCreation)
       val mealEntryRow = MealEntry
         .TransformableToDB(userId, profileId, mealId, mealEntry)
         .transformInto[Tables.MealEntryRow]
@@ -240,7 +240,7 @@ object Live {
           .getOrElseF(DBIO.failed(DBError.Meal.EntryNotFound))
       for {
         mealEntryRow <- findAction
-        _ <- mealEntryDao.update(
+        _            <- mealEntryDao.update(
           MealEntry
             .TransformableToDB(
               userId,

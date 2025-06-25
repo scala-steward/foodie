@@ -12,7 +12,7 @@ object Gens {
 
   def complexIngredientsGen(complexFoods: Seq[ComplexFood]): Gen[List[ComplexIngredient]] =
     for {
-      subset <- GenUtils.subset(complexFoods)
+      subset       <- GenUtils.subset(complexFoods)
       scalingModes <- subset.traverse(
         _.amountMilliLitres
           .pipe(scalingModesByVolumeAmount)

@@ -19,7 +19,7 @@ object AllFoodsProperties extends Properties("All foods") {
 
   private def oldImplementation: DBIO[Seq[Food]] =
     for {
-      foods <- Tables.FoodName.result
+      foods       <- Tables.FoodName.result
       withMeasure <- foods.traverse { food =>
         Tables.ConversionFactor
           .filter(cf => cf.foodId === food.foodId)

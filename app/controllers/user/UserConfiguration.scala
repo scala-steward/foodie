@@ -93,7 +93,7 @@ object UserConfiguration {
       jwt: String
   ): EmailParameters = {
     val addressWithMessage = emailComponents(userConfiguration)(operation)
-    val message =
+    val message            =
       s"""${userConfiguration.greeting} ${userIdentifier.nickname},
            |
            |${addressWithMessage.message}

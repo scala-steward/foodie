@@ -34,7 +34,7 @@ object RecipeDuplicationProperties extends Properties("Recipe duplication") {
   ): Services = {
     val recipeDao      = DAOTestInstance.Recipe.instanceFrom(ContentsUtil.Recipe.from(userId, Seq(recipe)))
     val complexFoodDao = DAOTestInstance.ComplexFood.instanceFrom(ContentsUtil.ComplexFood.from(userId, complexFoods))
-    val ingredientDao = DAOTestInstance.Ingredient.instanceFrom(
+    val ingredientDao  = DAOTestInstance.Ingredient.instanceFrom(
       ContentsUtil.Ingredient.from(
         userId,
         FullRecipe(
@@ -94,7 +94,7 @@ object RecipeDuplicationProperties extends Properties("Recipe duplication") {
     recipe                <- services.recipe.Gens.recipeGen
     referencedRecipes     <- Gen.nonEmptyListOf(services.recipe.Gens.recipeGen)
     subsetForComplexFoods <- GenUtils.subset(referencedRecipes)
-    complexFoods <- subsetForComplexFoods.traverse(
+    complexFoods          <- subsetForComplexFoods.traverse(
       services.complex.food.Gens.complexFood(_, VolumeAmountOption.OptionalVolume)
     )
     ingredients        <- Gen.listOf(services.recipe.Gens.ingredientGen)
@@ -135,7 +135,7 @@ object RecipeDuplicationProperties extends Properties("Recipe duplication") {
     val transformer = for {
       timestamp        <- EitherT.liftF(DateUtil.now)
       duplicatedRecipe <- EitherT(services.duplication.duplicate(setup.userId, setup.recipe.id, timestamp))
-      ingredients <- EitherT.liftF[Future, ServerError, List[Ingredient]](
+      ingredients      <- EitherT.liftF[Future, ServerError, List[Ingredient]](
         services.recipeService.getIngredients(setup.userId, duplicatedRecipe.id)
       )
       complexIngredients <- EitherT.liftF[Future, ServerError, Seq[ComplexIngredient]](
@@ -164,11 +164,11 @@ object RecipeDuplicationProperties extends Properties("Recipe duplication") {
       complexIngredients = setup.complexIngredients
     )
     val transformer = for {
-      timestamp <- EitherT.liftF(DateUtil.now)
+      timestamp        <- EitherT.liftF(DateUtil.now)
       allRecipesBefore <- EitherT.liftF[Future, ServerError, Seq[Recipe]](
         services.recipeService.allRecipes(setup.userId)
       )
-      duplicated <- EitherT(services.duplication.duplicate(setup.userId, setup.recipe.id, timestamp))
+      duplicated      <- EitherT(services.duplication.duplicate(setup.userId, setup.recipe.id, timestamp))
       allRecipesAfter <- EitherT.liftF[Future, ServerError, Seq[Recipe]](
         services.recipeService.allRecipes(setup.userId)
       )
