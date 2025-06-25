@@ -40,7 +40,7 @@ object RescaleProperties extends Properties("Rescale properties") {
   ): Services = {
     val recipeDao = DAOTestInstance.Recipe.instanceFrom(ContentsUtil.Recipe.from(userId, recipe +: referencedRecipes))
     val complexFoodDao = DAOTestInstance.ComplexFood.instanceFrom(ContentsUtil.ComplexFood.from(userId, complexFoods))
-    val ingredientDao = DAOTestInstance.Ingredient.instanceFrom(
+    val ingredientDao  = DAOTestInstance.Ingredient.instanceFrom(
       ContentsUtil.Ingredient.from(
         userId,
         FullRecipe(
@@ -117,7 +117,7 @@ object RescaleProperties extends Properties("Rescale properties") {
     recipe                <- services.recipe.Gens.recipeGen
     referencedRecipes     <- Gen.nonEmptyListOf(services.recipe.Gens.recipeGen)
     subsetForComplexFoods <- GenUtils.subset(referencedRecipes)
-    complexFoods <- subsetForComplexFoods.traverse(
+    complexFoods          <- subsetForComplexFoods.traverse(
       services.complex.food.Gens.complexFood(_, VolumeAmountOption.OptionalVolume)
     )
     ingredients        <- Gen.listOf(services.recipe.Gens.ingredientGen)
@@ -147,7 +147,7 @@ object RescaleProperties extends Properties("Rescale properties") {
     )
     val transformer = for {
       rescaledRecipe <- EitherT(services.rescaleService.rescale(setup.userId, setup.recipe.id))
-      recipeWeight <- EitherT.fromOptionF(
+      recipeWeight   <- EitherT.fromOptionF(
         services.statsService.weightOfRecipe(setup.userId, setup.recipe.id),
         ErrorContext.Recipe.NotFound.asServerError
       )

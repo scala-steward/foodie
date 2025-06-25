@@ -90,7 +90,7 @@ object Live {
       val findAction = OptionT(get(userId, profileId)).getOrElseF(notFound)
       for {
         profile <- findAction
-        _ <- dao.update(
+        _       <- dao.update(
           Profile
             .TransformableToDB(
               userId,

@@ -184,7 +184,7 @@ object Live {
       val findAction = OptionT(getRecipe(userId, id)).getOrElseF(notFound)
       for {
         recipe <- findAction
-        _ <- recipeDao.update(
+        _      <- recipeDao.update(
           Recipe
             .TransformableToDB(
               userId,
@@ -210,7 +210,7 @@ object Live {
         ec: ExecutionContext
     ): DBIO[List[Ingredient]] =
       for {
-        exists <- recipeDao.exists(RecipeKey(userId, recipeId))
+        exists      <- recipeDao.exists(RecipeKey(userId, recipeId))
         ingredients <-
           if (exists)
             ingredientDao
@@ -245,7 +245,7 @@ object Live {
     )(implicit
         ec: ExecutionContext
     ): DBIO[Ingredient] = {
-      val ingredient = IngredientCreation.create(id, ingredientCreation)
+      val ingredient    = IngredientCreation.create(id, ingredientCreation)
       val ingredientRow = Ingredient
         .TransformableToDB(userId, recipeId, ingredient)
         .transformInto[Tables.RecipeIngredientRow]
@@ -268,7 +268,7 @@ object Live {
           .getOrElseF(DBIO.failed(DBError.Recipe.IngredientNotFound))
       for {
         ingredientRow <- findAction
-        _ <- ingredientDao.update(
+        _             <- ingredientDao.update(
           Ingredient
             .TransformableToDB(
               userId,

@@ -278,7 +278,7 @@ object MealServiceProperties extends Properties("Meal service") {
         flattenedMealEntries(setup.profileId, mealService)(setup.userId, Seq(setup.fullMeal.meal.id))
       )
     } yield {
-      val expectedMealEntry = MealEntryUpdate.update(setup.mealEntry, setup.mealEntryUpdate)
+      val expectedMealEntry   = MealEntryUpdate.update(setup.mealEntry, setup.mealEntryUpdate)
       val expectedMealEntries = setup.fullMeal.mealEntries
         .map(mealEntry => mealEntry.id -> mealEntry)
         .toMap
