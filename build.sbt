@@ -52,7 +52,7 @@ lazy val root = (project in file("."))
       "com.kubukoz"           %% "slick-effect-catsio"      % "0.6.1",
       // Transitive dependency. Override added for proper version.
       "com.fasterxml.jackson.module" %% "jackson-module-scala"      % "2.19.2",
-      "org.scalacheck"               %% "scalacheck"                % "1.18.1" % Test,
+      "org.scalacheck"               %% "scalacheck"                % "1.19.0" % Test,
       "org.typelevel"                %% "cats-laws"                 % "2.13.0" % Test,
       "com.github.alexarchambault"   %% "scalacheck-shapeless_1.15" % "1.3.0"  % Test
     ),
