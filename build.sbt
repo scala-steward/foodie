@@ -37,7 +37,7 @@ lazy val root = (project in file("."))
       "com.dripower"          %% "play-circe"               % "3014.1",
       "com.davegurnell"       %% "bridges"                  % "0.24.0",
       "com.github.pathikrit"  %% "better-files"             % "3.9.2",
-      "com.typesafe"           % "config"                   % "1.4.4",
+      "com.typesafe"           % "config"                   % "1.4.5",
       "io.scalaland"          %% "chimney"                  % "1.8.2",
       "com.github.jwt-scala"  %% "jwt-core"                 % jwtVersion,
       "com.github.jwt-scala"  %% "jwt-circe"                % jwtVersion,
@@ -52,7 +52,7 @@ lazy val root = (project in file("."))
       "com.kubukoz"           %% "slick-effect-catsio"      % "0.6.1",
       // Transitive dependency. Override added for proper version.
       "com.fasterxml.jackson.module" %% "jackson-module-scala"      % "2.19.2",
-      "org.scalacheck"               %% "scalacheck"                % "1.18.1" % Test,
+      "org.scalacheck"               %% "scalacheck"                % "1.19.0" % Test,
       "org.typelevel"                %% "cats-laws"                 % "2.13.0" % Test,
       "com.github.alexarchambault"   %% "scalacheck-shapeless_1.15" % "1.3.0"  % Test
     ),
