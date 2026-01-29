@@ -26,7 +26,7 @@ lazy val root = (project in file("."))
       "com.typesafe.slick"    %% "slick-hikaricp"           % slickVersion,
       "com.typesafe.slick"    %% "slick-codegen"            % slickVersion,
       "org.postgresql"         % "postgresql"               % "42.7.9",
-      "ch.qos.logback"         % "logback-classic"          % "1.5.25",
+      "ch.qos.logback"         % "logback-classic"          % "1.5.26",
       "net.logstash.logback"   % "logstash-logback-encoder" % "9.0",
       "io.circe"              %% "circe-core"               % circeVersion,
       "io.circe"              %% "circe-generic"            % circeVersion,
@@ -41,7 +41,7 @@ lazy val root = (project in file("."))
       "io.scalaland"          %% "chimney"                  % "1.8.2",
       "com.github.jwt-scala"  %% "jwt-core"                 % jwtVersion,
       "com.github.jwt-scala"  %% "jwt-circe"                % jwtVersion,
-      "com.github.pureconfig" %% "pureconfig"               % "0.17.9",
+      "com.github.pureconfig" %% "pureconfig"               % "0.17.10",
       "org.typelevel"         %% "cats-effect"              % "3.6.3",
       "org.typelevel"         %% "cats-core"                % "2.13.0",
       "com.beachape"          %% "enumeratum-circe"         % "1.9.2",
@@ -51,7 +51,7 @@ lazy val root = (project in file("."))
       "com.kubukoz"           %% "slick-effect"             % "0.6.1",
       "com.kubukoz"           %% "slick-effect-catsio"      % "0.6.1",
       // Transitive dependency. Override added for proper version.
-      "com.fasterxml.jackson.module" %% "jackson-module-scala"      % "2.20.1",
+      "com.fasterxml.jackson.module" %% "jackson-module-scala"      % "2.20.2",
       "org.scalacheck"               %% "scalacheck"                % "1.19.0" % Test,
       "org.typelevel"                %% "cats-laws"                 % "2.13.0" % Test,
       "com.github.alexarchambault"   %% "scalacheck-shapeless_1.15" % "1.3.0"  % Test
