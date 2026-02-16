@@ -6,6 +6,6 @@ addSbtPlugin("nl.gn0s1s" % "sbt-dotenv" % "3.2.0")
 
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.6")
 
-libraryDependencies += "org.postgresql" % "postgresql" % "42.7.9"
+libraryDependencies += "org.postgresql" % "postgresql" % "42.7.10"
 
 ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
