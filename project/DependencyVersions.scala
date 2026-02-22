@@ -8,7 +8,7 @@ object DependencyVersions {
 
   val Postgresql: String = "42.7.9"
 
-  val LogbackClassic: String = "1.5.26"
+  val LogbackClassic: String = "1.5.32"
 
   val LogstashLogbackEncoder: String = "9.0"
 
