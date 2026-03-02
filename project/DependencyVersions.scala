@@ -24,7 +24,7 @@ object DependencyVersions {
 
   val BetterFiles: String = "3.9.2"
 
-  val Config: String = "1.4.5"
+  val Config: String = "1.4.6"
 
   val Chimney: String = "1.8.2"
 
