@@ -32,8 +32,8 @@ jobs:
           path: git-ops
 
       - name: Update image tag
+        working-directory: git-ops
         run: |
-          cd git-ops
           # Update the appropriate component's image tag
           if [ "${{ inputs.component }}" = "backend" ]; then
             yq -i '.backend.image.tag = "${{ inputs.version-tag }}"' foodie/values.yaml || \
