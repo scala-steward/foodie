@@ -15,7 +15,7 @@ jobs:
   update-gitops:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source repository
+      - name: Check out source repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           path: ${{ github.workspace }}/source
@@ -52,6 +52,10 @@ jobs:
             yq -i '.frontend.image.tag = "${{ inputs.version-tag }}"' foodie/values.yaml
           fi
 
+      - name: Determine commit title
+        id: commit
+        run: echo "title=$(echo '${{ github.event.head_commit.message }}' | head -n 1)" >> $GITHUB_OUTPUT
+
       - name: Create pull request
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
@@ -64,8 +68,8 @@ jobs:
             Automated deployment PR for foodie ${{ inputs.component }}.
             
             **Version:** `${{ inputs.version-tag }}`
-            **Triggered by:** [${{ github.event.head_commit.message }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+            **Triggered by:** [${{ steps.commit.outputs.title }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
           commit-message: "Update foodie ${{ inputs.component }} to ${{ inputs.version-tag }}"
           labels: |
-            - deployment
-            - automated
+            deployment
+            automated
