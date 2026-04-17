@@ -15,6 +15,11 @@ jobs:
   update-gitops:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout source repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          path: ${{ github.workspace }}/source
+
       - name: Generate GitHub App token
         id: app-token
         uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
@@ -29,25 +34,29 @@ jobs:
         with:
           repository: nikitaDanilenko/git-ops
           token: ${{ steps.app-token.outputs.token }}
-          path: git-ops
+          path: ${{ github.workspace }}/git-ops
+
+      - name: Copy deployment manifests
+        run: |
+          # Remove existing foodie folder and copy fresh from source
+          rm -rf ${{ github.workspace }}/git-ops/foodie
+          cp -r ${{ github.workspace }}/source/deployment ${{ github.workspace }}/git-ops/foodie
 
       - name: Update image tag
-        working-directory: git-ops
+        working-directory: ${{ github.workspace }}/git-ops
         run: |
           # Update the appropriate component's image tag
           if [ "${{ inputs.component }}" = "backend" ]; then
-            yq -i '.backend.image.tag = "${{ inputs.version-tag }}"' foodie/values.yaml || \
-              sed -i '/^backend:/,/^[a-z]/{s/tag: ".*"/tag: "${{ inputs.version-tag }}"/}' foodie/values.yaml
+            yq -i '.backend.image.tag = "${{ inputs.version-tag }}"' foodie/values.yaml
           elif [ "${{ inputs.component }}" = "frontend" ]; then
-            yq -i '.frontend.image.tag = "${{ inputs.version-tag }}"' foodie/values.yaml || \
-              sed -i '/^frontend:/,/^[a-z]/{s/tag: ".*"/tag: "${{ inputs.version-tag }}"/}' foodie/values.yaml
+            yq -i '.frontend.image.tag = "${{ inputs.version-tag }}"' foodie/values.yaml
           fi
 
       - name: Create pull request
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           token: ${{ steps.app-token.outputs.token }}
-          path: git-ops
+          path: ${{ github.workspace }}/git-ops
           branch: deploy/foodie-${{ inputs.component }}-${{ inputs.version-tag }}
           delete-branch: true
           title: "Deploy foodie ${{ inputs.component }} ${{ inputs.version-tag }}"
@@ -56,7 +65,7 @@ jobs:
             
             **Version:** `${{ inputs.version-tag }}`
             **Triggered by:** [${{ github.event.head_commit.message }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
-          commit-message: "Update ${{ inputs.component }} to ${{ inputs.version-tag }}"
+          commit-message: "Update foodie ${{ inputs.component }} to ${{ inputs.version-tag }}"
           labels: |
-            deployment
-            automated
+            - deployment
+            - automated
