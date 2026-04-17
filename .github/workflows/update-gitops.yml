@@ -3,7 +3,7 @@ name: Update GitOps deployment
 on:
   workflow_call:
     inputs:
-      version-tag:
+      version:
         type: string
         required: true
       component:
@@ -47,9 +47,9 @@ jobs:
         run: |
           # Update the appropriate component's image tag
           if [ "${{ inputs.component }}" = "backend" ]; then
-            yq -i '.backend.image.tag = "${{ inputs.version-tag }}"' foodie/values.yaml
+            yq -i '.backend.image.tag = "${{ inputs.version }}"' foodie/values.yaml
           elif [ "${{ inputs.component }}" = "frontend" ]; then
-            yq -i '.frontend.image.tag = "${{ inputs.version-tag }}"' foodie/values.yaml
+            yq -i '.frontend.image.tag = "${{ inputs.version }}"' foodie/values.yaml
           fi
 
       - name: Determine commit title
@@ -61,15 +61,15 @@ jobs:
         with:
           token: ${{ steps.app-token.outputs.token }}
           path: ${{ github.workspace }}/git-ops
-          branch: deploy/foodie-${{ inputs.component }}-${{ inputs.version-tag }}
+          branch: deploy/foodie-${{ inputs.component }}-${{ inputs.version }}
           delete-branch: true
-          title: "Deploy foodie ${{ inputs.component }} ${{ inputs.version-tag }}"
+          title: "Deploy `foodie-${{ inputs.component }}:${{ inputs.version }}`"
           body: |
             Automated deployment PR for foodie ${{ inputs.component }}.
             
-            **Version:** `${{ inputs.version-tag }}`
+            **Version:** `${{ inputs.version }}`
             **Triggered by:** [${{ steps.commit.outputs.title }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
-          commit-message: "Update foodie ${{ inputs.component }} to ${{ inputs.version-tag }}"
+          commit-message: "Update foodie-${{ inputs.component }} to ${{ inputs.version }}"
           labels: |
             deployment
             automated
