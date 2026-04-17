@@ -21,10 +21,10 @@ import scala.reflect.runtime.universe.TypeTag
 
 object Bridge {
 
-  private val elmModule: String       = "Api.Types"
-  private val elmModuleFilePath: File = "frontend" / "src" / "Api" / "Types"
+  val elmModule: String       = "Api.Types"
+  val elmModuleFilePath: File = "frontend" / "src" / "Api" / "Types"
 
-  private def mkElmBridge[A](implicit tpeTag: TypeTag[A], encoder: Lazy[Encoder[A]]): (String, String) = {
+  def mkElmBridge[A](implicit tpeTag: TypeTag[A], encoder: Lazy[Encoder[A]]): (String, String) = {
     val (fileName, content) = Elm.buildFile(
       module = elmModule,
       decl = decl[A],
@@ -84,7 +84,7 @@ object Bridge {
         )
   }
 
-  private def mkAndWrite[A](implicit tpeTag: TypeTag[A], encoder: Lazy[Encoder[A]]): Unit = {
+  def mkAndWrite[A](implicit tpeTag: TypeTag[A], encoder: Lazy[Encoder[A]]): Unit = {
     val (filePath, content) = mkElmBridge[A]
     val file                = (
       elmModuleFilePath /
