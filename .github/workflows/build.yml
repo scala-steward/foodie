@@ -68,7 +68,7 @@ jobs:
       - build_and_publish_back_end
     uses: ./.github/workflows/update-gitops.yml
     with:
-      version-tag: ${{ needs.create_new_version.outputs.version }}
+      version: ${{ needs.create_new_version.outputs.version }}
       component: backend
     secrets: inherit
 
@@ -87,6 +87,6 @@ jobs:
       - build_and_publish_front_end
     uses: ./.github/workflows/update-gitops.yml
     with:
-      version-tag: ${{ needs.create_new_version.outputs.version }}
+      version: ${{ needs.create_new_version.outputs.version }}
       component: frontend
     secrets: inherit
