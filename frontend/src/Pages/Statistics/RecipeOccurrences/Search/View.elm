@@ -3,7 +3,6 @@ module Pages.Statistics.RecipeOccurrences.Search.View exposing (view)
 import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.Profile exposing (Profile)
 import Api.Types.RecipeOccurrence exposing (RecipeOccurrence)
-import Configuration exposing (Configuration)
 import Html exposing (Html, button, div, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (disabled)
 import Html.Events exposing (onClick)
@@ -31,11 +30,10 @@ view =
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
-viewMain configuration main =
+viewMain : Page.Main -> Html Page.LogicMsg
+viewMain main =
     ViewUtil.viewMainWith
-        { configuration = configuration
-        , currentPage = Just Statistics
+        { currentPage = Just Statistics
         , showNavigation = True
         }
     <|

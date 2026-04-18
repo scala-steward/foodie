@@ -4,7 +4,6 @@ import Addresses.Frontend
 import Api.Auxiliary exposing (RecipeId)
 import Api.Types.Recipe exposing (Recipe)
 import Basics.Extra exposing (flip)
-import Configuration exposing (Configuration)
 import Html exposing (Attribute, Html, button, input, label, td, text, th, tr)
 import Html.Attributes exposing (disabled, value)
 import Html.Events exposing (onClick, onInput)
@@ -35,8 +34,8 @@ view =
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
-viewMain configuration =
+viewMain : Page.Main -> Html Page.LogicMsg
+viewMain =
     Pages.Util.ParentEditor.View.viewParentsWith
         { currentPage = Just ViewUtil.Recipes
         , matchesSearchText =
@@ -45,7 +44,7 @@ viewMain configuration =
                     || SearchUtil.search string (recipe.description |> Maybe.withDefault "")
         , sort = List.sortBy (.original >> .name)
         , tableHeader = tableHeader
-        , viewLine = always viewRecipeLine
+        , viewLine = viewRecipeLine
         , updateLine = .id >> updateRecipeLine
         , deleteLine = deleteRecipeLine
         , create =
@@ -58,7 +57,6 @@ viewMain configuration =
         , setPagination = Page.ParentMsg << Pages.Util.ParentEditor.Page.SetPagination
         , styling = Style.ids.addRecipeView
         }
-        configuration
 
 
 tableHeader : Html msg

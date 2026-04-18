@@ -1,6 +1,5 @@
 module Pages.ComplexFoods.View exposing (..)
 
-import Configuration exposing (Configuration)
 import Html exposing (Attribute, Html, div, label, text)
 import Pages.ComplexFoods.Foods.View
 import Pages.ComplexFoods.Page as Page
@@ -17,11 +16,10 @@ view =
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
-viewMain configuration main =
+viewMain : Page.Main -> Html Page.LogicMsg
+viewMain main =
     ViewUtil.viewMainWith
-        { configuration = configuration
-        , currentPage = Just ViewUtil.ComplexFoods
+        { currentPage = Just ViewUtil.ComplexFoods
         , showNavigation = True
         }
     <|

@@ -4,7 +4,6 @@ import Addresses.Frontend
 import Api.Auxiliary exposing (ReferenceMapId)
 import Api.Types.ReferenceMap exposing (ReferenceMap)
 import Basics.Extra exposing (flip)
-import Configuration exposing (Configuration)
 import Html exposing (Attribute, Html, button, input, label, td, text, th, tr)
 import Html.Attributes exposing (value)
 import Html.Events exposing (onClick, onInput)
@@ -35,14 +34,14 @@ view =
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
+viewMain : Page.Main -> Html Page.LogicMsg
 viewMain =
     Pages.Util.ParentEditor.View.viewParentsWith
         { currentPage = Just ViewUtil.ReferenceMaps
         , matchesSearchText = \string referenceMap -> SearchUtil.search string referenceMap.name
         , sort = List.sortBy (.original >> .name)
         , tableHeader = tableHeader
-        , viewLine = always viewReferenceMapLine
+        , viewLine = viewReferenceMapLine
         , updateLine = .id >> updateReferenceMapLine
         , deleteLine = deleteReferenceMapLine
         , create =

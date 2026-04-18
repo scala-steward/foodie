@@ -56,21 +56,18 @@ backendPage configuration pathSteps querySteps =
 
 
 toLoginButton :
-    { configuration : Configuration
-    , buttonText : String
+    { buttonText : String
     }
     -> Html msg
 toLoginButton params =
     toLoginButtonWith
-        { configuration = params.configuration
-        , buttonText = params.buttonText
+        { buttonText = params.buttonText
         , attributes = [ Style.classes.button.navigation ]
         }
 
 
 toLoginButtonWith :
-    { configuration : Configuration
-    , buttonText : String
+    { buttonText : String
     , attributes : List (Attribute msg)
     }
     -> Html msg

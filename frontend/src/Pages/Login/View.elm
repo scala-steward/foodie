@@ -1,7 +1,6 @@
 module Pages.Login.View exposing (..)
 
 import Addresses.Frontend
-import Configuration exposing (Configuration)
 import Html exposing (Html, button, div, input, label, text)
 import Html.Attributes exposing (autocomplete, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -21,11 +20,10 @@ view =
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
-viewMain configuration model =
+viewMain : Page.Main -> Html Page.LogicMsg
+viewMain model =
     ViewUtil.viewMainWith
-        { configuration = configuration
-        , currentPage = Just ViewUtil.Login
+        { currentPage = Just ViewUtil.Login
         , showNavigation = False
         }
     <|

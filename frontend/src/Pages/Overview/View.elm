@@ -1,7 +1,6 @@
 module Pages.Overview.View exposing (view)
 
 import Addresses.Frontend
-import Configuration exposing (Configuration)
 import Html exposing (Html, div, text)
 import Pages.Overview.Page as Page
 import Pages.Util.Links as Links
@@ -13,16 +12,15 @@ import Pages.View.Tristate as Tristate
 view : Page.Model -> Html Page.Msg
 view =
     Tristate.view
-        { viewMain = viewMain
+        { viewMain = always viewMain
         , showLoginRedirect = True
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
-viewMain configuration _ =
+viewMain : Html Page.LogicMsg
+viewMain =
     ViewUtil.viewMainWith
-        { configuration = configuration
-        , currentPage = Just ViewUtil.Overview
+        { currentPage = Just ViewUtil.Overview
         , showNavigation = False
         }
     <|

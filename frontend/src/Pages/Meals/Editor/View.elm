@@ -6,7 +6,6 @@ import Api.Types.Meal exposing (Meal)
 import Api.Types.Profile exposing (Profile)
 import Api.Types.SimpleDate exposing (SimpleDate)
 import Basics.Extra exposing (flip)
-import Configuration exposing (Configuration)
 import Html exposing (Attribute, Html, button, input, td, text, th, tr)
 import Html.Attributes exposing (type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -40,8 +39,8 @@ view model =
         model
 
 
-viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
-viewMain configuration main =
+viewMain : Page.Main -> Html Page.LogicMsg
+viewMain main =
     Pages.Util.ParentEditor.View.viewParentsWith
         { currentPage = Nothing
         , matchesSearchText =
@@ -50,7 +49,7 @@ viewMain configuration main =
                     || SearchUtil.search string (meal.date |> DateUtil.toString)
         , sort = List.sortBy (.original >> .date >> DateUtil.toString) >> List.reverse
         , tableHeader = tableHeader
-        , viewLine = \_ -> viewMealLine main.profile
+        , viewLine = viewMealLine main.profile
         , updateLine = .id >> updateMealLine main.profile.name
         , deleteLine = deleteMealLine main.profile.name
         , create =
@@ -63,7 +62,6 @@ viewMain configuration main =
         , setPagination = Pages.Util.ParentEditor.Page.SetPagination >> Page.ParentEditorMsg
         , styling = Style.ids.addMealView
         }
-        configuration
         main.parentEditor
 
 

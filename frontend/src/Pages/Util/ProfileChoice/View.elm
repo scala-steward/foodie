@@ -2,7 +2,6 @@ module Pages.Util.ProfileChoice.View exposing (viewWith)
 
 import Api.Auxiliary exposing (ProfileId)
 import Api.Types.Profile exposing (Profile)
-import Configuration exposing (Configuration)
 import Html exposing (Html, li, menu, text)
 import Pages.Util.Links as Links
 import Pages.Util.ProfileChoice.Page as Page
@@ -26,11 +25,10 @@ viewWith ps =
         }
 
 
-viewMainWith : Directions -> Configuration -> Page.Main -> Html Page.LogicMsg
-viewMainWith ps configuration main =
+viewMainWith : Directions -> Page.Main -> Html Page.LogicMsg
+viewMainWith ps main =
     ViewUtil.viewMainWith
-        { configuration = configuration
-        , currentPage = Just ps.currentPage
+        { currentPage = Just ps.currentPage
         , showNavigation = True
         }
     <|

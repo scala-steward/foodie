@@ -3,7 +3,6 @@ module Pages.Statistics.Meal.Search.View exposing (view)
 import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.Meal exposing (Meal)
 import Api.Types.Profile exposing (Profile)
-import Configuration exposing (Configuration)
 import Html exposing (Html, div, table, tbody, td, text, th, thead, tr)
 import Maybe.Extra
 import Monocle.Compose as Compose
@@ -29,11 +28,10 @@ view =
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
-viewMain configuration main =
+viewMain : Page.Main -> Html Page.LogicMsg
+viewMain main =
     ViewUtil.viewMainWith
-        { configuration = configuration
-        , currentPage = Just Statistics
+        { currentPage = Just Statistics
         , showNavigation = True
         }
     <|

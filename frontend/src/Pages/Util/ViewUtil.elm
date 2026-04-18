@@ -1,7 +1,6 @@
 module Pages.Util.ViewUtil exposing (Page(..), navigationBarWith, navigationToPageButton, navigationToPageButtonWith, pagerButtons, paginate, viewMainWith)
 
 import Addresses.Frontend
-import Configuration exposing (Configuration)
 import Html exposing (Html, button, div, main_, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (disabled)
 import Html.Events exposing (onClick)
@@ -17,8 +16,7 @@ import Util.MaybeUtil as MaybeUtil
 
 
 viewMainWith :
-    { configuration : Configuration
-    , currentPage : Maybe Page
+    { currentPage : Maybe Page
     , showNavigation : Bool
     }
     -> Html msg

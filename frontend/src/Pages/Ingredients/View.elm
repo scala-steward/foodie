@@ -1,6 +1,5 @@
 module Pages.Ingredients.View exposing (view)
 
-import Configuration exposing (Configuration)
 import Html exposing (Attribute, Html, button, div, label, text)
 import Html.Attributes exposing (disabled)
 import Html.Events exposing (onClick)
@@ -21,11 +20,10 @@ view =
         }
 
 
-viewMain : Configuration -> Page.Main -> Html Page.LogicMsg
-viewMain configuration main =
+viewMain : Page.Main -> Html Page.LogicMsg
+viewMain main =
     ViewUtil.viewMainWith
-        { configuration = configuration
-        , currentPage = Nothing
+        { currentPage = Nothing
         , showNavigation = True
         }
     <|
