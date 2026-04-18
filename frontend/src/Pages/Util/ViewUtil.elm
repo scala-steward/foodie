@@ -27,8 +27,7 @@ viewMainWith params html =
     let
         navigation =
             [ navigationBar
-                { mainPageURL = params.configuration |> .mainPageURL
-                , currentPage = params.currentPage
+                { currentPage = params.currentPage
                 }
             ]
                 |> List.filter (always params.showNavigation)
@@ -122,19 +121,13 @@ nameOf page =
             "Profiles"
 
 
-navigationLink : { mainPageURL : String, page : String } -> String
+navigationLink : { page : String } -> String
 navigationLink ps =
-    Url.Builder.relative
-        [ ps.mainPageURL
-        , "#"
-        , ps.page
-        ]
-        []
+    Url.Builder.absolute [ ps.page ] []
 
 
 navigationToPageButton :
     { page : Page
-    , mainPageURL : String
     , currentPage : Maybe Page
     }
     -> Html msg
@@ -143,7 +136,6 @@ navigationToPageButton ps =
         { page = ps.page
         , nameOf = nameOf
         , addressSuffix = addressSuffix
-        , mainPageURL = ps.mainPageURL
         , currentPage = ps.currentPage
         }
 
@@ -152,7 +144,6 @@ navigationToPageButtonWith :
     { page : page
     , nameOf : page -> String
     , addressSuffix : page -> String
-    , mainPageURL : String
     , currentPage : Maybe page
     }
     -> Html msg
@@ -173,8 +164,7 @@ navigationToPageButtonWith ps =
         Links.linkButton
             { url =
                 navigationLink
-                    { mainPageURL = ps.mainPageURL
-                    , page = ps.addressSuffix ps.page
+                    { page = ps.addressSuffix ps.page
                     }
             , attributes = [ Style.classes.button.navigation ]
             , children = [ text <| ps.nameOf <| ps.page ]
@@ -182,8 +172,7 @@ navigationToPageButtonWith ps =
 
 
 navigationBar :
-    { mainPageURL : String
-    , currentPage : Maybe Page
+    { currentPage : Maybe Page
     }
     -> Html msg
 navigationBar ps =
@@ -193,7 +182,6 @@ navigationBar ps =
             \page ->
                 navigationToPageButton
                     { page = page
-                    , mainPageURL = ps.mainPageURL
                     , currentPage = ps.currentPage
                     }
         }

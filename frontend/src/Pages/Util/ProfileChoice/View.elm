@@ -36,14 +36,14 @@ viewMainWith ps configuration main =
     <|
         ps.modifier <|
             menu []
-                (List.map (viewProfileButtonWith ps configuration) main.profiles)
+                (List.map (viewProfileButtonWith ps) main.profiles)
 
 
-viewProfileButtonWith : Directions -> Configuration -> Profile -> Html Page.LogicMsg
-viewProfileButtonWith ps configuration profile =
+viewProfileButtonWith : Directions -> Profile -> Html Page.LogicMsg
+viewProfileButtonWith ps profile =
     li []
         [ Links.linkButton
-            { url = Links.frontendPage configuration <| ps.address <| .id <| profile
+            { url = Links.frontendPage <| ps.address <| .id <| profile
             , attributes = [ Style.classes.button.overview ]
             , children = [ text profile.name ]
             }

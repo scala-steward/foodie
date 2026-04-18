@@ -57,14 +57,14 @@ viewMain configuration model =
                 [ button [ onClick Page.Login, Style.classes.button.confirm ] [ text "Log In" ] ]
             , div []
                 [ Links.linkButton
-                    { url = Links.frontendPage configuration <| Addresses.Frontend.requestRegistration.address ()
+                    { url = Links.frontendPage <| Addresses.Frontend.requestRegistration.address ()
                     , attributes = [ Style.classes.button.navigation ]
                     , children = [ text "Create account" ]
                     }
                 ]
             , div []
                 [ Links.linkButton
-                    { url = Links.frontendPage configuration <| Addresses.Frontend.requestRecovery.address ()
+                    { url = Links.frontendPage <| Addresses.Frontend.requestRecovery.address ()
                     , attributes = [ Style.classes.button.navigation ]
                     , children = [ text "Recover account" ]
                     }

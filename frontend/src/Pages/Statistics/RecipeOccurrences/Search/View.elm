@@ -4,7 +4,7 @@ import Addresses.StatisticsVariant as StatisticsVariant
 import Api.Types.Profile exposing (Profile)
 import Api.Types.RecipeOccurrence exposing (RecipeOccurrence)
 import Configuration exposing (Configuration)
-import Html exposing (Html, button, div, label, table, tbody, td, text, th, thead, tr)
+import Html exposing (Html, button, div, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (disabled)
 import Html.Events exposing (onClick)
 import Maybe.Extra
@@ -40,8 +40,7 @@ viewMain configuration main =
         }
     <|
         StatisticsView.withNavigationBar
-            { mainPageURL = configuration.mainPageURL
-            , currentPage = Just StatisticsVariant.RecipeOccurrences
+            { currentPage = Just StatisticsVariant.RecipeOccurrences
             }
         <|
             let
@@ -101,7 +100,7 @@ viewMain configuration main =
                         , tbody []
                             (viewRecipes
                                 |> Paginate.page
-                                |> List.map (viewRecipeOccurrenceLine configuration main.profile)
+                                |> List.map (viewRecipeOccurrenceLine main.profile)
                             )
                         ]
                     , div [ Style.classes.pagination ]
@@ -120,8 +119,8 @@ viewMain configuration main =
                 ]
 
 
-viewRecipeOccurrenceLine : Configuration -> Profile -> RecipeOccurrence -> Html Page.LogicMsg
-viewRecipeOccurrenceLine configuration profile recipeOccurrence =
+viewRecipeOccurrenceLine : Profile -> RecipeOccurrence -> Html Page.LogicMsg
+viewRecipeOccurrenceLine profile recipeOccurrence =
     let
         ( mealDate, mealName, mealButton ) =
             recipeOccurrence.lastUsedInMeal
@@ -130,7 +129,7 @@ viewRecipeOccurrenceLine configuration profile recipeOccurrence =
                         ( meal.date |> DateUtil.toPrettyString
                         , meal.name |> Maybe.withDefault ""
                         , [ td [ Style.classes.controls ]
-                                [ NavigationUtil.mealEditorLinkButton configuration profile.id meal.id ]
+                                [ NavigationUtil.mealEditorLinkButton profile.id meal.id ]
                           ]
                         )
                     )
@@ -148,7 +147,7 @@ viewRecipeOccurrenceLine configuration profile recipeOccurrence =
          , td [ Style.classes.editable ]
             [ text mealName ]
          , td [ Style.classes.editable ]
-            [ NavigationUtil.recipeEditorLinkButton configuration recipeOccurrence.recipe.id ]
+            [ NavigationUtil.recipeEditorLinkButton recipeOccurrence.recipe.id ]
          ]
             ++ mealButton
         )

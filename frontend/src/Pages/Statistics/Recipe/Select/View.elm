@@ -29,8 +29,7 @@ viewMain configuration main =
         }
     <|
         StatisticsView.withNavigationBar
-            { mainPageURL = configuration.mainPageURL
-            , currentPage = Nothing
+            { currentPage = Nothing
             }
         <|
             div [ Style.classes.partialStatistics ]

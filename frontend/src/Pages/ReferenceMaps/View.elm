@@ -42,7 +42,7 @@ viewMain =
         , matchesSearchText = \string referenceMap -> SearchUtil.search string referenceMap.name
         , sort = List.sortBy (.original >> .name)
         , tableHeader = tableHeader
-        , viewLine = viewReferenceMapLine
+        , viewLine = always viewReferenceMapLine
         , updateLine = .id >> updateReferenceMapLine
         , deleteLine = deleteReferenceMapLine
         , create =
@@ -65,15 +65,15 @@ tableHeader =
         }
 
 
-viewReferenceMapLine : Configuration -> ReferenceMap -> Bool -> List (Html Page.LogicMsg)
-viewReferenceMapLine configuration referenceMap showControls =
+viewReferenceMapLine : ReferenceMap -> Bool -> List (Html Page.LogicMsg)
+viewReferenceMapLine referenceMap showControls =
     referenceMapLineWith
         { controls =
             [ td [ Style.classes.controls ]
                 [ button [ Style.classes.button.edit, Pages.Util.ParentEditor.Page.EnterEdit referenceMap.id |> onClick ] [ text "Edit" ] ]
             , td [ Style.classes.controls ]
                 [ Links.linkButton
-                    { url = Links.frontendPage configuration <| Addresses.Frontend.referenceEntries.address <| referenceMap.id
+                    { url = Links.frontendPage <| Addresses.Frontend.referenceEntries.address <| referenceMap.id
                     , attributes = [ Style.classes.button.editor ]
                     , children = [ text "Entries" ]
                     }

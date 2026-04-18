@@ -35,8 +35,7 @@ viewMain configuration main =
         }
     <|
         StatisticsView.withNavigationBar
-            { mainPageURL = configuration.mainPageURL
-            , currentPage = Just StatisticsVariant.Recipe
+            { currentPage = Just StatisticsVariant.Recipe
             }
         <|
             let
@@ -76,7 +75,7 @@ viewMain configuration main =
                         , tbody []
                             (viewRecipes
                                 |> Paginate.page
-                                |> List.map (viewRecipeLine configuration)
+                                |> List.map viewRecipeLine
                             )
                         ]
                     , div [ Style.classes.pagination ]
@@ -95,15 +94,15 @@ viewMain configuration main =
                 ]
 
 
-viewRecipeLine : Configuration -> Recipe -> Html Page.LogicMsg
-viewRecipeLine configuration recipe =
+viewRecipeLine : Recipe -> Html Page.LogicMsg
+viewRecipeLine recipe =
     tr [ Style.classes.editing ]
         [ td [ Style.classes.editable ]
             [ label [] [ text recipe.name ] ]
         , td [ Style.classes.editable ]
             [ label [] [ text <| Maybe.withDefault "" <| recipe.description ] ]
         , td [ Style.classes.controls ]
-            [ NavigationUtil.recipeNutrientsLinkButton configuration recipe.id ]
+            [ NavigationUtil.recipeNutrientsLinkButton recipe.id ]
         , td [ Style.classes.controls ]
-            [ NavigationUtil.recipeEditorLinkButton configuration recipe.id ]
+            [ NavigationUtil.recipeEditorLinkButton recipe.id ]
         ]

@@ -36,8 +36,7 @@ viewMain configuration main =
         }
     <|
         StatisticsView.withNavigationBar
-            { mainPageURL = configuration.mainPageURL
-            , currentPage = Just StatisticsVariant.Food
+            { currentPage = Just StatisticsVariant.Food
             }
         <|
             let
@@ -72,7 +71,7 @@ viewMain configuration main =
                         , tbody []
                             (viewFoods
                                 |> Paginate.page
-                                |> List.map (viewFoodLine configuration)
+                                |> List.map viewFoodLine
                             )
                         ]
                     , div [ Style.classes.pagination ]
@@ -91,14 +90,14 @@ viewMain configuration main =
                 ]
 
 
-viewFoodLine : Configuration -> Food -> Html Page.LogicMsg
-viewFoodLine configuration food =
+viewFoodLine : Food -> Html Page.LogicMsg
+viewFoodLine food =
     tr [ Style.classes.editing ]
         [ td [ Style.classes.editable ]
             [ label [] [ text food.name ] ]
         , td [ Style.classes.controls ]
             [ Links.linkButton
-                { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsFoodSelect.address <| food.id
+                { url = Links.frontendPage <| Addresses.Frontend.statisticsFoodSelect.address <| food.id
                 , attributes = [ Style.classes.button.nutrients ]
                 , children = [ text "Nutrients" ]
                 }

@@ -28,11 +28,11 @@ viewMain configuration main =
     <|
         div [ Style.ids.mealEntryEditor ]
             [ div []
-                [ Pages.MealEntries.Meal.View.viewMain main.profile configuration main.meal
+                [ Pages.MealEntries.Meal.View.viewMain main.profile main.meal
                     |> Html.map Page.MealMsg
                 ]
             , div [ Style.classes.elements ] [ label [] [ text "Dishes" ] ]
-            , Pages.MealEntries.Entries.View.viewMealEntries configuration main.entries |> Html.map Page.EntriesMsg
+            , Pages.MealEntries.Entries.View.viewMealEntries main.entries |> Html.map Page.EntriesMsg
             , div [ Style.classes.elements ] [ label [] [ text "Recipes" ] ]
-            , Pages.MealEntries.Entries.View.viewRecipes configuration main.entries |> Html.map Page.EntriesMsg
+            , Pages.MealEntries.Entries.View.viewRecipes main.entries |> Html.map Page.EntriesMsg
             ]

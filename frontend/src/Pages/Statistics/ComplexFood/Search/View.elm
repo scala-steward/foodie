@@ -35,8 +35,7 @@ viewMain configuration main =
         }
     <|
         StatisticsView.withNavigationBar
-            { mainPageURL = configuration.mainPageURL
-            , currentPage = Just StatisticsVariant.ComplexFood
+            { currentPage = Just StatisticsVariant.ComplexFood
             }
         <|
             let
@@ -75,7 +74,7 @@ viewMain configuration main =
                         , tbody []
                             (viewComplexFoods
                                 |> Paginate.page
-                                |> List.map (viewComplexFoodLine configuration)
+                                |> List.map viewComplexFoodLine
                             )
                         ]
                     , div [ Style.classes.pagination ]
@@ -94,13 +93,13 @@ viewMain configuration main =
                 ]
 
 
-viewComplexFoodLine : Configuration -> ComplexFood -> Html Page.LogicMsg
-viewComplexFoodLine configuration complexFood =
+viewComplexFoodLine : ComplexFood -> Html Page.LogicMsg
+viewComplexFoodLine complexFood =
     tr [ Style.classes.editing ]
         [ td [ Style.classes.editable ]
             [ label [] [ text complexFood.name ] ]
         , td [ Style.classes.controls ]
-            [ NavigationUtil.complexFoodNutrientLinkButton configuration complexFood.recipeId ]
+            [ NavigationUtil.complexFoodNutrientLinkButton complexFood.recipeId ]
         , td [ Style.classes.controls ]
-            [ NavigationUtil.recipeEditorLinkButton configuration complexFood.recipeId ]
+            [ NavigationUtil.recipeEditorLinkButton complexFood.recipeId ]
         ]

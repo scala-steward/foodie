@@ -50,7 +50,7 @@ viewMain configuration main =
                     || SearchUtil.search string (meal.date |> DateUtil.toString)
         , sort = List.sortBy (.original >> .date >> DateUtil.toString) >> List.reverse
         , tableHeader = tableHeader
-        , viewLine = \c -> viewMealLine c main.profile
+        , viewLine = \_ -> viewMealLine main.profile
         , updateLine = .id >> updateMealLine main.profile.name
         , deleteLine = deleteMealLine main.profile.name
         , create =
@@ -80,8 +80,8 @@ tableHeader =
         }
 
 
-viewMealLine : Configuration -> Profile -> Meal -> Bool -> List (Html Page.LogicMsg)
-viewMealLine configuration profile meal showControls =
+viewMealLine : Profile -> Meal -> Bool -> List (Html Page.LogicMsg)
+viewMealLine profile meal showControls =
     let
         mealKey =
             ( profile.id, meal.id )
@@ -91,7 +91,7 @@ viewMealLine configuration profile meal showControls =
             [ td [ Style.classes.controls ] [ button [ Style.classes.button.edit, onClick <| Pages.Util.ParentEditor.Page.EnterEdit <| meal.id ] [ text "Edit" ] ]
             , td [ Style.classes.controls ]
                 [ Links.linkButton
-                    { url = Links.frontendPage configuration <| Addresses.Frontend.mealEntryEditor.address <| mealKey
+                    { url = Links.frontendPage <| Addresses.Frontend.mealEntryEditor.address <| mealKey
                     , attributes = [ Style.classes.button.editor ]
                     , children = [ text "Entries" ]
                     }
@@ -100,7 +100,7 @@ viewMealLine configuration profile meal showControls =
                 [ button [ Style.classes.button.delete, onClick <| Pages.Util.ParentEditor.Page.RequestDelete <| meal.id ] [ text "Delete" ] ]
             , td [ Style.classes.controls ]
                 [ Links.linkButton
-                    { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsMealSelect.address <| mealKey
+                    { url = Links.frontendPage <| Addresses.Frontend.statisticsMealSelect.address <| mealKey
                     , attributes = [ Style.classes.button.nutrients ]
                     , children = [ text "Nutrients" ]
                     }

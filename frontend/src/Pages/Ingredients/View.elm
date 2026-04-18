@@ -31,13 +31,13 @@ viewMain configuration main =
     <|
         div [ Style.ids.ingredientEditor ]
             [ div []
-                [ Pages.Ingredients.Recipe.View.viewMain configuration main.recipe
+                [ Pages.Ingredients.Recipe.View.viewMain main.recipe
                     |> Html.map Page.RecipeMsg
                 ]
             , div [ Style.classes.elements ] [ label [] [ text "Ingredients" ] ]
-            , Pages.Ingredients.Plain.View.viewIngredients configuration main.ingredientsGroup |> Html.map Page.IngredientMsg
+            , Pages.Ingredients.Plain.View.viewIngredients main.ingredientsGroup |> Html.map Page.IngredientMsg
             , div [ Style.classes.elements ] [ label [] [ text "Complex ingredients" ] ]
-            , Pages.Ingredients.Complex.View.viewComplexIngredients configuration main.complexIngredientsGroup |> Html.map Page.ComplexIngredientMsg
+            , Pages.Ingredients.Complex.View.viewComplexIngredients main.complexIngredientsGroup |> Html.map Page.ComplexIngredientMsg
             , div []
                 [ button
                     [ disabled <| main.foodsMode == Page.Plain
@@ -54,8 +54,8 @@ viewMain configuration main =
                 ]
             , case main.foodsMode of
                 Page.Plain ->
-                    Pages.Ingredients.Plain.View.viewFoods configuration main.ingredientsGroup |> Html.map Page.IngredientMsg
+                    Pages.Ingredients.Plain.View.viewFoods main.ingredientsGroup |> Html.map Page.IngredientMsg
 
                 Page.Complex ->
-                    Pages.Ingredients.Complex.View.viewFoods configuration main.complexIngredientsGroup |> Html.map Page.ComplexIngredientMsg
+                    Pages.Ingredients.Complex.View.viewFoods main.complexIngredientsGroup |> Html.map Page.ComplexIngredientMsg
             ]

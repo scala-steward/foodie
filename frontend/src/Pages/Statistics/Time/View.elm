@@ -97,7 +97,7 @@ viewMain configuration main =
                                     , tbody []
                                         (viewMeals
                                             |> Paginate.page
-                                            |> List.map (mealLine configuration profile)
+                                            |> List.map (mealLine profile)
                                         )
                                     ]
                                 , div [ Style.classes.pagination ]
@@ -125,8 +125,7 @@ viewMain configuration main =
         }
     <|
         StatisticsView.withNavigationBar
-            { mainPageURL = configuration.mainPageURL
-            , currentPage = Just StatisticsVariant.Time
+            { currentPage = Just StatisticsVariant.Time
             }
         <|
             div [ Style.ids.statistics.time ]
@@ -180,17 +179,17 @@ viewMain configuration main =
                 )
 
 
-mealLine : Configuration -> Profile -> Meal -> Html Page.LogicMsg
-mealLine configuration profile meal =
+mealLine : Profile -> Meal -> Html Page.LogicMsg
+mealLine profile meal =
     tr [ Style.classes.editLine ]
         [ td [ Style.classes.editable, Style.classes.date ] [ text <| DateUtil.dateToPrettyString <| meal.date.date ]
         , td [ Style.classes.editable, Style.classes.time ] [ text <| Maybe.Extra.unwrap "" DateUtil.timeToString <| meal.date.time ]
         , td [ Style.classes.editable ] [ text <| profile.name ]
         , td [ Style.classes.editable ] [ text <| Maybe.withDefault "" <| meal.name ]
         , td [ Style.classes.controls ]
-            [ NavigationUtil.mealNutrientsLinkButton configuration profile.id meal.id ]
+            [ NavigationUtil.mealNutrientsLinkButton profile.id meal.id ]
         , td [ Style.classes.controls ]
-            [ NavigationUtil.mealEditorLinkButton configuration profile.id meal.id ]
+            [ NavigationUtil.mealEditorLinkButton profile.id meal.id ]
         ]
 
 

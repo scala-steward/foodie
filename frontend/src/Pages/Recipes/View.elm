@@ -45,7 +45,7 @@ viewMain configuration =
                     || SearchUtil.search string (recipe.description |> Maybe.withDefault "")
         , sort = List.sortBy (.original >> .name)
         , tableHeader = tableHeader
-        , viewLine = viewRecipeLine
+        , viewLine = always viewRecipeLine
         , updateLine = .id >> updateRecipeLine
         , deleteLine = deleteRecipeLine
         , create =
@@ -74,8 +74,8 @@ tableHeader =
         }
 
 
-viewRecipeLine : Configuration -> Recipe -> Bool -> List (Html Page.LogicMsg)
-viewRecipeLine configuration recipe showControls =
+viewRecipeLine : Recipe -> Bool -> List (Html Page.LogicMsg)
+viewRecipeLine recipe showControls =
     let
         rescalable =
             recipe.servingSize
@@ -97,7 +97,7 @@ viewRecipeLine configuration recipe showControls =
                 ]
             , td [ Style.classes.controls ]
                 [ Links.linkButton
-                    { url = Links.frontendPage configuration <| Addresses.Frontend.ingredientEditor.address <| recipe.id
+                    { url = Links.frontendPage <| Addresses.Frontend.ingredientEditor.address <| recipe.id
                     , attributes = [ Style.classes.button.editor ]
                     , children = [ text "Ingredients" ]
                     }
@@ -109,7 +109,7 @@ viewRecipeLine configuration recipe showControls =
                 ]
             , td [ Style.classes.controls ]
                 [ Links.linkButton
-                    { url = Links.frontendPage configuration <| Addresses.Frontend.statisticsRecipeSelect.address <| recipe.id
+                    { url = Links.frontendPage <| Addresses.Frontend.statisticsRecipeSelect.address <| recipe.id
                     , attributes = [ Style.classes.button.nutrients ]
                     , children = [ text "Nutrients" ]
                     }

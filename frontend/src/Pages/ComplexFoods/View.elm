@@ -27,7 +27,7 @@ viewMain configuration main =
     <|
         div [ Style.ids.complexFoodEditor ]
             [ div [ Style.classes.elements ] [ label [] [ text "Complex foods" ] ]
-            , Pages.ComplexFoods.Foods.View.viewComplexFoods configuration main.foods |> Html.map Page.FoodsMsg
+            , Pages.ComplexFoods.Foods.View.viewComplexFoods main.foods |> Html.map Page.FoodsMsg
             , div [ Style.classes.elements ] [ label [] [ text "Recipes" ] ]
-            , Pages.ComplexFoods.Foods.View.viewRecipes configuration main.foods |> Html.map Page.FoodsMsg
+            , Pages.ComplexFoods.Foods.View.viewRecipes main.foods |> Html.map Page.FoodsMsg
             ]

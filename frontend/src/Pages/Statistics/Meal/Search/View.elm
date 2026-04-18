@@ -38,8 +38,7 @@ viewMain configuration main =
         }
     <|
         StatisticsView.withNavigationBar
-            { mainPageURL = configuration.mainPageURL
-            , currentPage = Just StatisticsVariant.Meal
+            { currentPage = Just StatisticsVariant.Meal
             }
         <|
             let
@@ -82,7 +81,7 @@ viewMain configuration main =
                         , tbody []
                             (viewMeals
                                 |> Paginate.page
-                                |> List.map (viewMealLine configuration main.profile)
+                                |> List.map (viewMealLine main.profile)
                             )
                         ]
                     , div [ Style.classes.pagination ]
@@ -101,8 +100,8 @@ viewMain configuration main =
                 ]
 
 
-viewMealLine : Configuration -> Profile -> Meal -> Html Page.LogicMsg
-viewMealLine configuration profile meal =
+viewMealLine : Profile -> Meal -> Html Page.LogicMsg
+viewMealLine profile meal =
     tr [ Style.classes.editLine ]
         [ td [ Style.classes.editable ]
             [ text <| DateUtil.dateToPrettyString <| meal.date.date ]
@@ -113,7 +112,7 @@ viewMealLine configuration profile meal =
         , td [ Style.classes.editable ]
             [ text <| Maybe.withDefault "" <| meal.name ]
         , td [ Style.classes.controls ]
-            [ NavigationUtil.mealNutrientsLinkButton configuration profile.id meal.id ]
+            [ NavigationUtil.mealNutrientsLinkButton profile.id meal.id ]
         , td [ Style.classes.controls ]
-            [ NavigationUtil.mealEditorLinkButton configuration profile.id meal.id ]
+            [ NavigationUtil.mealEditorLinkButton profile.id meal.id ]
         ]
