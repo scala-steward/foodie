@@ -6,5 +6,4 @@ import Configuration exposing (Configuration)
 configuration : Configuration
 configuration =
     { backendURL = "localhost"
-    , mainPageURL = "localhost"
     }
