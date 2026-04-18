@@ -36,21 +36,33 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           path: ${{ github.workspace }}/git-ops
 
-      - name: Copy deployment manifests
+      - name: Copy deployment manifests and preserve tags
         run: |
-          # Remove existing foodie folder and copy fresh from source
-          rm -rf ${{ github.workspace }}/git-ops/foodie
-          cp -r ${{ github.workspace }}/source/deployment ${{ github.workspace }}/git-ops/foodie
+          GITOPS_DIR="${{ github.workspace }}/git-ops/foodie"
+          SOURCE_DIR="${{ github.workspace }}/source/deployment"
+          
+          # Save existing tags if values.yaml exists
+          if [ -f "$GITOPS_DIR/values.yaml" ]; then
+            BACKEND_TAG=$(yq '.backend.image.tag' "$GITOPS_DIR/values.yaml")
+            FRONTEND_TAG=$(yq '.frontend.image.tag' "$GITOPS_DIR/values.yaml")
+          else
+            BACKEND_TAG="latest"
+            FRONTEND_TAG="latest"
+          fi
+          
+          # Remove existing and copy fresh from source
+          rm -rf "$GITOPS_DIR"
+          cp -r "$SOURCE_DIR" "$GITOPS_DIR"
+          
+          # Restore preserved tags
+          yq -i ".backend.image.tag = $BACKEND_TAG" "$GITOPS_DIR/values.yaml"
+          yq -i ".frontend.image.tag = $FRONTEND_TAG" "$GITOPS_DIR/values.yaml"
 
       - name: Update image tag
         working-directory: ${{ github.workspace }}/git-ops
         run: |
-          # Update the appropriate component's image tag
-          if [ "${{ inputs.component }}" = "backend" ]; then
-            yq -i '.backend.image.tag = "${{ inputs.version }}"' foodie/values.yaml
-          elif [ "${{ inputs.component }}" = "frontend" ]; then
-            yq -i '.frontend.image.tag = "${{ inputs.version }}"' foodie/values.yaml
-          fi
+          # Update only the changed component's image tag
+          yq -i '.${{ inputs.component }}.image.tag = "${{ inputs.version }}"' foodie/values.yaml
 
       - name: Determine commit title
         id: commit
