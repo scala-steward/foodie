@@ -43,8 +43,8 @@ jobs:
           
           # Save existing tags if values.yaml exists
           if [ -f "$GITOPS_DIR/values.yaml" ]; then
-            BACKEND_TAG=$(yq '.backend.image.tag' "$GITOPS_DIR/values.yaml")
-            FRONTEND_TAG=$(yq '.frontend.image.tag' "$GITOPS_DIR/values.yaml")
+            BACKEND_TAG=$(yq -r '.backend.image.tag' "$GITOPS_DIR/values.yaml")
+            FRONTEND_TAG=$(yq -r '.frontend.image.tag' "$GITOPS_DIR/values.yaml")
           else
             BACKEND_TAG="latest"
             FRONTEND_TAG="latest"
@@ -55,8 +55,10 @@ jobs:
           cp -r "$SOURCE_DIR" "$GITOPS_DIR"
           
           # Restore preserved tags
-          yq -i ".backend.image.tag = $BACKEND_TAG" "$GITOPS_DIR/values.yaml"
-          yq -i ".frontend.image.tag = $FRONTEND_TAG" "$GITOPS_DIR/values.yaml"
+          export BACKEND_TAG
+          export FRONTEND_TAG
+          yq -i '.backend.image.tag = env(BACKEND_TAG)' "$GITOPS_DIR/values.yaml"
+          yq -i '.frontend.image.tag = env(FRONTEND_TAG)' "$GITOPS_DIR/values.yaml"
 
       - name: Update image tag
         working-directory: ${{ github.workspace }}/git-ops
