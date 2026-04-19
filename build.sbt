@@ -46,9 +46,9 @@ lazy val root = (project in file("."))
       "com.kubukoz"           %% "slick-effect-catsio"      % DependencyVersions.SlickEffect,
       // Transitive dependency. Override added for proper version.
       "com.fasterxml.jackson.module" %% "jackson-module-scala"      % DependencyVersions.JacksonModuleScala,
-      "org.scalacheck"               %% "scalacheck"                % DependencyVersions.Scalacheck % Test,
-      "org.typelevel"                %% "cats-laws"                 % DependencyVersions.CatsCore % Test,
-      "com.github.alexarchambault"   %% "scalacheck-shapeless_1.15" % DependencyVersions.ScalacheckShapeless  % Test
+      "org.scalacheck"               %% "scalacheck"                % DependencyVersions.Scalacheck          % Test,
+      "org.typelevel"                %% "cats-laws"                 % DependencyVersions.CatsCore            % Test,
+      "com.github.alexarchambault"   %% "scalacheck-shapeless_1.15" % DependencyVersions.ScalacheckShapeless % Test
     ),
     slickCodegenDatabaseUrl      := config.getString("slick.dbs.default.db.url"),
     slickCodegenDatabaseUser     := config.getString("slick.dbs.default.db.user"),
