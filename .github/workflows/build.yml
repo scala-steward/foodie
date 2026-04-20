@@ -27,7 +27,7 @@ jobs:
           # Since version 6.0.0, the action uses conventional commits.
           major_pattern: "/(major)/i"
           minor_pattern: "/(minor)/i"
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         id: back-end
         with:
           filters: |
@@ -39,7 +39,7 @@ jobs:
               - 'build.sbt'
               - 'project/**'
               - '.scalafmt.conf'
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         id: front-end
         with:
           filters: |
