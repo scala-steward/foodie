@@ -1,0 +1,7 @@
+.env
+.nvmrc
+build/
+elm-stuff/
+node_modules/
+target/
+tests/
