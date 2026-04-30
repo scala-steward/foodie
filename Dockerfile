@@ -27,7 +27,8 @@ WORKDIR /opt/docker
 
 COPY --from=build /app/target/universal/stage/ /opt/docker/
 
-RUN chmod +x /opt/docker/bin/foodie && \
+RUN apk add --no-cache bash && \
+    chmod +x /opt/docker/bin/foodie && \
     adduser -D -u 1001 appuser
 
 EXPOSE 9000
