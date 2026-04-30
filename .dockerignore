@@ -1,3 +1,11 @@
 .env
 .git
 .gitignore
+.github/
+.idea/
+.bsp/
+deployment/
+frontend/
+scripts/
+target/
+test/
