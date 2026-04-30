@@ -80,6 +80,6 @@ jobs:
     if: ${{ always() && needs.create_new_version.result == 'success' }}
     uses: ./.github/workflows/update-gitops-manifests.yml
     with:
-      backend-version: ${{ needs.build_and_publish_back_end.result == 'success' && needs.create_new_version.outputs.version || '' }}
-      frontend-version: ${{ needs.build_and_publish_front_end.result == 'success' && needs.create_new_version.outputs.version || '' }}
+      back-end-version: ${{ needs.build_and_publish_back_end.result == 'success' && needs.create_new_version.outputs.version || '' }}
+      front-end-version: ${{ needs.build_and_publish_front_end.result == 'success' && needs.create_new_version.outputs.version || '' }}
     secrets: inherit
