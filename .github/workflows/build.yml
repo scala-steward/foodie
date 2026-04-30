@@ -15,7 +15,7 @@ jobs:
       back-end-paths-changed: ${{ steps.back-end.outputs.back-end-src }}
       front-end-paths-changed: ${{ steps.front-end.outputs.front-end-src }}
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         # Depth setting is necessary for the semantic-version action.
         with:
@@ -40,6 +40,7 @@ jobs:
               - 'build.sbt'
               - 'project/**'
               - '.scalafmt.conf'
+              - 'Dockerfile'
       - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         id: front-end
         with:
@@ -56,7 +57,8 @@ jobs:
           gh release create ${{ steps.semantic-version.outputs.version_tag }} --generate-notes --verify-tag
 
   build_and_publish_back_end:
-    needs: create_new_version
+    needs:
+      - create_new_version
     uses: ./.github/workflows/build-and-publish-back-end.yml
     # The output is a string, hence the string comparison.
     if: ${{ needs.create_new_version.outputs.back-end-paths-changed == 'true' }}
@@ -65,7 +67,8 @@ jobs:
     secrets: inherit
 
   build_and_publish_front_end:
-    needs: create_new_version
+    needs:
+      - create_new_version
     uses: ./.github/workflows/build-and-publish-front-end.yml
     # The output is a string, hence the string comparison.
     if: ${{ needs.create_new_version.outputs.front-end-paths-changed == 'true' }}
