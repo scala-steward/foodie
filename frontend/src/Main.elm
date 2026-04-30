@@ -21,6 +21,7 @@ import Pages.Deletion.View
 import Pages.Ingredients.Handler
 import Pages.Ingredients.Page
 import Pages.Ingredients.View
+import Pages.Landing.View
 import Pages.Login.Handler
 import Pages.Login.Page
 import Pages.Login.View
@@ -149,7 +150,8 @@ lenses =
 
 
 type Page
-    = Login Pages.Login.Page.Model
+    = Landing
+    | Login Pages.Login.Page.Model
     | Overview Pages.Overview.Page.Model
     | Recipes Pages.Recipes.Page.Model
     | Ingredients Pages.Ingredients.Page.Model
@@ -248,6 +250,9 @@ init configuration url key =
 view : Model -> Html Msg
 view model =
     case model.page of
+        Landing ->
+            Pages.Landing.View.view
+
         Login login ->
             Html.map LoginMsg (Pages.Login.View.view login)
 
@@ -539,7 +544,8 @@ stepThrough ps model ( subModel, cmd ) =
 
 
 type Route
-    = LoginRoute
+    = LandingRoute
+    | LoginRoute
     | OverviewRoute
     | RecipesRoute
     | IngredientRoute RecipeId
@@ -573,7 +579,8 @@ type Route
 plainRouteParser : Parser (Route -> a) a
 plainRouteParser =
     Parser.oneOf
-        [ route Addresses.Frontend.login.parser LoginRoute
+        [ route Addresses.Frontend.landing.parser LandingRoute
+        , route Addresses.Frontend.login.parser LoginRoute
         , route Addresses.Frontend.overview.parser OverviewRoute
         , route Addresses.Frontend.recipes.parser RecipesRoute
         , route Addresses.Frontend.ingredientEditor.parser IngredientRoute
@@ -624,6 +631,9 @@ followRoute model =
 
         Just entryRoute ->
             case ( entryRoute, model.jwt ) of
+                ( LandingRoute, _ ) ->
+                    ( { model | page = Landing }, Cmd.none )
+
                 ( LoginRoute, _ ) ->
                     Pages.Login.Handler.init { configuration = model.configuration }
                         |> stepThrough steps.login model
