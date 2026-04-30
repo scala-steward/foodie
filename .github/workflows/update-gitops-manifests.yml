@@ -1,15 +1,18 @@
-name: Update GitOps deployment
+name: Update GitOps manifests
 
 on:
   workflow_call:
     inputs:
-      version:
+      back-end-version:
         type: string
-        required: true
-      component:
+        required: false
+        default: ""
+        description: "Back end version to set (empty = preserve existing)"
+      front-end-version:
         type: string
-        required: true
-        description: "Either 'backend' or 'frontend'"
+        required: false
+        default: ""
+        description: "Front end version to set (empty = preserve existing)"
 
 jobs:
   update-gitops:
@@ -36,7 +39,7 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           path: ${{ github.workspace }}/git-ops
 
-      - name: Copy deployment manifests and preserve tags
+      - name: Copy deployment manifests and update tags
         run: |
           GITOPS_DIR="${{ github.workspace }}/git-ops/foodie"
           SOURCE_DIR="${{ github.workspace }}/source/deployment"
@@ -50,40 +53,60 @@ jobs:
             FRONTEND_TAG="latest"
           fi
           
+          # Override with input versions if provided
+          if [ -n "${{ inputs.back-end-version }}" ]; then
+            BACKEND_TAG="${{ inputs.back-end-version }}"
+          fi
+          if [ -n "${{ inputs.front-end-version }}" ]; then
+            FRONTEND_TAG="${{ inputs.front-end-version }}"
+          fi
+          
           # Remove existing and copy fresh from source
           rm -rf "$GITOPS_DIR"
           cp -r "$SOURCE_DIR" "$GITOPS_DIR"
           
-          # Restore preserved tags
+          # Remove local secret file if accidentally included
+          rm -f "$GITOPS_DIR/secret.local.yaml"
+          
+          # Set tags
           export BACKEND_TAG
           export FRONTEND_TAG
           yq -i '.backend.image.tag = env(BACKEND_TAG)' "$GITOPS_DIR/values.yaml"
           yq -i '.frontend.image.tag = env(FRONTEND_TAG)' "$GITOPS_DIR/values.yaml"
 
-      - name: Update image tag
-        working-directory: ${{ github.workspace }}/git-ops
-        run: |
-          # Update only the changed component's image tag
-          yq -i '.${{ inputs.component }}.image.tag = "${{ inputs.version }}"' foodie/values.yaml
-
       - name: Determine commit title
         id: commit
         run: echo "title=$(echo '${{ github.event.head_commit.message }}' | head -n 1)" >> $GITHUB_OUTPUT
+
+      - name: Determine PR title
+        id: pr-title
+        run: |
+          TITLE="Update foodie manifests"
+          if [ -n "${{ inputs.back-end-version }}" ] && [ -n "${{ inputs.front-end-version }}" ]; then
+            TITLE="Deploy foodie backend:${{ inputs.back-end-version }}, frontend:${{ inputs.front-end-version }}"
+          elif [ -n "${{ inputs.back-end-version }}" ]; then
+            TITLE="Deploy foodie-backend:${{ inputs.back-end-version }}"
+          elif [ -n "${{ inputs.front-end-version }}" ]; then
+            TITLE="Deploy foodie-frontend:${{ inputs.front-end-version }}"
+          fi
+          echo "title=$TITLE" >> $GITHUB_OUTPUT
 
       - name: Create pull request
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           token: ${{ steps.app-token.outputs.token }}
           path: ${{ github.workspace }}/git-ops
-          branch: deploy/foodie-${{ inputs.component }}-${{ inputs.version }}
+          branch: deploy/foodie-${{ github.run_id }}
           delete-branch: true
-          title: "Deploy `foodie-${{ inputs.component }}:${{ inputs.version }}`"
+          title: ${{ steps.pr-title.outputs.title }}
           body: |
-            Automated deployment PR for foodie ${{ inputs.component }}.
+            Automated deployment PR for foodie.
             
-            **Version:** `${{ inputs.version }}`
+            **Back end version:** `${{ inputs.back-end-version || 'unchanged' }}`
+            **Front end version:** `${{ inputs.front-end-version || 'unchanged' }}`
             **Triggered by:** [${{ steps.commit.outputs.title }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
-          commit-message: "Update foodie-${{ inputs.component }} to ${{ inputs.version }}"
+          commit-message: ${{ steps.pr-title.outputs.title }}
           labels: |
-            deployment
-            automated
+            - deployment
+            - automated
+
