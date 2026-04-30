@@ -4,6 +4,7 @@ module Addresses.Frontend exposing
     , confirmRegistration
     , deleteAccount
     , ingredientEditor
+    , landing
     , login
     , mealBranch
     , mealEntryEditor
@@ -253,6 +254,13 @@ ingredientEditor =
 login : AddressWithParser () a a
 login =
     plain "login"
+
+
+landing : AddressWithParser () a a
+landing =
+    { address = always []
+    , parser = Parser.top
+    }
 
 
 confirmRegistration : AddressWithParser ( ( String, String ), JWT ) (UserIdentifier -> JWT -> a) a
