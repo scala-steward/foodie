@@ -107,6 +107,6 @@ jobs:
             **Triggered by:** [${{ steps.commit.outputs.title }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
           commit-message: ${{ steps.pr-title.outputs.title }}
           labels: |
-            - deployment
-            - automated
+            deployment
+            automated
 
