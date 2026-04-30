@@ -50,4 +50,5 @@ config:
   mailerFrom: foodie@mail.danilenko.io
   mailerPort: "587"
   mailerTls: "true"
+  frontendUrl: foodie.danilenko.io
 
