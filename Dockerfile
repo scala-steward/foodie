@@ -21,7 +21,7 @@ COPY app/ app/
 RUN sbt stage
 
 # Very compact image for running.
-FROM bellsoft/liberica-runtime-container:jre-17-musl
+FROM bellsoft/liberica-runtime-container:jre-17-glibc
 
 WORKDIR /opt/docker
 
