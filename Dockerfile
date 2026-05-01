@@ -20,13 +20,13 @@ COPY app/ app/
 
 RUN sbt stage
 
-FROM bellsoft/liberica-runtime-container:jre-17-glibc
+FROM eclipse-temurin:17-jre
 
 WORKDIR /opt/docker
 
 COPY --from=build /app/target/universal/stage/ /opt/docker/
 
-RUN apt-get update && apt-get install -y bash && rm -rf /var/lib/apt/lists/* && \
+RUN apt-get update && apt-get install -y bash && \
     chmod +x /opt/docker/bin/foodie && \
     adduser --disabled-password --gecos "" --uid 1001 appuser
 
