@@ -20,16 +20,15 @@ COPY app/ app/
 
 RUN sbt stage
 
-# Very compact image for running.
 FROM bellsoft/liberica-runtime-container:jre-17-glibc
 
 WORKDIR /opt/docker
 
 COPY --from=build /app/target/universal/stage/ /opt/docker/
 
-RUN apk add --no-cache bash && \
+RUN apt-get update && apt-get install -y bash && rm -rf /var/lib/apt/lists/* && \
     chmod +x /opt/docker/bin/foodie && \
-    adduser -D -u 1001 appuser
+    adduser --disabled-password --gecos "" --uid 1001 appuser
 
 EXPOSE 9000
 
